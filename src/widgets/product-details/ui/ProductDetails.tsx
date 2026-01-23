@@ -1,0 +1,59 @@
+"use client";
+
+import { ShopifyProduct } from "@/lib/shopify";
+import ProductGallery from "@/entities/product/ui/ProductGallery";
+import ProductInfo from "@/entities/product/ui/ProductInfo";
+import ProductVariantSelector from "@/entities/product/ui/ProductVariantSelector";
+import AddToCartButton from "@/features/add-to-cart/ui/AddToCartButton";
+
+interface ProductDetailsProps {
+  product: ShopifyProduct;
+  selectedVariantId: string;
+  setSelectedVariantId: (id: string) => void;
+  mainImage: string;
+  setMainImage: (url: string) => void;
+}
+
+export default function ProductDetails({
+  product,
+  selectedVariantId,
+  setSelectedVariantId,
+  mainImage,
+  setMainImage,
+}: ProductDetailsProps) {
+  const selectedVariant = product.variants.edges.find(
+    (v) => v.node.id === selectedVariantId
+  )?.node;
+
+  return (
+    <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-16">
+      {/* Gallery Section */}
+      <ProductGallery
+        product={product}
+        mainImage={mainImage}
+        onImageSelect={setMainImage}
+      />
+
+      {/* Product Info Section */}
+      <div className="lg:col-span-5 flex flex-col h-full">
+        <div className="sticky top-24 flex flex-col gap-6">
+          <ProductInfo product={product} selectedVariant={selectedVariant} />
+
+          <div className="h-px w-full bg-text-main/10"></div>
+
+          <ProductVariantSelector
+            product={product}
+            selectedVariantId={selectedVariantId}
+            onVariantChange={setSelectedVariantId}
+          />
+
+          <AddToCartButton
+            product={product}
+            selectedVariant={selectedVariant}
+            mainImage={mainImage}
+          />
+        </div>
+      </div>
+    </div>
+  );
+}

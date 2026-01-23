@@ -1,0 +1,52 @@
+@import "tailwindcss";
+
+@theme {
+  --color-primary: #448da6;
+  --color-primary-dark: #367a8f;
+  --color-primary-accent: #448da6;
+  --color-background-light: #f0eee9;
+  --color-background-dark: #103642;
+  --color-text-main: #103642;
+  --color-text-muted: #5c747c;
+  --color-slate-dark: #103642;
+  --color-cream: #f0eee9;
+  --color-faq-bg: #eae7e1;
+
+  --font-display: var(--font-epilogue), ui-sans-serif, system-ui;
+  --font-body: var(--font-lato), ui-sans-serif, system-ui;
+}
+
+:root {
+  --background: #f0eee9;
+  --foreground: #103642;
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-body);
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+
+/* Details Marker Removal */
+summary::-webkit-details-marker {
+  display: none;
+}
+summary {
+  list-style: none;
+}
