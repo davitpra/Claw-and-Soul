@@ -1,0 +1,10 @@
+##---> CREATE NEW USER
+
+POST http://localhost:3001/api/auth/register
+Content-Type: application/json
+
+{
+  "fullName": "David Prado",
+  "email": "newuser@example.com",
+  "password": "securepassword"
+}

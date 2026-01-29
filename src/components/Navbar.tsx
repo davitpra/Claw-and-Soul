@@ -5,10 +5,13 @@ import Image from "next/image";
 import { usePathname } from "next/navigation";
 
 import { useCart } from "@/context/CartContext";
+import { useAuth } from "@/context/AuthContext";
+import UserMenu from "./UserMenu";
 
 export default function Navbar() {
   const pathname = usePathname();
   const { cartCount } = useCart();
+  const { isAuthenticated, isLoading } = useAuth();
 
   const navLinks = [
     { name: "Shop", href: "/shop" },
@@ -66,15 +69,29 @@ export default function Navbar() {
             />
           </div>
         </label>
-        <div className="flex gap-2">
-          <Link
-            href="/user/profile"
-            className="flex cursor-pointer items-center justify-center overflow-hidden rounded-xl h-10 w-10 bg-primary hover:bg-primary-dark text-white transition-colors shadow-sm"
-          >
-            <span className="material-symbols-outlined text-[20px]">
-              account_circle
-            </span>
-          </Link>
+        <div className="flex gap-2 items-center">
+          {!isLoading && (
+            <>
+              {isAuthenticated ? (
+                <UserMenu />
+              ) : (
+                <div className="flex gap-2">
+                  <Link
+                    href="/login"
+                    className="flex cursor-pointer items-center justify-center rounded-xl h-10 px-4 bg-white/50 hover:bg-white text-text-main transition-colors shadow-sm text-sm font-medium"
+                  >
+                    Login
+                  </Link>
+                  <Link
+                    href="/signup"
+                    className="flex cursor-pointer items-center justify-center rounded-xl h-10 px-4 bg-primary hover:bg-primary-dark text-white transition-colors shadow-sm text-sm font-semibold"
+                  >
+                    Sign Up
+                  </Link>
+                </div>
+              )}
+            </>
+          )}
           <Link
             href="/cart"
             className="flex cursor-pointer items-center justify-center overflow-hidden rounded-xl h-10 w-10 bg-white/50 hover:bg-white text-text-main transition-colors shadow-sm relative"

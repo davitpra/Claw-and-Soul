@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Epilogue, Lato } from "next/font/google";
 import "./globals.css";
 import { CartProvider } from "@/context/CartContext";
+import { AuthProvider } from "@/context/AuthContext";
 
 const epilogue = Epilogue({
   variable: "--font-epilogue",
@@ -36,7 +37,9 @@ export default function RootLayout({
       <body
         className={`${epilogue.variable} ${lato.variable} antialiased bg-background-light dark:bg-background-dark text-text-main font-body`}
       >
-        <CartProvider>{children}</CartProvider>
+        <AuthProvider>
+          <CartProvider>{children}</CartProvider>
+        </AuthProvider>
       </body>
     </html>
   );
