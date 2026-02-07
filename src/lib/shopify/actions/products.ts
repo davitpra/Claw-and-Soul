@@ -6,7 +6,7 @@ import { ShopifyProduct } from "../types";
  * Fetch a list of products
  */
 export async function getProducts(
-  first: number = 20
+  first: number = 20,
 ): Promise<ShopifyProduct[]> {
   const response = await shopifyFetch<{
     products: { edges: { node: ShopifyProduct }[] };
@@ -22,7 +22,7 @@ export async function getProducts(
  * Fetch a single product by handle
  */
 export async function getProduct(
-  handle: string
+  handle: string,
 ): Promise<ShopifyProduct | null> {
   const response = await shopifyFetch<{ product: ShopifyProduct }>({
     query: GET_PRODUCT,

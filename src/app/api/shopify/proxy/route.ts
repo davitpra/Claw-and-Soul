@@ -10,12 +10,12 @@ export async function POST(request: Request) {
     if (!domain || !accessToken) {
       return NextResponse.json(
         { error: "Shopify credentials not configured on server" },
-        { status: 500 }
+        { status: 500 },
       );
     }
 
     const cleanDomain = domain.replace(/^https?:\/\//, "").replace(/\/$/, "");
-    const endpoint = `https://${cleanDomain}/api/2024-01/graphql.json`;
+    const endpoint = `https://${cleanDomain}/api/2026-01/graphql.json`;
 
     const res = await fetch(endpoint, {
       method: "POST",
@@ -46,7 +46,7 @@ export async function POST(request: Request) {
         error: "Internal Server Error during Shopify fetch",
         details: error instanceof Error ? error.message : "Unknown",
       },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

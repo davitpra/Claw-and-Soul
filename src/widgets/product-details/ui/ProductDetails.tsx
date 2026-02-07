@@ -22,7 +22,7 @@ export default function ProductDetails({
   setMainImage,
 }: ProductDetailsProps) {
   const selectedVariant = product.variants.edges.find(
-    (v) => v.node.id === selectedVariantId
+    (v) => v.node.id === selectedVariantId,
   )?.node;
 
   return (

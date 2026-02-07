@@ -30,8 +30,14 @@ export default function ShopPage() {
       try {
         const fetchedData = await getProducts(20);
 
+        console.log("Fetched products from Shopify:", fetchedData);
+        console.log("Total products fetched:", fetchedData.length);
+
         const mappedProducts = fetchedData.map((node) => {
-          const price = node.priceRange.minVariantPrice;
+          const price = node.priceRange?.minVariantPrice || {
+            amount: "0.00",
+            currencyCode: "USD",
+          };
           const currencySymbol =
             price.currencyCode === "USD" ? "$" : price.currencyCode;
 
@@ -130,7 +136,7 @@ export default function ShopPage() {
                     .filter(
                       (p) =>
                         activeCategory === "All Products" ||
-                        p.category === activeCategory
+                        p.category === activeCategory,
                     )
                     .map((product) => (
                       <Link

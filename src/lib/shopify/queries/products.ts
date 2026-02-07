@@ -21,6 +21,14 @@ export const GET_PRODUCTS = `
               }
             }
           }
+          collections(first: 5) {
+            edges {
+              node {
+                title
+                handle
+              }
+            }
+          }
         }
       }
     }
