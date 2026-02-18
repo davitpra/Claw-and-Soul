@@ -5,6 +5,7 @@ import ProductGallery from "@/entities/product/ui/ProductGallery";
 import ProductInfo from "@/entities/product/ui/ProductInfo";
 import ProductVariantSelector from "@/entities/product/ui/ProductVariantSelector";
 import AddToCartButton from "@/features/add-to-cart/ui/AddToCartButton";
+import { useEffect } from "react";
 
 interface ProductDetailsProps {
   product: ShopifyProduct;
@@ -25,6 +26,13 @@ export default function ProductDetails({
     (v) => v.node.id === selectedVariantId,
   )?.node;
 
+  // Sync main image with selected variant
+  useEffect(() => {
+    if (selectedVariant?.image?.url) {
+      setMainImage(selectedVariant.image.url);
+    }
+  }, [selectedVariant, setMainImage]);
+
   return (
     <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-16">
       {/* Gallery Section */}
@@ -32,6 +40,7 @@ export default function ProductDetails({
         product={product}
         mainImage={mainImage}
         onImageSelect={setMainImage}
+        variantImage={selectedVariant?.image?.url}
       />
 
       {/* Product Info Section */}

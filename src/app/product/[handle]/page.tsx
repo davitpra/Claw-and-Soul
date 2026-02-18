@@ -40,8 +40,6 @@ export default function ProductDetail({
     fetchProduct();
   }, [handle]);
 
-  console.log(product);
-
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background-light">

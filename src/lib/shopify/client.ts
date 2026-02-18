@@ -6,7 +6,14 @@ export async function shopifyFetch<T>({
   variables?: any;
 }): Promise<{ data: T } | never> {
   try {
-    const res = await fetch("/api/shopify/proxy", {
+    // En el servidor, necesitamos una URL absoluta
+    const isServer = typeof window === "undefined";
+    const baseUrl = isServer
+      ? process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000"
+      : "";
+    const url = `${baseUrl}/api/shopify/proxy`;
+
+    const res = await fetch(url, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ query, variables }),

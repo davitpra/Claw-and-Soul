@@ -29,8 +29,8 @@ export default function ProductVariantSelector({
     optionNames.find((name) => {
       const values = new Set(
         variants.map(
-          (v) => v.node.selectedOptions.find((o) => o.name === name)?.value
-        )
+          (v) => v.node.selectedOptions.find((o) => o.name === name)?.value,
+        ),
       );
       return values.size > 1;
     }) || optionNames[0];
@@ -50,11 +50,11 @@ export default function ProductVariantSelector({
   // Estado para controlar qué grupo de variantes se está visualizando actualmente
   const [activeGroup, setActiveGroup] = useState<string>(() => {
     const initialVariant = variants.find(
-      (v) => v.node.id === selectedVariantId
+      (v) => v.node.id === selectedVariantId,
     );
     return (
       initialVariant?.node.selectedOptions.find(
-        (o) => o.name === groupingOptionName
+        (o) => o.name === groupingOptionName,
       )?.value || groupNames[0]
     );
   });
@@ -62,10 +62,10 @@ export default function ProductVariantSelector({
   // Sincroniza el grupo activo si la variante seleccionada cambia externamente
   useEffect(() => {
     const currentVariant = variants.find(
-      (v) => v.node.id === selectedVariantId
+      (v) => v.node.id === selectedVariantId,
     );
     const variantGroup = currentVariant?.node.selectedOptions.find(
-      (o) => o.name === groupingOptionName
+      (o) => o.name === groupingOptionName,
     )?.value;
     if (variantGroup && variantGroup !== activeGroup) {
       setActiveGroup(variantGroup);
@@ -123,7 +123,7 @@ export default function ProductVariantSelector({
                   // Seleccionamos automáticamente la primera variante disponible de este grupo
                   const firstInGroup =
                     groupedVariants[name].find(
-                      (v) => v.node.availableForSale
+                      (v) => v.node.availableForSale,
                     ) || groupedVariants[name][0];
                   if (firstInGroup) {
                     onVariantChange(firstInGroup.node.id);
@@ -145,14 +145,14 @@ export default function ProductVariantSelector({
         <div className="flex flex-col gap-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <span className="text-[10px] font-black text-primary uppercase tracking-widest bg-primary/5 px-2 py-1 rounded-md">
+              {/* <span className="text-[10px] font-black text-primary uppercase tracking-widest bg-primary/5 px-2 py-1 rounded-md">
                 Step 2: Choose {variants[0]?.node.selectedOptions[1].name}
-              </span>
+              </span> */}
               <div className="h-px w-24 bg-gradient-to-r from-text-main/10 to-transparent lg:block hidden"></div>
             </div>
 
             {/* Navegación del Carrusel */}
-            {currentGroupItems.length > 3 && (
+            {/* {currentGroupItems.length > 3 && (
               <div className="flex gap-2">
                 <button
                   onClick={() => scroll("left")}
@@ -169,7 +169,7 @@ export default function ProductVariantSelector({
                   <ChevronRight className="w-5 h-5" />
                 </button>
               </div>
-            )}
+            )} */}
           </div>
 
           <div className="relative group/carousel">
@@ -186,7 +186,7 @@ export default function ProductVariantSelector({
                 const isAvailable = variant.availableForSale;
 
                 const displayOptions = variant.selectedOptions.filter(
-                  (o) => o.name !== groupingOptionName
+                  (o) => o.name !== groupingOptionName,
                 );
 
                 return (
@@ -194,9 +194,11 @@ export default function ProductVariantSelector({
                     key={variant.id}
                     onClick={() => isAvailable && onVariantChange(variant.id)}
                     disabled={!isAvailable}
+                    aria-label={`${displayOptions.length > 0 ? displayOptions.map((o) => o.value).join(" ") : variant.title}, ${variant.price.currencyCode === "USD" ? "$" : ""}${parseFloat(variant.price.amount).toFixed(2)}${!isAvailable ? ", sold out" : ""}${isSelected ? ", currently selected" : ""}`}
                     className={`
                       flex-shrink-0 w-44 md:w-56 lg:w-32 snap-start
                       group relative flex flex-col items-center gap-4 p-4 rounded-3xl border-2 transition-all duration-300 text-center m-1
+                      focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2
                       ${
                         isSelected
                           ? "border-primary bg-primary/5 shadow-lg ring-1 ring-primary/20 scale-[1.02]"

@@ -1,0 +1,28 @@
+import { NextResponse } from 'next/server';
+import type { NextRequest } from 'next/server';
+
+export function middleware(request: NextRequest) {
+  // Verificar si hay token de acceso en las cookies
+  const accessToken = request.cookies.get('access_token');
+
+  // Si no hay token, redirigir a login
+  if (!accessToken) {
+    const loginUrl = new URL('/login', request.url);
+
+    // Opcional: guardar la URL original para redirigir después del login
+    loginUrl.searchParams.set('redirect', request.nextUrl.pathname);
+
+    return NextResponse.redirect(loginUrl);
+  }
+
+  // Si hay token, permitir el acceso
+  return NextResponse.next();
+}
+
+// Configurar qué rutas proteger
+export const config = {
+  matcher: [
+    '/ia-generator/:path*',  // Proteger generador de IA
+    '/user/:path*',          // Proteger área de usuario
+  ],
+};
