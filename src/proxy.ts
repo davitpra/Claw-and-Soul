@@ -1,9 +1,9 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 
-export function middleware(request: NextRequest) {
+export function proxy(request: NextRequest) {
   // Verificar si hay token de acceso en las cookies
-  const accessToken = request.cookies.get('access_token');
+  const accessToken = request.cookies.get('accessToken');
 
   // Si no hay token, redirigir a login
   if (!accessToken) {

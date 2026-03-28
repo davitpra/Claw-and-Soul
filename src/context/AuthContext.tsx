@@ -7,10 +7,6 @@ import {
   register as apiRegister,
   logout as apiLogout,
   refreshToken as apiRefreshToken,
-  saveTokens,
-  clearTokens as clearStoredTokens,
-  getAccessToken,
-  getRefreshToken,
   RegisterDto,
 } from "@/lib/auth/client";
 
@@ -101,7 +97,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       if (response.ok) {
         const data = await response.json();
-        setUser(data.user || data);
+        setUser(data.data?.user || null);
       } else {
         setUser(null);
       }

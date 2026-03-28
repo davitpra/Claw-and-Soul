@@ -54,7 +54,7 @@ export async function register(data: RegisterDto): Promise<AuthResponse> {
 
     // Backend now returns user only, tokens are in httpOnly cookies
     return {
-      user: json.user,
+      user: json.data?.user,
       accessToken: '', // Not used anymore
       refreshToken: '', // Not used anymore
     };
@@ -89,7 +89,7 @@ export async function login(data: LoginDto): Promise<AuthResponse> {
 
     // Backend now returns user only, tokens are in httpOnly cookies
     return {
-      user: json.user,
+      user: json.data?.user,
       accessToken: '', // Not used anymore
       refreshToken: '', // Not used anymore
     };
