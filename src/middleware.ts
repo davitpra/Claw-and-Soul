@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 
-export function proxy(request: NextRequest) {
+export function middleware(request: NextRequest) {
   // Verificar si hay token de acceso en las cookies
   const accessToken = request.cookies.get('accessToken');
 
@@ -9,7 +9,7 @@ export function proxy(request: NextRequest) {
   if (!accessToken) {
     const loginUrl = new URL('/login', request.url);
 
-    // Opcional: guardar la URL original para redirigir después del login
+    // Guardar la URL original para redirigir después del login
     loginUrl.searchParams.set('redirect', request.nextUrl.pathname);
 
     return NextResponse.redirect(loginUrl);
@@ -22,7 +22,7 @@ export function proxy(request: NextRequest) {
 // Configurar qué rutas proteger
 export const config = {
   matcher: [
-    '/ia-generator/:path*',  // Proteger generador de IA
-    '/user/:path*',          // Proteger área de usuario
+    '/ia-generator/:path*', // Proteger generador de IA
+    '/user/:path*',         // Proteger área de usuario
   ],
 };

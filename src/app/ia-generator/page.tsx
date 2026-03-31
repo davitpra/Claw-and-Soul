@@ -1,50 +1,143 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
+import { useAuth } from "@/context/AuthContext";
 import { IAHeader, IAStep1, IAStep2, IAStep3 } from "@/widgets/ia-generator";
 import { styles } from "@/entities/art-style/model/styles";
 import { productsList } from "@/entities/pet-product/model/products";
 
 export default function IAGeneratorPage() {
+  const { isAuthenticated, isLoading } = useAuth();
+  const router = useRouter();
   const [step, setStep] = useState(1);
+  const [photos, setPhotos] = useState<File[]>([]);
+  const [selectedPetId, setSelectedPetId] = useState<string | null>(null);
   const [selectedStyle, setSelectedStyle] = useState("Classic Oil");
-  const [hasFile, setHasFile] = useState(false);
-  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [selectedProduct, setSelectedProduct] = useState("Framed Painting");
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files.length > 0) {
-      const file = e.target.files[0];
-      setHasFile(true);
-      if (previewUrl) {
-        URL.revokeObjectURL(previewUrl);
-      }
-      setPreviewUrl(URL.createObjectURL(file));
+  useEffect(() => {
+    if (!isLoading && !isAuthenticated) {
+      router.push("/login");
     }
-  };
+  }, [isLoading, isAuthenticated, router]);
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-cream">
+        <span className="material-symbols-outlined animate-spin text-4xl text-primary">
+          progress_activity
+        </span>
+      </div>
+    );
+  }
+
+  if (!isAuthenticated) return null;
 
   return (
     <div className="bg-cream text-slate-dark font-body min-h-screen flex flex-col transition-all duration-500">
       <IAHeader step={step} />
 
-      {/* STEP 1: UPLOAD & STYLE */}
+      {/* STEP 1: UPLOAD & PET DETAILS */}
       {step === 1 && (
         <IAStep1
-          hasFile={hasFile}
-          previewUrl={previewUrl}
-          onFileChange={handleFileChange}
-          styles={styles}
-          selectedStyle={selectedStyle}
-          onStyleSelect={setSelectedStyle}
+          photos={photos}
+          onPhotosChange={setPhotos}
+          selectedPetId={selectedPetId}
+          onPetSelect={setSelectedPetId}
           onNext={() => setStep(2)}
         />
       )}
 
-      {/* STEP 2: LEAD CAPTURE / PROCESSING */}
-      {step === 2 && <IAStep2 onComplete={() => setStep(3)} />}
+      {/* STEP 2: CHOOSE ART STYLE */}
+      {step === 2 && (
+        <main className="grow px-6 py-8 md:py-12 animate-in fade-in slide-in-from-bottom-4 duration-700">
+          <div className="max-w-4xl mx-auto space-y-8">
+            <div className="text-center">
+              <h1 className="text-3xl md:text-4xl font-black text-slate-dark mb-2 tracking-tight font-display">
+                Choose Your Art Style
+              </h1>
+              <p className="text-slate-dark/70 text-lg">
+                Pick the style that best fits your vision.
+              </p>
+            </div>
 
-      {/* STEP 3: PREVIEW & PRODUCT */}
-      {step === 3 && (
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
+              {styles.map((style) => {
+                const isSelected = selectedStyle === style.name;
+                return (
+                  <div
+                    key={style.name}
+                    className="group relative cursor-pointer"
+                    onClick={() => setSelectedStyle(style.name)}
+                  >
+                    {isSelected && (
+                      <div className="absolute -top-3 -right-3 z-20 bg-primary text-white rounded-full p-1.5 shadow-md animate-in zoom-in duration-300">
+                        <span className="material-symbols-outlined text-lg block">
+                          check
+                        </span>
+                      </div>
+                    )}
+                    <div
+                      className={`relative overflow-hidden rounded-xl border-2 transition-all duration-300 bg-white shadow-sm hover:shadow-md hover:-translate-y-1 ${
+                        isSelected
+                          ? "border-primary ring-2 ring-primary/20 shadow-lg"
+                          : "border-transparent"
+                      }`}
+                    >
+                      <div className="aspect-4/5 w-full overflow-hidden bg-slate-100">
+                        <img
+                          alt={style.name}
+                          className={`h-full w-full object-cover transition-all duration-500 group-hover:scale-105 ${
+                            isSelected
+                              ? "opacity-100"
+                              : "opacity-90 group-hover:opacity-100"
+                          }`}
+                          src={style.img}
+                        />
+                        <div className="absolute inset-0 bg-linear-to-t from-black/60 via-transparent to-transparent opacity-60" />
+                      </div>
+                      <div className="absolute bottom-0 left-0 w-full p-3 text-white">
+                        {style.label && (
+                          <span className="block text-[10px] font-bold opacity-90 uppercase tracking-widest mb-0.5">
+                            {style.label}
+                          </span>
+                        )}
+                        <span className="block text-base font-bold leading-tight">
+                          {style.name}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+
+            <div className="flex justify-between items-center pt-2">
+              <button
+                onClick={() => setStep(1)}
+                className="flex items-center gap-2 text-sm font-semibold text-slate-dark/60 hover:text-slate-dark transition-colors"
+              >
+                <span className="material-symbols-outlined text-base">arrow_back</span>
+                Back
+              </button>
+              <button
+                onClick={() => setStep(3)}
+                className="flex items-center gap-2 rounded-xl bg-primary text-white px-8 py-3.5 text-base font-bold hover:bg-primary-dark hover:scale-105 transition-all shadow-md shadow-primary/20"
+              >
+                Continue to Preview
+                <span className="material-symbols-outlined">arrow_forward</span>
+              </button>
+            </div>
+          </div>
+        </main>
+      )}
+
+      {/* STEP 3: LEAD CAPTURE / PROCESSING */}
+      {step === 3 && <IAStep2 onComplete={() => setStep(4)} />}
+
+      {/* STEP 4: PREVIEW & PRODUCT */}
+      {step === 4 && (
         <IAStep3
           products={productsList}
           selectedProduct={selectedProduct}

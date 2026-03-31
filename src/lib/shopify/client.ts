@@ -6,16 +6,30 @@ export async function shopifyFetch<T>({
   variables?: any;
 }): Promise<{ data: T } | never> {
   try {
-    // En el servidor, necesitamos una URL absoluta
     const isServer = typeof window === "undefined";
-    const baseUrl = isServer
-      ? process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000"
-      : "";
-    const url = `${baseUrl}/api/shopify/proxy`;
+
+    let url: string;
+    let headers: Record<string, string> = { "Content-Type": "application/json" };
+
+    if (isServer) {
+      // En el servidor, llamar directamente a Shopify sin pasar por el proxy
+      const domain = process.env.SHOPIFY_STORE_DOMAIN;
+      const accessToken = process.env.SHOPIFY_STOREFRONT_ACCESS_TOKEN;
+
+      if (!domain || !accessToken) {
+        throw new Error("Shopify credentials not configured on server");
+      }
+
+      const cleanDomain = domain.replace(/^https?:\/\//, "").replace(/\/$/, "");
+      url = `https://${cleanDomain}/api/2026-01/graphql.json`;
+      headers["X-Shopify-Storefront-Access-Token"] = accessToken;
+    } else {
+      url = "/api/shopify/proxy";
+    }
 
     const res = await fetch(url, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers,
       body: JSON.stringify({ query, variables }),
     });
 
