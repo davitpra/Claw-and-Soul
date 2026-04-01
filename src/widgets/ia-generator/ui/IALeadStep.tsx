@@ -1,8 +1,8 @@
-interface IAStep2Props {
+interface IALeadStepProps {
   onComplete: () => void;
 }
 
-export function IAStep2({ onComplete }: IAStep2Props) {
+export function IALeadStep({ onComplete }: IALeadStepProps) {
   return (
     <main className="flex-grow flex items-center justify-center px-4 py-8 md:py-12 animate-in fade-in zoom-in-95 duration-700">
       <div className="w-full max-w-5xl">

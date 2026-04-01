@@ -1,12 +1,12 @@
 import { Product } from "@/entities/pet-product/model/products";
 
-interface IAStep3Props {
+interface IAPreviewStepProps {
   products: Product[];
   selectedProduct: string;
   onProductSelect: (name: string) => void;
 }
 
-export function IAStep3({
+export function IAPreviewStep({
   products,
   selectedProduct,
   onProductSelect,

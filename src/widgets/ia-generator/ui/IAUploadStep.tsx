@@ -30,7 +30,7 @@ const SPECIES_OPTIONS = ["dog", "cat", "bird", "rabbit", "other"];
 
 const MAX_PHOTOS = 1;
 
-export function IAStep1({
+export function IAUploadStep({
   photos,
   onPhotosChange,
   selectedPetId,
