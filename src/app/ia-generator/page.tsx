@@ -6,6 +6,7 @@ import { useAuth } from "@/context/AuthContext";
 import { IAHeader, IAUploadStep, IAStyleStep, IALeadStep, IAPreviewStep } from "@/widgets/ia-generator";
 import { styles } from "@/entities/art-style/model/styles";
 import { productsList } from "@/entities/pet-product/model/products";
+import { FormatOption } from "@/hooks/useFormatOptions";
 
 export default function IAGeneratorPage() {
   const { isAuthenticated, isLoading } = useAuth();
@@ -15,12 +16,19 @@ export default function IAGeneratorPage() {
   const [selectedPetId, setSelectedPetId] = useState<string | null>(null);
   const [selectedStyle, setSelectedStyle] = useState("Classic Oil");
   const [selectedProduct, setSelectedProduct] = useState("Framed Painting");
+  const [selectedFormat, setSelectedFormat] = useState<FormatOption | null>(null);
 
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {
       router.push("/login");
     }
   }, [isLoading, isAuthenticated, router]);
+
+  // Reset format selection when product changes
+  function handleProductSelect(name: string) {
+    setSelectedProduct(name);
+    setSelectedFormat(null);
+  }
 
   if (isLoading) {
     return (
@@ -63,12 +71,14 @@ export default function IAGeneratorPage() {
       {/* STEP 3: LEAD CAPTURE */}
       {step === 3 && <IALeadStep onComplete={() => setStep(4)} />}
 
-      {/* STEP 4: PREVIEW & PRODUCT */}
+      {/* STEP 4: PREVIEW & PRODUCT + FORMAT SELECTION */}
       {step === 4 && (
         <IAPreviewStep
           products={productsList}
           selectedProduct={selectedProduct}
-          onProductSelect={setSelectedProduct}
+          onProductSelect={handleProductSelect}
+          selectedFormat={selectedFormat}
+          onFormatSelect={setSelectedFormat}
         />
       )}
     </div>
