@@ -6,6 +6,8 @@ import ProductInfo from "@/entities/product/ui/ProductInfo";
 import ProductVariantSelector from "@/entities/product/ui/ProductVariantSelector";
 import AddToCartButton from "@/features/add-to-cart/ui/AddToCartButton";
 import { useEffect } from "react";
+import { productsList } from "@/entities/pet-product/model/products";
+import { useFormatOptions } from "@/hooks/useFormatOptions";
 
 interface ProductDetailsProps {
   product: ShopifyProduct;
@@ -32,6 +34,18 @@ export default function ProductDetails({
       setMainImage(selectedVariant.image.url);
     }
   }, [selectedVariant, setMainImage]);
+
+  // Map Shopify variant → backend formatId via compat API
+  const backendProduct = productsList.find(
+    (p) => p.shopifyHandle === product.handle,
+  );
+  const { formats } = useFormatOptions(
+    backendProduct?.shopifyHandle ?? null,
+    backendProduct?.productRefId ?? null,
+  );
+  const selectedFormatOption = formats.find(
+    (f) => f.shopifyVariantId === selectedVariantId,
+  );
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-16">
@@ -60,6 +74,8 @@ export default function ProductDetails({
             product={product}
             selectedVariant={selectedVariant}
             mainImage={mainImage}
+            productRefId={backendProduct?.productRefId}
+            formatId={selectedFormatOption?.formatId}
           />
         </div>
       </div>

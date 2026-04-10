@@ -1,4 +1,16 @@
+import { useState, useEffect } from "react";
 import { Style } from "@/entities/art-style/model/styles";
+
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001/api";
+
+interface BackendStyle {
+  id: string;
+  name: string;
+  displayName: string;
+  isPremium: boolean;
+  previewUrl: string | null;
+  images: { imageUrl: string }[];
+}
 
 interface IAStyleStepProps {
   styles: Style[];
@@ -6,6 +18,8 @@ interface IAStyleStepProps {
   onStyleSelect: (name: string) => void;
   onBack: () => void;
   onNext: () => void;
+  productRefId?: string | null;
+  formatId?: string | null;
 }
 
 export function IAStyleStep({
@@ -14,7 +28,50 @@ export function IAStyleStep({
   onStyleSelect,
   onBack,
   onNext,
+  productRefId,
+  formatId,
 }: IAStyleStepProps) {
+  const [compatStyles, setCompatStyles] = useState<Style[]>([]);
+  const [isLoadingCompat, setIsLoadingCompat] = useState(false);
+
+  useEffect(() => {
+    if (!productRefId || !formatId) return;
+
+    setIsLoadingCompat(true);
+    fetch(
+      `${API_URL}/compat/styles?product_id=${productRefId}&format_id=${formatId}`,
+      { credentials: "include" },
+    )
+      .then((res) => {
+        if (!res.ok) throw new Error(`compat/styles error: ${res.status}`);
+        return res.json() as Promise<BackendStyle[]>;
+      })
+      .then((data) => {
+        const mapped: Style[] = data.map((s) => ({
+          name: s.displayName,
+          label: s.isPremium ? "Premium" : undefined,
+          img:
+            s.images[0]?.imageUrl ??
+            s.previewUrl ??
+            "https://placehold.co/400x500?text=Style",
+        }));
+        setCompatStyles(mapped);
+        // Auto-select first if current selection no longer in the filtered list
+        if (mapped.length > 0 && !mapped.find((s) => s.name === selectedStyle)) {
+          onStyleSelect(mapped[0].name);
+        }
+      })
+      .catch((err) => {
+        console.error("Failed to fetch compatible styles:", err);
+      })
+      .finally(() => setIsLoadingCompat(false));
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [productRefId, formatId]);
+
+  const displayStyles =
+    productRefId && formatId && compatStyles.length > 0 ? compatStyles : styles;
+  const isFiltered = productRefId && formatId;
+
   return (
     <main className="grow px-6 py-8 md:py-12 animate-in fade-in slide-in-from-bottom-4 duration-700">
       <div className="max-w-4xl mx-auto space-y-8">
@@ -23,12 +80,21 @@ export function IAStyleStep({
             Choose Your Art Style
           </h1>
           <p className="text-slate-dark/70 text-lg">
-            Pick the style that best fits your vision.
+            {isFiltered
+              ? "Showing styles compatible with your selected product and size."
+              : "Pick the style that best fits your vision."}
           </p>
         </div>
 
+        {isLoadingCompat ? (
+          <div className="flex justify-center py-12">
+            <span className="material-symbols-outlined animate-spin text-4xl text-primary">
+              progress_activity
+            </span>
+          </div>
+        ) : (
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
-          {styles.map((style) => {
+          {displayStyles.map((style) => {
             const isSelected = selectedStyle === style.name;
             return (
               <div
@@ -77,6 +143,7 @@ export function IAStyleStep({
             );
           })}
         </div>
+        )}
 
         <div className="flex justify-between items-center pt-2">
           <button

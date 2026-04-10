@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect } from "react";
 import { useFormatOptions, FormatOption } from "@/hooks/useFormatOptions";
 import { Product } from "@/entities/pet-product/model/products";
 import { FormatSelector } from "./FormatSelector";
@@ -11,6 +12,7 @@ interface IAPreviewStepProps {
   onProductSelect: (name: string) => void;
   selectedFormat: FormatOption | null;
   onFormatSelect: (format: FormatOption) => void;
+  preSelectedFormatId?: string | null;
 }
 
 export function IAPreviewStep({
@@ -19,14 +21,22 @@ export function IAPreviewStep({
   onProductSelect,
   selectedFormat,
   onFormatSelect,
+  preSelectedFormatId,
 }: IAPreviewStepProps) {
   const { addToCart } = useCart();
 
   const activeProduct = products.find((p) => p.name === selectedProduct);
   const { formats, isLoading, error } = useFormatOptions(
     activeProduct?.shopifyHandle ?? null,
-    activeProduct?.productRefId ?? null
+    activeProduct?.productRefId ?? null,
   );
+
+  // Auto-select format from URL param once formats are loaded
+  useEffect(() => {
+    if (!preSelectedFormatId || selectedFormat || formats.length === 0) return;
+    const match = formats.find((f) => f.formatId === preSelectedFormatId);
+    if (match) onFormatSelect(match);
+  }, [formats, preSelectedFormatId, selectedFormat, onFormatSelect]);
 
   const hasShopifyIntegration = !!(
     activeProduct?.shopifyHandle && activeProduct?.productRefId

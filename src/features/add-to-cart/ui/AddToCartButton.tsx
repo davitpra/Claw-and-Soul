@@ -8,12 +8,16 @@ interface AddToCartButtonProps {
   product: ShopifyProduct;
   selectedVariant: ShopifyVariant | undefined;
   mainImage: string;
+  productRefId?: string;
+  formatId?: string;
 }
 
 export default function AddToCartButton({
   product,
   selectedVariant,
   mainImage,
+  productRefId,
+  formatId,
 }: AddToCartButtonProps) {
   const { addToCart } = useCart();
   const router = useRouter();
@@ -32,8 +36,11 @@ export default function AddToCartButton({
       size: selectedVariant.title,
     });
 
-    // redirect to ia-generator page
-    router.push("/ia-generator");
+    const params = new URLSearchParams();
+    if (productRefId) params.set("product_ref_id", productRefId);
+    if (formatId) params.set("format_id", formatId);
+    const query = params.toString();
+    router.push(`/ia-generator${query ? `?${query}` : ""}`);
   };
 
   return (

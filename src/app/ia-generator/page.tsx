@@ -1,21 +1,33 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useState, useEffect, Suspense } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
 import { IAHeader, IAUploadStep, IAStyleStep, IALeadStep, IAPreviewStep } from "@/widgets/ia-generator";
 import { styles } from "@/entities/art-style/model/styles";
 import { productsList } from "@/entities/pet-product/model/products";
 import { FormatOption } from "@/hooks/useFormatOptions";
 
-export default function IAGeneratorPage() {
+function IAGeneratorContent() {
   const { isAuthenticated, isLoading } = useAuth();
   const router = useRouter();
+  const searchParams = useSearchParams();
+
+  const productRefIdFromUrl = searchParams.get("product_ref_id");
+  const formatIdFromUrl = searchParams.get("format_id");
+
+  // Find pre-selected product name from URL param
+  const preSelectedProduct = productsList.find(
+    (p) => p.productRefId === productRefIdFromUrl,
+  );
+
   const [step, setStep] = useState(1);
   const [photos, setPhotos] = useState<File[]>([]);
   const [selectedPetId, setSelectedPetId] = useState<string | null>(null);
   const [selectedStyle, setSelectedStyle] = useState("Classic Oil");
-  const [selectedProduct, setSelectedProduct] = useState("Framed Painting");
+  const [selectedProduct, setSelectedProduct] = useState(
+    preSelectedProduct?.name ?? "Framed Painting",
+  );
   const [selectedFormat, setSelectedFormat] = useState<FormatOption | null>(null);
 
   useEffect(() => {
@@ -57,7 +69,7 @@ export default function IAGeneratorPage() {
         />
       )}
 
-      {/* STEP 2: CHOOSE ART STYLE */}
+      {/* STEP 2: CHOOSE ART STYLE (filtered by product+format if coming from product page) */}
       {step === 2 && (
         <IAStyleStep
           styles={styles}
@@ -65,6 +77,8 @@ export default function IAGeneratorPage() {
           onStyleSelect={setSelectedStyle}
           onBack={() => setStep(1)}
           onNext={() => setStep(3)}
+          productRefId={productRefIdFromUrl}
+          formatId={formatIdFromUrl}
         />
       )}
 
@@ -79,8 +93,25 @@ export default function IAGeneratorPage() {
           onProductSelect={handleProductSelect}
           selectedFormat={selectedFormat}
           onFormatSelect={setSelectedFormat}
+          preSelectedFormatId={formatIdFromUrl}
         />
       )}
     </div>
+  );
+}
+
+export default function IAGeneratorPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen flex items-center justify-center bg-cream">
+          <span className="material-symbols-outlined animate-spin text-4xl text-primary">
+            progress_activity
+          </span>
+        </div>
+      }
+    >
+      <IAGeneratorContent />
+    </Suspense>
   );
 }
