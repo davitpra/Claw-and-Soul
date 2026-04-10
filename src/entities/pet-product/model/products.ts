@@ -13,34 +13,36 @@ export interface Product {
 
 export const productsList: Product[] = [
   {
-    name: "Jigsaw Puzzle",
-    desc: "Family fun time",
-    price: "$45.00",
-    img: "https://lh3.googleusercontent.com/aida-public/AB6AXuBqruKWQZ48vypKc2KDwNU-A7eEWdee-4qr7voxSvahEirYjZJ3QmSQMZSa4GHMtmnjI5eTkQfmrY_hd3Sp46B3xITbeVqTwp4XU1EloL1v5pcuDA9l4RURurJdjzNpvBGAgPEgHl3KN1meLDAZgCl8cz3N49OEkrBHw17RvTAg9yq42QveTPszKqVLTB4gpTuwYnGVVDvh1_ky8ntzJ1OfwAYwrovrGYI0CPR268a3bUtfLR0K6QW4WMTsFYnGXXL-L6NlHeSXeR44",
-    badge: "1000 pcs",
-    // TODO: set shopifyHandle and productRefId once synced from backend
-  },
-  {
-    name: "Framed Painting",
+    name: "Framed Canvas",
     desc: "Gallery quality wood",
     price: "$89.99",
     img: "https://lh3.googleusercontent.com/aida-public/AB6AXuBqruKWQZ48vypKc2KDwNU-A7eEWdee-4qr7voxSvahEirYjZJ3QmSQMZSa4GHMtmnjI5eTkQfmrY_hd3Sp46B3xITbeVqTwp4XU1EloL1v5pcuDA9l4RURurJdjzNpvBGAgPEgHl3KN1meLDAZgCl8cz3N49OEkrBHw17RvTAg9yq42QveTPszKqVLTB4gpTuwYnGVVDvh1_ky8ntzJ1OfwAYwrovrGYI0CPR268a3bUtfLR0K6QW4WMTsFYnGXXL-L6NlHeSXeR44",
-    // TODO: set shopifyHandle and productRefId once synced from backend
+    shopifyHandle: "framed-canvas",
+    productRefId: "9b3a1ca9-5969-4206-a50a-ec63786f5e1d",
   },
   {
-    name: "Coloring Book",
-    desc: "Relax with art therapy",
-    price: "$29.99",
+    name: "Framed Poster",
+    desc: "Premium print, wooden frame",
+    price: "$69.99",
     img: "https://lh3.googleusercontent.com/aida-public/AB6AXuBqruKWQZ48vypKc2KDwNU-A7eEWdee-4qr7voxSvahEirYjZJ3QmSQMZSa4GHMtmnjI5eTkQfmrY_hd3Sp46B3xITbeVqTwp4XU1EloL1v5pcuDA9l4RURurJdjzNpvBGAgPEgHl3KN1meLDAZgCl8cz3N49OEkrBHw17RvTAg9yq42QveTPszKqVLTB4gpTuwYnGVVDvh1_ky8ntzJ1OfwAYwrovrGYI0CPR268a3bUtfLR0K6QW4WMTsFYnGXXL-L6NlHeSXeR44",
-    tag: "Coloring Edition",
-    // TODO: set shopifyHandle and productRefId once synced from backend
+    shopifyHandle: "framed-poster",
+    productRefId: "0c824c23-8bdb-45b8-9164-c104b0236821",
   },
   {
-    name: "Animated Notebook",
-    desc: "Scannable AR cover",
+    name: "Museum Quality Poster",
+    desc: "Matte paper, wooden frame",
+    price: "$99.99",
+    img: "https://lh3.googleusercontent.com/aida-public/AB6AXuBqruKWQZ48vypKc2KDwNU-A7eEWdee-4qr7voxSvahEirYjZJ3QmSQMZSa4GHMtmnjI5eTkQfmrY_hd3Sp46B3xITbeVqTwp4XU1EloL1v5pcuDA9l4RURurJdjzNpvBGAgPEgHl3KN1meLDAZgCl8cz3N49OEkrBHw17RvTAg9yq42QveTPszKqVLTB4gpTuwYnGVVDvh1_ky8ntzJ1OfwAYwrovrGYI0CPR268a3bUtfLR0K6QW4WMTsFYnGXXL-L6NlHeSXeR44",
+    badge: "Museum Grade",
+    shopifyHandle: "museum-quality-matte-paper-wooden-framed-poster",
+    productRefId: "152ed4f4-82c7-4302-b2b9-725da897fb39",
+  },
+  {
+    name: "Photo Paper Poster",
+    desc: "Vibrant colors, photo finish",
     price: "$34.50",
     img: "https://lh3.googleusercontent.com/aida-public/AB6AXuBqruKWQZ48vypKc2KDwNU-A7eEWdee-4qr7voxSvahEirYjZJ3QmSQMZSa4GHMtmnjI5eTkQfmrY_hd3Sp46B3xITbeVqTwp4XU1EloL1v5pcuDA9l4RURurJdjzNpvBGAgPEgHl3KN1meLDAZgCl8cz3N49OEkrBHw17RvTAg9yq42QveTPszKqVLTB4gpTuwYnGVVDvh1_ky8ntzJ1OfwAYwrovrGYI0CPR268a3bUtfLR0K6QW4WMTsFYnGXXL-L6NlHeSXeR44",
-    hasPlay: true,
-    // TODO: set shopifyHandle and productRefId once synced from backend
+    shopifyHandle: "photo-paper-poster",
+    productRefId: "4a67c67c-4431-4254-a748-813790631161",
   },
 ];
