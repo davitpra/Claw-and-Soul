@@ -23,6 +23,12 @@ export default function CartPage() {
           attributes: [
             { key: "Style", value: item.style || "Default" },
             { key: "Size", value: item.size || "Default" },
+            ...(item.generationId
+              ? [{ key: "generation_id", value: item.generationId }]
+              : []),
+            ...(item.imageUrl
+              ? [{ key: "image_url", value: item.imageUrl }]
+              : []),
           ],
         }))
         .filter((line) => line.merchandiseId !== "");
