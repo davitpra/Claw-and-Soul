@@ -6,7 +6,6 @@ import ProductInfo from "@/entities/product/ui/ProductInfo";
 import ProductVariantSelector from "@/entities/product/ui/ProductVariantSelector";
 import AddToCartButton from "@/features/add-to-cart/ui/AddToCartButton";
 import { useEffect } from "react";
-import { productsList } from "@/entities/pet-product/model/products";
 import { useFormatOptions } from "@/hooks/useFormatOptions";
 
 interface ProductDetailsProps {
@@ -28,28 +27,27 @@ export default function ProductDetails({
     (v) => v.node.id === selectedVariantId,
   )?.node;
 
-  // Sync main image with selected variant
   useEffect(() => {
     if (selectedVariant?.image?.url) {
       setMainImage(selectedVariant.image.url);
     }
   }, [selectedVariant, setMainImage]);
 
-  // Map Shopify variant → backend formatId via compat API
-  const backendProduct = productsList.find(
-    (p) => p.shopifyHandle === product.handle,
-  );
-  const { formats } = useFormatOptions(
-    backendProduct?.shopifyHandle ?? null,
-    backendProduct?.productRefId ?? null,
-  );
+  const {
+    productRefId,
+    formats,
+    isLoading: isLoadingFormats,
+    error: formatsError,
+  } = useFormatOptions(product.handle);
+
   const selectedFormatOption = formats.find(
     (f) => f.shopifyVariantId === selectedVariantId,
   );
 
+  const hasBackendMapping = !!productRefId;
+
   return (
     <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-16">
-      {/* Gallery Section */}
       <ProductGallery
         product={product}
         mainImage={mainImage}
@@ -57,7 +55,6 @@ export default function ProductDetails({
         variantImage={selectedVariant?.image?.url}
       />
 
-      {/* Product Info Section */}
       <div className="lg:col-span-5 flex flex-col h-full">
         <div className="sticky top-24 flex flex-col gap-6">
           <ProductInfo product={product} selectedVariant={selectedVariant} />
@@ -74,8 +71,11 @@ export default function ProductDetails({
             product={product}
             selectedVariant={selectedVariant}
             mainImage={mainImage}
-            productRefId={backendProduct?.productRefId}
+            productRefId={productRefId ?? undefined}
             formatId={selectedFormatOption?.formatId}
+            isCompatLoading={isLoadingFormats}
+            hasBackendMapping={hasBackendMapping}
+            backendError={formatsError}
           />
         </div>
       </div>

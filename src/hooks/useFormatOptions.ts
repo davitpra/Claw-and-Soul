@@ -5,15 +5,25 @@ import { ShopifyProduct, ShopifyVariant } from "@/lib/shopify/types";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001/api";
 
-export interface CompatFormat {
-  id: string;
-  name: string;
-  displayName: string;
+interface BackendProductVariant {
+  shopifyVariantId: string;
+  shopifyVariantTitle: string;
+  formatId: string;
+  formatName: string;
+  formatDisplayName: string;
   aspectRatio: string;
   width: number;
   height: number;
-  shopifyVariantId: string | null;
-  shopifyVariantOption: string | null;
+}
+
+interface BackendProductWithVariants {
+  productRefId: string;
+  shopifyProductId: string;
+  shopifyHandle: string;
+  name: string;
+  displayName: string;
+  description: string | null;
+  variants: BackendProductVariant[];
 }
 
 export interface FormatOption {
@@ -30,30 +40,30 @@ export interface FormatOption {
 }
 
 interface UseFormatOptionsResult {
+  productRefId: string | null;
   formats: FormatOption[];
   isLoading: boolean;
   error: string | null;
 }
 
 /**
- * Fetches compat formats from the backend and variant pricing from Shopify in parallel,
- * then merges them by shopifyVariantId.
- *
- * Only returns formats that:
- * - Have a shopifyVariantId (configured in product_format_variants)
- * - Are availableForSale in Shopify
+ * Backend is the source of truth for the variant↔format mapping.
+ * Shopify Storefront API is used only for display data (price, availability).
+ * Merge key is `shopifyVariantId` (GID), which backend normalizes.
  */
 export function useFormatOptions(
   productHandle: string | null,
-  productId: string | null
 ): UseFormatOptionsResult {
+  const [productRefId, setProductRefId] = useState<string | null>(null);
   const [formats, setFormats] = useState<FormatOption[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!productHandle || !productId) {
+    if (!productHandle) {
+      setProductRefId(null);
       setFormats([]);
+      setError(null);
       return;
     }
 
@@ -62,25 +72,29 @@ export function useFormatOptions(
     setError(null);
 
     Promise.all([
-      // Backend: compat formats with shopifyVariantId
-      fetch(`${API_URL}/compat/formats?product_id=${productId}`, {
-        credentials: "include",
-      }).then((res) => {
-        if (!res.ok) throw new Error(`Compat API error: ${res.status}`);
-        return res.json() as Promise<CompatFormat[]>;
+      fetch(
+        `${API_URL}/products/${encodeURIComponent(productHandle)}/variants`,
+        { credentials: "include" },
+      ).then(async (res) => {
+        if (res.status === 404) throw new Error("not_found");
+        if (!res.ok) throw new Error(`backend variants error: ${res.status}`);
+        const json = (await res.json()) as
+          | { data: BackendProductWithVariants }
+          | BackendProductWithVariants;
+        return "data" in json ? json.data : json;
       }),
 
-      // Shopify: variant pricing and availability
       shopifyFetch<{ product: ShopifyProduct }>({
         query: GET_PRODUCT,
         variables: { handle: productHandle },
       }).then((res) => res.data.product),
     ])
-      .then(([compatFormats, shopifyProduct]) => {
+      .then(([backendProduct, shopifyProduct]) => {
         if (cancelled) return;
 
         if (!shopifyProduct) {
           setError(`Product '${productHandle}' not found in Shopify`);
+          setProductRefId(backendProduct.productRefId);
           setFormats([]);
           return;
         }
@@ -90,13 +104,23 @@ export function useFormatOptions(
           variantMap.set(edge.node.id, edge.node);
         }
 
-        const merged = mergeFormatsWithVariants(compatFormats, variantMap);
+        const merged = mergeBackendVariantsWithShopify(
+          backendProduct.variants,
+          variantMap,
+        );
+
+        setProductRefId(backendProduct.productRefId);
         setFormats(merged);
       })
       .catch((err) => {
         if (cancelled) return;
         console.error("useFormatOptions error:", err);
-        setError("Failed to load format options. Please try again.");
+        setError(
+          err.message === "not_found"
+            ? "This product is not available for personalization."
+            : "Failed to load format options. Please try again.",
+        );
+        setProductRefId(null);
         setFormats([]);
       })
       .finally(() => {
@@ -106,28 +130,27 @@ export function useFormatOptions(
     return () => {
       cancelled = true;
     };
-  }, [productHandle, productId]);
+  }, [productHandle]);
 
-  return { formats, isLoading, error };
+  return { productRefId, formats, isLoading, error };
 }
 
-function mergeFormatsWithVariants(
-  compatFormats: CompatFormat[],
-  variantMap: Map<string, ShopifyVariant>
+function mergeBackendVariantsWithShopify(
+  backendVariants: BackendProductVariant[],
+  variantMap: Map<string, ShopifyVariant>,
 ): FormatOption[] {
-  return compatFormats
-    .filter((f) => f.shopifyVariantId !== null)
-    .map((format) => {
-      const variant = variantMap.get(format.shopifyVariantId!);
+  return backendVariants
+    .map((bv) => {
+      const variant = variantMap.get(bv.shopifyVariantId);
       if (!variant) return null;
 
       return {
-        formatId: format.id,
-        name: format.name,
-        displayName: format.displayName,
-        aspectRatio: format.aspectRatio,
-        width: format.width,
-        height: format.height,
+        formatId: bv.formatId,
+        name: bv.formatName,
+        displayName: bv.formatDisplayName,
+        aspectRatio: bv.aspectRatio,
+        width: bv.width,
+        height: bv.height,
         shopifyVariantId: variant.id,
         price: variant.price.amount,
         currencyCode: variant.price.currencyCode,

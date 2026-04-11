@@ -1,12 +1,20 @@
 "use client";
 
-import { useState, useEffect, Suspense } from "react";
+import { useState, useMemo, useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
-import { IAHeader, IAUploadStep, IAStyleStep, IALeadStep, IAPreviewStep } from "@/widgets/ia-generator";
-import { styles } from "@/entities/art-style/model/styles";
-import { productsList } from "@/entities/pet-product/model/products";
+import {
+  IAHeader,
+  IAUploadStep,
+  IAStyleStep,
+  IALeadStep,
+  IAPreviewStep,
+} from "@/widgets/ia-generator";
+import { Style } from "@/entities/art-style/model/styles";
 import { FormatOption } from "@/hooks/useFormatOptions";
+import { useCompatStyles } from "@/hooks/useCompatStyles";
+import { useBackendProducts } from "@/hooks/useBackendProducts";
+import { useAllStyles } from "@/hooks/useAllStyles";
 
 function IAGeneratorContent() {
   const { isAuthenticated, isLoading } = useAuth();
@@ -15,20 +23,69 @@ function IAGeneratorContent() {
 
   const productRefIdFromUrl = searchParams.get("product_ref_id");
   const formatIdFromUrl = searchParams.get("format_id");
+  const isFiltered = !!(productRefIdFromUrl && formatIdFromUrl);
 
-  // Find pre-selected product name from URL param
-  const preSelectedProduct = productsList.find(
-    (p) => p.productRefId === productRefIdFromUrl,
-  );
+  const {
+    products: backendProducts,
+    isLoading: isLoadingProducts,
+    error: productsError,
+  } = useBackendProducts();
+
+  const {
+    styles: allStyles,
+    isLoading: isLoadingAllStyles,
+    error: allStylesError,
+  } = useAllStyles();
+
+  const {
+    styles: compatStyles,
+    isLoading: isLoadingCompatStyles,
+    error: compatStylesError,
+  } = useCompatStyles(productRefIdFromUrl, formatIdFromUrl);
+
+  const isLoadingStyles = isFiltered ? isLoadingCompatStyles : isLoadingAllStyles;
+  const stylesError = isFiltered ? compatStylesError : allStylesError;
+  const displayStyles: Style[] = isFiltered ? compatStyles : allStyles;
+
+  // Derived: the product name to pre-select (from URL or first product loaded)
+  const defaultProduct = useMemo(() => {
+    if (productRefIdFromUrl) {
+      const match = backendProducts.find(
+        (p) => p.productRefId === productRefIdFromUrl,
+      );
+      if (match) return match.name;
+    }
+    return backendProducts[0]?.name ?? "";
+  }, [backendProducts, productRefIdFromUrl]);
+
+  // Derived: the first compatible style to pre-select once loaded
+  const defaultStyle: Style | null = useMemo(() => {
+    if (isLoadingStyles) return null;
+    return displayStyles[0] ?? null;
+  }, [displayStyles, isLoadingStyles]);
 
   const [step, setStep] = useState(1);
   const [photos, setPhotos] = useState<File[]>([]);
   const [selectedPetId, setSelectedPetId] = useState<string | null>(null);
-  const [selectedStyle, setSelectedStyle] = useState("Classic Oil");
-  const [selectedProduct, setSelectedProduct] = useState(
-    preSelectedProduct?.name ?? "Framed Painting",
+  const [selectedStyle, setSelectedStyle] = useState<Style | null>(null);
+  const [selectedProduct, setSelectedProduct] = useState<string>("");
+  const [selectedFormat, setSelectedFormat] = useState<FormatOption | null>(
+    null,
   );
-  const [selectedFormat, setSelectedFormat] = useState<FormatOption | null>(null);
+
+  // Sync selectedProduct when backend products arrive or URL param changes
+  const resolvedProduct = selectedProduct || defaultProduct;
+
+  // Sync selectedStyle: use user pick if it exists in the current list, else fall back to default
+  const resolvedStyle: Style | null = useMemo(() => {
+    if (
+      selectedStyle &&
+      displayStyles.find((s) => s.name === selectedStyle.name)
+    ) {
+      return selectedStyle;
+    }
+    return defaultStyle;
+  }, [selectedStyle, displayStyles, defaultStyle]);
 
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {
@@ -36,7 +93,6 @@ function IAGeneratorContent() {
     }
   }, [isLoading, isAuthenticated, router]);
 
-  // Reset format selection when product changes
   function handleProductSelect(name: string) {
     setSelectedProduct(name);
     setSelectedFormat(null);
@@ -58,42 +114,41 @@ function IAGeneratorContent() {
     <div className="bg-cream text-slate-dark font-body min-h-screen flex flex-col transition-all duration-500">
       <IAHeader step={step} />
 
-      {/* STEP 1: UPLOAD & PET DETAILS */}
       {step === 1 && (
+        <IAStyleStep
+          styles={displayStyles}
+          selectedStyle={resolvedStyle}
+          onStyleSelect={setSelectedStyle}
+          onBack={undefined}
+          onNext={() => setStep(2)}
+          isLoading={isLoadingStyles}
+          error={stylesError}
+          isFiltered={isFiltered}
+        />
+      )}
+
+      {step === 2 && <IALeadStep onComplete={() => setStep(3)} />}
+
+      {step === 3 && (
         <IAUploadStep
           photos={photos}
           onPhotosChange={setPhotos}
           selectedPetId={selectedPetId}
           onPetSelect={setSelectedPetId}
-          onNext={() => setStep(2)}
+          onNext={() => setStep(4)}
         />
       )}
 
-      {/* STEP 2: CHOOSE ART STYLE (filtered by product+format if coming from product page) */}
-      {step === 2 && (
-        <IAStyleStep
-          styles={styles}
-          selectedStyle={selectedStyle}
-          onStyleSelect={setSelectedStyle}
-          onBack={() => setStep(1)}
-          onNext={() => setStep(3)}
-          productRefId={productRefIdFromUrl}
-          formatId={formatIdFromUrl}
-        />
-      )}
-
-      {/* STEP 3: LEAD CAPTURE */}
-      {step === 3 && <IALeadStep onComplete={() => setStep(4)} />}
-
-      {/* STEP 4: PREVIEW & PRODUCT + FORMAT SELECTION */}
       {step === 4 && (
         <IAPreviewStep
-          products={productsList}
-          selectedProduct={selectedProduct}
+          products={backendProducts}
+          selectedProduct={resolvedProduct}
           onProductSelect={handleProductSelect}
           selectedFormat={selectedFormat}
           onFormatSelect={setSelectedFormat}
           preSelectedFormatId={formatIdFromUrl}
+          isLoadingProducts={isLoadingProducts}
+          productsError={productsError}
         />
       )}
     </div>

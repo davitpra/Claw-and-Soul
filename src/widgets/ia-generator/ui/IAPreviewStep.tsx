@@ -2,7 +2,7 @@
 
 import { useEffect } from "react";
 import { useFormatOptions, FormatOption } from "@/hooks/useFormatOptions";
-import { Product } from "@/entities/pet-product/model/products";
+import { Product } from "@/entities/pet-product/model/types";
 import { FormatSelector } from "./FormatSelector";
 import { useCart } from "@/hooks/useCart";
 
@@ -13,6 +13,8 @@ interface IAPreviewStepProps {
   selectedFormat: FormatOption | null;
   onFormatSelect: (format: FormatOption) => void;
   preSelectedFormatId?: string | null;
+  isLoadingProducts?: boolean;
+  productsError?: string | null;
 }
 
 export function IAPreviewStep({
@@ -22,13 +24,14 @@ export function IAPreviewStep({
   selectedFormat,
   onFormatSelect,
   preSelectedFormatId,
+  isLoadingProducts = false,
+  productsError = null,
 }: IAPreviewStepProps) {
   const { addToCart } = useCart();
 
   const activeProduct = products.find((p) => p.name === selectedProduct);
   const { formats, isLoading, error } = useFormatOptions(
     activeProduct?.shopifyHandle ?? null,
-    activeProduct?.productRefId ?? null,
   );
 
   // Auto-select format from URL param once formats are loaded

@@ -10,6 +10,9 @@ interface AddToCartButtonProps {
   mainImage: string;
   productRefId?: string;
   formatId?: string;
+  isCompatLoading?: boolean;
+  hasBackendMapping?: boolean;
+  backendError?: string | null;
 }
 
 export default function AddToCartButton({
@@ -18,12 +21,22 @@ export default function AddToCartButton({
   mainImage,
   productRefId,
   formatId,
+  isCompatLoading = false,
+  hasBackendMapping = false,
+  backendError = null,
 }: AddToCartButtonProps) {
   const { addToCart } = useCart();
   const router = useRouter();
 
+  const isDisabled =
+    !selectedVariant ||
+    isCompatLoading ||
+    !!backendError ||
+    !hasBackendMapping ||
+    !formatId;
+
   const handleAddToCart = () => {
-    if (!product || !selectedVariant) return;
+    if (!product || !selectedVariant || isDisabled) return;
 
     addToCart({
       id: product.id,
@@ -43,15 +56,31 @@ export default function AddToCartButton({
     router.push(`/ia-generator${query ? `?${query}` : ""}`);
   };
 
+  const label = isCompatLoading
+    ? "Loading options…"
+    : backendError
+      ? "Unavailable for personalization"
+      : !hasBackendMapping
+        ? "Unavailable for personalization"
+        : !selectedVariant
+          ? "Select a size"
+          : !formatId
+            ? "This size can't be personalized yet"
+            : "Personalize & Add to Cart";
+
   return (
     <div className="flex flex-col gap-3 mt-2">
       <button
         onClick={handleAddToCart}
-        className="w-full h-14 bg-primary text-white rounded-full font-bold text-lg hover:bg-primary-dark hover:shadow-lg hover:-translate-y-0.5 active:translate-y-0 transition-all flex items-center justify-center gap-2"
+        disabled={isDisabled}
+        className="w-full h-14 bg-primary text-white rounded-full font-bold text-lg hover:bg-primary-dark hover:shadow-lg hover:-translate-y-0.5 active:translate-y-0 transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:translate-y-0 disabled:hover:shadow-none"
       >
         <span className="material-symbols-outlined">auto_fix_high</span>
-        Personalize & Add to Cart
+        {label}
       </button>
+      {backendError && (
+        <p className="text-sm text-red-600 text-center">{backendError}</p>
+      )}
     </div>
   );
 }

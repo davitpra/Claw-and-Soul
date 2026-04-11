@@ -133,26 +133,31 @@ export function IAUploadStep({
     setSubmitting(true);
     try {
       if (isExistingPet) {
-        const updated = await authFetchJSON<Pet>(`/pets/${activePet.id}`, {
-          method: "PATCH",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            species: form.species,
-            breed: form.breed.trim() || undefined,
-            age: form.age ? parseInt(form.age) : undefined,
-          }),
-        });
+        const raw = await authFetchJSON<{ data: Pet } | Pet>(
+          `/pets/${activePet.id}`,
+          {
+            method: "PATCH",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              species: form.species,
+              breed: form.breed.trim() || undefined,
+              age: form.age ? parseInt(form.age) : undefined,
+            }),
+          },
+        );
+        const updated = "data" in raw ? raw.data : raw;
         await uploadPhoto(activePet.id);
         setPets((prev) => prev.map((p) => (p.id === updated.id ? updated : p)));
         setActivePet(updated);
         onNext();
       } else {
-        const newPet = await post<Pet>("/pets", {
+        const raw = await post<{ data: Pet } | Pet>("/pets", {
           name: form.name.trim(),
           species: form.species,
           breed: form.breed.trim() || undefined,
           age: form.age ? parseInt(form.age) : undefined,
         });
+        const newPet = "data" in raw ? raw.data : raw;
         await uploadPhoto(newPet.id);
         setPets((prev) => [...prev, newPet]);
         setActivePet(newPet);
