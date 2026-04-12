@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useMemo, useEffect, Suspense } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useState, useMemo, Suspense } from "react";
+import { useSearchParams } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
 import {
   IAHeader,
@@ -17,8 +17,7 @@ import { useBackendProducts } from "@/hooks/useBackendProducts";
 import { useAllStyles } from "@/hooks/useAllStyles";
 
 function IAGeneratorContent() {
-  const { isAuthenticated, isLoading } = useAuth();
-  const router = useRouter();
+  const { isAuthenticated } = useAuth();
   const searchParams = useSearchParams();
 
   const productRefIdFromUrl = searchParams.get("product_ref_id");
@@ -66,7 +65,6 @@ function IAGeneratorContent() {
 
   const [step, setStep] = useState(1);
   const [photos, setPhotos] = useState<File[]>([]);
-  const [selectedPetId, setSelectedPetId] = useState<string | null>(null);
   const [selectedStyle, setSelectedStyle] = useState<Style | null>(null);
   const [selectedProduct, setSelectedProduct] = useState<string>("");
   const [selectedFormat, setSelectedFormat] = useState<FormatOption | null>(
@@ -87,28 +85,10 @@ function IAGeneratorContent() {
     return defaultStyle;
   }, [selectedStyle, displayStyles, defaultStyle]);
 
-  useEffect(() => {
-    if (!isLoading && !isAuthenticated) {
-      router.push("/login");
-    }
-  }, [isLoading, isAuthenticated, router]);
-
   function handleProductSelect(name: string) {
     setSelectedProduct(name);
     setSelectedFormat(null);
   }
-
-  if (isLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-cream">
-        <span className="material-symbols-outlined animate-spin text-4xl text-primary">
-          progress_activity
-        </span>
-      </div>
-    );
-  }
-
-  if (!isAuthenticated) return null;
 
   return (
     <div className="bg-cream text-slate-dark font-body min-h-screen flex flex-col transition-all duration-500">
@@ -120,21 +100,22 @@ function IAGeneratorContent() {
           selectedStyle={resolvedStyle}
           onStyleSelect={setSelectedStyle}
           onBack={undefined}
-          onNext={() => setStep(2)}
+          onNext={() => setStep(isAuthenticated ? 3 : 2)}
           isLoading={isLoadingStyles}
           error={stylesError}
           isFiltered={isFiltered}
         />
       )}
 
-      {step === 2 && <IALeadStep onComplete={() => setStep(3)} />}
+      {step === 2 && (
+        <IALeadStep onComplete={() => setStep(3)} />
+      )}
 
       {step === 3 && (
         <IAUploadStep
           photos={photos}
           onPhotosChange={setPhotos}
-          selectedPetId={selectedPetId}
-          onPetSelect={setSelectedPetId}
+          onPetSelect={() => {}}
           onNext={() => setStep(4)}
         />
       )}

@@ -22,7 +22,6 @@ export function middleware(request: NextRequest) {
 // Configurar qué rutas proteger
 export const config = {
   matcher: [
-    '/ia-generator/:path*', // Proteger generador de IA
-    '/user/:path*',         // Proteger área de usuario
+    '/user/:path*', // Proteger área de usuario
   ],
 };

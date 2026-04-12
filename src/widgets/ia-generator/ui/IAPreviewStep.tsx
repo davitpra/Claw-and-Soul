@@ -1,10 +1,11 @@
 "use client";
 
 import { useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { useFormatOptions, FormatOption } from "@/hooks/useFormatOptions";
 import { Product } from "@/entities/pet-product/model/types";
 import { FormatSelector } from "./FormatSelector";
-import { useCart } from "@/hooks/useCart";
+import { useCart } from "@/context/CartContext";
 
 interface IAPreviewStepProps {
   products: Product[];
@@ -28,6 +29,7 @@ export function IAPreviewStep({
   productsError = null,
 }: IAPreviewStepProps) {
   const { addToCart } = useCart();
+  const router = useRouter();
 
   const activeProduct = products.find((p) => p.name === selectedProduct);
   const { formats, isLoading, error } = useFormatOptions(
@@ -53,18 +55,34 @@ export function IAPreviewStep({
     : activeProduct?.price ?? "$0.00";
 
   function handleAddToCart() {
-    if (!selectedFormat || !activeProduct) return;
+    if (!activeProduct) return;
 
-    addToCart({
-      id: selectedFormat.shopifyVariantId,
-      variantId: selectedFormat.shopifyVariantId,
-      name: activeProduct.name,
-      size: selectedFormat.displayName,
-      style: selectedFormat.aspectRatio,
-      price: parseFloat(selectedFormat.price),
-      quantity: 1,
-      img: activeProduct.img,
-    });
+    if (hasShopifyIntegration) {
+      if (!selectedFormat) return;
+      addToCart({
+        id: selectedFormat.shopifyVariantId,
+        variantId: selectedFormat.shopifyVariantId,
+        name: activeProduct.name,
+        size: selectedFormat.displayName,
+        style: selectedFormat.aspectRatio,
+        price: parseFloat(selectedFormat.price),
+        quantity: 1,
+        img: activeProduct.img,
+      });
+    } else {
+      addToCart({
+        id: activeProduct.productRefId ?? activeProduct.name,
+        variantId: activeProduct.productRefId ?? activeProduct.name,
+        name: activeProduct.name,
+        price: typeof activeProduct.price === "string"
+          ? parseFloat(activeProduct.price.replace(/[^0-9.]/g, ""))
+          : activeProduct.price,
+        quantity: 1,
+        img: activeProduct.img,
+      });
+    }
+
+    router.push("/cart");
   }
 
   const canAddToCart = hasShopifyIntegration ? !!selectedFormat : !!selectedProduct;

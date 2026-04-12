@@ -21,7 +21,6 @@ export function IAStyleStep({
   error = null,
   isFiltered = false,
 }: IAStyleStepProps) {
-  console.log("styles", styles);
   return (
     <main className="grow px-6 py-8 md:py-12 animate-in fade-in slide-in-from-bottom-4 duration-700">
       <div className="max-w-4xl mx-auto space-y-8">

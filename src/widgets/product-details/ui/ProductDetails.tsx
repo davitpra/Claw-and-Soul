@@ -4,7 +4,7 @@ import { ShopifyProduct } from "@/lib/shopify";
 import ProductGallery from "@/entities/product/ui/ProductGallery";
 import ProductInfo from "@/entities/product/ui/ProductInfo";
 import ProductVariantSelector from "@/entities/product/ui/ProductVariantSelector";
-import AddToCartButton from "@/features/add-to-cart/ui/AddToCartButton";
+import PersonalizeButton from "@/features/personalize/ui/PersonalizeButton";
 import { useEffect } from "react";
 import { useFormatOptions } from "@/hooks/useFormatOptions";
 
@@ -67,10 +67,9 @@ export default function ProductDetails({
             onVariantChange={setSelectedVariantId}
           />
 
-          <AddToCartButton
+          <PersonalizeButton
             product={product}
             selectedVariant={selectedVariant}
-            mainImage={mainImage}
             productRefId={productRefId ?? undefined}
             formatId={selectedFormatOption?.formatId}
             isCompatLoading={isLoadingFormats}

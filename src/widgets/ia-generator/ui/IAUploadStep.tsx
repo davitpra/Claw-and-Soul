@@ -18,26 +18,24 @@ interface Pet {
   photos?: PetPhoto[];
 }
 
-interface IAStep1Props {
+interface IAUploadStepProps {
   photos: File[];
   onPhotosChange: (files: File[]) => void;
-  selectedPetId: string | null;
   onPetSelect: (petId: string | null) => void;
   onNext: () => void;
 }
 
 const SPECIES_OPTIONS = ["dog", "cat", "bird", "rabbit", "other"];
-
 const MAX_PHOTOS = 1;
 
 export function IAUploadStep({
   photos,
   onPhotosChange,
-  selectedPetId,
   onPetSelect,
   onNext,
-}: IAStep1Props) {
+}: IAUploadStepProps) {
   const { get, post, authFetch, authFetchJSON } = useAuthFetch();
+
   const [pets, setPets] = useState<Pet[]>([]);
   const [activePet, setActivePet] = useState<Pet | null>(null);
   const [submitting, setSubmitting] = useState(false);
@@ -196,7 +194,7 @@ export function IAUploadStep({
 
             {/* Drop zone */}
             <div
-              className={`group relative rounded-2xl overflow-hidden cursor-pointer transition-all duration-300 flex-1 min-h-[200px] ${
+              className={`group relative rounded-2xl overflow-hidden cursor-pointer transition-all duration-300 flex-1 min-h-50 ${
                 displayPhoto
                   ? ""
                   : `border-2 border-dashed flex flex-col items-center justify-center gap-3 ${
@@ -221,7 +219,6 @@ export function IAUploadStep({
 
               {displayPhoto ? (
                 <>
-                  {/* Preview image */}
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
                     src={displayPhoto}
@@ -230,7 +227,7 @@ export function IAUploadStep({
                   />
 
                   {/* Hover overlay */}
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-10 flex flex-col items-center justify-end pb-5 gap-1">
+                  <div className="absolute inset-0 bg-linear-to-t from-black/60 via-black/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-10 flex flex-col items-center justify-end pb-5 gap-1">
                     <span className="material-symbols-outlined text-white text-3xl">
                       photo_camera
                     </span>
@@ -264,7 +261,6 @@ export function IAUploadStep({
                 </>
               ) : (
                 <>
-                  {/* Idle state */}
                   <div
                     className={`size-14 rounded-full flex items-center justify-center mb-1 transition-all duration-300 ${
                       isDragging
@@ -286,7 +282,6 @@ export function IAUploadStep({
               )}
             </div>
 
-            {/* Tip */}
             {!displayPhoto && (
               <p className="mt-3 text-xs text-slate-400 text-center flex items-center justify-center gap-1">
                 <span className="material-symbols-outlined text-[14px] text-amber-400">
@@ -303,7 +298,6 @@ export function IAUploadStep({
               Pet Details
             </h2>
 
-            {/* Selected pet chip */}
             {isExistingPet && (
               <div className="flex items-center gap-2 mb-4 px-3 py-2 bg-primary/10 border border-primary/20 rounded-lg">
                 <span className="material-symbols-outlined text-primary text-[18px]">
@@ -327,17 +321,11 @@ export function IAUploadStep({
               </div>
             )}
 
-            <form
-              id="pet-form"
-              onSubmit={handleSubmit}
-              className="space-y-3"
-            >
-              {/* Your Pets — select */}
+            <form id="pet-form" onSubmit={handleSubmit} className="space-y-3">
               <div>
                 <label className="block text-sm font-medium text-slate-700 mb-1">
                   Your Pets
                 </label>
-
                 {pets.length === 0 ? (
                   <div className="flex items-center gap-2 px-4 py-2.5 border border-slate-200 rounded-lg bg-slate-50 text-sm text-slate-500">
                     <span className="material-symbols-outlined text-[16px] text-slate-400">
@@ -354,12 +342,7 @@ export function IAUploadStep({
                         selectPet(pet);
                       } else {
                         setActivePet(null);
-                        setForm({
-                          name: "",
-                          species: "dog",
-                          breed: "",
-                          age: "",
-                        });
+                        setForm({ name: "", species: "dog", breed: "", age: "" });
                         onPetSelect(null);
                         setExistingPhotoUrl(null);
                       }
@@ -376,7 +359,6 @@ export function IAUploadStep({
                 )}
               </div>
 
-              {/* Pet Name — only for new pet creation */}
               {!isExistingPet && (
                 <div>
                   <label className="block text-sm font-medium text-slate-700 mb-1">
@@ -396,7 +378,6 @@ export function IAUploadStep({
                 </div>
               )}
 
-              {/* Species */}
               <div>
                 <label className="block text-sm font-medium text-slate-700 mb-1">
                   Species
@@ -415,7 +396,6 @@ export function IAUploadStep({
                 </select>
               </div>
 
-              {/* Breed */}
               <div>
                 <label className="block text-sm font-medium text-slate-700 mb-1">
                   Breed
@@ -430,7 +410,6 @@ export function IAUploadStep({
                 />
               </div>
 
-              {/* Age */}
               <div>
                 <label className="block text-sm font-medium text-slate-700 mb-1">
                   Age
@@ -450,7 +429,6 @@ export function IAUploadStep({
               {formError && <p className="text-red-500 text-xs">{formError}</p>}
             </form>
 
-            {/* Single action button */}
             {(() => {
               const needsPhoto = photos.length === 0 && !existingPhotoUrl;
               const needsName = !isExistingPet && !form.name.trim();
@@ -482,7 +460,6 @@ export function IAUploadStep({
                         ? "Update & Continue"
                         : "Save & Continue"}
                   </button>
-
                   {hint && (
                     <p className="mt-2 text-xs text-slate-400 text-center">
                       {hint}
