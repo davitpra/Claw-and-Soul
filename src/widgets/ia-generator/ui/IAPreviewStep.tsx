@@ -1,11 +1,14 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { useFormatOptions, FormatOption } from "@/hooks/useFormatOptions";
 import { Product } from "@/entities/pet-product/model/types";
 import { FormatSelector } from "./FormatSelector";
+import { IAGenerationCanvas } from "./IAGenerationCanvas";
 import { useCart } from "@/context/CartContext";
+import { useGenerateImage } from "@/hooks/useGenerateImage";
+import { useGenerationStatus, GenerationStatus } from "@/hooks/useGenerationStatus";
 
 interface IAPreviewStepProps {
   products: Product[];
@@ -16,6 +19,11 @@ interface IAPreviewStepProps {
   preSelectedFormatId?: string | null;
   isLoadingProducts?: boolean;
   productsError?: string | null;
+  petId: string | null;
+  petPhotoId: string | null;
+  petPhotoUrl: string | null;
+  styleId: string | null;
+  onGenerationStatusChange?: (status: GenerationStatus) => void;
 }
 
 export function IAPreviewStep({
@@ -27,6 +35,11 @@ export function IAPreviewStep({
   preSelectedFormatId,
   isLoadingProducts = false,
   productsError = null,
+  petId,
+  petPhotoId,
+  petPhotoUrl,
+  styleId,
+  onGenerationStatusChange,
 }: IAPreviewStepProps) {
   const { addToCart } = useCart();
   const router = useRouter();
@@ -35,6 +48,20 @@ export function IAPreviewStep({
   const { formats, isLoading, error } = useFormatOptions(
     activeProduct?.shopifyHandle ?? null,
   );
+
+  const { generate, isCreating, error: generateError } = useGenerateImage();
+  const [generationId, setGenerationId] = useState<string | null>(null);
+  const {
+    status,
+    progress,
+    imageUrl,
+    error: pollError,
+  } = useGenerationStatus(generationId);
+
+  // Propagate generation status to parent (for header indicator)
+  useEffect(() => {
+    onGenerationStatusChange?.(status);
+  }, [status, onGenerationStatusChange]);
 
   // Auto-select format from URL param once formats are loaded
   useEffect(() => {
@@ -47,12 +74,39 @@ export function IAPreviewStep({
     activeProduct?.shopifyHandle && activeProduct?.productRefId
   );
 
+  const canGenerate =
+    !!petId &&
+    !!styleId &&
+    !!selectedFormat &&
+    !!(activeProduct?.productRefId);
+
   const displayPrice = selectedFormat
     ? new Intl.NumberFormat("en-US", {
         style: "currency",
         currency: selectedFormat.currencyCode,
       }).format(parseFloat(selectedFormat.price))
     : activeProduct?.price ?? "$0.00";
+
+  const handleGenerate = useCallback(async () => {
+    if (!canGenerate || !petId || !styleId || !selectedFormat || !activeProduct?.productRefId) return;
+    try {
+      const result = await generate({
+        petId,
+        petPhotoId: petPhotoId ?? undefined,
+        styleId,
+        formatId: selectedFormat.formatId,
+        productRefId: activeProduct.productRefId,
+      });
+      setGenerationId(result.id);
+    } catch {
+      // error tracked in useGenerateImage
+    }
+  }, [canGenerate, petId, petPhotoId, styleId, selectedFormat, activeProduct, generate]);
+
+  const handleRetry = useCallback(() => {
+    setGenerationId(null);
+    handleGenerate();
+  }, [handleGenerate]);
 
   function handleAddToCart() {
     if (!activeProduct) return;
@@ -67,7 +121,9 @@ export function IAPreviewStep({
         style: selectedFormat.aspectRatio,
         price: parseFloat(selectedFormat.price),
         quantity: 1,
-        img: activeProduct.img,
+        img: imageUrl ?? activeProduct.img,
+        generationId: generationId ?? undefined,
+        imageUrl: imageUrl ?? undefined,
       });
     } else {
       addToCart({
@@ -78,80 +134,68 @@ export function IAPreviewStep({
           ? parseFloat(activeProduct.price.replace(/[^0-9.]/g, ""))
           : activeProduct.price,
         quantity: 1,
-        img: activeProduct.img,
+        img: imageUrl ?? activeProduct.img,
+        generationId: generationId ?? undefined,
+        imageUrl: imageUrl ?? undefined,
       });
     }
 
     router.push("/cart");
   }
 
-  const canAddToCart = hasShopifyIntegration ? !!selectedFormat : !!selectedProduct;
+  const generationLoading = isCreating || status === "pending" || status === "processing";
+  const generationDone = status === "completed";
+  const generationFailed = status === "failed";
+
+  // Footer CTA logic
+  const footerLabel = (() => {
+    if (!selectedFormat && hasShopifyIntegration) return "Selecciona un tamaño";
+    if (generationLoading) return "Generando...";
+    if (generationFailed) return "Reintentar";
+    if (generationDone) return "Add to Cart & Checkout";
+    return "Generar arte ✨";
+  })();
+
+  const footerDisabled =
+    (!selectedFormat && hasShopifyIntegration) ||
+    generationLoading ||
+    (!canGenerate && !generationDone);
+
+  const handleFooterClick = () => {
+    if (generationFailed) {
+      handleRetry();
+    } else if (generationDone) {
+      handleAddToCart();
+    } else if (canGenerate) {
+      handleGenerate();
+    }
+  };
 
   return (
     <>
       <main className="flex-grow px-4 py-8 md:py-12 animate-in fade-in slide-in-from-bottom-4 duration-700">
         <div className="max-w-5xl mx-auto space-y-12">
-          {/* --- Comparison slider --- */}
+          {/* --- Generation canvas --- */}
           <section>
             <div className="text-center mb-8">
               <h1 className="text-3xl md:text-4xl font-black text-slate-dark mb-2 tracking-tight font-display">
-                The Transformation
+                {generationDone ? "¡Tu obra de arte!" : "Genera tu arte"}
               </h1>
               <p className="text-slate-dark/70 text-lg">
-                See how we turned your photo into a masterpiece.
+                {generationDone
+                  ? "Mira la transformación de tu mascota."
+                  : "Selecciona el producto y tamaño, luego genera tu imagen."}
               </p>
             </div>
-            <div className="relative w-full aspect-[16/9] md:aspect-[2.35/1] max-h-[550px] rounded-2xl overflow-hidden shadow-xl select-none group border-4 border-white bg-slate-100">
-              <img
-                alt="Original dog photo"
-                className="absolute inset-0 w-full h-full object-cover"
-                src="https://lh3.googleusercontent.com/aida-public/AB6AXuB5cv5UXI6n4PI_8Ya3Rh-X74jZ0SQxJ7Qej67Loo65G5WVzAOaUkAz3Qfv_imuG0fHz7JgNJuAsTrN1JwDJKKC15QKiuOLVPPRNIBtu7zOtSRPCq628kmg0QnozpKxhCaAqPq7452YJ7RMTTj163JOWTy-QiCukOi_DN-l4a3WJ4b_Dbif5ejxxXmCn121FbjWsEWvZunkUmtiHLTZglsSsOblRw4advHALpiRw07aeJDprARXA7fghypANKLQycDJ-aZWytp98Kn5"
-              />
-              <div className="absolute top-6 left-6 bg-black/50 backdrop-blur-md text-white px-4 py-1.5 rounded-full text-sm font-bold shadow-lg">
-                Original
-              </div>
-              <div className="absolute inset-y-0 left-0 w-1/2 overflow-hidden border-r-4 border-primary bg-white/10 z-10">
-                <img
-                  alt="Artistic dog masterpiece"
-                  className="absolute inset-0 w-[200%] max-w-none h-full object-cover object-left"
-                  src="https://lh3.googleusercontent.com/aida-public/AB6AXuBqruKWQZ48vypKc2KDwNU-A7eEWdee-4qr7voxSvahEirYjZJ3QmSQMZSa4GHMtmnjI5eTkQfmrY_hd3Sp46B3xITbeVqTwp4XU1EloL1v5pcuDA9l4RURurJdjzNpvBGAgPEgHl3KN1meLDAZgCl8cz3N49OEkrBHw17RvTAg9yq42QveTPszKqVLTB4gpTuwYnGVVDvh1_ky8ntzJ1OfwAYwrovrGYI0CPR268a3bUtfLR0K6QW4WMTsFYnGXXL-L6NlHeSXeR44"
-                />
-                <div className="absolute top-6 right-6 bg-primary/90 backdrop-blur-md text-white px-4 py-1.5 rounded-full text-sm font-bold shadow-lg">
-                  Masterpiece
-                </div>
-              </div>
-              <div className="absolute inset-y-0 left-1/2 -ml-[22px] flex items-center justify-center pointer-events-none z-20">
-                <div className="size-11 bg-primary rounded-full shadow-[0_0_15px_rgba(0,0,0,0.3)] flex items-center justify-center text-white border-4 border-white">
-                  <span className="material-symbols-outlined">code</span>
-                </div>
-              </div>
-            </div>
-          </section>
-
-          {/* --- More Variations --- */}
-          <section>
-            <div className="flex items-center gap-3 mb-6">
-              <h2 className="text-2xl font-black text-slate-dark tracking-tight font-display">
-                More Variations
-              </h2>
-            </div>
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
-              {[
-                { style: "Soft Watercolor", img: "https://lh3.googleusercontent.com/aida-public/AB6AXuBqruKWQZ48vypKc2KDwNU-A7eEWdee-4qr7voxSvahEirYjZJ3QmSQMZSa4GHMtmnjI5eTkQfmrY_hd3Sp46B3xITbeVqTwp4XU1EloL1v5pcuDA9l4RURurJdjzNpvBGAgPEgHl3KN1meLDAZgCl8cz3N49OEkrBHw17RvTAg9yq42QveTPszKqVLTB4gpTuwYnGVVDvh1_ky8ntzJ1OfwAYwrovrGYI0CPR268a3bUtfLR0K6QW4WMTsFYnGXXL-L6NlHeSXeR44" },
-                { style: "Minimalist Pencil Sketch", img: "https://lh3.googleusercontent.com/aida-public/AB6AXuB5cv5UXI6n4PI_8Ya3Rh-X74jZ0SQxJ7Qej67Loo65G5WVzAOaUkAz3Qfv_imuG0fHz7JgNJuAsTrN1JwDJKKC15QKiuOLVPPRNIBtu7zOtSRPCq628kmg0QnozpKxhCaAqPq7452YJ7RMTTj163JOWTy-QiCukOi_DN-l4a3WJ4b_Dbif5ejxxXmCn121FbjWsEWvZunkUmtiHLTZglsSsOblRw4advHALpiRw07aeJDprARXA7fghypANKLQycDJ-aZWytp98Kn5" },
-                { style: "Vibrant Pop Art", img: "https://lh3.googleusercontent.com/aida-public/AB6AXuB5cv5UXI6n4PI_8Ya3Rh-X74jZ0SQxJ7Qej67Loo65G5WVzAOaUkAz3Qfv_imuG0fHz7JgNJuAsTrN1JwDJKKC15QKiuOLVPPRNIBtu7zOtSRPCq628kmg0QnozpKxhCaAqPq7452YJ7RMTTj163JOWTy-QiCukOi_DN-l4a3WJ4b_Dbif5ejxxXmCn121FbjWsEWvZunkUmtiHLTZglsSsOblRw4advHALpiRw07aeJDprARXA7fghypANKLQycDJ-aZWytp98Kn5" },
-              ].map((v, i) => (
-                <div key={i} className="bg-white rounded-2xl p-4 shadow-sm border border-transparent hover:border-primary/20 hover:shadow-md transition-all flex flex-col group h-full">
-                  <div className="aspect-square rounded-xl overflow-hidden mb-4 bg-slate-100 relative shadow-inner">
-                    <img alt={v.style} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" src={v.img} />
-                  </div>
-                  <h3 className="text-center font-bold text-slate-dark mb-3 text-lg">{v.style}</h3>
-                  <button className="w-full py-2.5 bg-primary text-white rounded-lg font-bold text-sm hover:bg-primary-dark shadow hover:shadow-lg transition-all transform active:scale-95 mt-auto">
-                    Select
-                  </button>
-                </div>
-              ))}
-            </div>
+            <IAGenerationCanvas
+              status={status}
+              isCreating={isCreating}
+              imageUrl={imageUrl}
+              petPhotoUrl={petPhotoUrl}
+              progress={progress}
+              error={generateError ?? pollError}
+              onRetry={handleRetry}
+            />
           </section>
 
           {/* --- Step 1: Choose product type --- */}
@@ -164,65 +208,76 @@ export function IAPreviewStep({
                 Choose Your Perfect Canvas
               </h2>
             </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 gap-6">
-              {products.map((p) => {
-                const isSelected = selectedProduct === p.name;
-                return (
-                  <label
-                    key={p.name}
-                    className="group relative cursor-pointer block h-full"
-                    onClick={() => onProductSelect(p.name)}
-                  >
-                    <input
-                      checked={isSelected}
-                      className="peer sr-only"
-                      name="product_type"
-                      type="radio"
-                      readOnly
-                    />
-                    <div className={`h-full bg-white rounded-2xl p-4 shadow-sm border-2 transition-all hover:shadow-md flex flex-col ${isSelected ? "border-primary bg-primary/5" : "border-transparent"}`}>
-                      <div className="aspect-[16/10] bg-[#F5F5F0] rounded-xl mb-4 flex items-center justify-center p-6 relative overflow-hidden">
-                        <div className="relative w-56 aspect-[4/3] group-hover:scale-105 transition-transform duration-500 shadow-xl rounded bg-white overflow-hidden">
-                          <img className="w-full h-full object-cover rounded opacity-90" src={p.img} alt={p.name} />
-                          {p.badge && (
-                            <div className="absolute bottom-2 right-2 bg-white/90 px-2 py-1 text-[10px] font-bold rounded uppercase tracking-wide text-slate-dark shadow-sm">
-                              {p.badge}
-                            </div>
-                          )}
-                          {p.tag && (
-                            <div className="absolute bottom-0 w-full bg-primary/90 text-white text-center text-[10px] py-1.5 font-bold uppercase tracking-widest">
-                              {p.tag}
-                            </div>
-                          )}
-                          {p.hasPlay && (
-                            <div className="absolute inset-0 flex items-center justify-center">
-                              <div className="size-10 bg-white/90 rounded-full flex items-center justify-center shadow-lg backdrop-blur-sm group-hover:scale-110 transition-transform">
-                                <span className="material-symbols-outlined text-primary text-xl animate-pulse">play_circle</span>
+            {isLoadingProducts ? (
+              <div className="flex items-center justify-center h-32">
+                <span className="material-symbols-outlined animate-spin text-4xl text-primary">
+                  progress_activity
+                </span>
+              </div>
+            ) : productsError ? (
+              <p className="text-red-500 text-sm">{productsError}</p>
+            ) : (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 gap-6">
+                {products.map((p) => {
+                  const isSelected = selectedProduct === p.name;
+                  return (
+                    <label
+                      key={p.name}
+                      className="group relative cursor-pointer block h-full"
+                      onClick={() => onProductSelect(p.name)}
+                    >
+                      <input
+                        checked={isSelected}
+                        className="peer sr-only"
+                        name="product_type"
+                        type="radio"
+                        readOnly
+                      />
+                      <div className={`h-full bg-white rounded-2xl p-4 shadow-sm border-2 transition-all hover:shadow-md flex flex-col ${isSelected ? "border-primary bg-primary/5" : "border-transparent"}`}>
+                        <div className="aspect-[16/10] bg-[#F5F5F0] rounded-xl mb-4 flex items-center justify-center p-6 relative overflow-hidden">
+                          <div className="relative w-56 aspect-[4/3] group-hover:scale-105 transition-transform duration-500 shadow-xl rounded bg-white overflow-hidden">
+                            {/* eslint-disable-next-line @next/next/no-img-element */}
+                            <img className="w-full h-full object-cover rounded opacity-90" src={p.img} alt={p.name} />
+                            {p.badge && (
+                              <div className="absolute bottom-2 right-2 bg-white/90 px-2 py-1 text-[10px] font-bold rounded uppercase tracking-wide text-slate-dark shadow-sm">
+                                {p.badge}
                               </div>
+                            )}
+                            {p.tag && (
+                              <div className="absolute bottom-0 w-full bg-primary/90 text-white text-center text-[10px] py-1.5 font-bold uppercase tracking-widest">
+                                {p.tag}
+                              </div>
+                            )}
+                            {p.hasPlay && (
+                              <div className="absolute inset-0 flex items-center justify-center">
+                                <div className="size-10 bg-white/90 rounded-full flex items-center justify-center shadow-lg backdrop-blur-sm group-hover:scale-110 transition-transform">
+                                  <span className="material-symbols-outlined text-primary text-xl animate-pulse">play_circle</span>
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                          {isSelected && (
+                            <div className="absolute top-3 right-3 text-primary z-20">
+                              <span className="material-symbols-outlined text-3xl bg-white rounded-full">check_circle</span>
                             </div>
                           )}
                         </div>
-                        {isSelected && (
-                          <div className="absolute top-3 right-3 text-primary z-20">
-                            <span className="material-symbols-outlined text-3xl bg-white rounded-full">check_circle</span>
+                        <div className="mt-auto flex justify-between items-end">
+                          <div>
+                            <h3 className="text-lg font-bold text-slate-dark">{p.name}</h3>
+                            <p className="text-sm text-slate-dark/60">{p.desc}</p>
                           </div>
-                        )}
-                      </div>
-                      <div className="mt-auto flex justify-between items-end">
-                        <div>
-                          <h3 className="text-lg font-bold text-slate-dark">{p.name}</h3>
-                          <p className="text-sm text-slate-dark/60">{p.desc}</p>
+                          <span className="text-xl font-bold text-primary">{p.price}</span>
                         </div>
-                        <span className="text-xl font-bold text-primary">{p.price}</span>
                       </div>
-                    </div>
-                  </label>
-                );
-              })}
-            </div>
+                    </label>
+                  );
+                })}
+              </div>
+            )}
           </section>
 
-          {/* --- Step 2: Choose size/format (only when product has Shopify integration) --- */}
+          {/* --- Step 2: Choose size/format --- */}
           {hasShopifyIntegration && (
             <section className="pb-12">
               <div className="flex items-center gap-3 mb-6">
@@ -263,14 +318,31 @@ export function IAPreviewStep({
               <span className="block text-xl font-black text-slate-dark tracking-tight">{displayPrice}</span>
             </div>
             <button
-              onClick={handleAddToCart}
-              disabled={!canAddToCart}
+              onClick={handleFooterClick}
+              disabled={footerDisabled}
               className="w-full md:w-auto min-w-[260px] flex items-center justify-center gap-2 rounded-xl bg-primary hover:bg-primary-dark text-white px-8 py-3.5 text-lg font-bold transition-all shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
             >
-              <span className="material-symbols-outlined">shopping_cart</span>
-              {hasShopifyIntegration && !selectedFormat
-                ? "Select a Size"
-                : "Add to Cart & Checkout"}
+              {generationLoading ? (
+                <>
+                  <span className="size-5 rounded-full border-2 border-white border-t-transparent animate-spin" />
+                  Generando...
+                </>
+              ) : generationDone ? (
+                <>
+                  <span className="material-symbols-outlined">shopping_cart</span>
+                  Add to Cart & Checkout
+                </>
+              ) : generationFailed ? (
+                <>
+                  <span className="material-symbols-outlined">refresh</span>
+                  Reintentar
+                </>
+              ) : (
+                <>
+                  <span className="material-symbols-outlined">auto_awesome</span>
+                  {footerLabel}
+                </>
+              )}
             </button>
           </div>
         </div>

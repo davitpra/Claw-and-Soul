@@ -4,3 +4,4 @@ export * from "./ui/IAStyleStep";
 export * from "./ui/IALeadStep";
 export * from "./ui/IAPreviewStep";
 export * from "./ui/FormatSelector";
+export * from "./ui/IAGenerationCanvas";

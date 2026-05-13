@@ -18,10 +18,16 @@ interface Pet {
   photos?: PetPhoto[];
 }
 
+interface PetReadyPayload {
+  petId: string;
+  petPhotoId: string | null;
+  petPhotoUrl: string | null;
+}
+
 interface IAUploadStepProps {
   photos: File[];
   onPhotosChange: (files: File[]) => void;
-  onPetSelect: (petId: string | null) => void;
+  onPetReady: (payload: PetReadyPayload) => void;
   onNext: () => void;
 }
 
@@ -31,10 +37,10 @@ const MAX_PHOTOS = 1;
 export function IAUploadStep({
   photos,
   onPhotosChange,
-  onPetSelect,
+  onPetReady,
   onNext,
 }: IAUploadStepProps) {
-  const { get, post, authFetch, authFetchJSON } = useAuthFetch();
+  const { get, post, authFetchJSON } = useAuthFetch();
 
   const [pets, setPets] = useState<Pet[]>([]);
   const [activePet, setActivePet] = useState<Pet | null>(null);
@@ -99,7 +105,6 @@ export function IAUploadStep({
       breed: pet.breed ?? "",
       age: pet.age != null ? String(pet.age) : "",
     });
-    onPetSelect(pet.id);
     const primary =
       pet.photos?.find((p) => p.isPrimary) ?? pet.photos?.[0] ?? null;
     setExistingPhotoUrl(primary?.photoUrl ?? null);
@@ -111,14 +116,15 @@ export function IAUploadStep({
     setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }));
   };
 
-  const uploadPhoto = async (petId: string) => {
-    if (!photos[0]) return;
+  const uploadPhoto = async (petId: string): Promise<PetPhoto | null> => {
+    if (!photos[0]) return null;
     const formData = new FormData();
     formData.append("photo", photos[0]);
-    await authFetch(`/pets/${petId}/photos?isPrimary=true`, {
-      method: "POST",
-      body: formData,
-    });
+    const result = await authFetchJSON<PetPhoto>(
+      `/pets/${petId}/photos?isPrimary=true`,
+      { method: "POST", body: formData }
+    );
+    return result;
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -144,7 +150,16 @@ export function IAUploadStep({
           },
         );
         const updated = "data" in raw ? raw.data : raw;
-        await uploadPhoto(activePet.id);
+        const newPhoto = await uploadPhoto(activePet.id);
+        const existingPrimary =
+          activePet.photos?.find((p) => p.isPrimary) ??
+          activePet.photos?.[0] ??
+          null;
+        onPetReady({
+          petId: activePet.id,
+          petPhotoId: newPhoto?.id ?? existingPrimary?.id ?? null,
+          petPhotoUrl: newPhoto?.photoUrl ?? existingPrimary?.photoUrl ?? null,
+        });
         setPets((prev) => prev.map((p) => (p.id === updated.id ? updated : p)));
         setActivePet(updated);
         onNext();
@@ -156,7 +171,12 @@ export function IAUploadStep({
           age: form.age ? parseInt(form.age) : undefined,
         });
         const newPet = "data" in raw ? raw.data : raw;
-        await uploadPhoto(newPet.id);
+        const newPhoto = await uploadPhoto(newPet.id);
+        onPetReady({
+          petId: newPet.id,
+          petPhotoId: newPhoto?.id ?? null,
+          petPhotoUrl: newPhoto?.photoUrl ?? null,
+        });
         setPets((prev) => [...prev, newPet]);
         setActivePet(newPet);
         setForm({
@@ -165,7 +185,6 @@ export function IAUploadStep({
           breed: newPet.breed ?? "",
           age: newPet.age != null ? String(newPet.age) : "",
         });
-        onPetSelect(newPet.id);
         onNext();
       }
     } catch {
@@ -311,12 +330,11 @@ export function IAUploadStep({
                   onClick={() => {
                     setActivePet(null);
                     setForm({ name: "", species: "dog", breed: "", age: "" });
-                    onPetSelect(null);
                     setExistingPhotoUrl(null);
                   }}
                   className="bg-white ml-auto text-xs text-slate-500 hover:text-slate-700 underline"
                 >
-                  Change
+                  Cambiar
                 </button>
               </div>
             )}
@@ -343,7 +361,6 @@ export function IAUploadStep({
                       } else {
                         setActivePet(null);
                         setForm({ name: "", species: "dog", breed: "", age: "" });
-                        onPetSelect(null);
                         setExistingPhotoUrl(null);
                       }
                     }}

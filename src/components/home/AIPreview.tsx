@@ -1,108 +1,210 @@
+import Image from "next/image";
 import Link from "next/link";
 
 export default function AIPreview() {
   return (
-    <section className="py-20 bg-white">
-      <div className="mx-auto max-w-[1280px] px-6 lg:px-10">
+    <section className="relative overflow-hidden py-20 bg-[#f7f5f0]">
+      {/* Subtle grain texture overlay */}
+      <div
+        className="pointer-events-none absolute inset-0 opacity-[0.03]"
+        style={{
+          backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E")`,
+        }}
+      />
+
+      <div className="relative mx-auto max-w-[1100px] px-6 lg:px-10">
+        {/* ── Header ── */}
         <div className="mb-14 text-center">
-          <span className="text-primary-accent font-bold tracking-wider uppercase text-sm mb-2 block">
+          <span className="inline-flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-[0.18em] text-[#448da6] mb-5">
+            <span className="material-symbols-outlined text-[14px] leading-none">
+              auto_awesome
+            </span>
             AI Art Preview
           </span>
-          <h2 className="text-3xl font-black text-slate-dark md:text-4xl">
+          <h2 className="text-4xl font-black text-[#103642] md:text-5xl leading-[1.1] tracking-tight">
             See the Transformation
           </h2>
-          <p className="mt-4 text-slate-dark/70 max-w-2xl mx-auto">
-            Watch your pet turn into a Renaissance masterpiece instantly.
-            Experience the magic of our AI before you buy.
+          <p className="mt-4 max-w-lg mx-auto text-base text-[#103642]/55 leading-relaxed">
+            Watch your pet become a Renaissance masterpiece in seconds.
+            <br />
+            Try it free before you buy.
           </p>
         </div>
-        <div className="max-w-[1000px] mx-auto">
-          <div className="grid grid-cols-1 lg:grid-cols-[260px_auto_1fr] gap-8 lg:gap-10 items-center">
-            <div className="relative group cursor-pointer w-full mx-auto">
-              <div className="aspect-[4/5] w-full rounded-2xl border-2 border-dashed border-slate-300 bg-cream/30 flex flex-col items-center justify-center gap-4 transition-all duration-300 hover:border-primary-accent hover:bg-cream/50">
-                <div className="size-20 rounded-full bg-white flex items-center justify-center shadow-sm">
-                  <span className="material-symbols-outlined text-[40px] text-slate-dark/50 group-hover:text-primary-accent transition-colors">
-                    add_a_photo
-                  </span>
-                </div>
-                <div className="text-center px-6">
-                  <p className="font-bold text-slate-dark text-lg">
-                    Upload Pet Photo
-                  </p>
-                  <p className="text-sm text-slate-dark/50 mt-1">
-                    Drop image here or click to browse
-                  </p>
-                  <span className="inline-block mt-4 px-3 py-1 bg-white rounded text-xs font-semibold text-slate-dark border border-slate-200">
-                    JPEG, PNG
-                  </span>
-                </div>
+
+        {/* ── 3-Step Flow ── */}
+        <div className="flex flex-col lg:flex-row items-stretch gap-0">
+          {/* Step 1 — Upload */}
+          <div className="relative flex-1">
+            <StepBadge number="01" />
+            <div className="flex flex-col items-center gap-5 rounded-3xl border-2 border-dashed border-slate-200 bg-white p-8 h-full min-h-[320px]">
+              {/* Dog illustration */}
+              <div className="flex-1 flex items-center justify-center">
+                <Image
+                  src="/process/1. Upload Picture.png"
+                  alt="Upload Illustration"
+                  width={150}
+                  height={110}
+                />
               </div>
-              <div className="absolute -top-3 -left-3 bg-slate-dark text-white text-xs font-bold py-1 px-3 rounded-full shadow-md z-10">
-                Step 1
+              <div className="text-center">
+                <p className="text-lg font-black text-[#103642] tracking-tight">
+                  Upload Pet Photo
+                </p>
+                <p className="mt-2 text-sm text-[#103642]/50 leading-relaxed max-w-[200px] mx-auto">
+                  Add a clear photo of your pet in JPG, PNG or WEBP format.
+                </p>
+              </div>
+              <div className="flex gap-2">
+                {["JPG", "PNG", "WEBP"].map((fmt) => (
+                  <span
+                    key={fmt}
+                    className="rounded-md border border-slate-200 bg-slate-50 px-2.5 py-1 text-[10px] font-bold text-slate-400 tracking-wider"
+                  >
+                    {fmt}
+                  </span>
+                ))}
               </div>
             </div>
-            <div className="flex justify-center py-4 lg:py-0">
-              <div className="flex flex-col items-center gap-2">
-                <div className="size-16 rounded-full bg-primary-accent/10 flex items-center justify-center text-primary-accent animate-pulse">
-                  <span className="material-symbols-outlined text-[32px] lg:rotate-0 rotate-90">
-                    arrow_forward
-                  </span>
-                </div>
-                <span className="text-xs font-bold text-primary-accent uppercase tracking-wide">
-                  AI Magic
-                </span>
+          </div>
+
+          {/* Arrow Connector 1 */}
+          <DottedArrow />
+
+          {/* Step 2 — Choose Style */}
+          <div className="relative flex-1">
+            <StepBadge number="02" variant="light" />
+            <div className="flex flex-col items-center gap-5 rounded-3xl border border-slate-100 bg-white p-8 h-full min-h-[320px] shadow-sm">
+              <div className="flex-1 flex items-center justify-center">
+                <Image
+                  src="/process/2 approve.png"
+                  alt="Choose Style Illustration"
+                  width={150}
+                  height={110}
+                />
+              </div>
+              <div className="text-center">
+                <p className="text-lg font-black text-[#103642] tracking-tight">
+                  Choose Your Style
+                </p>
+                <p className="mt-2 text-sm text-[#103642]/50 leading-relaxed max-w-[200px] mx-auto">
+                  Pick an art style for your pet and let our AI work its magic.
+                </p>
               </div>
             </div>
-            <div className="relative group w-full mx-auto">
-              <div className="aspect-[4/5] w-full rounded-2xl overflow-hidden shadow-2xl bg-slate-100 relative border-4 border-white">
-                <div
-                  className="absolute inset-0 bg-cover bg-center"
-                  style={{
-                    backgroundImage:
-                      "url('https://lh3.googleusercontent.com/aida-public/AB6AXuBHeNR2rBiKdgNqJwr9p0OB2CtgE-C6GIx1dYM7n_TTpzlxow9y264GudhdhqsHyQCLxu69xp1kp-kePGTpMYuzyjmGaEzfTF1EW-M1oRZqj9nTFANWeAg8wqlAmWGBjef-C94DFGU7w9vJcYXlspzMbNmizadTVywvaGc81P9fyiE83SlIbXDNnEgdr3re64DRkcABSIVf1-Nd2R_qxmS3jHTss-xP6ZRNe4SaelTXoYPDShPfWl45WT_N784p7ipNvFbXKAbs19U4')",
-                  }}
-                ></div>
-                <div className="absolute inset-y-0 left-0 w-[50%] overflow-hidden bg-gray-100 border-r-2 border-white/50">
-                  <div
-                    className="absolute inset-0 w-[200%] bg-cover bg-center"
-                    style={{
-                      backgroundImage:
-                        "url('https://lh3.googleusercontent.com/aida-public/AB6AXuAQbcWgrNDM3FyFb8i7zwgk7zpIiZC9v_IdT686jK2gjEz1HEeJtJkhfogbxoTFT61q1haZY3r-5f4WwXx2ywyDbh---9f-_oKXraMb83m1LtXx-0I_H3y2F-AWxrHelCGsADa6Nj14SVkK3JSAJpAy6heyNe8j97Q8LNkjX14RwyHzwzzd_HZ1_oMGWygKs-kdNMrskiQYNDywy3X4vKJQVhALOVH8j9WrFFzzHR2d73_tqY7pWG4o22VbwE2ZnS0KgtUAkmQJkLlK')",
-                    }}
-                  ></div>
-                  <div className="absolute inset-0 bg-black/5"></div>
-                </div>
-                <div className="absolute inset-y-0 left-[50%] -translate-x-1/2 flex items-center justify-center pointer-events-none">
-                  <div className="h-full w-1 bg-white shadow-[0_0_10px_rgba(0,0,0,0.3)]"></div>
-                  <div className="absolute size-10 bg-white rounded-full shadow-lg flex items-center justify-center text-primary-accent ring-4 ring-black/10">
-                    <span className="material-symbols-outlined text-sm font-bold">
-                      code
-                    </span>
-                  </div>
-                </div>
-                <div className="absolute bottom-6 left-6 bg-black/60 backdrop-blur-sm text-white text-xs uppercase font-bold px-4 py-2 rounded-full tracking-wider">
-                  Original
-                </div>
-                <div className="absolute bottom-6 right-6 bg-primary-accent/90 backdrop-blur-sm text-white text-xs uppercase font-bold px-4 py-2 rounded-full tracking-wider">
-                  Masterpiece
-                </div>
+          </div>
+
+          {/* Arrow Connector 2 */}
+          <DottedArrow />
+
+          {/* Step 3 — Result */}
+          <div className="relative flex-1">
+            <StepBadge number="03" side="right" />
+            <div className="flex flex-col items-center gap-5 rounded-3xl border border-slate-100 bg-white p-8 h-full min-h-[320px] shadow-sm overflow-hidden">
+              <div className="flex-1 flex items-center justify-center">
+                <Image
+                  src="/process/3. Final Art.png"
+                  alt="Result Illustration"
+                  width={150}
+                  height={110}
+                />
               </div>
-              <div className="absolute -top-3 -right-3 bg-primary-accent text-white text-xs font-bold py-1 px-3 rounded-full shadow-md z-10">
-                Step 2
+              <div className="text-center">
+                <p className="text-lg font-black text-[#103642] tracking-tight">
+                  Get Your Masterpiece
+                </p>
+                <p className="mt-2 text-sm text-[#103642]/50 leading-relaxed max-w-[200px] mx-auto">
+                  Preview your artwork in seconds and download your masterpiece.
+                </p>
               </div>
             </div>
           </div>
         </div>
-        <div className="mt-16 text-center">
-          <button className="inline-flex items-center justify-center rounded-xl bg-[#448DA6] px-12 py-5 text-lg font-bold text-white shadow-xl shadow-[#448DA6]/20 transition-all hover:scale-105 hover:bg-[#367a8f] ring-offset-2 hover:ring-2 ring-[#448DA6]">
-            Try the AI Generator Now
-            <span className="material-symbols-outlined ml-2">auto_awesome</span>
-          </button>
-          <p className="mt-4 text-slate-dark/50 text-sm">
-            Free preview • No credit card required
-          </p>
+
+        {/* ── CTA ── */}
+        <div className="mt-14 text-center">
+          <Link
+            href="/ia-generator"
+            className="inline-flex items-center justify-center gap-2.5 rounded-xl bg-[#103642] px-10 py-4 text-base font-bold text-white shadow-lg shadow-[#103642]/20 transition-all duration-200 hover:bg-[#0d2c37] hover:scale-[1.02] hover:shadow-xl hover:shadow-[#103642]/25 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#448da6] focus-visible:ring-offset-2"
+          >
+            Try the AI Generator — It&apos;s Free
+            <span className="material-symbols-outlined text-[18px]">
+              auto_awesome
+            </span>
+          </Link>
+
+          <div className="mt-5 flex flex-wrap items-center justify-center gap-5 text-sm text-[#103642]/40">
+            <span className="flex items-center gap-1.5">
+              <span className="material-symbols-outlined text-[16px]">
+                credit_card_off
+              </span>
+              No credit card required
+            </span>
+            <span className="text-[#103642]/20">·</span>
+            <span className="flex items-center gap-1.5">
+              <span className="material-symbols-outlined text-[16px]">
+                bolt
+              </span>
+              Instant results
+            </span>
+            <span className="text-[#103642]/20">·</span>
+            <span className="flex items-center gap-1.5">
+              <span className="material-symbols-outlined text-[16px]">
+                all_inclusive
+              </span>
+              Unlimited previews
+            </span>
+          </div>
         </div>
       </div>
     </section>
+  );
+}
+
+/* ── Sub-components ── */
+
+function StepBadge({
+  number,
+  variant = "dark",
+  side = "left",
+}: {
+  number: string;
+  variant?: "dark" | "light";
+  side?: "left" | "right";
+}) {
+  const base =
+    "absolute -top-3.5 z-10 flex size-8 items-center justify-center rounded-full text-[11px] font-black tracking-wider shadow-md";
+  const color =
+    variant === "dark"
+      ? "bg-[#103642] text-white"
+      : "bg-white border-2 border-[#448da6]/30 text-[#448da6]";
+  const pos = side === "right" ? "right-5" : "left-5";
+
+  return <div className={`${base} ${color} ${pos}`}>{number}</div>;
+}
+
+function DottedArrow() {
+  return (
+    <div className="flex items-center justify-center py-6 lg:py-0 lg:px-2 shrink-0">
+      <div className="flex items-center gap-0.5 rotate-90 lg:rotate-0">
+        {[0, 1, 2, 3, 4].map((i) => (
+          <div
+            key={i}
+            className="size-1 rounded-full bg-slate-300"
+            style={{ opacity: 0.4 + i * 0.12 }}
+          />
+        ))}
+        <div className="ml-0.5 text-slate-400">
+          <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
+            <path
+              d="M1 5h8M5.5 1.5L9 5l-3.5 3.5"
+              stroke="currentColor"
+              strokeWidth="1.5"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+          </svg>
+        </div>
+      </div>
+    </div>
   );
 }

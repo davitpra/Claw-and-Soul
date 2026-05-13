@@ -1,11 +1,25 @@
 import Link from "next/link";
 import Image from "next/image";
+import { GenerationStatus } from "@/hooks/useGenerationStatus";
+
+const STEP_LABELS: Record<number, string> = {
+  1: "Elige tu estilo",
+  2: "Crea tu cuenta",
+  3: "Sube tu foto",
+  4: "Personaliza y genera",
+};
+
+const TOTAL_STEPS = 4;
 
 interface IAHeaderProps {
   step: number;
+  generationStatus?: GenerationStatus;
 }
 
-export function IAHeader({ step }: IAHeaderProps) {
+export function IAHeader({ step, generationStatus }: IAHeaderProps) {
+  const isGenerating =
+    generationStatus === "pending" || generationStatus === "processing";
+
   return (
     <header className="bg-white border-b border-[#E5E0D8] sticky top-0 z-50">
       <div className="px-6 md:px-10 py-4 max-w-7xl mx-auto flex items-center justify-between">
@@ -27,36 +41,33 @@ export function IAHeader({ step }: IAHeaderProps) {
           </h2>
         </Link>
 
-        {step === 2 && (
-          <div className="hidden md:flex items-center gap-4 opacity-50 animate-in fade-in duration-700">
+        {isGenerating ? (
+          <div className="hidden md:flex items-center gap-4 opacity-70 animate-in fade-in duration-700">
             <div className="flex flex-col items-end">
               <span className="text-xs font-bold text-primary uppercase tracking-wider">
-                Processing
+                Generando
               </span>
               <span className="text-sm font-medium text-slate-dark">
-                Analyzing Photo...
+                Creando tu arte con IA...
               </span>
             </div>
-            <div className="size-8 rounded-full border-2 border-primary border-t-transparent animate-spin"></div>
+            <div className="size-8 rounded-full border-2 border-primary border-t-transparent animate-spin" />
           </div>
-        )}
-
-        {step !== 2 && (
+        ) : (
           <div className="hidden md:flex items-center gap-4 animate-in fade-in duration-700">
             <div className="flex flex-col items-end">
               <span className="text-xs font-bold text-primary uppercase tracking-wider">
-                Step {step === 1 ? "1" : "2"} of 2
+                Paso {step} de {TOTAL_STEPS}
               </span>
               <span className="text-sm font-medium text-slate-dark">
-                {step === 1 ? "Create Your Art" : "Customize Your Product"}
+                {STEP_LABELS[step] ?? ""}
               </span>
             </div>
             <div className="w-24 h-2 bg-[#dee2e3] rounded-full overflow-hidden">
               <div
-                className={`h-full bg-primary rounded-full transition-all duration-700 ${
-                  step === 1 ? "w-1/2" : "w-full"
-                }`}
-              ></div>
+                className="h-full bg-primary rounded-full transition-all duration-700"
+                style={{ width: `${(step / TOTAL_STEPS) * 100}%` }}
+              />
             </div>
           </div>
         )}
@@ -73,15 +84,14 @@ export function IAHeader({ step }: IAHeaderProps) {
           </Link>
         </div>
       </div>
-      {step !== 2 && (
-        <div className="md:hidden w-full h-1 bg-[#dee2e3]">
-          <div
-            className={`h-full bg-primary transition-all duration-700 ${
-              step === 1 ? "w-1/2" : "w-full"
-            }`}
-          ></div>
-        </div>
-      )}
+
+      {/* Mobile progress bar */}
+      <div className="md:hidden w-full h-1 bg-[#dee2e3]">
+        <div
+          className="h-full bg-primary transition-all duration-700"
+          style={{ width: `${(step / TOTAL_STEPS) * 100}%` }}
+        />
+      </div>
     </header>
   );
 }
