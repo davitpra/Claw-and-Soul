@@ -1,0 +1,91 @@
+# Tokens — Claw & Soul
+
+Fuente de verdad: `src/app/globals.css` (bloque `@theme`, líneas 3-17).
+
+## Colores de marca
+
+| Token CSS | Valor | Clase Tailwind | Uso |
+|-----------|-------|----------------|-----|
+| `--color-primary` | `#448da6` | `bg-primary`, `text-primary`, `border-primary` | CTA primario, links activos, acentos |
+| `--color-primary-dark` | `#367a8f` | `bg-primary-dark`, `hover:bg-primary-dark` | Estado hover de primario |
+| `--color-primary-accent` | `#448da6` | *(alias de primary)* | — |
+| `--color-background-light` | `#f0eee9` | `bg-background-light` | Fondo página (modo claro) |
+| `--color-background-dark` | `#103642` | `bg-background-dark` | Fondo página (modo oscuro) |
+| `--color-text-main` | `#103642` | `text-text-main` | Texto principal, headings |
+| `--color-text-muted` | `#5c747c` | `text-text-muted` | Texto secundario, placeholders |
+| `--color-slate-dark` | `#103642` | `text-slate-dark`, `bg-slate-dark` | Dark sections (Footer), headings en secciones |
+| `--color-cream` | `#f0eee9` | `bg-cream` | Secciones alternadas (Hero, Featured, Shop) |
+| `--color-faq-bg` | `#eae7e1` | `bg-faq-bg` | Solo acordeón FAQ, no usar en otro sitio |
+
+### Variables CSS raíz (`:root`)
+```css
+--background: #f0eee9;   /* bg-background */
+--foreground: #103642;   /* text-foreground */
+```
+
+### Opacidades frecuentes (modificador `/`)
+```
+text-slate-dark/80   → texto principal levemente transparente
+text-slate-dark/70   → texto secundario
+text-slate-dark/60   → texto descriptivo
+text-white/70        → texto sobre fondo oscuro
+text-white/50        → placeholder sobre fondo oscuro
+bg-primary/10        → fondo de badge/tag con color brand
+bg-primary/20        → anillo focus-visible
+bg-white/95          → navbar semi-transparente
+bg-white/10          → input sobre fondo oscuro (Footer)
+bg-white/50          → input en barra de búsqueda
+```
+
+### Color hardcodeado documentado
+`border-[#E0DED9]` — gris muy claro para bordes sutiles de inputs, navbar scrolled, botones secundarios. Es intencional; no sustituir con gray-200 porque el tono es warm (ligeramente beige).
+
+### Colores utilitarios (Tailwind estándar en uso)
+- `bg-white`, `hover:bg-gray-50`, `bg-gray-200` — fondos neutros en componentes
+- `text-yellow-500` — estrellas de rating
+- `bg-green-100`, `text-green-600` — badge de confirmación
+- `ring-primary/30` — anillo de focus en inputs
+
+---
+
+## Border Radius
+
+| Clase | Valor | Uso |
+|-------|-------|-----|
+| `rounded-xl` | 12px | **Default** — botones, inputs, modales, chips, tooltips |
+| `rounded-2xl` | 16px | Cards de producto, imágenes Hero, contenedores grandes |
+| `rounded-[2rem]` | 32px | Solo imagen hero (`rounded-[2rem]`) |
+| `rounded-full` | 9999px | Avatares, badges circulares, logo circle |
+
+---
+
+## Sombras
+
+| Clase | Uso |
+|-------|-----|
+| `shadow-sm` | Estado reposo en botones, cards, inputs |
+| `hover:shadow-md` | Estado hover en casi todos los elementos interactivos |
+| `shadow-lg shadow-primary/20` | Solo CTA principal de la página (Hero button) |
+| `shadow-xl` | Floating cards (badge flotante en Hero) |
+| `shadow-2xl` | Imagen hero grande |
+
+---
+
+## Espaciado (convenciones de uso en componentes)
+
+Los valores son Tailwind estándar (escala 4px base). Los más usados:
+
+| Uso | Clases |
+|-----|--------|
+| Padding interno botones | `px-8 py-4` (grande), `px-5 h-10` (estándar), `px-6 py-3` (mediano) |
+| Padding de sección | `py-20`, `py-16`, `py-12` |
+| Padding de contenedor | `px-6 lg:px-10` |
+| Gap entre elementos | `gap-3`, `gap-4`, `gap-6`, `gap-8`, `gap-12` |
+| Max-width de página | `max-w-[1280px] mx-auto` |
+| Max-width navbar | `max-w-7xl mx-auto` |
+
+---
+
+## Scrollbar
+
+Definido en `globals.css:31-44`. Thumb `#cbd5e1`, hover `#94a3b8`. No tocar salvo rediseño global.
