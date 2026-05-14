@@ -25,8 +25,6 @@ export function useAllStyles(): UseAllStylesResult {
 
   useEffect(() => {
     let cancelled = false;
-    setIsLoading(true);
-    setError(null);
 
     fetch(`${API_URL}/styles`, { credentials: "include" })
       .then(async (res) => {
@@ -43,8 +41,8 @@ export function useAllStyles(): UseAllStylesResult {
           name: s.displayName,
           label: s.isPremium ? "Premium" : undefined,
           img:
-            s.images[0]?.imageUrl ??
             s.previewUrl ??
+            // s.images[0]?.imageUrl ??
             "https://placehold.co/400x500?text=Style",
         }));
         setStyles(mapped);
