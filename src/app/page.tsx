@@ -6,11 +6,12 @@ import AIPreview from "@/components/home/AIPreview";
 import FeaturedProducts from "@/components/home/FeaturedProducts";
 import CustomerGallery from "@/components/home/CustomerGallery";
 import Reviews from "@/components/home/Reviews";
+import NewColection from "@/components/home/NewColection";
 
 export default async function Home() {
   const featuredCollection = await getCollectionProducts(
     "featured-collection",
-    4
+    4,
   );
 
   const products = featuredCollection?.products?.edges || [];
@@ -21,6 +22,7 @@ export default async function Home() {
 
       <main className="flex-1">
         <Hero />
+        <NewColection />
         <AIPreview />
         <FeaturedProducts
           products={products}

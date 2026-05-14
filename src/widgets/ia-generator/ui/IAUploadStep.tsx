@@ -207,13 +207,13 @@ export function IAUploadStep({
         });
       }
 
-      // await generate({
-      //   petId,
-      //   petPhotoId: petPhotoId ?? undefined,
-      //   styleId,
-      //   formatId,
-      //   productRefId,
-      // });
+      await generate({
+        petId,
+        petPhotoId: petPhotoId ?? undefined,
+        styleId,
+        formatId,
+        productRefId,
+      });
 
       onNext();
     } catch {
