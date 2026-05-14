@@ -7,7 +7,6 @@ interface BackendStyle {
   id: string;
   name: string;
   displayName: string;
-  isPremium: boolean;
   previewUrl: string | null;
   images: { imageUrl: string }[];
 }
@@ -39,7 +38,6 @@ export function useAllStyles(): UseAllStylesResult {
         const mapped: Style[] = data.map((s) => ({
           id: s.id,
           name: s.displayName,
-          label: s.isPremium ? "Premium" : undefined,
           img:
             s.previewUrl ??
             // s.images[0]?.imageUrl ??

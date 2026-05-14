@@ -88,11 +88,6 @@ export function IAStyleStep({
                       <div className="absolute inset-0 bg-linear-to-t from-black/60 via-transparent to-transparent opacity-60" />
                     </div>
                     <div className="absolute bottom-0 left-0 w-full p-3 text-white">
-                      {style.label && (
-                        <span className="block text-[10px] font-bold opacity-90 uppercase tracking-widest mb-0.5">
-                          {style.label}
-                        </span>
-                      )}
                       <span className="block text-base font-bold leading-tight">
                         {style.name}
                       </span>
