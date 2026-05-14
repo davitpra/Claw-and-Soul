@@ -14,6 +14,16 @@
 
   --font-display: var(--font-epilogue), ui-sans-serif, system-ui;
   --font-body: var(--font-lato), ui-sans-serif, system-ui;
+
+  --container-max-w: 90rem;
+  --container-padding-x: 1.5rem;
+  --container-padding-x-lg: 2.5rem;
+}
+
+.container-site {
+  width: 100%;
+  max-width: var(--container-max-w);
+  margin-inline: auto;
 }
 
 :root {

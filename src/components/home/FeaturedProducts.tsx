@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { Container } from "@/components/ui/Container";
 
 interface ProductProps {
   products: any[];
@@ -11,7 +12,7 @@ export default function FeaturedProducts({
 }: ProductProps) {
   return (
     <section className="py-20 bg-cream">
-      <div className="mx-auto max-w-[1280px] px-6 lg:px-10">
+      <Container>
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-12">
           <div>
             <h2 className="text-3xl font-black text-slate-dark md:text-4xl">
@@ -72,7 +73,7 @@ export default function FeaturedProducts({
             );
           })}
         </div>
-      </div>
+      </Container>
     </section>
   );
 }

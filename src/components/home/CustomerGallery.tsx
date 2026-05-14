@@ -1,3 +1,5 @@
+import { Container } from "@/components/ui/Container";
+
 export default function CustomerGallery() {
   const galleryItems = [
     {
@@ -34,7 +36,7 @@ export default function CustomerGallery() {
 
   return (
     <section className="py-20 bg-[#E6E2DC]">
-      <div className="mx-auto max-w-[1280px] px-6 lg:px-10">
+      <Container>
         <div className="mb-12 text-center">
           <h2 className="text-3xl font-black text-slate-dark md:text-4xl">
             Customer Gallery
@@ -63,7 +65,7 @@ export default function CustomerGallery() {
             </div>
           ))}
         </div>
-      </div>
+      </Container>
     </section>
   );
 }

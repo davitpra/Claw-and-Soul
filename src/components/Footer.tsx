@@ -1,9 +1,10 @@
 import Link from "next/link";
+import { Container } from "@/components/ui/Container";
 
 export default function Footer() {
   return (
     <footer className="bg-slate-dark text-white py-16">
-      <div className="mx-auto max-w-[1280px] px-6 lg:px-10">
+      <Container>
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-24">
           <div>
             <h3 className="text-2xl font-bold mb-6">Stay Connected</h3>
@@ -133,7 +134,7 @@ export default function Footer() {
         <div className="border-t border-white/10 mt-16 pt-8 text-center text-white/40 text-sm">
           <p>© 2024 Claw and Soul. All rights reserved.</p>
         </div>
-      </div>
+      </Container>
     </footer>
   );
 }

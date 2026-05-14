@@ -1,3 +1,5 @@
+import { Container } from "@/components/ui/Container";
+
 export default function Reviews() {
   const reviews = [
     {
@@ -22,7 +24,7 @@ export default function Reviews() {
 
   return (
     <section className="py-20 bg-white">
-      <div className="mx-auto max-w-[1280px] px-6 lg:px-10">
+      <Container>
         <h2 className="text-3xl font-black text-slate-dark md:text-4xl text-center mb-16">
           Pawsitive Reviews
         </h2>
@@ -58,7 +60,7 @@ export default function Reviews() {
             </div>
           ))}
         </div>
-      </div>
+      </Container>
     </section>
   );
 }

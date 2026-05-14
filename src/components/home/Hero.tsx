@@ -1,9 +1,10 @@
 import Link from "next/link";
+import { Container } from "@/components/ui/Container";
 
 export default function Hero() {
   return (
     <section className="w-full bg-cream py-12 md:py-20 lg:py-28">
-      <div className="mx-auto max-w-[1280px] px-6 lg:px-10">
+      <Container>
         <div className="grid grid-cols-1 gap-12 lg:grid-cols-2 lg:items-center">
           <div className="flex flex-col gap-6 order-2 lg:order-1">
             <div className="flex flex-col gap-4">
@@ -92,7 +93,7 @@ export default function Hero() {
             </div>
           </div>
         </div>
-      </div>
+      </Container>
     </section>
   );
 }

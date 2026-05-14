@@ -72,7 +72,7 @@ export default function GalleryPage() {
         </section>
 
         {/* Style Grid */}
-        <section className="max-w-[1280px] mx-auto px-4 pb-32">
+        <section className="container-site px-4 pb-32">
           <div className="columns-1 sm:columns-2 lg:columns-3 gap-6 space-y-6">
             {STYLES.map((style) => (
               <div

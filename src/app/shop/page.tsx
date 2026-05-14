@@ -77,7 +77,7 @@ export default function ShopPage() {
       <Navbar />
 
       <main className="flex-grow w-full px-4 md:px-10 py-10 md:py-16">
-        <div className="max-w-7xl mx-auto flex flex-col items-center">
+        <div className="container-site flex flex-col items-center">
           {/* Hero Section */}
           <div className="text-center mb-10 md:mb-14 max-w-2xl">
             <span className="text-primary font-bold tracking-widest text-xs uppercase mb-3 block">
