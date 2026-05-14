@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { useAuthFetch } from "@/hooks/useAuthFetch";
+import { useGenerateImage } from "@/hooks/useGenerateImage";
 
 interface PetPhoto {
   id: string;
@@ -18,32 +19,46 @@ interface Pet {
   photos?: PetPhoto[];
 }
 
-interface PetReadyPayload {
-  petId: string;
-  petPhotoId: string | null;
-  petPhotoUrl: string | null;
-}
-
 interface IAUploadStepProps {
   photos: File[];
   onPhotosChange: (files: File[]) => void;
-  onPetReady: (payload: PetReadyPayload) => void;
+  styleId: string | null;
+  productRefId: string | null;
+  formatId: string | null;
   onNext: () => void;
 }
 
 const SPECIES_OPTIONS = ["dog", "cat", "bird", "rabbit", "other"];
 const MAX_PHOTOS = 1;
 
+/**
+ * Componente IAUploadStep
+ *
+ * Este componente representa el primer paso en el flujo de generación de IA.
+ * Permite al usuario subir una foto de su mascota o seleccionar una mascota existente.
+ * También gestiona los detalles de la mascota (nombre, especie, raza, edad).
+ *
+ * @param props.photos - Lista de fotos subidas por el usuario.
+ * @param props.onPhotosChange - Callback que se ejecuta cuando cambian las fotos.
+ * @param props.styleId - ID del estilo de arte seleccionado (viene de la URL).
+ * @param props.productRefId - ID del producto base seleccionado (viene de la URL).
+ * @param props.formatId - ID del formato del producto (viene de la URL).
+ * @param props.onNext - Callback para avanzar al siguiente paso del flujo (generación de IA).
+ */
 export function IAUploadStep({
   photos,
   onPhotosChange,
-  onPetReady,
+  styleId,
+  productRefId,
+  formatId,
   onNext,
 }: IAUploadStepProps) {
   const { get, post, authFetchJSON } = useAuthFetch();
+  const { generate } = useGenerateImage();
 
-  const [pets, setPets] = useState<Pet[]>([]);
-  const [activePet, setActivePet] = useState<Pet | null>(null);
+  // Estados principales del componente
+  const [pets, setPets] = useState<Pet[]>([]); // Lista de mascotas del usuario
+  const [activePet, setActivePet] = useState<Pet | null>(null); // Mascota seleccionada actualmente
   const [submitting, setSubmitting] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
   const [previews, setPreviews] = useState<string[]>([]);
@@ -56,6 +71,7 @@ export function IAUploadStep({
     age: "",
   });
 
+  // Carga inicial de las mascotas del usuario desde el backend
   useEffect(() => {
     get<unknown>("/pets")
       .then((res) => {
@@ -75,6 +91,7 @@ export function IAUploadStep({
     return () => urls.forEach((u) => URL.revokeObjectURL(u));
   }, [photos]);
 
+  // Funciones para manejar la subida de fotos (drag & drop y selección manual)
   const addPhotos = useCallback(
     (incoming: File[]) => {
       const images = incoming.filter((f) => f.type.startsWith("image/"));
@@ -122,11 +139,12 @@ export function IAUploadStep({
     formData.append("photo", photos[0]);
     const result = await authFetchJSON<PetPhoto>(
       `/pets/${petId}/photos?isPrimary=true`,
-      { method: "POST", body: formData }
+      { method: "POST", body: formData },
     );
     return result;
   };
 
+  // Maneja el envío del formulario: guarda o actualiza la mascota, sube la foto y llama a la API de generación de IA
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setFormError(null);
@@ -134,8 +152,17 @@ export function IAUploadStep({
       setFormError("Pet name is required.");
       return;
     }
+    if (!styleId || !productRefId || !formatId) {
+      setFormError(
+        "Missing product or format info. Please start from the catalog link.",
+      );
+      return;
+    }
     setSubmitting(true);
     try {
+      let petId: string;
+      let petPhotoId: string | null = null;
+
       if (isExistingPet) {
         const raw = await authFetchJSON<{ data: Pet } | Pet>(
           `/pets/${activePet.id}`,
@@ -155,14 +182,10 @@ export function IAUploadStep({
           activePet.photos?.find((p) => p.isPrimary) ??
           activePet.photos?.[0] ??
           null;
-        onPetReady({
-          petId: activePet.id,
-          petPhotoId: newPhoto?.id ?? existingPrimary?.id ?? null,
-          petPhotoUrl: newPhoto?.photoUrl ?? existingPrimary?.photoUrl ?? null,
-        });
+        petId = activePet.id;
+        petPhotoId = newPhoto?.id ?? existingPrimary?.id ?? null;
         setPets((prev) => prev.map((p) => (p.id === updated.id ? updated : p)));
         setActivePet(updated);
-        onNext();
       } else {
         const raw = await post<{ data: Pet } | Pet>("/pets", {
           name: form.name.trim(),
@@ -172,11 +195,8 @@ export function IAUploadStep({
         });
         const newPet = "data" in raw ? raw.data : raw;
         const newPhoto = await uploadPhoto(newPet.id);
-        onPetReady({
-          petId: newPet.id,
-          petPhotoId: newPhoto?.id ?? null,
-          petPhotoUrl: newPhoto?.photoUrl ?? null,
-        });
+        petId = newPet.id;
+        petPhotoId = newPhoto?.id ?? null;
         setPets((prev) => [...prev, newPet]);
         setActivePet(newPet);
         setForm({
@@ -185,8 +205,17 @@ export function IAUploadStep({
           breed: newPet.breed ?? "",
           age: newPet.age != null ? String(newPet.age) : "",
         });
-        onNext();
       }
+
+      // await generate({
+      //   petId,
+      //   petPhotoId: petPhotoId ?? undefined,
+      //   styleId,
+      //   formatId,
+      //   productRefId,
+      // });
+
+      onNext();
     } catch {
       setFormError(
         isExistingPet
@@ -360,7 +389,12 @@ export function IAUploadStep({
                         selectPet(pet);
                       } else {
                         setActivePet(null);
-                        setForm({ name: "", species: "dog", breed: "", age: "" });
+                        setForm({
+                          name: "",
+                          species: "dog",
+                          breed: "",
+                          age: "",
+                        });
                         setExistingPhotoUrl(null);
                       }
                     }}
@@ -449,9 +483,12 @@ export function IAUploadStep({
             {(() => {
               const needsPhoto = photos.length === 0 && !existingPhotoUrl;
               const needsName = !isExistingPet && !form.name.trim();
-              const disabled = needsPhoto || needsName || submitting;
-              const hint =
-                needsPhoto && needsName
+              const missingParams = !styleId || !productRefId || !formatId;
+              const disabled =
+                needsPhoto || needsName || missingParams || submitting;
+              const hint = missingParams
+                ? "Missing product or format info — use a catalog link"
+                : needsPhoto && needsName
                   ? "Upload a photo and enter a pet name to continue"
                   : needsPhoto
                     ? "Upload at least one photo to continue"

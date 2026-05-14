@@ -6,7 +6,7 @@ const STEP_LABELS: Record<number, string> = {
   1: "Elige tu estilo",
   2: "Crea tu cuenta",
   3: "Sube tu foto",
-  4: "Personaliza y genera",
+  4: "¡Listo!",
 };
 
 const TOTAL_STEPS = 4;
