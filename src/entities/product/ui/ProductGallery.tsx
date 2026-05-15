@@ -49,7 +49,7 @@ export default function ProductGallery({
   return (
     <div className="lg:col-span-6 flex flex-col gap-4">
       {/* Main Image Container */}
-      <div className="w-full aspect-[3/4] rounded-2xl overflow-hidden bg-white shadow-lg relative group">
+      <div className="w-full aspect-[3/4] rounded-xl overflow-hidden bg-white shadow-lg relative group">
         <Image
           src={mainImage}
           alt={product.title}

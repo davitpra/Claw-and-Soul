@@ -212,7 +212,7 @@ export default function ProductVariantSelector({
                     `}
                   >
                     {/* Variant Image */}
-                    <div className="relative w-full aspect-square rounded-2xl overflow-hidden bg-background-light border border-text-main/5 group-hover:shadow-inner">
+                    <div className="relative w-full aspect-square rounded-xl overflow-hidden bg-background-light border border-text-main/5 group-hover:shadow-inner">
                       {variant.image ? (
                         <Image
                           src={variant.image.url}

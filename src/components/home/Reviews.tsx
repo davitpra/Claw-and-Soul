@@ -32,7 +32,7 @@ export default function Reviews() {
           {reviews.map((review, i) => (
             <div
               key={i}
-              className="bg-cream/30 p-8 rounded-2xl border border-cream flex flex-col gap-6"
+              className="bg-cream/30 p-8 rounded-xl border border-cream flex flex-col gap-6"
             >
               <div className="flex text-yellow-500">
                 {[...Array(5)].map((_, i) => (

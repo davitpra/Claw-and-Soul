@@ -81,7 +81,7 @@ export default function GalleryPage() {
                 onClick={() => setSelectedStyle(style.id)}
               >
                 <div
-                  className={`relative group cursor-pointer overflow-hidden rounded-2xl bg-white shadow-sm transition-all duration-300 border-4 ${
+                  className={`relative group cursor-pointer overflow-hidden rounded-xl bg-white shadow-sm transition-all duration-300 border-4 ${
                     selectedStyle === style.id
                       ? "border-primary"
                       : "border-transparent"

@@ -123,7 +123,7 @@ export default function CartPage() {
                         className="grid grid-cols-1 md:grid-cols-12 gap-6 md:gap-4 items-center py-8 border-b border-slate-dark/10 last:border-none relative group"
                       >
                         <div className="col-span-1 md:col-span-6 flex gap-6">
-                          <div className="w-24 h-24 md:w-32 md:h-32 rounded-2xl overflow-hidden bg-white shrink-0 shadow-sm border border-slate-dark/5">
+                          <div className="w-24 h-24 md:w-32 md:h-32 rounded-xl overflow-hidden bg-white shrink-0 shadow-sm border border-slate-dark/5">
                             <img
                               src={item.img}
                               alt={item.name}
@@ -266,7 +266,7 @@ export default function CartPage() {
               </div>
 
               {/* Promo Code or similar */}
-              <div className="bg-cream rounded-2xl p-6 border border-slate-dark/5">
+              <div className="bg-cream rounded-xl p-6 border border-slate-dark/5">
                 <p className="text-sm font-bold text-slate-dark mb-3">
                   Have a promo code?
                 </p>

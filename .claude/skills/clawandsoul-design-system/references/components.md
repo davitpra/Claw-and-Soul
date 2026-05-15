@@ -120,7 +120,7 @@ Referencia: `src/components/home/FeaturedProducts.tsx:42-73`
   {/* Imagen con hover scale */}
   <Link
     href={`/product/${handle}`}
-    className="overflow-hidden rounded-2xl bg-white shadow-sm transition-all hover:shadow-md"
+    className="overflow-hidden rounded-xl bg-white shadow-sm transition-all hover:shadow-md"
   >
     <div
       className="aspect-[4/5] w-full bg-cover bg-center transition-transform duration-500 group-hover:scale-110"

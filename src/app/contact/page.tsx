@@ -37,7 +37,7 @@ export default function Contact() {
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 px-4">
               {/* Form Section */}
               <div className="lg:col-span-7 flex flex-col">
-                <div className="bg-white rounded-2xl p-6 md:p-10 shadow-sm border border-[#EBE9E4]">
+                <div className="bg-white rounded-xl p-6 md:p-10 shadow-sm border border-[#EBE9E4]">
                   <form className="flex flex-col gap-6">
                     <div className="flex flex-col md:flex-row gap-6">
                       <label className="flex flex-col flex-1 gap-2">
@@ -103,7 +103,7 @@ export default function Contact() {
 
               {/* Sidebar Info */}
               <div className="lg:col-span-5 flex flex-col gap-6">
-                <div className="bg-[#E6E2DC] rounded-2xl p-8 flex flex-col gap-8">
+                <div className="bg-[#E6E2DC] rounded-xl p-8 flex flex-col gap-8">
                   <h3 className="text-xl font-bold text-text-main">
                     Other ways to connect
                   </h3>
@@ -204,7 +204,7 @@ export default function Contact() {
                   </div>
                 </div>
                 {/* Map Overlay */}
-                <div className="h-64 w-full rounded-2xl overflow-hidden shadow-sm relative group cursor-pointer">
+                <div className="h-64 w-full rounded-xl overflow-hidden shadow-sm relative group cursor-pointer">
                   <img
                     alt="Map showing headquarters location in Pet City"
                     className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105 filter grayscale hover:grayscale-0"

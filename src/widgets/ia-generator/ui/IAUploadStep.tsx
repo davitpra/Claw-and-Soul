@@ -242,7 +242,7 @@ export function IAUploadStep({
 
             {/* Drop zone */}
             <div
-              className={`group relative rounded-2xl overflow-hidden cursor-pointer transition-all duration-300 flex-1 min-h-50 ${
+              className={`group relative rounded-xl overflow-hidden cursor-pointer transition-all duration-300 flex-1 min-h-50 ${
                 displayPhoto
                   ? ""
                   : `border-2 border-dashed flex flex-col items-center justify-center gap-3 ${

@@ -49,7 +49,7 @@ export default function CustomerGallery() {
           {galleryItems.map((item, i) => (
             <div
               key={i}
-              className="break-inside-avoid rounded-2xl overflow-hidden shadow-md bg-white p-2"
+              className="break-inside-avoid rounded-xl overflow-hidden shadow-md bg-white p-2"
             >
               <div className="w-full bg-gray-100 rounded-xl overflow-hidden">
                 <img

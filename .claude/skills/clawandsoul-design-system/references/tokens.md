@@ -52,10 +52,10 @@ bg-white/50          → input en barra de búsqueda
 
 | Clase | Valor | Uso |
 |-------|-------|-----|
-| `rounded-xl` | 12px | **Default** — botones, inputs, modales, chips, tooltips |
-| `rounded-2xl` | 16px | Cards de producto, imágenes Hero, contenedores grandes |
-| `rounded-[2rem]` | 32px | Solo imagen hero (`rounded-[2rem]`) |
+| `rounded-xl` | 12px | **Default universal** — botones, inputs, modales, chips, tooltips, cards, imágenes, contenedores |
 | `rounded-full` | 9999px | Avatares, badges circulares, logo circle |
+
+> **Regla**: `rounded-2xl` está prohibido. Usar siempre `rounded-xl`.
 
 ---
 

@@ -41,7 +41,7 @@ export function IAGenerationCanvas({
 
   if (status === "completed" && imageUrl) {
     return (
-      <div className="relative w-full aspect-[16/9] md:aspect-[2.35/1] max-h-[550px] rounded-2xl overflow-hidden shadow-xl select-none border-4 border-white bg-slate-100">
+      <div className="relative w-full aspect-[16/9] md:aspect-[2.35/1] max-h-[550px] rounded-xl overflow-hidden shadow-xl select-none border-4 border-white bg-slate-100">
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
           alt="Foto original de tu mascota"
@@ -73,7 +73,7 @@ export function IAGenerationCanvas({
 
   if (status === "failed") {
     return (
-      <div className="w-full aspect-[16/9] md:aspect-[2.35/1] max-h-[550px] rounded-2xl overflow-hidden shadow-xl border-4 border-red-100 bg-red-50 flex flex-col items-center justify-center gap-4 p-8">
+      <div className="w-full aspect-[16/9] md:aspect-[2.35/1] max-h-[550px] rounded-xl overflow-hidden shadow-xl border-4 border-red-100 bg-red-50 flex flex-col items-center justify-center gap-4 p-8">
         <span className="material-symbols-outlined text-5xl text-red-400">
           error
         </span>
@@ -93,7 +93,7 @@ export function IAGenerationCanvas({
 
   if (isCreating || status === "pending" || status === "processing") {
     return (
-      <div className="relative w-full aspect-[16/9] md:aspect-[2.35/1] max-h-[550px] rounded-2xl overflow-hidden shadow-xl border-4 border-white bg-slate-100">
+      <div className="relative w-full aspect-[16/9] md:aspect-[2.35/1] max-h-[550px] rounded-xl overflow-hidden shadow-xl border-4 border-white bg-slate-100">
         {petPhotoUrl && (
           // eslint-disable-next-line @next/next/no-img-element
           <img
@@ -127,7 +127,7 @@ export function IAGenerationCanvas({
 
   // idle
   return (
-    <div className="relative w-full aspect-[16/9] md:aspect-[2.35/1] max-h-[550px] rounded-2xl overflow-hidden shadow-xl border-4 border-white bg-slate-100 flex flex-col items-center justify-center gap-5 p-8">
+    <div className="relative w-full aspect-[16/9] md:aspect-[2.35/1] max-h-[550px] rounded-xl overflow-hidden shadow-xl border-4 border-white bg-slate-100 flex flex-col items-center justify-center gap-5 p-8">
       {petPhotoUrl && (
         // eslint-disable-next-line @next/next/no-img-element
         <img

@@ -1,7 +1,7 @@
 export default function ProductEssence() {
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center py-12 border-t border-text-main/10">
-      <div className="relative rounded-2xl overflow-hidden aspect-[4/3] shadow-lg group order-2 lg:order-1">
+      <div className="relative rounded-xl overflow-hidden aspect-[4/3] shadow-lg group order-2 lg:order-1">
         <div
           className="w-full h-full bg-center bg-cover transition-transform duration-700 group-hover:scale-105"
           style={{

@@ -11,7 +11,7 @@ Guía de referencia rápida para construir UI consistente en este repo. La fuent
 
 - **Estética warm & artesanal** — fondos cream (`#f0eee9`) en secciones, no blanco puro como fondo de página.
 - **Brand teal para CTAs** — `bg-primary` (`#448da6`) es el único color de acción primaria; `hover:bg-primary-dark` para estados hover.
-- **Esquinas suaves por defecto** — `rounded-xl` (16px) en casi todo; `rounded-2xl` para cards grandes; `rounded-full` para avatares/badges circulares.
+- **Esquinas suaves por defecto** — `rounded-xl` (16px) en todo: botones, inputs, cards, imágenes, modales, chips; `rounded-full` solo para avatares/badges circulares. **Nunca usar `rounded-2xl`.**
 - **Sombras sutiles** — `shadow-sm` en reposo → `shadow-md` en hover; `shadow-lg shadow-primary/20` solo en el CTA principal por página.
 - **Transiciones consistentes** — `transition-all` es el default; `duration-300` implícito en Tailwind; usar `hover:scale-105` en CTAs primarios.
 - **Mobile-first** — todas las clases base son móvil; breakpoints `sm:`, `md:`, `lg:`, `xl:` para escalar.
@@ -23,7 +23,7 @@ Guía de referencia rápida para construir UI consistente en este repo. La fuent
 | Hacer | Evitar |
 |-------|--------|
 | `bg-primary`, `text-text-main`, `bg-cream` | Colores hex hardcodeados fuera de `globals.css` |
-| `rounded-xl` como radio base | `rounded-lg` o `rounded-md` para elementos interactivos |
+| `rounded-xl` como radio base en todo (cards, imágenes, botones, inputs) | `rounded-2xl`, `rounded-lg` o `rounded-md` para elementos interactivos |
 | `border border-[#E0DED9]` en bordes sutiles | Otros grises inventados para bordes |
 | Epilogue para headings (`font-display`) | Fuentes distintas a Epilogue/Lato |
 | `shadow-sm` → `hover:shadow-md` | Sombras muy dramáticas en elementos secundarios |
@@ -44,7 +44,7 @@ Lee solo lo que necesites para la tarea:
 ## Checklist de revisión (para validar UI existente)
 
 - [ ] ¿Todos los colores usan clases Tailwind de los tokens (`bg-primary`, `text-text-muted`, etc.) y no hex hardcodeados?
-- [ ] ¿Los radios son `rounded-xl` o `rounded-2xl`? (no `rounded-md` en botones o inputs)
+- [ ] ¿Los radios son `rounded-xl` en todo (cards, imágenes, botones, inputs)? No debe haber `rounded-2xl` ni `rounded-md`.
 - [ ] ¿Los bordes sutiles usan `border-[#E0DED9]`?
 - [ ] ¿Los hover en buttons tienen `hover:bg-primary-dark` (o `hover:bg-gray-50` en secundarios)?
 - [ ] ¿Las sombras escalan de `shadow-sm` a `shadow-md` en hover?

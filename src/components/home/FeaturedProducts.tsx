@@ -13,10 +13,10 @@ export default function FeaturedProducts() {
       <Container>
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-12">
           <div>
-            <h2 className="text-3xl font-black text-slate-dark md:text-4xl">
+            <h2 className="text-3xl font-black text-slate-dark md:text-4xl font-display">
               Featured Collections
             </h2>
-            <p className="mt-2 text-slate-dark/70">
+            <p className="mt-2 text-slate-dark/60">
               Discover our most popular personalized products.
             </p>
           </div>
@@ -41,7 +41,7 @@ export default function FeaturedProducts() {
                     key={i}
                     className="flex-[0_0_80%] sm:flex-[0_0_48%] md:flex-[0_0_35%] lg:flex-[0_0_25%] min-w-0 flex flex-col gap-4 animate-pulse"
                   >
-                    <div className="aspect-[4/5] w-full rounded-2xl bg-slate-dark/10" />
+                    <div className="aspect-[4/5] w-full bg-slate-dark/10" />
                     <div className="flex flex-col gap-2">
                       <div className="h-5 w-3/4 rounded bg-slate-dark/10" />
                       <div className="h-4 w-1/2 rounded bg-slate-dark/10" />
@@ -55,7 +55,7 @@ export default function FeaturedProducts() {
                   >
                     <Link
                       href={`/product/${product.shopifyHandle}`}
-                      className="overflow-hidden rounded-2xl bg-white shadow-sm transition-all hover:shadow-md"
+                      className="overflow-hidden bg-white shadow-sm transition-all hover:shadow-md"
                     >
                       <div
                         className="aspect-[4/5] w-full bg-cover bg-center transition-transform duration-500 group-hover:scale-110"
@@ -64,7 +64,7 @@ export default function FeaturedProducts() {
                     </Link>
                     <div className="flex flex-col gap-1 flex-1">
                       <div className="flex items-center justify-between">
-                        <h3 className="text-lg font-bold text-slate-dark line-clamp-1">
+                        <h3 className="text-lg font-bold text-slate-dark line-clamp-1 font-display">
                           {product.name}
                         </h3>
                         <span className="text-base font-bold text-slate-dark">
@@ -73,7 +73,7 @@ export default function FeaturedProducts() {
                       </div>
                       <Link
                         href={`/product/${product.shopifyHandle}`}
-                        className="mt-auto w-full text-center rounded-xl bg-primary py-3 text-sm font-bold text-white shadow-sm transition-colors hover:bg-primary-dark"
+                        className="mt-auto w-full text-center rounded-xl bg-primary py-3 text-sm font-bold text-white shadow-sm transition-all hover:bg-primary-dark"
                       >
                         See Details
                       </Link>
