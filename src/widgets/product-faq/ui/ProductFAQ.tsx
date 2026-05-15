@@ -1,5 +1,7 @@
 "use client";
 
+import Accordion from "@/shared/ui/Accordion";
+
 interface FAQItem {
   q: string;
   a: string;
@@ -18,22 +20,17 @@ export default function ProductFAQ({ faqs }: ProductFAQProps) {
         </h2>
         <div className="flex flex-col gap-4 max-w-3xl mx-auto">
           {faqs.map((faq, i) => (
-            <details
+            <Accordion
               key={i}
-              className="group bg-white rounded-xl shadow-sm cursor-pointer"
+              title={faq.q}
+              className="bg-white rounded-xl shadow-sm"
+              summaryClassName="w-full p-5"
+              titleClassName="font-bold text-text-main text-lg"
+              iconClassName="text-text-main"
+              contentClassName="px-5 pb-5 pt-0 text-text-main/80 leading-relaxed font-body"
             >
-              <summary className="flex w-full items-center justify-between p-5 list-none">
-                <span className="font-bold text-text-main text-lg">
-                  {faq.q}
-                </span>
-                <span className="material-symbols-outlined text-text-main transition-transform duration-300 group-open:rotate-180">
-                  expand_more
-                </span>
-              </summary>
-              <div className="px-5 pb-5 pt-0 text-text-main/80 leading-relaxed font-body">
-                {faq.a}
-              </div>
-            </details>
+              {faq.a}
+            </Accordion>
           ))}
         </div>
       </div>

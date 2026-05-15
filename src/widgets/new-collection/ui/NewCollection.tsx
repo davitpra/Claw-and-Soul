@@ -9,7 +9,7 @@ function StyleCard({ image }: { image: StyleImage }) {
   return (
     <div className="relative overflow-hidden bg-white shadow-sm flex-[0_0_72%] sm:flex-[0_0_45%] md:flex-[0_0_33%] lg:flex-[0_0_22%] min-w-0">
       <div
-        className="aspect-[4/5] w-full bg-cover bg-center"
+        className="aspect-4/5 w-full bg-cover bg-center"
         style={{ backgroundImage: `url('${image.imageUrl}')` }}
       />
       <span className="absolute top-3 left-3 bg-primary text-white text-[10px] font-bold uppercase px-2 py-1 rounded-full tracking-wider">
@@ -22,7 +22,7 @@ function StyleCard({ image }: { image: StyleImage }) {
 function SkeletonCard() {
   return (
     <div className="flex-[0_0_72%] sm:flex-[0_0_45%] md:flex-[0_0_33%] lg:flex-[0_0_22%] min-w-0 overflow-hidden">
-      <div className="aspect-[4/5] w-full animate-pulse bg-slate-200" />
+      <div className="aspect-4/5 w-full animate-pulse bg-slate-200" />
       <div className="p-3 space-y-2">
         <div className="h-3 w-3/4 mx-auto animate-pulse bg-slate-200 rounded" />
         <div className="h-3 w-1/3 mx-auto animate-pulse bg-slate-200 rounded" />

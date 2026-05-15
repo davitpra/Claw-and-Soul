@@ -8,7 +8,7 @@ import { NewCollection } from "@/widgets/new-collection";
 
 export default async function Home() {
   return (
-    <div className="relative flex min-h-screen w-full flex-col overflow-x-hidden">
+    <div className="relative flex min-h-screen w-full flex-col overflow-x-hidden bg-background-light">
       <Navbar />
 
       <main className="flex-1">

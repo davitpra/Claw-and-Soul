@@ -11,7 +11,7 @@ interface BreadcrumbsProps {
 
 export default function Breadcrumbs({ items }: BreadcrumbsProps) {
   return (
-    <nav className="flex flex-wrap gap-2 items-center text-sm">
+    <nav className="flex flex-wrap gap-2 items-center">
       {items.map((item, index) => (
         <React.Fragment key={index}>
           {item.href ? (

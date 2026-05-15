@@ -97,7 +97,7 @@ export default function ProductDetail({
   ];
 
   return (
-    <div className="relative flex min-h-screen w-full flex-col overflow-x-hidden bg-background-light">
+    <div className="relative flex min-h-screen w-full flex-col overflow-x-hidden bg-white">
       <Navbar />
 
       <main className="flex-1 flex justify-center py-6 md:py-10 px-4 md:px-10 lg:px-40">

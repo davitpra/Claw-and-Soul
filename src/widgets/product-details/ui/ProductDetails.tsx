@@ -5,6 +5,7 @@ import ProductGallery from "@/entities/product/ui/ProductGallery";
 import ProductInfo from "@/entities/product/ui/ProductInfo";
 import ProductVariantSelector from "@/entities/product/ui/ProductVariantSelector";
 import PersonalizeButton from "@/features/personalize/ui/PersonalizeButton";
+import ProductAccordions from "./ProductAccordions";
 import { useEffect } from "react";
 import { useFormatOptions } from "@/hooks/useFormatOptions";
 
@@ -66,6 +67,9 @@ export default function ProductDetails({
             selectedVariantId={selectedVariantId}
             onVariantChange={setSelectedVariantId}
           />
+          <div className="h-px w-full bg-gradient-to-r from-text-main/15 via-text-main/5 to-transparent" />
+
+          <ProductAccordions html={product.description} />
 
           <PersonalizeButton
             product={product}
