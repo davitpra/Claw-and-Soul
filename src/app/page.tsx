@@ -1,8 +1,6 @@
 import { Navbar } from "@/widgets/navbar";
 import { Footer } from "@/widgets/footer";
-import { getCollectionProducts } from "@/lib/shopify";
 import { Hero } from "@/widgets/home-hero";
-import { AIPreview } from "@/widgets/ai-preview";
 import { FeaturedProducts } from "@/widgets/featured-products";
 import { CustomerGallery } from "@/widgets/customer-gallery";
 import { Reviews } from "@/widgets/reviews";
@@ -17,7 +15,6 @@ export default async function Home() {
         <Hero />
         <NewCollection />
         <FeaturedProducts />
-        <AIPreview />
         <CustomerGallery />
         <Reviews />
       </main>

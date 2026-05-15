@@ -1,7 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 
-export default function AIPreview() {
+export default function AIProcess() {
   return (
     <section className="relative overflow-hidden py-20 bg-[#f7f5f0]">
       {/* Subtle grain texture overlay */}

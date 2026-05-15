@@ -9,6 +9,7 @@ import Breadcrumbs from "@/shared/ui/Breadcrumbs";
 import ProductDetails from "@/widgets/product-details/ui/ProductDetails";
 import ProductFAQ from "@/widgets/product-faq/ui/ProductFAQ";
 import ProductEssence from "@/widgets/product-essence/ui/ProductEssence";
+import { AIProcess } from "@/widgets/ai-process";
 
 export default function ProductDetail({
   params,
@@ -110,7 +111,7 @@ export default function ProductDetail({
             mainImage={mainImage}
             setMainImage={setMainImage}
           />
-
+          <AIProcess />
           <ProductEssence />
 
           <ProductFAQ faqs={faqs} />
