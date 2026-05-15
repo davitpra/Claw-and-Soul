@@ -6,18 +6,20 @@ Guía de diseño para el equipo. La fuente de verdad técnica es `src/app/global
 
 ## Paleta de colores
 
-| Nombre | Hex | Uso |
-|--------|-----|-----|
-| Primary | `#448da6` | CTAs, links activos, acentos de marca |
-| Primary Dark | `#367a8f` | Hover sobre Primary |
-| Cream | `#f0eee9` | Fondo de la mayoría de secciones |
-| Slate Dark | `#103642` | Fondo footer, headings principales, texto principal |
-| Text Muted | `#5c747c` | Texto secundario, placeholders |
-| FAQ Background | `#eae7e1` | Solo acordeón FAQ |
-| Border sutil | `#E0DED9` | Bordes de inputs, navbar scrolled, botones secundarios |
+| Nombre         | Hex       | Uso                                                    |
+| -------------- | --------- | ------------------------------------------------------ |
+| Primary        | `#448da6` | CTAs, links activos, acentos de marca                  |
+| Primary Dark   | `#367a8f` | Hover sobre Primary                                    |
+| Cream          | `#f0eee9` | Fondo de la mayoría de secciones                       |
+| Slate Dark     | `#103642` | Fondo footer, headings principales, texto principal    |
+| Text Muted     | `#5c747c` | Texto secundario, placeholders                         |
+| FAQ Background | `#eae7e1` | Solo acordeón FAQ                                      |
+| Border sutil   | `#E0DED9` | Bordes de inputs, navbar scrolled, botones secundarios |
 
 ### Convención de opacidades
+
 Se usan los modificadores de opacidad de Tailwind (`/`) para variantes:
+
 - `text-slate-dark/80` — texto principal suavizado
 - `text-slate-dark/60` — texto descriptivo
 - `bg-primary/10` — badge/tag con color brand
@@ -29,24 +31,24 @@ Se usan los modificadores de opacidad de Tailwind (`/`) para variantes:
 
 ### Fuentes
 
-| Fuente | Rol | Clase CSS | Pesos |
-|--------|-----|-----------|-------|
-| **Epilogue** | Headings, brand | `font-display` | 400, 500, 700, 900 |
-| **Lato** | Cuerpo, UI | `font-body` | 300, 400, 700, 900 |
-| **Material Symbols Outlined** | Iconos | `material-symbols-outlined` | Variable |
+| Fuente                        | Rol             | Clase CSS                   | Pesos              |
+| ----------------------------- | --------------- | --------------------------- | ------------------ |
+| **Epilogue**                  | Headings, brand | `font-display`              | 400, 500, 700, 900 |
+| **Lato**                      | Cuerpo, UI      | `font-body`                 | 300, 400, 700, 900 |
+| **Material Symbols Outlined** | Iconos          | `material-symbols-outlined` | Variable           |
 
 ### Jerarquía
 
-| Elemento | Tamaño | Peso | Fuente |
-|---|---|---|---|
-| H1 hero | `text-4xl` → `text-6xl` | `font-black` (900) | Epilogue |
-| H2 sección | `text-3xl` → `text-4xl` | `font-black` (900) | Epilogue |
-| H3 card | `text-lg` | `font-bold` (700) | Epilogue/Lato |
-| Párrafo lead | `text-lg leading-relaxed` | `font-normal` (400) | Lato |
-| Body regular | `text-base` | `font-normal` (400) | Lato |
-| Label / UI | `text-sm` | `font-medium` o `font-semibold` | Lato |
-| Caption | `text-xs` | `font-medium` | Lato |
-| Eyebrow | `text-sm uppercase tracking-wider` | `font-bold` | Lato |
+| Elemento     | Tamaño                             | Peso                            | Fuente        |
+| ------------ | ---------------------------------- | ------------------------------- | ------------- |
+| H1 hero      | `text-4xl` → `text-6xl`            | `font-black` (900)              | Epilogue      |
+| H2 sección   | `text-3xl` → `text-4xl`            | `font-black` (900)              | Epilogue      |
+| H3 card      | `text-lg`                          | `font-bold` (700)               | Epilogue/Lato |
+| Párrafo lead | `text-lg leading-relaxed`          | `font-normal` (400)             | Lato          |
+| Body regular | `text-base`                        | `font-normal` (400)             | Lato          |
+| Label / UI   | `text-sm`                          | `font-medium` o `font-semibold` | Lato          |
+| Caption      | `text-xs`                          | `font-medium`                   | Lato          |
+| Eyebrow      | `text-sm uppercase tracking-wider` | `font-bold`                     | Lato          |
 
 ---
 
@@ -63,12 +65,14 @@ Se usan los modificadores de opacidad de Tailwind (`/`) para variantes:
 ### Botones
 
 **Primario**: fondo teal, texto blanco, hover scale + dark.
+
 ```
 bg-primary → hover:bg-primary-dark, rounded-xl, shadow-sm → hover:shadow-md
 CTA hero: shadow-lg shadow-primary/20, hover:scale-105
 ```
 
 **Secundario**: fondo blanco, borde `#E0DED9`, hover gray-50.
+
 ```
 bg-white border border-[#E0DED9] → hover:bg-gray-50, rounded-xl
 ```
@@ -76,14 +80,16 @@ bg-white border border-[#E0DED9] → hover:bg-gray-50, rounded-xl
 **Sobre oscuro**: igual que primario pero sin necesidad de shadow.
 
 ### Inputs
+
 ```
 rounded-xl, border border-[#E0DED9], focus:ring-2 focus:ring-primary/30
 Sobre oscuro: bg-white/10 border border-white/20
 ```
 
 ### Cards de producto
+
 ```
-rounded-2xl bg-white shadow-sm → hover:shadow-md
+bg-white shadow-sm → hover:shadow-md
 Imagen: overflow-hidden + group-hover:scale-110 duration-500
 ```
 
@@ -91,11 +97,10 @@ Imagen: overflow-hidden + group-hover:scale-110 duration-500
 
 ## Border Radius
 
-| Radio | Uso |
-|-------|-----|
-| `rounded-xl` | Default — botones, inputs, chips, tooltips, modales |
-| `rounded-2xl` | Cards de producto, imágenes grandes |
-| `rounded-full` | Avatares, badges circulares |
+| Radio          | Uso                                                 |
+| -------------- | --------------------------------------------------- | --- |
+| `rounded-xl`   | Default — botones, inputs, chips, tooltips, modales |     |
+| `rounded-full` | Avatares, badges circulares                         |
 
 ---
 

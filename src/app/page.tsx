@@ -9,13 +9,6 @@ import Reviews from "@/components/home/Reviews";
 import NewColection from "@/components/home/NewColection";
 
 export default async function Home() {
-  const featuredCollection = await getCollectionProducts(
-    "featured-collection",
-    4,
-  );
-
-  const products = featuredCollection?.products?.edges || [];
-
   return (
     <div className="relative flex min-h-screen w-full flex-col overflow-x-hidden">
       <Navbar />
@@ -23,11 +16,8 @@ export default async function Home() {
       <main className="flex-1">
         <Hero />
         <NewColection />
+        <FeaturedProducts />
         <AIPreview />
-        <FeaturedProducts
-          products={products}
-          featuredCollection={featuredCollection}
-        />
         <CustomerGallery />
         <Reviews />
       </main>
