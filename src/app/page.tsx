@@ -1,12 +1,12 @@
-import Navbar from "@/components/Navbar";
-import Footer from "@/components/Footer";
+import { Navbar } from "@/widgets/navbar";
+import { Footer } from "@/widgets/footer";
 import { getCollectionProducts } from "@/lib/shopify";
-import Hero from "@/components/home/Hero";
-import AIPreview from "@/components/home/AIPreview";
-import FeaturedProducts from "@/components/home/FeaturedProducts";
-import CustomerGallery from "@/components/home/CustomerGallery";
-import Reviews from "@/components/home/Reviews";
-import NewColection from "@/components/home/NewColection";
+import { Hero } from "@/widgets/home-hero";
+import { AIPreview } from "@/widgets/ai-preview";
+import { FeaturedProducts } from "@/widgets/featured-products";
+import { CustomerGallery } from "@/widgets/customer-gallery";
+import { Reviews } from "@/widgets/reviews";
+import { NewCollection } from "@/widgets/new-collection";
 
 export default async function Home() {
   return (
@@ -15,7 +15,7 @@ export default async function Home() {
 
       <main className="flex-1">
         <Hero />
-        <NewColection />
+        <NewCollection />
         <FeaturedProducts />
         <AIPreview />
         <CustomerGallery />

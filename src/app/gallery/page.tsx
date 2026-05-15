@@ -1,8 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import Navbar from "@/components/Navbar";
-import Footer from "@/components/Footer";
+import { Navbar } from "@/widgets/navbar";
+import { Footer } from "@/widgets/footer";
 import Link from "next/link";
 
 const STYLES = [

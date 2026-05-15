@@ -1,7 +1,7 @@
 "use client";
 
-import Navbar from "@/components/Navbar";
-import Footer from "@/components/Footer";
+import { Navbar } from "@/widgets/navbar";
+import { Footer } from "@/widgets/footer";
 import { useState, useEffect, use } from "react";
 import { getProduct, ShopifyProduct } from "@/lib/shopify";
 import Link from "next/link";

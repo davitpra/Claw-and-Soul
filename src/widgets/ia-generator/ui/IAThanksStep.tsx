@@ -1,6 +1,6 @@
 "use client";
 
-import { Container } from "@/components/ui/Container";
+import { Container } from "@/shared/ui/Container";
 import { useRouter } from "next/navigation";
 
 interface IAThanksStepProps {

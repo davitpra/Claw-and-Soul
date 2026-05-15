@@ -1,4 +1,4 @@
-import { Container } from "@/components/ui/Container";
+import { Container } from "@/shared/ui/Container";
 
 export default function CustomerGallery() {
   const galleryItems = [
@@ -20,7 +20,7 @@ export default function CustomerGallery() {
     {
       name: "Bella",
       style: "Sketch Style",
-      img: "https://lh3.googleusercontent.com/aida-public/AB6AXuAPoJbdJ3mGVdTSF6H2PDUvf0AvH_QvsDaOySKHVkryQyYOSQuZmFaMH_9YBvpZYw7qX8dM62JxYiZCkPaLHkaFaP8BcgdFSvE1TkMv8j0HJEYyzzzMeWj6CFjxURdL1-GLOw-NhIcRL9xui-6q6kLl-q3nwEbS7RfU7KRmYBAmLVdcf1EP-o7z8OR2JF8CGp9W3Bp_ws0QHSpL3WEgo9n-dvmQMZA-lMT9H5O8PZmFqOcmjYlOZXJBwXgEijqtf-JdquVS4fKkhgsZ",
+      img: "https://lh3.googleusercontent.com/aida-public/AB6AXuAPoJbdJ3mGVdTSF6H2PDUvf0AvH_QvsDaOySKHVkryQyYOSQuZmFaMH_9YBvpZYw7qX8dM62JxYiZCkPaLHkaFaP8BcgdFSvE1TkMv8j0HJEYyzzzMeWj6CFjxURdL1-GLOw-NhIcRL9xui-6q6kLl-q3nwEbS7RfU7KRmYBAmLVdcf1EP-o7z8OR2JF8CGp9W3Bp_ws0QHSpL3WEgo9n-dvmQMZA-lMT9H5O8PJmFqOcmjYlOZXJBwXgEijqtf-JdquVS4fKkhgsZ",
     },
     {
       name: "Sir Whiskers",

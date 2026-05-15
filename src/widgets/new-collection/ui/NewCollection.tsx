@@ -2,8 +2,8 @@
 
 import Link from "next/link";
 import { useStyleImages, StyleImage } from "@/hooks/useStyleImages";
-import { Container } from "@/components/ui/Container";
-import { Carousel } from "@/components/ui/Carousel";
+import { Container } from "@/shared/ui/Container";
+import { Carousel } from "@/shared/ui/Carousel";
 
 function StyleCard({ image }: { image: StyleImage }) {
   return (
@@ -31,7 +31,7 @@ function SkeletonCard() {
   );
 }
 
-export default function NewColection() {
+export default function NewCollection() {
   const { images, isLoading, error } = useStyleImages();
 
   if (!isLoading && (error || images.length === 0)) return null;

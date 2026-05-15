@@ -1,4 +1,4 @@
-import { Container } from "@/components/ui/Container";
+import { Container } from "@/shared/ui/Container";
 
 export default function Reviews() {
   const reviews = [
@@ -45,7 +45,7 @@ export default function Reviews() {
                 ))}
               </div>
               <p className="text-slate-dark/80 italic text-lg">
-                "{review.text}"
+                &ldquo;{review.text}&rdquo;
               </p>
               <div className="flex items-center gap-4 mt-auto">
                 <div

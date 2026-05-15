@@ -1,4 +1,4 @@
-import { ActiveSessions } from "@/components/ActiveSessions";
+import { ActiveSessions } from "@/widgets/active-sessions";
 
 export default function SessionsPage() {
   return (
