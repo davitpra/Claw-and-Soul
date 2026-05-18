@@ -7,6 +7,7 @@ interface PersonalizeButtonProps {
   product: ShopifyProduct;
   selectedVariant: ShopifyVariant | undefined;
   productRefId?: string;
+  styleId?: string;
   formatId?: string;
   isCompatLoading?: boolean;
   hasBackendMapping?: boolean;
@@ -17,6 +18,7 @@ export default function PersonalizeButton({
   product,
   selectedVariant,
   productRefId,
+  styleId,
   formatId,
   isCompatLoading = false,
   hasBackendMapping = false,
@@ -37,6 +39,7 @@ export default function PersonalizeButton({
     const params = new URLSearchParams();
     if (productRefId) params.set("product_ref_id", productRefId);
     if (formatId) params.set("format_id", formatId);
+    if (styleId) params.set("style_id", styleId);
     const query = params.toString();
     router.push(`/ia-generator${query ? `?${query}` : ""}`);
   };

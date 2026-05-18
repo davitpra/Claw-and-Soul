@@ -6,11 +6,7 @@ import { useState, useEffect, use } from "react";
 import { getProduct, ShopifyProduct } from "@/lib/shopify";
 import Link from "next/link";
 import Breadcrumbs from "@/shared/ui/Breadcrumbs";
-import ProductDetails from "@/widgets/product-details/ui/ProductDetails";
-import ProductFAQ from "@/widgets/product-faq/ui/ProductFAQ";
-import ProductEssence from "@/widgets/product-essence/ui/ProductEssence";
-import { AIProcess } from "@/widgets/ai-process";
-import { StyleCollection } from "@/widgets/collection";
+import { ProductPageTemplate } from "@/widgets/product-templates";
 
 export default function ProductDetail({
   params,
@@ -103,29 +99,20 @@ export default function ProductDetail({
 
       <main className="flex-1 flex flex-col">
         <div className="flex justify-center py-6 md:py-10 px-4 md:px-10 lg:px-40">
-          <div className="layout-content-container flex flex-col max-w-[1200px] w-full gap-8">
+          <div className="layout-content-container flex flex-col max-w-[1200px] w-full">
             <Breadcrumbs items={breadcrumbItems} />
-
-            <ProductDetails
-              product={product}
-              selectedVariantId={selectedVariantId}
-              setSelectedVariantId={setSelectedVariantId}
-              mainImage={mainImage}
-              setMainImage={setMainImage}
-            />
           </div>
         </div>
 
-        <StyleCollection handle={handle} />
-
-        <AIProcess />
-
-        <div className="flex justify-center py-6 md:py-10 px-4 md:px-10 lg:px-40">
-          <div className="layout-content-container flex flex-col max-w-[1200px] w-full gap-8">
-            <ProductEssence />
-            <ProductFAQ faqs={faqs} />
-          </div>
-        </div>
+        <ProductPageTemplate
+          product={product}
+          selectedVariantId={selectedVariantId}
+          setSelectedVariantId={setSelectedVariantId}
+          mainImage={mainImage}
+          setMainImage={setMainImage}
+          handle={handle}
+          faqs={faqs}
+        />
       </main>
 
       <Footer />

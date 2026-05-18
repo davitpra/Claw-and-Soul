@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo, Suspense } from "react";
+import { useState, useMemo, useEffect, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
 import {
@@ -17,11 +17,12 @@ import { useCompatStyles } from "@/hooks/useCompatStyles";
 import { useAllStyles } from "@/hooks/useAllStyles";
 
 function IAGeneratorContent() {
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, isLoading: isAuthLoading } = useAuth();
   const searchParams = useSearchParams();
 
   const productRefIdFromUrl = searchParams.get("product_ref_id");
   const formatIdFromUrl = searchParams.get("format_id");
+  const styleIdFromUrl = searchParams.get("style_id");
 
   const [pickedProductRefId, setPickedProductRefId] = useState<string | null>(null);
   const [pickedFormatId, setPickedFormatId] = useState<string | null>(null);
@@ -54,9 +55,31 @@ function IAGeneratorContent() {
     return displayStyles[0] ?? null;
   }, [displayStyles, isLoadingStyles]);
 
+  const preselectedStyle: Style | null = useMemo(() => {
+    if (!styleIdFromUrl || isLoadingStyles) return null;
+    return displayStyles.find((s) => s.id === styleIdFromUrl) ?? null;
+  }, [styleIdFromUrl, displayStyles, isLoadingStyles]);
+
   const [step, setStep] = useState(1);
   const [photos, setPhotos] = useState<File[]>([]);
   const [selectedStyle, setSelectedStyle] = useState<Style | null>(null);
+  const [styleSkipResolved, setStyleSkipResolved] = useState(false);
+
+  useEffect(() => {
+    if (!styleIdFromUrl) {
+      setStyleSkipResolved(true);
+      return;
+    }
+    if (needsProductSelection || isLoadingStyles || isAuthLoading) return;
+    if (styleSkipResolved) return;
+
+    if (preselectedStyle) {
+      setSelectedStyle(preselectedStyle);
+      setStep((prev) => (prev === 1 ? (isAuthenticated ? 3 : 2) : prev));
+    }
+    setStyleSkipResolved(true);
+  }, [styleIdFromUrl, needsProductSelection, isLoadingStyles, isAuthLoading,
+      preselectedStyle, isAuthenticated, styleSkipResolved]);
 
   const resolvedStyle: Style | null = useMemo(() => {
     if (selectedStyle && displayStyles.find((s) => s.id === selectedStyle.id)) {
@@ -76,6 +99,12 @@ function IAGeneratorContent() {
             setPickedFormatId(fmtId);
           }}
         />
+      ) : styleIdFromUrl && !styleSkipResolved ? (
+        <div className="flex-1 flex items-center justify-center">
+          <span className="material-symbols-outlined animate-spin text-4xl text-primary">
+            progress_activity
+          </span>
+        </div>
       ) : (
         <>
           {step === 1 && (

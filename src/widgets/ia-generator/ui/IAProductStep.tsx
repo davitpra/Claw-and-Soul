@@ -107,7 +107,7 @@ export function IAProductStep({ onSelect }: IAProductStepProps) {
           No products found in your Shopify store.
         </div>
       ) : (
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 md:gap-8 items-start">
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6 pt-20">
           {products.map((catalogProduct) => {
             const isSelected = selectedHandle === catalogProduct.handle;
             return (
@@ -130,7 +130,9 @@ export function IAProductStep({ onSelect }: IAProductStepProps) {
                   >
                     <div
                       className="aspect-4/5 w-full bg-cover bg-center transition-transform duration-500 group-hover:scale-110"
-                      style={{ backgroundImage: `url('${catalogProduct.image}')` }}
+                      style={{
+                        backgroundImage: `url('${catalogProduct.image}')`,
+                      }}
                     />
                     {isSelected && (
                       <span className="absolute top-3 left-3 bg-primary text-white text-[10px] font-bold uppercase px-2 py-1 rounded-full tracking-wider">

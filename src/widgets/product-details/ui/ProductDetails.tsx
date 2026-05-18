@@ -36,6 +36,7 @@ export default function ProductDetails({
 
   const {
     productRefId,
+    styleId,
     formats,
     isLoading: isLoadingFormats,
     error: formatsError,
@@ -75,6 +76,7 @@ export default function ProductDetails({
             product={product}
             selectedVariant={selectedVariant}
             productRefId={productRefId ?? undefined}
+            styleId={styleId ?? undefined}
             formatId={selectedFormatOption?.formatId}
             isCompatLoading={isLoadingFormats}
             hasBackendMapping={hasBackendMapping}

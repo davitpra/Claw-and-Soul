@@ -23,13 +23,14 @@ export function useCompatStyles(
   formatId: string | null,
 ): UseCompatStylesResult {
   const [styles, setStyles] = useState<Style[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!productRefId || !formatId) {
       setStyles([]);
       setError(null);
+      setIsLoading(false);
       return;
     }
 
