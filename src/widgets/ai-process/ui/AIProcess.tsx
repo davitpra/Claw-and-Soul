@@ -1,18 +1,11 @@
 import Image from "next/image";
 import Link from "next/link";
+import { Container } from "@/shared/ui/Container";
 
 export default function AIProcess() {
   return (
-    <section className="relative overflow-hidden py-20 bg-[#f7f5f0]">
-      {/* Subtle grain texture overlay */}
-      <div
-        className="pointer-events-none absolute inset-0 opacity-[0.03]"
-        style={{
-          backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E")`,
-        }}
-      />
-
-      <div className="relative mx-auto max-w-[1100px] px-6 lg:px-10">
+    <section className=" w-full py-20 bg-cream">
+      <Container className="relative">
         {/* ── Header ── */}
         <div className="mb-14 text-center">
           <span className="inline-flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-[0.18em] text-[#448da6] mb-5">
@@ -155,7 +148,7 @@ export default function AIProcess() {
             </span>
           </div>
         </div>
-      </div>
+      </Container>
     </section>
   );
 }
