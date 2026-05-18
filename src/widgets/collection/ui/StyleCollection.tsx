@@ -15,14 +15,10 @@ export default function StyleCollection({ handle }: StyleCollectionProps) {
     isLoading: styleLoading,
   } = useProductStyle(handle);
 
-  const {
-    images,
-    isLoading: imagesLoading,
-    error,
-  } = useStyleImages(styleId);
+  const { images, isLoading: imagesLoading, error } = useStyleImages(styleId);
 
   const isLoading = styleLoading || imagesLoading;
-  const title = styleName ? `Más en estilo ${styleName}` : "Más en este estilo";
+  const title = "Other pets in this style";
 
   return (
     <CollectionSection
