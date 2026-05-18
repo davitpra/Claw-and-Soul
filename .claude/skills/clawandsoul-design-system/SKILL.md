@@ -1,6 +1,6 @@
 ---
 name: clawandsoul-design-system
-description: Sistema de diseño de Claw & Soul — paleta teal/cream (#448da6 / #f0eee9), tipografía Epilogue+Lato, esquinas rounded-xl, iconos Material Symbols. Usa esta skill siempre que el usuario pida crear, agregar, modificar o revisar cualquier UI en este repo: páginas, secciones, componentes, botones, cards, formularios, modales, headers, footers. También úsala al refactorizar o validar consistencia visual aunque el usuario no mencione "design system" explícitamente.
+description: Sistema de diseño de Claw & Soul — paleta teal/cream (#448da6 / #f0eee9), tipografía Epilogue+Lato, esquinas rounded-xl (botones/inputs/modales), cards planas sin rounded, iconos Material Symbols. Usa esta skill siempre que el usuario pida crear, agregar, modificar o revisar cualquier UI en este repo: páginas, secciones, componentes, botones, cards, formularios, modales, headers, footers. También úsala al refactorizar o validar consistencia visual aunque el usuario no mencione "design system" explícitamente.
 ---
 
 # Claw & Soul — Design System
@@ -11,7 +11,7 @@ Guía de referencia rápida para construir UI consistente en este repo. La fuent
 
 - **Estética warm & artesanal** — fondos cream (`#f0eee9`) en secciones, no blanco puro como fondo de página.
 - **Brand teal para CTAs** — `bg-primary` (`#448da6`) es el único color de acción primaria; `hover:bg-primary-dark` para estados hover.
-- **Esquinas suaves por defecto** — `rounded-xl` (16px) en todo: botones, inputs, cards, imágenes, modales, chips; `rounded-full` solo para avatares/badges circulares. **Nunca usar `rounded-2xl`.**
+- **Esquinas suaves por defecto** — `rounded-xl` (16px) en botones, inputs, modales, chips e imágenes sueltas; `rounded-full` solo para avatares/badges circulares. **Nunca usar `rounded-2xl`.** **Excepción: cards de imagen** — el componente `<Card>` (`shared/ui/Card`) es plano (`overflow-hidden`, sin `rounded`), igual que el diseño de `CollectionSection`.
 - **Sombras sutiles** — `shadow-sm` en reposo → `shadow-md` en hover; `shadow-lg shadow-primary/20` solo en el CTA principal por página.
 - **Transiciones consistentes** — `transition-all` es el default; `duration-300` implícito en Tailwind; usar `hover:scale-105` en CTAs primarios.
 - **Mobile-first** — todas las clases base son móvil; breakpoints `sm:`, `md:`, `lg:`, `xl:` para escalar.
@@ -23,7 +23,8 @@ Guía de referencia rápida para construir UI consistente en este repo. La fuent
 | Hacer | Evitar |
 |-------|--------|
 | `bg-primary`, `text-text-main`, `bg-cream` | Colores hex hardcodeados fuera de `globals.css` |
-| `rounded-xl` como radio base en todo (cards, imágenes, botones, inputs) | `rounded-2xl`, `rounded-lg` o `rounded-md` para elementos interactivos |
+| `rounded-xl` en botones, inputs, modales, chips e imágenes sueltas | `rounded-2xl`, `rounded-lg` o `rounded-md` para elementos interactivos |
+| `<Card>` plana (sin `rounded`) para cards de imagen | `rounded-xl` en el componente `<Card>` |
 | `border border-[#E0DED9]` en bordes sutiles | Otros grises inventados para bordes |
 | Epilogue para headings (`font-display`) | Fuentes distintas a Epilogue/Lato |
 | `shadow-sm` → `hover:shadow-md` | Sombras muy dramáticas en elementos secundarios |
@@ -44,7 +45,7 @@ Lee solo lo que necesites para la tarea:
 ## Checklist de revisión (para validar UI existente)
 
 - [ ] ¿Todos los colores usan clases Tailwind de los tokens (`bg-primary`, `text-text-muted`, etc.) y no hex hardcodeados?
-- [ ] ¿Los radios son `rounded-xl` en todo (cards, imágenes, botones, inputs)? No debe haber `rounded-2xl` ni `rounded-md`.
+- [ ] ¿Los radios son `rounded-xl` en botones, inputs, modales y chips? No debe haber `rounded-2xl` ni `rounded-md`. Las cards de imagen usan `<Card>` plano (sin `rounded`).
 - [ ] ¿Los bordes sutiles usan `border-[#E0DED9]`?
 - [ ] ¿Los hover en buttons tienen `hover:bg-primary-dark` (o `hover:bg-gray-50` en secundarios)?
 - [ ] ¿Las sombras escalan de `shadow-sm` a `shadow-md` en hover?

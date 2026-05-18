@@ -4,6 +4,10 @@ import Link from "next/link";
 import { StyleImage } from "@/hooks/useStyleImages";
 import { Container } from "@/shared/ui/Container";
 import { Carousel } from "@/shared/ui/Carousel";
+import { Card } from "@/shared/ui/Card";
+
+const cardSizeClasses =
+  "flex-[0_0_72%] sm:flex-[0_0_45%] md:flex-[0_0_33%] lg:flex-[0_0_22%] min-w-0";
 
 interface StyleCardProps {
   image: StyleImage;
@@ -12,23 +16,20 @@ interface StyleCardProps {
 
 function StyleCard({ image, badgeLabel }: StyleCardProps) {
   return (
-    <div className="relative overflow-hidden bg-white shadow-sm flex-[0_0_72%] sm:flex-[0_0_45%] md:flex-[0_0_33%] lg:flex-[0_0_22%] min-w-0">
-      <div
-        className="aspect-4/5 w-full bg-cover bg-center"
-        style={{ backgroundImage: `url('${image.imageUrl}')` }}
-      />
+    <Card imageUrl={image.imageUrl} className={cardSizeClasses}>
+      <div className="absolute inset-0 bg-linear-to-t from-black/60 via-transparent to-transparent opacity-60" />
       {badgeLabel && (
         <span className="absolute top-3 left-3 bg-primary text-white text-[10px] font-bold uppercase px-2 py-1 rounded-full tracking-wider">
           {badgeLabel}
         </span>
       )}
-    </div>
+    </Card>
   );
 }
 
 function SkeletonCard() {
   return (
-    <div className="flex-[0_0_72%] sm:flex-[0_0_45%] md:flex-[0_0_33%] lg:flex-[0_0_22%] min-w-0 overflow-hidden">
+    <div className={`${cardSizeClasses} overflow-hidden`}>
       <div className="aspect-4/5 w-full animate-pulse bg-slate-200" />
       <div className="p-3 space-y-2">
         <div className="h-3 w-3/4 mx-auto animate-pulse bg-slate-200 rounded" />
@@ -46,6 +47,7 @@ interface CollectionSectionProps {
   ctaHref: string;
   ctaLabel: string;
   badgeLabel?: string;
+  background?: string;
 }
 
 export default function CollectionSection({
@@ -56,13 +58,14 @@ export default function CollectionSection({
   ctaHref,
   ctaLabel,
   badgeLabel,
+  background,
 }: CollectionSectionProps) {
   if (!isLoading && (error || images.length === 0)) return null;
 
   return (
-    <section className="py-20 bg-white">
+    <section className={`py-20 ${background}`}>
       <Container>
-        <h2 className="text-4xl font-black text-[#103642] md:text-5xl leading-[1.1] tracking-tight text-center mb-10">
+        <h2 className="text-4xl font-black text-[#103642] leading-[1.1] tracking-tight text-center mb-10">
           {title}
         </h2>
 
@@ -70,7 +73,11 @@ export default function CollectionSection({
           {isLoading
             ? Array.from({ length: 5 }).map((_, i) => <SkeletonCard key={i} />)
             : images.map((image) => (
-                <StyleCard key={image.id} image={image} badgeLabel={badgeLabel} />
+                <StyleCard
+                  key={image.id}
+                  image={image}
+                  badgeLabel={badgeLabel}
+                />
               ))}
         </Carousel>
 

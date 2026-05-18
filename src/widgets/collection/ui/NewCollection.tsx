@@ -15,6 +15,7 @@ export default function NewCollection() {
       ctaHref="/ia-generator"
       ctaLabel="Ver colección completa"
       badgeLabel="Nuevo"
+      background="bg-white"
     />
   );
 }

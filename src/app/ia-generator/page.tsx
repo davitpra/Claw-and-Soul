@@ -35,7 +35,9 @@ function IAGeneratorContent() {
     error: compatStylesError,
   } = useCompatStyles(productRefIdFromUrl, formatIdFromUrl);
 
-  const isLoadingStyles = isFiltered ? isLoadingCompatStyles : isLoadingAllStyles;
+  const isLoadingStyles = isFiltered
+    ? isLoadingCompatStyles
+    : isLoadingAllStyles;
   const stylesError = isFiltered ? compatStylesError : allStylesError;
   const displayStyles: Style[] = isFiltered ? compatStyles : allStyles;
 
@@ -56,20 +58,22 @@ function IAGeneratorContent() {
   }, [selectedStyle, displayStyles, defaultStyle]);
 
   return (
-    <div className="bg-cream text-slate-dark font-body min-h-screen flex flex-col transition-all duration-500">
+    <div className="bg-white text-slate-dark font-body min-h-screen flex flex-col transition-all duration-500">
       <IAHeader step={step} />
 
       {step === 1 && (
-        <IAStyleStep
-          styles={displayStyles}
-          selectedStyle={resolvedStyle}
-          onStyleSelect={setSelectedStyle}
-          onBack={undefined}
-          onNext={() => setStep(isAuthenticated ? 3 : 2)}
-          isLoading={isLoadingStyles}
-          error={stylesError}
-          isFiltered={isFiltered}
-        />
+        <>
+          <IAStyleStep
+            styles={displayStyles}
+            selectedStyle={resolvedStyle}
+            onStyleSelect={setSelectedStyle}
+            onBack={undefined}
+            onNext={() => setStep(isAuthenticated ? 3 : 2)}
+            isLoading={isLoadingStyles}
+            error={stylesError}
+            isFiltered={isFiltered}
+          />
+        </>
       )}
 
       {step === 2 && <IALeadStep onComplete={() => setStep(3)} />}
@@ -85,9 +89,7 @@ function IAGeneratorContent() {
         />
       )}
 
-      {step === 4 && (
-        <IAThanksStep thanksUrl={resolvedStyle?.thanksUrl} />
-      )}
+      {step === 4 && <IAThanksStep thanksUrl={resolvedStyle?.thanksUrl} />}
     </div>
   );
 }

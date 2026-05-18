@@ -111,39 +111,55 @@ Referencia: `src/components/Footer.tsx:14-18`
 
 ---
 
-## Card de Producto
+## Card (primitivo compartido)
 
-Referencia: `src/components/home/FeaturedProducts.tsx:42-73`
+Referencia: `src/shared/ui/Card.tsx`
+
+Card de imagen plana: **sin `rounded`**, sin hover. Los overlays (badges, etiquetas, gradientes) se pasan como `children` y se posicionan con `absolute`.
 
 ```tsx
-<div className="group flex flex-col gap-4">
-  {/* Imagen con hover scale */}
-  <Link
-    href={`/product/${handle}`}
-    className="overflow-hidden rounded-xl bg-white shadow-sm transition-all hover:shadow-md"
-  >
-    <div
-      className="aspect-[4/5] w-full bg-cover bg-center transition-transform duration-500 group-hover:scale-110"
-      style={{ backgroundImage: `url('${imgUrl}')` }}
-    />
-  </Link>
+import { Card } from "@/shared/ui/Card";
 
-  {/* Contenido */}
-  <div className="flex flex-col gap-1 flex-1">
-    <div className="flex items-center justify-between">
-      <h3 className="text-lg font-bold text-slate-dark line-clamp-1">{title}</h3>
-      <span className="text-base font-bold text-slate-dark">From ${price}</span>
+// Card básica con badge opcional
+<Card imageUrl={imageUrl} imageAlt="descripción">
+  <span className="absolute top-3 left-3 bg-primary text-white text-[10px] font-bold uppercase px-2 py-1 rounded-full tracking-wider">
+    Nuevo
+  </span>
+</Card>
+
+// Card seleccionable (IA generator)
+<div className="group relative cursor-pointer" onClick={() => onSelect(style)}>
+  {isSelected && (
+    <div className="absolute -top-3 -right-3 z-20 bg-primary text-white rounded-full p-1.5 shadow-md animate-in zoom-in duration-300">
+      <span className="material-symbols-outlined text-lg block">check</span>
     </div>
-    <p className="text-sm text-slate-dark/60 line-clamp-2">{description}</p>
-    <Link
-      href={`/product/${handle}`}
-      className="mt-auto w-full text-center rounded-xl bg-primary py-3 text-sm font-bold text-white shadow-sm transition-colors hover:bg-primary-dark"
-    >
-      Ver Detalles
-    </Link>
-  </div>
+  )}
+  <Card
+    imageUrl={style.img}
+    imageAlt={style.name}
+    className={`transition-all ${isSelected ? "ring-2 ring-primary" : ""}`}
+  >
+    <div className="absolute inset-0 bg-linear-to-t from-black/60 via-transparent to-transparent opacity-60" />
+    <div className="absolute bottom-0 left-0 w-full p-3 text-white">
+      <span className="block text-base font-bold leading-tight">{style.name}</span>
+    </div>
+  </Card>
 </div>
+
+// Tamaño en carrusel (pasar vía className)
+<Card
+  imageUrl={imageUrl}
+  className="flex-[0_0_72%] sm:flex-[0_0_45%] md:flex-[0_0_33%] lg:flex-[0_0_22%] min-w-0"
+/>
 ```
+
+**Props de `<Card>`:**
+| Prop | Tipo | Descripción |
+|------|------|-------------|
+| `imageUrl` | `string` | URL de la imagen de fondo (relación 4/5) |
+| `imageAlt` | `string?` | `aria-label` para accesibilidad |
+| `className` | `string?` | Clases extra del contenedor (tamaño, ring, etc.) |
+| `children` | `ReactNode?` | Overlays posicionados con `absolute` |
 
 ---
 
