@@ -9,6 +9,7 @@ import {
   IAStyleStep,
   IALeadStep,
   IAThanksStep,
+  IAProductStep,
 } from "@/widgets/ia-generator";
 
 import { Style } from "@/entities/art-style/model/styles";
@@ -21,7 +22,14 @@ function IAGeneratorContent() {
 
   const productRefIdFromUrl = searchParams.get("product_ref_id");
   const formatIdFromUrl = searchParams.get("format_id");
-  const isFiltered = !!(productRefIdFromUrl && formatIdFromUrl);
+
+  const [pickedProductRefId, setPickedProductRefId] = useState<string | null>(null);
+  const [pickedFormatId, setPickedFormatId] = useState<string | null>(null);
+
+  const productRefId = productRefIdFromUrl ?? pickedProductRefId;
+  const formatId = formatIdFromUrl ?? pickedFormatId;
+  const isFiltered = !!(productRefId && formatId);
+  const needsProductSelection = !productRefId || !formatId;
 
   const {
     styles: allStyles,
@@ -33,7 +41,7 @@ function IAGeneratorContent() {
     styles: compatStyles,
     isLoading: isLoadingCompatStyles,
     error: compatStylesError,
-  } = useCompatStyles(productRefIdFromUrl, formatIdFromUrl);
+  } = useCompatStyles(productRefId, formatId);
 
   const isLoadingStyles = isFiltered
     ? isLoadingCompatStyles
@@ -61,35 +69,44 @@ function IAGeneratorContent() {
     <div className="bg-white text-slate-dark font-body min-h-screen flex flex-col transition-all duration-500">
       <IAHeader step={step} />
 
-      {step === 1 && (
+      {needsProductSelection ? (
+        <IAProductStep
+          onSelect={(refId, fmtId) => {
+            setPickedProductRefId(refId);
+            setPickedFormatId(fmtId);
+          }}
+        />
+      ) : (
         <>
-          <IAStyleStep
-            styles={displayStyles}
-            selectedStyle={resolvedStyle}
-            onStyleSelect={setSelectedStyle}
-            onBack={undefined}
-            onNext={() => setStep(isAuthenticated ? 3 : 2)}
-            isLoading={isLoadingStyles}
-            error={stylesError}
-            isFiltered={isFiltered}
-          />
+          {step === 1 && (
+            <IAStyleStep
+              styles={displayStyles}
+              selectedStyle={resolvedStyle}
+              onStyleSelect={setSelectedStyle}
+              onBack={undefined}
+              onNext={() => setStep(isAuthenticated ? 3 : 2)}
+              isLoading={isLoadingStyles}
+              error={stylesError}
+              isFiltered={isFiltered}
+            />
+          )}
+
+          {step === 2 && <IALeadStep onComplete={() => setStep(3)} />}
+
+          {step === 3 && (
+            <IAUploadStep
+              photos={photos}
+              onPhotosChange={setPhotos}
+              styleId={resolvedStyle?.id ?? null}
+              productRefId={productRefId}
+              formatId={formatId}
+              onNext={() => setStep(4)}
+            />
+          )}
+
+          {step === 4 && <IAThanksStep thanksUrl={resolvedStyle?.thanksUrl} />}
         </>
       )}
-
-      {step === 2 && <IALeadStep onComplete={() => setStep(3)} />}
-
-      {step === 3 && (
-        <IAUploadStep
-          photos={photos}
-          onPhotosChange={setPhotos}
-          styleId={resolvedStyle?.id ?? null}
-          productRefId={productRefIdFromUrl}
-          formatId={formatIdFromUrl}
-          onNext={() => setStep(4)}
-        />
-      )}
-
-      {step === 4 && <IAThanksStep thanksUrl={resolvedStyle?.thanksUrl} />}
     </div>
   );
 }

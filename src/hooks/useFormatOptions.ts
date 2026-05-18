@@ -3,6 +3,8 @@ import { shopifyFetch } from "@/lib/shopify/client";
 import { GET_PRODUCT } from "@/lib/shopify/queries/products";
 import { ShopifyProduct, ShopifyVariant } from "@/lib/shopify/types";
 
+export type { ShopifyProduct };
+
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001/api";
 
 interface BackendProductVariant {
@@ -42,6 +44,7 @@ export interface FormatOption {
 interface UseFormatOptionsResult {
   productRefId: string | null;
   formats: FormatOption[];
+  product: ShopifyProduct | null;
   isLoading: boolean;
   error: string | null;
 }
@@ -56,6 +59,7 @@ export function useFormatOptions(
 ): UseFormatOptionsResult {
   const [productRefId, setProductRefId] = useState<string | null>(null);
   const [formats, setFormats] = useState<FormatOption[]>([]);
+  const [product, setProduct] = useState<ShopifyProduct | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -63,6 +67,7 @@ export function useFormatOptions(
     if (!productHandle) {
       setProductRefId(null);
       setFormats([]);
+      setProduct(null);
       setError(null);
       return;
     }
@@ -96,6 +101,7 @@ export function useFormatOptions(
           setError(`Product '${productHandle}' not found in Shopify`);
           setProductRefId(backendProduct.productRefId);
           setFormats([]);
+          setProduct(null);
           return;
         }
 
@@ -111,6 +117,7 @@ export function useFormatOptions(
 
         setProductRefId(backendProduct.productRefId);
         setFormats(merged);
+        setProduct(shopifyProduct);
       })
       .catch((err) => {
         if (cancelled) return;
@@ -122,6 +129,7 @@ export function useFormatOptions(
         );
         setProductRefId(null);
         setFormats([]);
+        setProduct(null);
       })
       .finally(() => {
         if (!cancelled) setIsLoading(false);
@@ -132,7 +140,7 @@ export function useFormatOptions(
     };
   }, [productHandle]);
 
-  return { productRefId, formats, isLoading, error };
+  return { productRefId, formats, product, isLoading, error };
 }
 
 function mergeBackendVariantsWithShopify(

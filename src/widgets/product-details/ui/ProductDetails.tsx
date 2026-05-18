@@ -67,7 +67,7 @@ export default function ProductDetails({
             selectedVariantId={selectedVariantId}
             onVariantChange={setSelectedVariantId}
           />
-          <div className="h-px w-full bg-gradient-to-r from-text-main/15 via-text-main/5 to-transparent" />
+          <div className="h-px w-full bg-linear-to-r from-text-main/15 via-text-main/5 to-transparent" />
 
           <ProductAccordions html={product.description} />
 
