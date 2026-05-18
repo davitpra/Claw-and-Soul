@@ -4,7 +4,7 @@ import { Hero } from "@/widgets/home-hero";
 import { FeaturedProducts } from "@/widgets/featured-products";
 import { CustomerGallery } from "@/widgets/customer-gallery";
 import { Reviews } from "@/widgets/reviews";
-import { NewCollection } from "@/widgets/new-collection";
+import { NewCollection } from "@/widgets/collection";
 
 export default async function Home() {
   return (

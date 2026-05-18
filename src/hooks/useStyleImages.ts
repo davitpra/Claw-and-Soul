@@ -20,17 +20,23 @@ interface UseStyleImagesResult {
   error: string | null;
 }
 
-export function useStyleImages(
-  styleId: string = NEW_COLLECTION_STYLE_ID,
-): UseStyleImagesResult {
+export function useStyleImages(styleId?: string | null): UseStyleImagesResult {
+  const resolvedId =
+    styleId === undefined ? NEW_COLLECTION_STYLE_ID : (styleId ?? null);
+
   const [images, setImages] = useState<StyleImage[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    let cancelled = false;
+    if (!resolvedId) return;
 
-    fetch(`${API_URL}/styles/${styleId}/images`, { credentials: "include" })
+    let cancelled = false;
+    setIsLoading(true);
+    setImages([]);
+    setError(null);
+
+    fetch(`${API_URL}/styles/${resolvedId}/images`, { credentials: "include" })
       .then(async (res) => {
         if (!res.ok) throw new Error(`style images error: ${res.status}`);
         const json = (await res.json()) as
@@ -55,7 +61,7 @@ export function useStyleImages(
     return () => {
       cancelled = true;
     };
-  }, [styleId]);
+  }, [resolvedId]);
 
   return { images, isLoading, error };
 }

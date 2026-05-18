@@ -10,6 +10,7 @@ import ProductDetails from "@/widgets/product-details/ui/ProductDetails";
 import ProductFAQ from "@/widgets/product-faq/ui/ProductFAQ";
 import ProductEssence from "@/widgets/product-essence/ui/ProductEssence";
 import { AIProcess } from "@/widgets/ai-process";
+import { StyleCollection } from "@/widgets/collection";
 
 export default function ProductDetail({
   params,
@@ -53,7 +54,7 @@ export default function ProductDetail({
     return (
       <div className="min-h-screen flex flex-col bg-background-light">
         <Navbar />
-        <div className="flex-grow flex items-center justify-center">
+        <div className="grow flex items-center justify-center">
           <div className="text-center">
             <h1 className="text-4xl font-bold text-text-main mb-4">
               Product Not Found
@@ -114,6 +115,8 @@ export default function ProductDetail({
             />
           </div>
         </div>
+
+        <StyleCollection handle={handle} />
 
         <AIProcess />
 
