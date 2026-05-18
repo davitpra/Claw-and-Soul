@@ -55,15 +55,7 @@ export function IAHeader({ step, generationStatus }: IAHeaderProps) {
           </div>
         ) : (
           <div className="hidden md:flex items-center gap-4 animate-in fade-in duration-700">
-            <div className="flex flex-col items-end">
-              <span className="text-xs font-bold text-primary uppercase tracking-wider">
-                Paso {step} de {TOTAL_STEPS}
-              </span>
-              <span className="text-sm font-medium text-slate-dark">
-                {STEP_LABELS[step] ?? ""}
-              </span>
-            </div>
-            <div className="w-24 h-2 bg-[#dee2e3] rounded-full overflow-hidden">
+            <div className="w-52 h-2 bg-cream rounded-full overflow-hidden">
               <div
                 className="h-full bg-primary rounded-full transition-all duration-700"
                 style={{ width: `${(step / TOTAL_STEPS) * 100}%` }}

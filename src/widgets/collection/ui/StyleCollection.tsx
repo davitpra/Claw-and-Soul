@@ -7,9 +7,10 @@ import CollectionSection from "./CollectionSection";
 interface StyleCollectionProps {
   handle?: string | null;
   styleId?: string | null;
+  showCta?: boolean;
 }
 
-export default function StyleCollection({ handle, styleId: styleIdProp }: StyleCollectionProps) {
+export default function StyleCollection({ handle, styleId: styleIdProp, showCta = true }: StyleCollectionProps) {
   const { styleId: derivedStyleId, isLoading: styleLoading } = useProductStyle(
     styleIdProp ? null : (handle ?? null)
   );
@@ -26,8 +27,8 @@ export default function StyleCollection({ handle, styleId: styleIdProp }: StyleC
       isLoading={isLoading}
       error={error}
       title={title}
-      ctaHref="/ia-generator"
-      ctaLabel="Ver más estilos"
+      ctaHref={showCta ? "/ia-generator" : undefined}
+      ctaLabel={showCta ? "Ver más estilos" : undefined}
     />
   );
 }

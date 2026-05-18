@@ -44,8 +44,8 @@ interface CollectionSectionProps {
   isLoading: boolean;
   error: string | null;
   title: string;
-  ctaHref: string;
-  ctaLabel: string;
+  ctaHref?: string;
+  ctaLabel?: string;
   badgeLabel?: string;
   background?: string;
 }
@@ -81,14 +81,16 @@ export default function CollectionSection({
               ))}
         </Carousel>
 
-        <div className="flex justify-center mt-10">
-          <Link
-            href={ctaHref}
-            className="bg-primary hover:bg-primary-dark text-white rounded-xl px-8 py-3 font-bold shadow-lg shadow-primary/20 transition-colors"
-          >
-            {ctaLabel}
-          </Link>
-        </div>
+        {ctaHref && ctaLabel && (
+          <div className="flex justify-center mt-10">
+            <Link
+              href={ctaHref}
+              className="bg-primary hover:bg-primary-dark text-white rounded-xl px-8 py-3 font-bold shadow-lg shadow-primary/20 transition-colors"
+            >
+              {ctaLabel}
+            </Link>
+          </div>
+        )}
       </Container>
     </section>
   );

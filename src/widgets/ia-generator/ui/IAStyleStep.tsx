@@ -30,8 +30,8 @@ export function IAStyleStep({
       as="main"
       className="grow py-8 md:py-12 animate-in fade-in slide-in-from-bottom-4 duration-700"
     >
-      <div className="flex flex-col justify-center md:flex-row md:justify-between">
-        <div className="text-center">
+      <div className="flex flex-col justify-center md:flex-row md:justify-between gap-4 md:gap-0">
+        <div className="text-center md:text-left">
           <h1 className="text-3xl md:text-4xl font-black text-slate-dark mb-2 tracking-tight font-display">
             Choose Your Art Style
           </h1>
@@ -69,7 +69,7 @@ export function IAStyleStep({
         </div>
       ) : (
         <>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6 pt-20">
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6 pt-20">
             {styles.map((style) => (
               <StyleCard
                 key={style.id ?? style.name}
@@ -79,7 +79,7 @@ export function IAStyleStep({
               />
             ))}
           </div>
-          {selectedStyle && <StyleCollection styleId={selectedStyle.id} />}
+          {selectedStyle && <StyleCollection styleId={selectedStyle.id} showCta={false} />}
         </>
       )}
     </Container>
