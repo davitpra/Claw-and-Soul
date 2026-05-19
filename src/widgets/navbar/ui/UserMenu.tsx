@@ -8,7 +8,7 @@ export default function UserMenu() {
   const [isOpen, setIsOpen] = useState(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
-  const { user, logout } = useAuth();
+  const { user, logout, isAdmin } = useAuth();
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -127,6 +127,26 @@ export default function UserMenu() {
               <span>Order History</span>
             </Link>
           </div>
+
+          {/* Admin link */}
+          {isAdmin && (
+            <>
+              <div className="border-t border-[#E0DED9]" />
+              <div className="py-1">
+                <Link
+                  href="/admin"
+                  onClick={closeMenu}
+                  className="flex items-center gap-3 px-4 py-2.5 text-sm text-primary font-semibold hover:bg-cream transition-colors"
+                  role="menuitem"
+                >
+                  <span className="material-symbols-outlined text-[18px]">
+                    admin_panel_settings
+                  </span>
+                  <span>Panel de Admin</span>
+                </Link>
+              </div>
+            </>
+          )}
 
           {/* Divider */}
           <div className="border-t border-[#E0DED9]" />

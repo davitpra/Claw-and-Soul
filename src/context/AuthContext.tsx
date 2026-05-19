@@ -14,10 +14,12 @@ export interface User {
   id: string;
   email: string;
   fullName?: string;
+  role?: 'user' | 'premium' | 'admin';
 }
 
 interface AuthContextType {
   isAuthenticated: boolean;
+  isAdmin: boolean;
   user: User | null;
   isLoading: boolean;
   login: (email: string, password: string) => Promise<void>;
@@ -167,11 +169,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const isAuthenticated = user !== null;
+  const isAdmin = user?.role === 'admin';
 
   return (
     <AuthContext.Provider
       value={{
         isAuthenticated,
+        isAdmin,
         user,
         isLoading,
         login,

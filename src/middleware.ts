@@ -1,27 +1,39 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 
-export function middleware(request: NextRequest) {
-  // Verificar si hay token de acceso en las cookies
-  const accessToken = request.cookies.get('accessToken');
+function getJwtRole(token: string): string | null {
+  try {
+    const payload = token.split('.')[1];
+    const decoded = JSON.parse(Buffer.from(payload, 'base64url').toString());
+    return decoded?.role ?? null;
+  } catch {
+    return null;
+  }
+}
 
-  // Si no hay token, redirigir a login
+export function middleware(request: NextRequest) {
+  const accessToken = request.cookies.get('accessToken');
+  const isAdminRoute = request.nextUrl.pathname.startsWith('/admin');
+
   if (!accessToken) {
     const loginUrl = new URL('/login', request.url);
-
-    // Guardar la URL original para redirigir después del login
     loginUrl.searchParams.set('redirect', request.nextUrl.pathname);
-
     return NextResponse.redirect(loginUrl);
   }
 
-  // Si hay token, permitir el acceso
+  if (isAdminRoute) {
+    const role = getJwtRole(accessToken.value);
+    if (role !== 'admin') {
+      return NextResponse.redirect(new URL('/', request.url));
+    }
+  }
+
   return NextResponse.next();
 }
 
-// Configurar qué rutas proteger
 export const config = {
   matcher: [
-    '/user/:path*', // Proteger área de usuario
+    '/user/:path*',
+    '/admin/:path*',
   ],
 };

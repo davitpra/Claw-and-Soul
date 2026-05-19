@@ -13,6 +13,11 @@ const nextConfig: NextConfig = {
         hostname: "fal.media",
         pathname: "**",
       },
+      {
+        protocol: "https",
+        hostname: "res.cloudinary.com",
+        pathname: "**",
+      },
     ],
   },
 };
