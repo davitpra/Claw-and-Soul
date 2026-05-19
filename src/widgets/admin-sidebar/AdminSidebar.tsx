@@ -2,44 +2,82 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useAuth } from "@/context/AuthContext";
+import Image from "next/image";
 
 const navItems = [
-  { label: "Resumen", href: "/admin", icon: "dashboard", exact: true },
+  { label: "Dashboard", href: "/admin", icon: "dashboard", exact: true },
+  { label: "Usuarios", href: "/admin/users", icon: "group" },
   { label: "Estilos", href: "/admin/styles", icon: "palette" },
   { label: "Formatos", href: "/admin/formats", icon: "aspect_ratio" },
   { label: "Productos & Sync", href: "/admin/products", icon: "inventory_2" },
-  { label: "Usuarios", href: "/admin/users", icon: "group" },
 ];
 
 export default function AdminSidebar() {
   const pathname = usePathname();
+  const { user } = useAuth();
 
   return (
-    <aside className="w-56 shrink-0 flex flex-col gap-1 pr-4 border-r border-slate-dark/10 min-h-full">
-      <p className="text-xs font-bold uppercase tracking-widest text-text-muted px-3 pt-2 pb-3">
-        Administración
-      </p>
-      {navItems.map((item) => {
-        const isActive = item.exact
-          ? pathname === item.href
-          : pathname.startsWith(item.href);
-        return (
-          <Link
-            key={item.href}
-            href={item.href}
-            className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold transition-all ${
-              isActive
-                ? "bg-primary/10 text-primary"
-                : "text-text-main hover:bg-slate-dark/5 hover:text-slate-dark"
-            }`}
-          >
-            <span className="material-symbols-outlined text-[20px]">
-              {item.icon}
+    <aside className="w-60 shrink-0 flex flex-col min-h-screen bg-background-dark text-white">
+      {/* Logo */}
+      <div className="px-5 py-6 border-b border-white/10">
+        <Link href="/admin" className="flex items-center gap-2.5">
+          <div className="size-10 relative overflow-hidden rounded-full ring-2 ring-transparent group-hover:ring-primary/20 transition-all">
+            <Image
+              src="/Logo.jpg"
+              alt="Claw & Soul Logo"
+              fill
+              className="object-contain"
+              priority
+            />
+          </div>
+          <h2 className="text-white text-lg lg:text-xl font-bold leading-tight tracking-[-0.015em] hidden sm:block">
+            Claw & Soul
+          </h2>
+        </Link>
+      </div>
+
+      {/* Nav */}
+      <nav className="flex-1 px-3 py-4 flex flex-col gap-0.5">
+        {navItems.map((item) => {
+          const isActive = item.exact
+            ? pathname === item.href
+            : pathname.startsWith(item.href);
+          return (
+            <Link
+              key={item.href}
+              href={item.href}
+              className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold transition-all ${
+                isActive
+                  ? "bg-primary text-white"
+                  : "text-white/60 hover:bg-white/10 hover:text-white"
+              }`}
+            >
+              <span className="material-symbols-outlined text-[20px]">
+                {item.icon}
+              </span>
+              {item.label}
+            </Link>
+          );
+        })}
+      </nav>
+
+      {/* Admin card */}
+      <div className="px-3 pb-5">
+        <div className="flex items-center gap-3 px-3 py-3 rounded-xl bg-white/8 border border-white/10">
+          <div className="w-8 h-8 rounded-full bg-primary/30 flex items-center justify-center shrink-0">
+            <span className="material-symbols-outlined text-primary text-[18px]">
+              admin_panel_settings
             </span>
-            {item.label}
-          </Link>
-        );
-      })}
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="text-xs font-semibold text-white truncate">
+              {user?.fullName || user?.email || "Admin"}
+            </p>
+            <p className="text-[11px] text-white/40">Administrador</p>
+          </div>
+        </div>
+      </div>
     </aside>
   );
 }
