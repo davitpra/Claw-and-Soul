@@ -180,7 +180,7 @@ export default function AdminProductsPage() {
                       )}
                     </td>
                     <td className="px-5 py-3 text-text-muted">
-                      {p.productType?.displayName ?? "—"}
+                      {p.productType ?? "—"}
                     </td>
                     <td className="px-5 py-3">
                       <span

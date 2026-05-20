@@ -2,11 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
-import {
-  adminApi,
-  AdminOrderListItem,
-  Paginated,
-} from "@/entities/admin/api";
+import { adminApi, AdminOrderListItem, Paginated } from "@/entities/admin/api";
 
 const PRODUCTION_STATUS_LABELS: Record<string, string> = {
   paid: "Pagado",
@@ -71,7 +67,10 @@ function ItemThumbnails({ items }: { items: AdminOrderListItem["items"] }) {
     .map((i) => i.generation?.resultUrl ?? i.imageUrl)
     .filter(Boolean) as string[];
 
-  if (!thumbs.length) return <span className="text-text-muted text-xs">{items.length} item(s)</span>;
+  if (!thumbs.length)
+    return (
+      <span className="text-text-muted text-xs">{items.length} item(s)</span>
+    );
 
   return (
     <div className="flex items-center gap-1">
@@ -85,13 +84,22 @@ function ItemThumbnails({ items }: { items: AdminOrderListItem["items"] }) {
         />
       ))}
       {items.length > 3 && (
-        <span className="text-xs text-text-muted ml-1">+{items.length - 3}</span>
+        <span className="text-xs text-text-muted ml-1">
+          +{items.length - 3}
+        </span>
       )}
     </div>
   );
 }
 
-const STATUSES = ["paid", "in_production", "shipped", "delivered", "cancelled", "refunded"];
+const STATUSES = [
+  "paid",
+  "in_production",
+  "shipped",
+  "delivered",
+  "cancelled",
+  "refunded",
+];
 const METHODS = [
   { value: "", label: "Todos" },
   { value: "in_house", label: "Taller" },
@@ -99,7 +107,9 @@ const METHODS = [
 ];
 
 export default function AdminOrdersPage() {
-  const [orders, setOrders] = useState<Paginated<AdminOrderListItem> | null>(null);
+  const [orders, setOrders] = useState<Paginated<AdminOrderListItem> | null>(
+    null,
+  );
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
   const [q, setQ] = useState("");
@@ -112,14 +122,21 @@ export default function AdminOrdersPage() {
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      const data = await adminApi.orders.list({ page, q: q || undefined, status: status || undefined, method: method || undefined });
+      const data = await adminApi.orders.list({
+        page,
+        q: q || undefined,
+        status: status || undefined,
+        method: method || undefined,
+      });
       setOrders(data);
     } finally {
       setLoading(false);
     }
   }, [page, q, status, method]);
 
-  useEffect(() => { load(); }, [load]);
+  useEffect(() => {
+    load();
+  }, [load]);
 
   function handleSearch(e: React.FormEvent) {
     e.preventDefault();
@@ -147,14 +164,20 @@ export default function AdminOrdersPage() {
       <div className="flex items-center justify-between mb-6">
         <div>
           <h1 className="text-2xl font-bold text-text-main">Pedidos</h1>
-          <p className="text-sm text-text-muted mt-0.5">Gestión de pedidos y fabricación</p>
+          <p className="text-sm text-text-muted mt-0.5">
+            Gestión de pedidos y fabricación
+          </p>
         </div>
         <button
           onClick={handleSync}
           disabled={syncing}
           className="flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-xl text-sm font-semibold hover:bg-primary/90 disabled:opacity-60 transition-colors"
         >
-          <span className={`material-symbols-outlined text-[18px] ${syncing ? "animate-spin" : ""}`}>sync</span>
+          <span
+            className={`material-symbols-outlined text-[18px] ${syncing ? "animate-spin" : ""}`}
+          >
+            sync
+          </span>
           {syncing ? "Sincronizando…" : "Sincronizar desde Shopify"}
         </button>
       </div>
@@ -167,21 +190,29 @@ export default function AdminOrdersPage() {
 
       {/* Filters */}
       <div className="bg-white rounded-2xl border border-[#E0DED9] shadow-sm p-4 mb-4 flex flex-wrap gap-3 items-center">
-        <form onSubmit={handleSearch} className="flex gap-2 flex-1 min-w-[200px]">
+        <form onSubmit={handleSearch} className="flex gap-2 flex-1 min-w-50">
           <input
             value={inputQ}
             onChange={(e) => setInputQ(e.target.value)}
             placeholder="Buscar # pedido o email…"
             className="flex-1 border border-[#E0DED9] rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
           />
-          <button type="submit" className="px-3 py-1.5 bg-primary text-white rounded-lg text-sm hover:bg-primary/90 transition-colors">
-            <span className="material-symbols-outlined text-[18px]">search</span>
+          <button
+            type="submit"
+            className="px-3 py-1.5 bg-primary text-white rounded-lg text-sm hover:bg-primary/90 transition-colors"
+          >
+            <span className="material-symbols-outlined text-[18px]">
+              search
+            </span>
           </button>
         </form>
 
         <div className="flex gap-1.5 flex-wrap">
           <button
-            onClick={() => { setStatus(""); setPage(1); }}
+            onClick={() => {
+              setStatus("");
+              setPage(1);
+            }}
             className={`px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors ${!status ? "bg-primary text-white border-primary" : "border-[#E0DED9] text-text-muted hover:bg-cream"}`}
           >
             Todos
@@ -189,7 +220,10 @@ export default function AdminOrdersPage() {
           {STATUSES.map((s) => (
             <button
               key={s}
-              onClick={() => { setStatus(s); setPage(1); }}
+              onClick={() => {
+                setStatus(s);
+                setPage(1);
+              }}
               className={`px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors ${status === s ? "bg-primary text-white border-primary" : "border-[#E0DED9] text-text-muted hover:bg-cream"}`}
             >
               {PRODUCTION_STATUS_LABELS[s]}
@@ -199,10 +233,17 @@ export default function AdminOrdersPage() {
 
         <select
           value={method}
-          onChange={(e) => { setMethod(e.target.value); setPage(1); }}
+          onChange={(e) => {
+            setMethod(e.target.value);
+            setPage(1);
+          }}
           className="border border-[#E0DED9] rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
         >
-          {METHODS.map((m) => <option key={m.value} value={m.value}>{m.label}</option>)}
+          {METHODS.map((m) => (
+            <option key={m.value} value={m.value}>
+              {m.label}
+            </option>
+          ))}
         </select>
       </div>
 
@@ -210,12 +251,16 @@ export default function AdminOrdersPage() {
       <div className="bg-white rounded-2xl border border-[#E0DED9] shadow-sm overflow-hidden">
         {loading ? (
           <div className="flex items-center justify-center py-16 gap-3 text-text-muted">
-            <span className="material-symbols-outlined animate-spin">progress_activity</span>
+            <span className="material-symbols-outlined animate-spin">
+              progress_activity
+            </span>
             Cargando pedidos…
           </div>
         ) : !orders?.data.length ? (
           <div className="flex flex-col items-center justify-center py-16 gap-3 text-text-muted">
-            <span className="material-symbols-outlined text-4xl">shopping_bag</span>
+            <span className="material-symbols-outlined text-4xl">
+              shopping_bag
+            </span>
             <p className="text-sm">No hay pedidos con estos filtros</p>
           </div>
         ) : (
@@ -223,12 +268,24 @@ export default function AdminOrdersPage() {
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-[#E0DED9] bg-cream/40">
-                  <th className="text-left px-4 py-3 font-semibold text-text-muted"># Pedido</th>
-                  <th className="text-left px-4 py-3 font-semibold text-text-muted">Cliente</th>
-                  <th className="text-left px-4 py-3 font-semibold text-text-muted">Items</th>
-                  <th className="text-left px-4 py-3 font-semibold text-text-muted">Total</th>
-                  <th className="text-left px-4 py-3 font-semibold text-text-muted">Estado prod.</th>
-                  <th className="text-left px-4 py-3 font-semibold text-text-muted">Fecha</th>
+                  <th className="text-left px-4 py-3 font-semibold text-text-muted">
+                    # Pedido
+                  </th>
+                  <th className="text-left px-4 py-3 font-semibold text-text-muted">
+                    Cliente
+                  </th>
+                  <th className="text-left px-4 py-3 font-semibold text-text-muted">
+                    Items
+                  </th>
+                  <th className="text-left px-4 py-3 font-semibold text-text-muted">
+                    Total
+                  </th>
+                  <th className="text-left px-4 py-3 font-semibold text-text-muted">
+                    Estado prod.
+                  </th>
+                  <th className="text-left px-4 py-3 font-semibold text-text-muted">
+                    Fecha
+                  </th>
                   <th className="px-4 py-3" />
                 </tr>
               </thead>
@@ -236,15 +293,25 @@ export default function AdminOrdersPage() {
                 {orders.data.map((order) => {
                   const orderStatus = getOrderStatus(order.items);
                   return (
-                    <tr key={order.id} className="border-b border-[#E0DED9] hover:bg-cream/20 transition-colors">
-                      <td className="px-4 py-3 font-mono font-semibold text-text-main">{order.orderNumber}</td>
+                    <tr
+                      key={order.id}
+                      className="border-b border-[#E0DED9] hover:bg-cream/20 transition-colors"
+                    >
+                      <td className="px-4 py-3 font-mono font-semibold text-text-main">
+                        {order.orderNumber}
+                      </td>
                       <td className="px-4 py-3">
                         {order.userId ? (
-                          <Link href={`/admin/users/${order.userId}`} className="text-primary hover:underline text-sm">
+                          <Link
+                            href={`/admin/users/${order.userId}`}
+                            className="text-primary hover:underline text-sm"
+                          >
                             {order.customerName || order.customerEmail || "—"}
                           </Link>
                         ) : (
-                          <span className="text-text-muted text-sm">{order.customerEmail || "Invitado"}</span>
+                          <span className="text-text-muted text-sm">
+                            {order.customerEmail || "Invitado"}
+                          </span>
                         )}
                       </td>
                       <td className="px-4 py-3">
@@ -256,13 +323,17 @@ export default function AdminOrdersPage() {
                       <td className="px-4 py-3">
                         <StatusBadge status={orderStatus} />
                       </td>
-                      <td className="px-4 py-3 text-text-muted">{fmtDate(order.shopifyCreatedAt)}</td>
+                      <td className="px-4 py-3 text-text-muted">
+                        {fmtDate(order.shopifyCreatedAt)}
+                      </td>
                       <td className="px-4 py-3">
                         <Link
                           href={`/admin/orders/${order.id}`}
                           className="flex items-center justify-center w-8 h-8 rounded-lg hover:bg-cream transition-colors"
                         >
-                          <span className="material-symbols-outlined text-[20px] text-text-muted">chevron_right</span>
+                          <span className="material-symbols-outlined text-[20px] text-text-muted">
+                            chevron_right
+                          </span>
                         </Link>
                       </td>
                     </tr>
@@ -274,7 +345,8 @@ export default function AdminOrdersPage() {
             {/* Pagination */}
             <div className="flex items-center justify-between px-4 py-3 border-t border-[#E0DED9]">
               <p className="text-sm text-text-muted">
-                {orders.meta.total} pedido(s) · Página {orders.meta.page} de {orders.meta.totalPages}
+                {orders.meta.total} pedido(s) · Página {orders.meta.page} de{" "}
+                {orders.meta.totalPages}
               </p>
               <div className="flex gap-2">
                 <button
@@ -282,7 +354,9 @@ export default function AdminOrdersPage() {
                   onClick={() => setPage((p) => p - 1)}
                   className="flex items-center gap-1 px-3 py-1.5 rounded-lg border border-[#E0DED9] text-text-main hover:bg-cream disabled:opacity-40 transition-colors text-sm"
                 >
-                  <span className="material-symbols-outlined text-[16px]">chevron_left</span>
+                  <span className="material-symbols-outlined text-[16px]">
+                    chevron_left
+                  </span>
                   Anterior
                 </button>
                 <button
@@ -291,7 +365,9 @@ export default function AdminOrdersPage() {
                   className="flex items-center gap-1 px-3 py-1.5 rounded-lg border border-[#E0DED9] text-text-main hover:bg-cream disabled:opacity-40 transition-colors text-sm"
                 >
                   Siguiente
-                  <span className="material-symbols-outlined text-[16px]">chevron_right</span>
+                  <span className="material-symbols-outlined text-[16px]">
+                    chevron_right
+                  </span>
                 </button>
               </div>
             </div>

@@ -242,7 +242,7 @@ export interface AdminProduct {
   isActive: boolean;
   styleId: string | null;
   style: { id: string; name: string; displayName: string; previewUrl: string | null } | null;
-  productType: { id: string; name: string; displayName: string } | null;
+  productType: string | null;
 }
 
 export interface SyncStatus {

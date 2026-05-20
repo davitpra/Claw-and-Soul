@@ -3,7 +3,7 @@
 import { ComponentType } from "react";
 import { ShopifyProduct } from "@/lib/shopify";
 import CanvasTemplate from "./CanvasTemplate";
-import DefaultTemplate from "./DefaultTemplate";
+import PosterTemplate from "./PosterTemplate";
 
 export interface ProductTemplateProps {
   product: ShopifyProduct;
@@ -17,10 +17,10 @@ export interface ProductTemplateProps {
 
 const TEMPLATE_MAP: Record<string, ComponentType<ProductTemplateProps>> = {
   Canvas: CanvasTemplate,
+  Poster: PosterTemplate,
 };
 
 export default function ProductPageTemplate(props: ProductTemplateProps) {
-  const Template =
-    TEMPLATE_MAP[props.product.productType] ?? DefaultTemplate;
+  const Template = TEMPLATE_MAP[props.product.productType] ?? CanvasTemplate;
   return <Template {...props} />;
 }

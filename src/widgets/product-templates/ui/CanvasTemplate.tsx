@@ -19,7 +19,7 @@ export default function CanvasTemplate({
   return (
     <>
       <div className="flex justify-center py-6 md:py-10 px-4 md:px-10 lg:px-40">
-        <div className="layout-content-container flex flex-col max-w-[1200px] w-full gap-8">
+        <div className="layout-content-container flex flex-col max-w-300 w-full gap-8">
           <ProductDetails
             product={product}
             selectedVariantId={selectedVariantId}
@@ -35,7 +35,7 @@ export default function CanvasTemplate({
       <AIProcess />
 
       <div className="flex justify-center py-6 md:py-10 px-4 md:px-10 lg:px-40">
-        <div className="layout-content-container flex flex-col max-w-[1200px] w-full gap-8">
+        <div className="layout-content-container flex flex-col max-w-300 w-full gap-8">
           <ProductEssence />
           <ProductFAQ faqs={faqs} />
         </div>
