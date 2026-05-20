@@ -16,8 +16,17 @@ interface CatalogProduct {
   price: string;
 }
 
+export type SelectedProductInfo = {
+  shopifyVariantId: string;
+  price: string;
+  currencyCode: string;
+  productTitle: string;
+  productImage: string;
+  formatLabel: string;
+};
+
 interface IAProductStepProps {
-  onSelect: (productRefId: string, formatId: string) => void;
+  onSelect: (productRefId: string, formatId: string, productInfo: SelectedProductInfo) => void;
 }
 
 export function IAProductStep({ onSelect }: IAProductStepProps) {
@@ -67,7 +76,15 @@ export function IAProductStep({ onSelect }: IAProductStepProps) {
 
   const handleContinue = () => {
     if (productRefId && selectedFormat) {
-      onSelect(productRefId, selectedFormat.formatId);
+      const selectedProduct = products.find((p) => p.handle === selectedHandle);
+      onSelect(productRefId, selectedFormat.formatId, {
+        shopifyVariantId: selectedFormat.shopifyVariantId,
+        price: selectedFormat.price,
+        currencyCode: selectedFormat.currencyCode,
+        productTitle: selectedProduct?.title ?? "",
+        productImage: selectedProduct?.image ?? "",
+        formatLabel: selectedFormat.displayName,
+      });
     }
   };
 

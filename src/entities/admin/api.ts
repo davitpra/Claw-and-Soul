@@ -60,6 +60,122 @@ export interface AdminUserGeneration {
   style: { id: string; displayName: string } | null;
 }
 
+export interface AdminOrderItemSummary {
+  id: string;
+  productionStatus: string;
+  fulfillmentMethod: string;
+  imageUrl: string | null;
+  generation: { resultUrl: string | null } | null;
+}
+
+export interface AdminOrderListItem {
+  id: string;
+  orderNumber: string;
+  customerEmail: string | null;
+  customerName: string | null;
+  userId: string | null;
+  totalAmount: number;
+  currency: string;
+  financialStatus: string | null;
+  fulfillmentStatus: string | null;
+  shopifyCreatedAt: string;
+  items: AdminOrderItemSummary[];
+}
+
+export interface AdminOrderItem {
+  id: string;
+  shopifyLineItemId: string;
+  title: string;
+  variantTitle: string | null;
+  sku: string | null;
+  quantity: number;
+  unitPrice: number;
+  totalPrice: number;
+  imageUrl: string | null;
+  style: string | null;
+  size: string | null;
+  fulfillmentMethod: string;
+  productionStatus: string;
+  trackingNumber: string | null;
+  trackingUrl: string | null;
+  trackingCarrier: string | null;
+  podProvider: string | null;
+  podOrderId: string | null;
+  notes: string | null;
+  shippedAt: string | null;
+  deliveredAt: string | null;
+  productRef: { id: string; name: string; displayName: string; fulfillmentMethod: string } | null;
+  productVariant: { id: string; shopifyVariantTitle: string } | null;
+  generation: {
+    id: string;
+    resultUrl: string | null;
+    thumbnailUrl: string | null;
+    pet: { id: string; name: string; species: string } | null;
+    style: { id: string; displayName: string } | null;
+  } | null;
+}
+
+export interface AdminOrderEvent {
+  id: string;
+  eventType: string;
+  fromStatus: string | null;
+  toStatus: string | null;
+  source: string;
+  userId: string | null;
+  payload: Record<string, unknown> | null;
+  createdAt: string;
+}
+
+export interface AdminOrderDetail {
+  id: string;
+  shopifyOrderId: string;
+  orderNumber: string;
+  customerEmail: string | null;
+  customerName: string | null;
+  customerPhone: string | null;
+  userId: string | null;
+  financialStatus: string | null;
+  fulfillmentStatus: string | null;
+  currency: string;
+  subtotalAmount: number;
+  shippingAmount: number | null;
+  taxAmount: number | null;
+  totalAmount: number;
+  shippingAddress: Record<string, string> | null;
+  billingAddress: Record<string, string> | null;
+  customerNote: string | null;
+  shopifyCreatedAt: string;
+  cancelledAt: string | null;
+  user: { id: string; email: string; fullName: string | null } | null;
+  items: AdminOrderItem[];
+  events: AdminOrderEvent[];
+}
+
+export interface AdminUserOrderItem {
+  id: string;
+  title: string;
+  productionStatus: string;
+  imageUrl: string | null;
+  generation: { resultUrl: string | null } | null;
+}
+
+export interface AdminUserOrderListItem {
+  id: string;
+  orderNumber: string;
+  totalAmount: number;
+  currency: string;
+  financialStatus: string | null;
+  shopifyCreatedAt: string;
+  items: AdminUserOrderItem[];
+}
+
+export interface OrderStats {
+  total: number;
+  period: number;
+  revenue: number;
+  byProductionStatus: Record<string, number>;
+}
+
 export interface OverviewStats {
   totals: {
     users: number;
@@ -85,6 +201,11 @@ export interface OverviewStats {
     productsUpdated: number | null;
   }[];
   timeline: { day: string; count: number }[];
+  orders: {
+    thisWeek: number;
+    revenueThisWeek: number;
+    byProductionStatus: Record<string, number>;
+  };
 }
 
 export interface AdminStyle {
@@ -214,5 +335,65 @@ export const adminApi = {
       adminFetch<Paginated<AdminUserGeneration>>(
         `/admin/users/${id}/generations?page=${page}&limit=24`,
       ),
+    orders: (id: string, page = 1): Promise<Paginated<AdminUserOrderListItem>> =>
+      adminFetch<Paginated<AdminUserOrderListItem>>(
+        `/admin/users/${id}/orders?page=${page}&limit=10`,
+      ),
+  },
+  orders: {
+    list: (params: {
+      page?: number;
+      limit?: number;
+      status?: string;
+      method?: string;
+      dateFrom?: string;
+      dateTo?: string;
+      q?: string;
+    } = {}): Promise<Paginated<AdminOrderListItem>> => {
+      const p = new URLSearchParams();
+      if (params.page) p.set('page', String(params.page));
+      if (params.limit) p.set('limit', String(params.limit));
+      if (params.status) p.set('status', params.status);
+      if (params.method) p.set('method', params.method);
+      if (params.dateFrom) p.set('dateFrom', params.dateFrom);
+      if (params.dateTo) p.set('dateTo', params.dateTo);
+      if (params.q) p.set('q', params.q);
+      return adminFetch<Paginated<AdminOrderListItem>>(`/admin/orders?${p}`);
+    },
+    detail: (id: string) => adminFetch<AdminOrderDetail>(`/admin/orders/${id}`),
+    stats: (period?: '7d' | '30d' | '90d') =>
+      adminFetch<OrderStats>(`/admin/orders/stats/summary?period=${period ?? '30d'}`),
+    syncStatus: () => adminFetch(`/admin/orders/sync/status`),
+    triggerSync: (since?: string) =>
+      adminFetch<{ syncId: string }>('/admin/orders/sync', {
+        method: 'POST',
+        body: JSON.stringify({ since }),
+      }),
+    updateItemStatus: (
+      orderId: string,
+      itemId: string,
+      toStatus: string,
+      notes?: string,
+    ) =>
+      adminFetch(`/admin/orders/${orderId}/items/${itemId}/status`, {
+        method: 'PATCH',
+        body: JSON.stringify({ toStatus, notes }),
+      }),
+    updateTracking: (
+      orderId: string,
+      itemId: string,
+      data: { trackingNumber: string; trackingUrl?: string; trackingCarrier?: string },
+    ) =>
+      adminFetch(`/admin/orders/${orderId}/items/${itemId}/tracking`, {
+        method: 'PATCH',
+        body: JSON.stringify(data),
+      }),
+    resync: (orderId: string) =>
+      adminFetch(`/admin/orders/${orderId}/resync`, { method: 'POST' }),
+    linkUser: (orderId: string, userId: string) =>
+      adminFetch(`/admin/orders/${orderId}/link-user`, {
+        method: 'POST',
+        body: JSON.stringify({ userId }),
+      }),
   },
 };

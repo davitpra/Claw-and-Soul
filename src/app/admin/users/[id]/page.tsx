@@ -7,6 +7,7 @@ import {
   adminApi,
   AdminUserDetail,
   AdminUserGeneration,
+  AdminUserOrderListItem,
   Paginated,
 } from "@/entities/admin/api";
 import Breadcrumbs from "@/shared/ui/Breadcrumbs";
@@ -502,17 +503,7 @@ export default function AdminUserDetailPage() {
       )}
 
       {tab === "pedidos" && (
-        <div className="bg-white rounded-2xl border border-[#E0DED9] p-12 text-center shadow-sm flex flex-col items-center gap-3">
-          <div className="bg-gray-100 rounded-2xl p-4">
-            <span className="material-symbols-outlined text-gray-400 text-4xl">
-              shopping_bag
-            </span>
-          </div>
-          <p className="text-sm font-semibold text-text-main">Sin pedidos registrados</p>
-          <p className="text-xs text-text-muted">
-            El módulo de pedidos no está disponible en esta versión.
-          </p>
-        </div>
+        <UserOrdersList userId={id} />
       )}
     </div>
   );
@@ -588,6 +579,114 @@ function GenerationsGrid({
           </div>
         );
       })}
+    </div>
+  );
+}
+
+const PRODUCTION_STATUS_LABELS: Record<string, string> = {
+  paid: "Pagado",
+  in_production: "En producción",
+  shipped: "Enviado",
+  delivered: "Entregado",
+  cancelled: "Cancelado",
+  refunded: "Reembolsado",
+};
+
+function UserOrdersList({ userId }: { userId: string }) {
+  const [orders, setOrders] = useState<Paginated<AdminUserOrderListItem> | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [page, setPage] = useState(1);
+
+  useEffect(() => {
+    setLoading(true);
+    adminApi.users.orders(userId, page).then(setOrders).finally(() => setLoading(false));
+  }, [userId, page]);
+
+  if (loading) {
+    return (
+      <div className="flex items-center gap-3 text-text-muted">
+        <span className="material-symbols-outlined animate-spin">progress_activity</span>
+        Cargando pedidos…
+      </div>
+    );
+  }
+
+  if (!orders?.data.length) {
+    return (
+      <div className="bg-white rounded-2xl border border-[#E0DED9] p-12 text-center shadow-sm flex flex-col items-center gap-3">
+        <div className="bg-gray-100 rounded-2xl p-4">
+          <span className="material-symbols-outlined text-gray-400 text-4xl">shopping_bag</span>
+        </div>
+        <p className="text-sm font-semibold text-text-main">Sin pedidos registrados</p>
+        <p className="text-xs text-text-muted">No se encontraron pedidos para este usuario.</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-3">
+      {orders.data.map((order) => {
+        const thumb = order.items[0]?.generation?.resultUrl ?? order.items[0]?.imageUrl;
+        return (
+          <Link
+            key={order.id}
+            href={`/admin/orders/${order.id}`}
+            className="flex items-center gap-4 bg-white rounded-2xl border border-[#E0DED9] shadow-sm p-4 hover:bg-cream/20 transition-colors"
+          >
+            <div className="w-12 h-12 rounded-xl border border-[#E0DED9] overflow-hidden bg-cream/40 shrink-0">
+              {thumb ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={thumb} alt="" className="w-full h-full object-cover" />
+              ) : (
+                <div className="w-full h-full flex items-center justify-center">
+                  <span className="material-symbols-outlined text-text-muted text-xl">image</span>
+                </div>
+              )}
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="font-semibold text-text-main text-sm font-mono">{order.orderNumber}</p>
+              <p className="text-xs text-text-muted mt-0.5">
+                {new Date(order.shopifyCreatedAt).toLocaleDateString("es-ES", {
+                  day: "2-digit",
+                  month: "short",
+                  year: "numeric",
+                })} · {order.items.length} item(s)
+              </p>
+            </div>
+            <div className="text-right shrink-0">
+              <p className="font-semibold text-text-main text-sm">
+                {new Intl.NumberFormat("es-ES", { style: "currency", currency: order.currency }).format(order.totalAmount)}
+              </p>
+              <div className="flex justify-end gap-1 mt-1 flex-wrap">
+                {[...new Set(order.items.map((i) => i.productionStatus))].map((s) => (
+                  <span key={s} className="text-[10px] px-1.5 py-0.5 rounded-full bg-cream text-text-muted font-medium">
+                    {PRODUCTION_STATUS_LABELS[s] ?? s}
+                  </span>
+                ))}
+              </div>
+            </div>
+            <span className="material-symbols-outlined text-text-muted text-[20px]">chevron_right</span>
+          </Link>
+        );
+      })}
+      {orders.meta.totalPages > 1 && (
+        <div className="flex justify-center gap-2 pt-2">
+          <button
+            disabled={page <= 1}
+            onClick={() => setPage((p) => p - 1)}
+            className="px-3 py-1.5 rounded-lg border border-[#E0DED9] text-sm text-text-muted hover:bg-cream disabled:opacity-40 transition-colors"
+          >
+            Anterior
+          </button>
+          <button
+            disabled={page >= orders.meta.totalPages}
+            onClick={() => setPage((p) => p + 1)}
+            className="px-3 py-1.5 rounded-lg border border-[#E0DED9] text-sm text-text-muted hover:bg-cream disabled:opacity-40 transition-colors"
+          >
+            Siguiente
+          </button>
+        </div>
+      )}
     </div>
   );
 }

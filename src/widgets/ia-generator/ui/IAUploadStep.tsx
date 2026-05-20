@@ -3,6 +3,8 @@
 import { useState, useEffect, useCallback } from "react";
 import { useAuthFetch } from "@/hooks/useAuthFetch";
 import { useGenerateImage } from "@/hooks/useGenerateImage";
+import { useCart } from "@/context/CartContext";
+import type { SelectedProductInfo } from "./IAProductStep";
 
 interface PetPhoto {
   id: string;
@@ -26,6 +28,8 @@ interface IAUploadStepProps {
   productRefId: string | null;
   formatId: string | null;
   onNext: () => void;
+  productInfo: SelectedProductInfo | null;
+  styleName: string | null;
 }
 
 const SPECIES_OPTIONS = ["dog", "cat", "bird", "rabbit", "other"];
@@ -52,9 +56,12 @@ export function IAUploadStep({
   productRefId,
   formatId,
   onNext,
+  productInfo,
+  styleName,
 }: IAUploadStepProps) {
   const { get, post, authFetchJSON } = useAuthFetch();
   const { generate } = useGenerateImage();
+  const { addToCart } = useCart();
 
   // Estados principales del componente
   const [pets, setPets] = useState<Pet[]>([]); // Lista de mascotas del usuario
@@ -207,21 +214,36 @@ export function IAUploadStep({
         });
       }
 
-      await generate({
+      const generation = await generate({
         petId,
         petPhotoId: petPhotoId ?? undefined,
-        styleId,
         formatId,
         productRefId,
       });
 
+      // productInfo is null when arriving via URL params without passing through IAProductStep
+      // (e.g. deep link). In that case, generation is still triggered but cart add is skipped.
+      if (productInfo) {
+        try {
+          addToCart({
+            id: generation.id,
+            variantId: productInfo.shopifyVariantId,
+            name: productInfo.productTitle,
+            size: productInfo.formatLabel,
+            style: styleName ?? undefined,
+            price: parseFloat(productInfo.price),
+            quantity: 1,
+            img: productInfo.productImage,
+            generationId: generation.id,
+          });
+        } catch (cartErr) {
+          console.error("addToCart failed:", cartErr);
+        }
+      }
+
       onNext();
     } catch {
-      setFormError(
-        isExistingPet
-          ? "Could not update pet. Try again."
-          : "Could not save pet. Try again.",
-      );
+      setFormError("Could not start generation. Try again.");
     } finally {
       setSubmitting(false);
     }

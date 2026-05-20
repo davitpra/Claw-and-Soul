@@ -1,15 +1,42 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { Navbar } from "@/widgets/navbar";
 import { Footer } from "@/widgets/footer";
 import { shopifyFetch, GRAPHQL_QUERIES } from "@/lib/shopify";
 import { useCart } from "@/context/CartContext";
+import { useAuthFetch } from "@/hooks/useAuthFetch";
 
 export default function CartPage() {
-  const { items, updateQuantity, removeItem, subtotal } = useCart();
+  const { items, updateQuantity, removeItem, subtotal, updateItemImage } = useCart();
+  const { authFetchJSON } = useAuthFetch();
   const [isCheckingOut, setIsCheckingOut] = useState(false);
+
+  // On mount, fetch status for any items whose AI generation hasn't resolved yet.
+  useEffect(() => {
+    const pending = items.filter((i) => i.generationId && !i.imageUrl);
+    if (pending.length === 0) return;
+
+    pending.forEach(async (item) => {
+      try {
+        const statusRes = await authFetchJSON<{ data: { status: string } }>(
+          `/generations/${item.generationId}/status`
+        );
+        if (statusRes.data.status !== "completed") return;
+
+        const detailRes = await authFetchJSON<{ data: { resultUrl: string } }>(
+          `/generations/${item.generationId}`
+        );
+        if (detailRes.data.resultUrl) {
+          updateItemImage(item.generationId!, detailRes.data.resultUrl);
+        }
+      } catch {
+        // generation not ready — silently ignore
+      }
+    });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const handleCheckout = async () => {
     if (items.length === 0) return;
@@ -123,12 +150,23 @@ export default function CartPage() {
                         className="grid grid-cols-1 md:grid-cols-12 gap-6 md:gap-4 items-center py-8 border-b border-slate-dark/10 last:border-none relative group"
                       >
                         <div className="col-span-1 md:col-span-6 flex gap-6">
-                          <div className="w-24 h-24 md:w-32 md:h-32 rounded-xl overflow-hidden bg-white shrink-0 shadow-sm border border-slate-dark/5">
-                            <img
-                              src={item.img}
-                              alt={item.name}
-                              className="w-full h-full object-cover"
-                            />
+                          <div className="w-24 h-24 md:w-32 md:h-32 rounded-xl overflow-hidden bg-white shrink-0 shadow-sm border border-slate-dark/5 relative">
+                            {item.generationId && !item.imageUrl ? (
+                              <div className="w-full h-full flex flex-col items-center justify-center gap-1 bg-slate-50 px-2">
+                                <span className="material-symbols-outlined animate-spin text-2xl text-primary">
+                                  progress_activity
+                                </span>
+                                <p className="text-[9px] font-bold text-slate-500 text-center leading-tight">
+                                  Creando tu obra…
+                                </p>
+                              </div>
+                            ) : (
+                              <img
+                                src={item.img}
+                                alt={item.name}
+                                className="w-full h-full object-cover"
+                              />
+                            )}
                           </div>
                           <div className="flex flex-col justify-center gap-1">
                             <h3 className="font-black text-lg text-slate-dark leading-tight">

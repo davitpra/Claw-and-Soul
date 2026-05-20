@@ -6,7 +6,6 @@ import { useAuthFetch } from "@/hooks/useAuthFetch";
 export interface GeneratePayload {
   petId: string;
   petPhotoId?: string;
-  styleId: string;
   formatId: string;
   productRefId: string;
   width?: number;

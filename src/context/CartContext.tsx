@@ -22,6 +22,7 @@ interface CartContextType {
   updateQuantity: (variantId: string, delta: number) => void;
   removeItem: (variantId: string) => void;
   clearCart: () => void;
+  updateItemImage: (generationId: string, imageUrl: string) => void;
   subtotal: number;
   cartCount: number;
 }
@@ -88,6 +89,16 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     setItems([]);
   };
 
+  const updateItemImage = (generationId: string, imageUrl: string) => {
+    setItems((prev) =>
+      prev.map((item) =>
+        item.generationId === generationId && !item.imageUrl
+          ? { ...item, imageUrl, img: imageUrl }
+          : item
+      )
+    );
+  };
+
   const subtotal = items.reduce(
     (acc, item) => acc + item.price * item.quantity,
     0
@@ -102,6 +113,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
         updateQuantity,
         removeItem,
         clearCart,
+        updateItemImage,
         subtotal,
         cartCount,
       }}

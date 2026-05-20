@@ -8,6 +8,7 @@ import Image from "next/image";
 const navItems = [
   { label: "Dashboard", href: "/admin", icon: "dashboard", exact: true },
   { label: "Usuarios", href: "/admin/users", icon: "group" },
+  { label: "Pedidos", href: "/admin/orders", icon: "shopping_bag" },
   { label: "Estilos", href: "/admin/styles", icon: "palette" },
   { label: "Formatos", href: "/admin/formats", icon: "aspect_ratio" },
   { label: "Productos & Sync", href: "/admin/products", icon: "inventory_2" },
@@ -21,18 +22,9 @@ export default function AdminSidebar() {
     <aside className="w-60 shrink-0 flex flex-col min-h-screen bg-background-dark text-white">
       {/* Logo */}
       <div className="px-5 py-6 border-b border-white/10">
-        <Link href="/admin" className="flex items-center gap-2.5">
-          <div className="size-10 relative overflow-hidden rounded-full ring-2 ring-transparent group-hover:ring-primary/20 transition-all">
-            <Image
-              src="/Logo.jpg"
-              alt="Claw & Soul Logo"
-              fill
-              className="object-contain"
-              priority
-            />
-          </div>
-          <h2 className="text-white text-lg lg:text-xl font-bold leading-tight tracking-[-0.015em] hidden sm:block">
-            Claw & Soul
+        <Link href="/admin" className="flex items-center justify-center gap-2.5">
+          <h2 className="text-white text-xl lg:text-2xl font-bold leading-tight tracking-[-0.015em] text-center">
+            Claw <span className="text-primary">&</span> Soul
           </h2>
         </Link>
       </div>
