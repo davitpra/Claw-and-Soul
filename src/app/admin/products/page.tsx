@@ -12,12 +12,35 @@ import {
   Text,
   InlineStack,
   BlockStack,
-  Divider,
-  Icon,
-
+  Modal,
+  Select,
+  Thumbnail,
 } from "@shopify/polaris";
-import { RefreshIcon, AlertTriangleIcon } from "@shopify/polaris-icons";
-import { adminApi, AdminProduct, SyncStatus } from "@/entities/admin/api";
+import { RefreshIcon, DeleteIcon, ImageIcon } from "@shopify/polaris-icons";
+import {
+  adminApi,
+  AdminProduct,
+  AdminStyle,
+  SyncStatus,
+} from "@/entities/admin/api";
+import { shopifyFetch } from "@/lib/shopify/client";
+
+const GET_PRODUCTS_IMAGES = `
+  query getProductsImages($first: Int!) {
+    products(first: $first) {
+      edges {
+        node {
+          handle
+          images(first: 1) {
+            edges {
+              node { url }
+            }
+          }
+        }
+      }
+    }
+  }
+`;
 
 export default function AdminProductsPage() {
   const [products, setProducts] = useState<AdminProduct[]>([]);
@@ -26,6 +49,13 @@ export default function AdminProductsPage() {
   const [syncing, setSyncing] = useState(false);
   const [toggling, setToggling] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [deletingTarget, setDeletingTarget] = useState<AdminProduct | null>(
+    null,
+  );
+  const [deleting, setDeleting] = useState(false);
+  const [styles, setStyles] = useState<AdminStyle[]>([]);
+  const [savingStyle, setSavingStyle] = useState<string | null>(null);
+  const [imageMap, setImageMap] = useState<Record<string, string>>({});
 
   const loadProducts = () => {
     setLoading(true);
@@ -37,12 +67,48 @@ export default function AdminProductsPage() {
   };
 
   const loadSyncStatus = () => {
-    adminApi.sync.status().then(setSyncStatus).catch(() => {});
+    adminApi.sync
+      .status()
+      .then(setSyncStatus)
+      .catch(() => {});
+  };
+
+  const loadStyles = () => {
+    adminApi.styles
+      .list()
+      .then((all) => setStyles(all.filter((s) => s.isActive)))
+      .catch(() => {});
+  };
+
+  const loadImages = async () => {
+    try {
+      const { data } = await shopifyFetch<{
+        products: {
+          edges: Array<{
+            node: {
+              handle: string;
+              images: { edges: Array<{ node: { url: string } }> };
+            };
+          }>;
+        };
+      }>({ query: GET_PRODUCTS_IMAGES, variables: { first: 250 } });
+
+      const map: Record<string, string> = {};
+      for (const { node } of data.products.edges) {
+        const url = node.images.edges[0]?.node.url;
+        if (url) map[node.handle] = url;
+      }
+      setImageMap(map);
+    } catch {
+      // imágenes best-effort — no bloquear la UI si falla
+    }
   };
 
   useEffect(() => {
     loadProducts();
     loadSyncStatus();
+    loadStyles();
+    loadImages();
   }, []);
 
   const handleSync = async () => {
@@ -75,12 +141,62 @@ export default function AdminProductsPage() {
     }
   };
 
+  const handleDelete = async () => {
+    if (!deletingTarget) return;
+    setDeleting(true);
+    try {
+      await adminApi.products.delete(deletingTarget.id);
+      setDeletingTarget(null);
+      loadProducts();
+    } catch (e: unknown) {
+      setError((e as Error).message);
+    } finally {
+      setDeleting(false);
+    }
+  };
+
+  const handleStyleChange = async (productId: string, newStyleId: string) => {
+    setSavingStyle(productId);
+    const styleId = newStyleId || null;
+    setProducts((prev) =>
+      prev.map((p) =>
+        p.id === productId
+          ? {
+              ...p,
+              styleId,
+              style: styleId
+                ? (() => {
+                    const s = styles.find((x) => x.id === styleId);
+                    return s
+                      ? {
+                          id: s.id,
+                          name: s.name,
+                          displayName: s.displayName,
+                          previewUrl: s.previewUrl,
+                        }
+                      : null;
+                  })()
+                : null,
+            }
+          : p,
+      ),
+    );
+    try {
+      await adminApi.products.update(productId, { styleId });
+    } catch (e: unknown) {
+      setError((e as Error).message);
+      loadProducts();
+    } finally {
+      setSavingStyle(null);
+    }
+  };
+
   const syncTone =
     syncStatus?.status === "completed"
       ? "success"
       : syncStatus?.status === "failed"
-      ? "critical"
-      : "attention";
+        ? "critical"
+        : "attention";
 
   return (
     <Page
@@ -177,7 +293,14 @@ export default function AdminProductsPage() {
             <IndexTable
               resourceName={{ singular: "producto", plural: "productos" }}
               itemCount={products.length}
-              headings={[{ title: "Producto" }, { title: "Handle Shopify" }, { title: "Estilo asignado" }, { title: "Tipo" }, { title: "Estado" }, { title: "Acción" }]}
+              headings={[
+                { title: "Producto" },
+                { title: "Handle Shopify" },
+                { title: "Estilo asignado" },
+                { title: "Tipo" },
+                { title: "Estado" },
+                { title: "" },
+              ]}
               selectable={false}
             >
               {products.map((p, index) => (
@@ -188,36 +311,50 @@ export default function AdminProductsPage() {
                   tone={p.isActive ? undefined : "subdued"}
                 >
                   <IndexTable.Cell>
-                    <Text variant="bodyMd" fontWeight="semibold" as="span">
-                      {p.displayName}
-                    </Text>
-                    <br />
-                    <Text variant="bodySm" tone="subdued" as="span">
-                      {p.name}
-                    </Text>
+                    <InlineStack gap="300" blockAlign="center">
+                      <Thumbnail
+                        source={
+                          (p.shopifyHandle && imageMap[p.shopifyHandle]) ||
+                          ImageIcon
+                        }
+                        alt={p.displayName}
+                        size="small"
+                      />
+                      <BlockStack gap="0">
+                        <Text variant="bodyMd" fontWeight="semibold" as="span">
+                          {p.displayName}
+                        </Text>
+                        <Text variant="bodySm" tone="subdued" as="span">
+                          {p.name}
+                        </Text>
+                      </BlockStack>
+                    </InlineStack>
                   </IndexTable.Cell>
                   <IndexTable.Cell>
-                    <Text
-                      variant="bodySm"
-                      tone="subdued"
-                      as="span"
-                    >
+                    <Text variant="bodySm" tone="subdued" as="span">
                       {p.shopifyHandle ?? "—"}
                     </Text>
                   </IndexTable.Cell>
                   <IndexTable.Cell>
-                    {p.style ? (
-                      <Text variant="bodyMd" fontWeight="medium" as="span">
-                        {p.style.displayName}
-                      </Text>
-                    ) : (
-                      <InlineStack gap="100" blockAlign="center">
-                        <Icon source={AlertTriangleIcon} tone="caution" />
-                        <Text variant="bodySm" tone="caution" as="span">
-                          Sin asignar
-                        </Text>
-                      </InlineStack>
-                    )}
+                    <InlineStack gap="200" blockAlign="center">
+                      <div style={{ minWidth: 180 }}>
+                        <Select
+                          label=""
+                          labelHidden
+                          disabled={savingStyle === p.id}
+                          value={p.styleId ?? ""}
+                          onChange={(value) => handleStyleChange(p.id, value)}
+                          options={[
+                            { label: "Sin asignar", value: "" },
+                            ...styles.map((s) => ({
+                              label: s.displayName,
+                              value: s.id,
+                            })),
+                          ]}
+                        />
+                      </div>
+                      {savingStyle === p.id && <Spinner size="small" />}
+                    </InlineStack>
                   </IndexTable.Cell>
                   <IndexTable.Cell>
                     <Text as="span" tone="subdued">
@@ -225,20 +362,46 @@ export default function AdminProductsPage() {
                     </Text>
                   </IndexTable.Cell>
                   <IndexTable.Cell>
-                    <Badge tone={p.isActive ? "success" : "enabled"}>
-                      {p.isActive ? "Activo" : "Inactivo"}
-                    </Badge>
+                    <InlineStack gap="200" blockAlign="center">
+                      <button
+                        type="button"
+                        onClick={() => handleToggle(p)}
+                        disabled={toggling === p.id}
+                        aria-label={
+                          p.isActive
+                            ? "Desactivar producto"
+                            : "Activar producto"
+                        }
+                        title={
+                          p.isActive
+                            ? "Click para desactivar"
+                            : "Click para activar"
+                        }
+                        style={{
+                          background: "transparent",
+                          border: "none",
+                          padding: 0,
+                          cursor:
+                            toggling === p.id ? "wait" : "pointer",
+                          opacity: toggling === p.id ? 0.6 : 1,
+                        }}
+                      >
+                        <Badge tone={p.isActive ? "success" : "enabled"}>
+                          {p.isActive ? "Activo" : "Inactivo"}
+                        </Badge>
+                      </button>
+                      {toggling === p.id && <Spinner size="small" />}
+                    </InlineStack>
                   </IndexTable.Cell>
                   <IndexTable.Cell>
                     <Button
                       variant="plain"
-                      tone={p.isActive ? "critical" : undefined}
+                      tone="critical"
                       size="slim"
-                      loading={toggling === p.id}
-                      onClick={() => handleToggle(p)}
-                    >
-                      {p.isActive ? "Desactivar" : "Activar"}
-                    </Button>
+                      icon={DeleteIcon}
+                      accessibilityLabel={`Eliminar ${p.displayName}`}
+                      onClick={() => setDeletingTarget(p)}
+                    />
                   </IndexTable.Cell>
                 </IndexTable.Row>
               ))}
@@ -246,6 +409,43 @@ export default function AdminProductsPage() {
           </Card>
         )}
       </BlockStack>
+
+      <Modal
+        open={deletingTarget !== null}
+        onClose={() => {
+          if (!deleting) setDeletingTarget(null);
+        }}
+        title="¿Eliminar producto permanentemente?"
+        primaryAction={{
+          content: "Eliminar",
+          destructive: true,
+          loading: deleting,
+          onAction: handleDelete,
+        }}
+        secondaryActions={[
+          {
+            content: "Cancelar",
+            onAction: () => setDeletingTarget(null),
+            disabled: deleting,
+          },
+        ]}
+      >
+        <Modal.Section>
+          <BlockStack gap="200">
+            <Text as="p">
+              Se eliminará{" "}
+              <Text as="span" fontWeight="semibold">
+                {deletingTarget?.displayName}
+              </Text>{" "}
+              y todas sus variantes vinculadas.
+            </Text>
+            <Text as="p" tone="subdued">
+              Las generaciones y pedidos existentes se conservan sin referencia
+              al producto. Esta acción no se puede deshacer.
+            </Text>
+          </BlockStack>
+        </Modal.Section>
+      </Modal>
     </Page>
   );
 }

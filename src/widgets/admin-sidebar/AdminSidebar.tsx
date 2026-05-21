@@ -36,74 +36,20 @@ export default function AdminSidebar() {
     : "AD";
 
   return (
-    <aside
-      style={{
-        width: 240,
-        flexShrink: 0,
-        display: "flex",
-        flexDirection: "column",
-        minHeight: "100vh",
-        backgroundColor: "#ffffff",
-        borderRight: "1px solid #e3e3e3",
-      }}
-    >
+    <aside className="w-60 shrink-0 flex flex-col min-h-screen bg-white border-r border-[#e3e3e3]">
       {/* Logo */}
-      <div
-        style={{
-          padding: "20px 20px 16px",
-          borderBottom: "1px solid #e3e3e3",
-        }}
-      >
-        <Link
-          href="/admin"
-          style={{ textDecoration: "none", display: "block" }}
-        >
-          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-            <div
-              style={{
-                width: 32,
-                height: 32,
-                borderRadius: 8,
-                background: "#448da6",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                flexShrink: 0,
-              }}
-            >
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
-                <path
-                  d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 14H9V8h2v8zm4 0h-2V8h2v8z"
-                  fill="white"
-                />
-              </svg>
-            </div>
-            <div>
-              <span
-                style={{
-                  fontSize: 14,
-                  fontWeight: 700,
-                  color: "#202223",
-                  lineHeight: 1.2,
-                  display: "block",
-                }}
-              >
-                Claw{" "}
-                <span style={{ color: "#448da6" }}>&amp;</span>{" "}
-                Soul
-              </span>
-              <span
-                style={{ fontSize: 11, color: "#6d7175", display: "block" }}
-              >
-                Admin
-              </span>
-            </div>
+      <div className="px-5 pt-5 pb-4 border-b border-[#e3e3e3]">
+        <Link href="/admin" className="no-underline block">
+          <div className="flex items-center gap-2.5 justify-center">
+            <span className="text-2xl font-bold text-[#202223] leading-tight block text-center">
+              Claw <span className="text-[#448da6]">&amp;</span> Soul
+            </span>
           </div>
         </Link>
       </div>
 
       {/* Nav */}
-      <nav style={{ flex: 1, padding: "8px 8px" }}>
+      <nav className="flex-1 p-2">
         {navItems.map((item) => {
           const isActive = item.exact
             ? pathname === item.href
@@ -112,28 +58,16 @@ export default function AdminSidebar() {
             <Link
               key={item.href}
               href={item.href}
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: 10,
-                padding: "8px 12px",
-                borderRadius: 8,
-                textDecoration: "none",
-                fontSize: 13,
-                fontWeight: isActive ? 600 : 400,
-                color: isActive ? "#448da6" : "#202223",
-                backgroundColor: isActive ? "#e8f3f6" : "transparent",
-                marginBottom: 2,
-                transition: "background 0.12s, color 0.12s",
-                borderLeft: isActive ? "3px solid #448da6" : "3px solid transparent",
-              }}
+              className={`flex items-center gap-2.5 px-3 py-2 rounded-lg no-underline text-[13px] mb-0.5 border-l-[3px] transition-colors duration-120 ${
+                isActive
+                  ? "font-semibold text-[#448da6] bg-[#e8f3f6] border-l-[#448da6]"
+                  : "font-normal text-[#202223] bg-transparent border-l-transparent"
+              }`}
             >
               <span
-                style={{
-                  color: isActive ? "#448da6" : "#5c5f62",
-                  display: "flex",
-                  flexShrink: 0,
-                }}
+                className={`flex shrink-0 ${
+                  isActive ? "text-[#448da6]" : "text-[#5c5f62]"
+                }`}
               >
                 <Icon source={item.icon} />
               </span>
@@ -144,42 +78,18 @@ export default function AdminSidebar() {
       </nav>
 
       {/* Admin card */}
-      <div style={{ padding: "12px 12px 16px" }}>
-        <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            gap: 10,
-            padding: "10px 12px",
-            borderRadius: 8,
-            backgroundColor: "#f6f6f7",
-            border: "1px solid #e3e3e3",
-          }}
-        >
-          <Avatar size="sm" initials={initials} name={user?.fullName ?? "Admin"} />
-          <div style={{ flex: 1, minWidth: 0 }}>
-            <p
-              style={{
-                fontSize: 13,
-                fontWeight: 600,
-                color: "#202223",
-                overflow: "hidden",
-                textOverflow: "ellipsis",
-                whiteSpace: "nowrap",
-                margin: 0,
-              }}
-            >
+      <div className="px-3 pt-3 pb-4">
+        <div className="flex items-center gap-2.5 px-3 py-2.5 rounded-lg bg-[#f6f6f7] border border-[#e3e3e3]">
+          <Avatar
+            size="sm"
+            initials={initials}
+            name={user?.fullName ?? "Admin"}
+          />
+          <div className="flex-1 min-w-0">
+            <p className="text-[13px] font-semibold text-[#202223] truncate m-0">
               {user?.fullName || user?.email || "Admin"}
             </p>
-            <p
-              style={{
-                fontSize: 11,
-                color: "#6d7175",
-                margin: 0,
-              }}
-            >
-              Administrador
-            </p>
+            <p className="text-[11px] text-[#6d7175] m-0">Administrador</p>
           </div>
         </div>
       </div>

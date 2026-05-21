@@ -68,15 +68,11 @@ function StatTile({
 }) {
   return (
     <div
-      style={{
-        background: highlight ? "#e8f3f6" : "#f6f6f7",
-        borderRadius: 8,
-        padding: "16px",
-        border: highlight ? "1px solid #448da6" : "1px solid #e3e3e3",
-        display: "flex",
-        flexDirection: "column",
-        gap: 4,
-      }}
+      className={`rounded-lg p-4 flex flex-col gap-1 border ${
+        highlight
+          ? "bg-[#e8f3f6] border-[#448da6]"
+          : "bg-[#f6f6f7] border-[#e3e3e3]"
+      }`}
     >
       <Text variant="heading2xl" as="p">
         {typeof value === "number" ? value.toLocaleString() : value}

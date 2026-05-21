@@ -22,26 +22,8 @@ export default function AdminLayout({
 
   if (isLoading) {
     return (
-      <div
-        style={{
-          minHeight: "100vh",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          background: "#f4f6f8",
-        }}
-      >
-        <div
-          style={{
-            width: 32,
-            height: 32,
-            border: "3px solid #e3e3e3",
-            borderTopColor: "#448da6",
-            borderRadius: "50%",
-            animation: "spin 0.8s linear infinite",
-          }}
-        />
-        <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+      <div className="min-h-screen flex items-center justify-center bg-[#f4f6f8]">
+        <div className="w-8 h-8 rounded-full border-[3px] border-[#e3e3e3] border-t-[#448da6] animate-spin" />
       </div>
     );
   }
