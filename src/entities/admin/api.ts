@@ -316,6 +316,8 @@ export const adminApi = {
       }),
     deactivate: (id: string) =>
       adminFetch(`/admin/products/${id}`, { method: 'DELETE' }),
+    delete: (id: string) =>
+      adminFetch(`/admin/products/${id}/permanent`, { method: 'DELETE' }),
   },
   sync: {
     trigger: () => adminFetch('/admin/products/sync', { method: 'POST' }),
