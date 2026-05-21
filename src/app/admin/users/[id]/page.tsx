@@ -4,24 +4,32 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import {
+  Page,
+  Layout,
+  Card,
+  Avatar,
+  Badge,
+  Button,
+  Banner,
+  Spinner,
+  Text,
+  InlineStack,
+  BlockStack,
+  Box,
+  Divider,
+  Tabs,
+  Thumbnail,
+  Pagination,
+  EmptyState,
+  Grid,
+} from "@shopify/polaris";
+import {
   adminApi,
   AdminUserDetail,
   AdminUserGeneration,
   AdminUserOrderListItem,
   Paginated,
 } from "@/entities/admin/api";
-import Breadcrumbs from "@/shared/ui/Breadcrumbs";
-
-const LOCATION_PLACEHOLDERS = [
-  "Buenos Aires, Argentina",
-  "Córdoba, Argentina",
-  "Rosario, Argentina",
-  "La Plata, Argentina",
-  "Mendoza, Argentina",
-  "Mar del Plata, Argentina",
-  "Santiago, Chile",
-  "Montevideo, Uruguay",
-];
 
 function getInitials(fullName: string | null, email: string): string {
   if (fullName) {
@@ -35,11 +43,6 @@ function getInitials(fullName: string | null, email: string): string {
 
 function getHandle(email: string): string {
   return "@" + email.split("@")[0];
-}
-
-function getLocation(id: string): string {
-  const sum = id.split("").reduce((acc, c) => acc + c.charCodeAt(0), 0);
-  return LOCATION_PLACEHOLDERS[sum % LOCATION_PLACEHOLDERS.length];
 }
 
 function daysSince(dateStr: string): number {
@@ -56,28 +59,33 @@ function fmtDate(d: string) {
   });
 }
 
-const ROLE_BADGE: Record<string, string> = {
-  admin: "bg-purple-50 text-purple-700 border-purple-100",
-  premium: "bg-amber-50 text-amber-700 border-amber-100",
-  user: "bg-blue-50 text-blue-700 border-blue-100",
+const ROLE_TONES: Record<
+  string,
+  "attention" | "warning" | "info"
+> = {
+  admin: "attention",
+  premium: "warning",
+  user: "info",
 };
 
-const STATUS_BADGE: Record<string, string> = {
-  completed: "bg-emerald-50 text-emerald-700",
-  failed: "bg-red-50 text-red-700",
-  processing: "bg-amber-50 text-amber-700",
-  pending: "bg-gray-50 text-gray-500",
+const GEN_STATUS_TONES: Record<
+  string,
+  "success" | "critical" | "warning" | "enabled"
+> = {
+  completed: "success",
+  failed: "critical",
+  processing: "warning",
+  pending: "enabled",
 };
 
-type Tab = "resumen" | "mascotas" | "imagenes" | "ia" | "pedidos";
-
-const TABS: { id: Tab; label: string }[] = [
-  { id: "resumen", label: "Resumen" },
-  { id: "mascotas", label: "Mascotas" },
-  { id: "imagenes", label: "Imágenes" },
-  { id: "ia", label: "Resultados IA" },
-  { id: "pedidos", label: "Pedidos" },
-];
+const PRODUCTION_STATUS_LABELS: Record<string, string> = {
+  paid: "Pagado",
+  in_production: "En producción",
+  shipped: "Enviado",
+  delivered: "Entregado",
+  cancelled: "Cancelado",
+  refunded: "Reembolsado",
+};
 
 export default function AdminUserDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -87,7 +95,7 @@ export default function AdminUserDetailPage() {
   const [loading, setLoading] = useState(true);
   const [gensLoading, setGensLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [tab, setTab] = useState<Tab>("resumen");
+  const [selectedTab, setSelectedTab] = useState(0);
 
   useEffect(() => {
     adminApi.users
@@ -108,19 +116,25 @@ export default function AdminUserDetailPage() {
 
   if (loading) {
     return (
-      <div className="flex items-center gap-3 text-text-muted">
-        <span className="material-symbols-outlined animate-spin">progress_activity</span>
-        Cargando usuario…
-      </div>
+      <Box padding="600">
+        <InlineStack align="center" gap="300">
+          <Spinner />
+          <Text as="span" tone="subdued">
+            Cargando usuario…
+          </Text>
+        </InlineStack>
+      </Box>
     );
   }
 
   if (error || !user) {
     return (
-      <div className="flex items-center gap-3 text-red-600 bg-red-50 rounded-2xl p-4 text-sm">
-        <span className="material-symbols-outlined">error</span>
-        {error ?? "Usuario no encontrado"}
-      </div>
+      <Page
+        backAction={{ url: "/admin/users", content: "Usuarios" }}
+        title="Usuario no encontrado"
+      >
+        <Banner tone="critical">{error ?? "Usuario no encontrado"}</Banner>
+      </Page>
     );
   }
 
@@ -128,384 +142,372 @@ export default function AdminUserDetailPage() {
     p.photos.map((ph) => ({ ...ph, petName: p.name, petSpecies: p.species }))
   );
 
+  const tabs = [
+    { id: "resumen", content: "Resumen", panelID: "panel-resumen" },
+    { id: "mascotas", content: "Mascotas", panelID: "panel-mascotas" },
+    { id: "imagenes", content: "Imágenes", panelID: "panel-imagenes" },
+    { id: "ia", content: "Resultados IA", panelID: "panel-ia" },
+    { id: "pedidos", content: "Pedidos", panelID: "panel-pedidos" },
+  ];
+
   return (
-    <div className="flex flex-col gap-6">
-      {/* Breadcrumb */}
-      <Breadcrumbs
-        items={[
-          { label: "Dashboard", href: "/admin" },
-          { label: "Usuarios", href: "/admin/users" },
-          { label: "Perfil" },
-        ]}
-      />
+    <Page
+      backAction={{ url: "/admin/users", content: "Usuarios" }}
+      title={user.fullName || getHandle(user.email)}
+      subtitle={user.email}
+      titleMetadata={
+        <InlineStack gap="200">
+          <Badge tone={ROLE_TONES[user.role] ?? "enabled"}>
+            {user.role}
+          </Badge>
+          <Badge tone={user.isActive ? "success" : "enabled"}>
+            {user.isActive ? "Activo" : "Inactivo"}
+          </Badge>
+        </InlineStack>
+      }
+    >
+      <Layout>
+        <Layout.Section variant="oneThird">
+          <BlockStack gap="400">
+            {/* Profile card */}
+            <Card>
+              <BlockStack gap="400">
+                <InlineStack align="center">
+                  <Avatar
+                    size="xl"
+                    initials={getInitials(user.fullName, user.email)}
+                    name={user.fullName ?? user.email}
+                  />
+                </InlineStack>
+                <BlockStack gap="200">
+                  <InlineStack gap="200" align="center">
+                    <Badge tone={ROLE_TONES[user.role] ?? "enabled"}>
+                      {user.role}
+                    </Badge>
+                    <Badge tone={user.isActive ? "success" : "enabled"}>
+                      {user.isActive ? "Activo" : "Inactivo"}
+                    </Badge>
+                  </InlineStack>
+                  <Divider />
+                  <BlockStack gap="100">
+                    <Text variant="bodySm" tone="subdued" as="span">
+                      Email
+                    </Text>
+                    <Text variant="bodyMd" as="span">
+                      {user.email}
+                    </Text>
+                  </BlockStack>
+                  <BlockStack gap="100">
+                    <Text variant="bodySm" tone="subdued" as="span">
+                      Email verificado
+                    </Text>
+                    <Badge tone={user.emailVerified ? "success" : "critical"}>
+                      {user.emailVerified ? "Verificado" : "No verificado"}
+                    </Badge>
+                  </BlockStack>
+                  {user.lastLoginAt && (
+                    <BlockStack gap="100">
+                      <Text variant="bodySm" tone="subdued" as="span">
+                        Último acceso
+                      </Text>
+                      <Text variant="bodyMd" as="span">
+                        {fmtDate(user.lastLoginAt)}
+                      </Text>
+                    </BlockStack>
+                  )}
+                  <BlockStack gap="100">
+                    <Text variant="bodySm" tone="subdued" as="span">
+                      Miembro desde
+                    </Text>
+                    <Text variant="bodyMd" as="span">
+                      {fmtDate(user.createdAt)}
+                    </Text>
+                  </BlockStack>
+                </BlockStack>
+              </BlockStack>
+            </Card>
 
-      {/* Header */}
-      <div className="flex items-start justify-between gap-4 flex-wrap">
-        <div>
-          <h1 className="text-2xl font-bold text-slate-dark font-display tracking-tight">
-            Perfil de usuario
-          </h1>
-          <p className="text-text-muted text-sm mt-1">
-            Información y actividad del usuario
-          </p>
-        </div>
-        <Link
-          href="/admin/users"
-          className="flex items-center gap-1 text-sm font-semibold text-text-muted border border-[#E0DED9] rounded-xl px-4 py-2 hover:bg-cream transition-colors"
-        >
-          <span className="material-symbols-outlined text-[16px]">chevron_left</span>
-          Volver a usuarios
-        </Link>
-      </div>
+            {/* Stats */}
+            <Card>
+              <BlockStack gap="300">
+                <Text variant="headingSm" as="h2">
+                  Estadísticas
+                </Text>
+                <Grid columns={{ xs: 2 }}>
+                  {[
+                    { label: "Mascotas", value: user.pets.length },
+                    { label: "Imágenes", value: allPhotos.length },
+                    { label: "Generaciones IA", value: gens?.meta.total ?? "—" },
+                    { label: "Días desde alta", value: daysSince(user.createdAt) },
+                  ].map((stat) => (
+                    <div
+                      key={stat.label}
+                      style={{
+                        background: "#f6f6f7",
+                        borderRadius: 8,
+                        padding: "12px",
+                        textAlign: "center",
+                      }}
+                    >
+                      <Text variant="headingLg" as="p">
+                        {typeof stat.value === "number"
+                          ? stat.value.toLocaleString()
+                          : stat.value}
+                      </Text>
+                      <Text variant="bodySm" tone="subdued" as="span">
+                        {stat.label}
+                      </Text>
+                    </div>
+                  ))}
+                </Grid>
+              </BlockStack>
+            </Card>
+          </BlockStack>
+        </Layout.Section>
 
-      {/* Profile card */}
-      <div className="bg-white rounded-2xl border border-[#E0DED9] p-6 shadow-sm flex flex-col gap-6">
-        {/* Identity row */}
-        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-5">
-          {/* Avatar */}
-          <div className="relative shrink-0">
-            <div className="w-20 h-20 rounded-full bg-primary/20 text-primary flex items-center justify-center text-2xl font-bold font-display select-none">
-              {getInitials(user.fullName, user.email)}
-            </div>
-            {user.isActive && (
-              <span className="absolute bottom-0.5 right-0.5 w-4 h-4 rounded-full bg-emerald-500 border-2 border-white" />
-            )}
-          </div>
-
-          {/* Name + meta */}
-          <div className="flex-1 min-w-0">
-            <div className="flex flex-wrap items-center gap-2 mb-0.5">
-              <p className="text-xl font-bold text-slate-dark font-display leading-tight">
-                {user.fullName || getHandle(user.email)}
-              </p>
-              <span
-                className={`text-xs font-semibold px-2.5 py-0.5 rounded-full border capitalize ${
-                  ROLE_BADGE[user.role] ?? "bg-gray-50 text-gray-600 border-gray-200"
-                }`}
-              >
-                {user.role}
-              </span>
-              <span
-                className={`text-xs font-semibold px-2.5 py-0.5 rounded-full border ${
-                  user.isActive
-                    ? "bg-emerald-50 text-emerald-700 border-emerald-100"
-                    : "bg-gray-100 text-gray-500 border-gray-200"
-                }`}
-              >
-                {user.isActive ? "Activo" : "Inactivo"}
-              </span>
-            </div>
-            <p className="text-sm text-text-muted">{getHandle(user.email)}</p>
-            <div className="flex flex-wrap gap-x-4 gap-y-1 mt-1.5 text-xs text-text-muted">
-              <span className="flex items-center gap-1">
-                <span className="material-symbols-outlined text-[14px]">location_on</span>
-                {getLocation(user.id)}
-              </span>
-              <span className="flex items-center gap-1">
-                <span className="material-symbols-outlined text-[14px]">mail</span>
-                {user.email}
-              </span>
-              <span className="flex items-center gap-1">
-                <span className="material-symbols-outlined text-[14px]">
-                  {user.emailVerified ? "mark_email_read" : "mail"}
-                </span>
-                Email {user.emailVerified ? "verificado" : "no verificado"}
-              </span>
-              {user.lastLoginAt && (
-                <span className="flex items-center gap-1">
-                  <span className="material-symbols-outlined text-[14px]">schedule</span>
-                  Último acceso: {fmtDate(user.lastLoginAt)}
-                </span>
-              )}
-            </div>
-          </div>
-        </div>
-
-        {/* Stats tiles */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-          {[
-            { icon: "pets", label: "Mascotas", value: user.pets.length },
-            { icon: "photo_library", label: "Imágenes subidas", value: allPhotos.length },
-            {
-              icon: "auto_awesome",
-              label: "Resultados IA",
-              value: gens?.meta.total ?? "—",
-            },
-            {
-              icon: "calendar_today",
-              label: "Días desde alta",
-              value: daysSince(user.createdAt),
-            },
-          ].map((s) => (
-            <div
-              key={s.label}
-              className="flex flex-col items-center justify-center gap-2 bg-[#f7f6f2] rounded-xl p-4 text-center"
+        <Layout.Section>
+          <Card padding="0">
+            <Tabs
+              tabs={tabs}
+              selected={selectedTab}
+              onSelect={setSelectedTab}
             >
-              <div className="bg-primary/10 rounded-xl p-2">
-                <span className="material-symbols-outlined text-primary text-[20px]">
-                  {s.icon}
-                </span>
-              </div>
-              <p className="text-2xl font-bold text-slate-dark font-display leading-none">
-                {typeof s.value === "number" ? s.value.toLocaleString() : s.value}
-              </p>
-              <p className="text-xs text-text-muted font-semibold">{s.label}</p>
-            </div>
-          ))}
-        </div>
-      </div>
+              <Box padding="400">
+                {selectedTab === 0 && (
+                  <BlockStack gap="500">
+                    {/* Photos preview */}
+                    <BlockStack gap="300">
+                      <InlineStack align="space-between">
+                        <Text variant="headingMd" as="h2">
+                          Fotos de mascotas ({allPhotos.length})
+                        </Text>
+                        {allPhotos.length > 9 && (
+                          <Button
+                            variant="plain"
+                            onClick={() => setSelectedTab(2)}
+                          >
+                            Ver todas →
+                          </Button>
+                        )}
+                      </InlineStack>
+                      {allPhotos.length === 0 ? (
+                        <Text as="p" tone="subdued">
+                          Sin fotos subidas.
+                        </Text>
+                      ) : (
+                        <div
+                          style={{
+                            display: "grid",
+                            gridTemplateColumns:
+                              "repeat(auto-fill, minmax(60px, 1fr))",
+                            gap: 8,
+                          }}
+                        >
+                          {allPhotos.slice(0, 9).map((ph) => (
+                            <div
+                              key={ph.id}
+                              style={{
+                                aspectRatio: "1",
+                                borderRadius: 8,
+                                overflow: "hidden",
+                                border: ph.isPrimary
+                                  ? "2px solid #448da6"
+                                  : "2px solid #e3e3e3",
+                              }}
+                            >
+                              {/* eslint-disable-next-line @next/next/no-img-element */}
+                              <img
+                                src={ph.photoUrl}
+                                alt={ph.petName}
+                                style={{
+                                  width: "100%",
+                                  height: "100%",
+                                  objectFit: "cover",
+                                }}
+                                loading="lazy"
+                              />
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </BlockStack>
 
-      {/* Tabs */}
-      <div className="border-b border-[#E0DED9]">
-        <div className="flex gap-0 overflow-x-auto">
-          {TABS.map((t) => (
-            <button
-              key={t.id}
-              onClick={() => setTab(t.id)}
-              className={`px-5 py-3 text-sm font-semibold whitespace-nowrap transition-colors border-b-2 -mb-px ${
-                tab === t.id
-                  ? "text-primary border-primary"
-                  : "text-text-muted border-transparent hover:text-text-main"
-              }`}
-            >
-              {t.label}
-            </button>
-          ))}
-        </div>
-      </div>
+                    {/* Generations preview */}
+                    <BlockStack gap="300">
+                      <InlineStack align="space-between">
+                        <Text variant="headingMd" as="h2">
+                          Resultados IA ({gens?.meta.total ?? 0})
+                        </Text>
+                        {gens && gens.meta.total > 6 && (
+                          <Button
+                            variant="plain"
+                            onClick={() => setSelectedTab(3)}
+                          >
+                            Ver todos →
+                          </Button>
+                        )}
+                      </InlineStack>
+                      <GenerationsGrid
+                        gens={gens}
+                        loading={gensLoading}
+                        preview={6}
+                      />
+                    </BlockStack>
+                  </BlockStack>
+                )}
 
-      {/* Tab content */}
-      {tab === "resumen" && (
-        <div className="flex flex-col gap-8">
-          {/* Photos preview */}
-          <div>
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-lg font-bold text-slate-dark font-display">
-                Fotos de mascotas subidas
-                <span className="text-sm font-normal text-text-muted ml-2">
-                  ({allPhotos.length} fotos)
-                </span>
-              </h2>
-              {allPhotos.length > 9 && (
-                <button
-                  onClick={() => setTab("imagenes")}
-                  className="text-sm font-semibold text-primary hover:text-primary-dark transition-colors flex items-center gap-0.5"
-                >
-                  Ver todas las imágenes
-                  <span className="material-symbols-outlined text-[16px]">chevron_right</span>
-                </button>
-              )}
-            </div>
-            {allPhotos.length === 0 ? (
-              <div className="bg-white rounded-2xl border border-[#E0DED9] p-8 text-center text-text-muted text-sm shadow-sm">
-                Este usuario no tiene fotos subidas.
-              </div>
-            ) : (
-              <div className="grid grid-cols-3 sm:grid-cols-5 md:grid-cols-7 lg:grid-cols-9 gap-2">
-                {allPhotos.slice(0, 9).map((ph) => (
-                  <div
-                    key={ph.id}
-                    className={`relative aspect-square rounded-xl overflow-hidden border-2 transition-all ${
-                      ph.isPrimary ? "border-primary shadow-md" : "border-[#E0DED9]"
-                    }`}
-                  >
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img
-                      src={ph.photoUrl}
-                      alt={ph.petName}
-                      className="w-full h-full object-cover"
-                      loading="lazy"
-                    />
-                    {ph.isPrimary && (
-                      <div className="absolute top-1 left-1 bg-primary rounded-full p-0.5">
-                        <span className="material-symbols-outlined text-white text-[10px] block">
-                          star
-                        </span>
+                {selectedTab === 1 && (
+                  <BlockStack gap="400">
+                    <Text variant="headingMd" as="h2">
+                      Mascotas ({user.pets.length})
+                    </Text>
+                    {user.pets.length === 0 ? (
+                      <EmptyState heading="Sin mascotas registradas" image="">
+                        <Text as="p" tone="subdued">
+                          Este usuario no tiene mascotas.
+                        </Text>
+                      </EmptyState>
+                    ) : (
+                      user.pets.map((pet) => (
+                        <Card key={pet.id}>
+                          <BlockStack gap="300">
+                            <InlineStack gap="200" blockAlign="center">
+                              <Text variant="headingSm" as="h3">
+                                {pet.name}
+                              </Text>
+                              <Text variant="bodySm" tone="subdued" as="span">
+                                {pet.species}
+                                {pet.breed ? ` · ${pet.breed}` : ""}
+                              </Text>
+                              {!pet.isActive && (
+                                <Badge tone="enabled">Inactiva</Badge>
+                              )}
+                            </InlineStack>
+                            {pet.photos.length === 0 ? (
+                              <Text as="p" tone="subdued" variant="bodySm">
+                                Sin fotos subidas.
+                              </Text>
+                            ) : (
+                              <div
+                                style={{
+                                  display: "grid",
+                                  gridTemplateColumns:
+                                    "repeat(auto-fill, minmax(60px, 1fr))",
+                                  gap: 8,
+                                }}
+                              >
+                                {pet.photos.map((ph) => (
+                                  <div
+                                    key={ph.id}
+                                    style={{
+                                      aspectRatio: "1",
+                                      borderRadius: 8,
+                                      overflow: "hidden",
+                                      border: ph.isPrimary
+                                        ? "2px solid #448da6"
+                                        : "2px solid #e3e3e3",
+                                    }}
+                                  >
+                                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                                    <img
+                                      src={ph.photoUrl}
+                                      alt={pet.name}
+                                      style={{
+                                        width: "100%",
+                                        height: "100%",
+                                        objectFit: "cover",
+                                      }}
+                                      loading="lazy"
+                                    />
+                                  </div>
+                                ))}
+                              </div>
+                            )}
+                          </BlockStack>
+                        </Card>
+                      ))
+                    )}
+                  </BlockStack>
+                )}
+
+                {selectedTab === 2 && (
+                  <BlockStack gap="300">
+                    <Text variant="headingMd" as="h2">
+                      Imágenes subidas ({allPhotos.length})
+                    </Text>
+                    {allPhotos.length === 0 ? (
+                      <EmptyState heading="Sin imágenes" image="">
+                        <Text as="p" tone="subdued">
+                          Sin fotos subidas.
+                        </Text>
+                      </EmptyState>
+                    ) : (
+                      <div
+                        style={{
+                          display: "grid",
+                          gridTemplateColumns:
+                            "repeat(auto-fill, minmax(60px, 1fr))",
+                          gap: 8,
+                        }}
+                      >
+                        {allPhotos.map((ph) => (
+                          <div
+                            key={ph.id}
+                            style={{
+                              position: "relative",
+                              aspectRatio: "1",
+                              borderRadius: 8,
+                              overflow: "hidden",
+                              border: ph.isPrimary
+                                ? "2px solid #448da6"
+                                : "2px solid #e3e3e3",
+                            }}
+                          >
+                            {/* eslint-disable-next-line @next/next/no-img-element */}
+                            <img
+                              src={ph.photoUrl}
+                              alt={ph.petName}
+                              style={{
+                                width: "100%",
+                                height: "100%",
+                                objectFit: "cover",
+                              }}
+                              loading="lazy"
+                            />
+                          </div>
+                        ))}
                       </div>
                     )}
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-
-          {/* Generations preview */}
-          <div>
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-lg font-bold text-slate-dark font-display">
-                Resultados IA generados
-                {gens && (
-                  <span className="text-sm font-normal text-text-muted ml-2">
-                    ({gens.meta.total} en total)
-                  </span>
+                  </BlockStack>
                 )}
-              </h2>
-              {gens && gens.meta.total > 6 && (
-                <button
-                  onClick={() => setTab("ia")}
-                  className="text-sm font-semibold text-primary hover:text-primary-dark transition-colors flex items-center gap-0.5"
-                >
-                  Ver todos los resultados
-                  <span className="material-symbols-outlined text-[16px]">chevron_right</span>
-                </button>
-              )}
-            </div>
-            <GenerationsGrid gens={gens} loading={gensLoading} preview={6} />
-          </div>
-        </div>
-      )}
 
-      {tab === "mascotas" && (
-        <div className="flex flex-col gap-6">
-          <h2 className="text-lg font-bold text-slate-dark font-display">
-            Mascotas
-            <span className="text-sm font-normal text-text-muted ml-2">
-              ({user.pets.length})
-            </span>
-          </h2>
-          {user.pets.length === 0 ? (
-            <div className="bg-white rounded-2xl border border-[#E0DED9] p-8 text-center text-text-muted text-sm shadow-sm">
-              Este usuario no tiene mascotas registradas.
-            </div>
-          ) : (
-            user.pets.map((pet) => (
-              <div key={pet.id} className="bg-white rounded-2xl border border-[#E0DED9] p-5 shadow-sm">
-                <div className="flex items-center gap-2 mb-3">
-                  <span className="material-symbols-outlined text-primary text-[18px]">pets</span>
-                  <p className="text-sm font-semibold text-text-main capitalize">
-                    {pet.name}
-                    <span className="text-text-muted font-normal ml-1">
-                      · {pet.species}
-                      {pet.breed ? ` · ${pet.breed}` : ""}
-                    </span>
-                  </p>
-                  {!pet.isActive && (
-                    <span className="text-xs text-gray-400">(inactiva)</span>
-                  )}
-                </div>
-                {pet.photos.length === 0 ? (
-                  <p className="text-xs text-text-muted ml-6">Sin fotos subidas.</p>
-                ) : (
-                  <div className="grid grid-cols-3 sm:grid-cols-5 md:grid-cols-7 gap-2">
-                    {pet.photos.map((ph) => (
-                      <div
-                        key={ph.id}
-                        className={`relative aspect-square rounded-xl overflow-hidden border-2 transition-all ${
-                          ph.isPrimary ? "border-primary shadow-md" : "border-[#E0DED9]"
-                        }`}
-                      >
-                        {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img
-                          src={ph.photoUrl}
-                          alt={pet.name}
-                          className="w-full h-full object-cover"
-                          loading="lazy"
+                {selectedTab === 3 && (
+                  <BlockStack gap="400">
+                    <Text variant="headingMd" as="h2">
+                      Resultados IA ({gens?.meta.total ?? 0})
+                    </Text>
+                    <GenerationsGrid gens={gens} loading={gensLoading} />
+                    {gens && gens.meta.totalPages > 1 && (
+                      <InlineStack align="center">
+                        <Pagination
+                          hasPrevious={genPage > 1}
+                          hasNext={genPage < gens.meta.totalPages}
+                          onPrevious={() => setGenPage((p) => p - 1)}
+                          onNext={() => setGenPage((p) => p + 1)}
+                          label={`Pág. ${gens.meta.page} / ${gens.meta.totalPages}`}
                         />
-                        {ph.isPrimary && (
-                          <div className="absolute top-1 left-1 bg-primary rounded-full p-0.5">
-                            <span className="material-symbols-outlined text-white text-[10px] block">
-                              star
-                            </span>
-                          </div>
-                        )}
-                      </div>
-                    ))}
-                  </div>
+                      </InlineStack>
+                    )}
+                  </BlockStack>
                 )}
-              </div>
-            ))
-          )}
-        </div>
-      )}
 
-      {tab === "imagenes" && (
-        <div>
-          <h2 className="text-lg font-bold text-slate-dark font-display mb-4">
-            Imágenes subidas
-            <span className="text-sm font-normal text-text-muted ml-2">
-              ({allPhotos.length} fotos)
-            </span>
-          </h2>
-          {allPhotos.length === 0 ? (
-            <div className="bg-white rounded-2xl border border-[#E0DED9] p-8 text-center text-text-muted text-sm shadow-sm">
-              Este usuario no tiene fotos subidas.
-            </div>
-          ) : (
-            <div className="grid grid-cols-3 sm:grid-cols-5 md:grid-cols-7 lg:grid-cols-9 gap-2">
-              {allPhotos.map((ph) => (
-                <div
-                  key={ph.id}
-                  className={`relative aspect-square rounded-xl overflow-hidden border-2 transition-all group ${
-                    ph.isPrimary ? "border-primary shadow-md" : "border-[#E0DED9]"
-                  }`}
-                >
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
-                    src={ph.photoUrl}
-                    alt={ph.petName}
-                    className="w-full h-full object-cover"
-                    loading="lazy"
-                  />
-                  {ph.isPrimary && (
-                    <div className="absolute top-1 left-1 bg-primary rounded-full p-0.5">
-                      <span className="material-symbols-outlined text-white text-[10px] block">
-                        star
-                      </span>
-                    </div>
-                  )}
-                  <div className="absolute bottom-0 inset-x-0 bg-black/50 text-white text-[9px] px-1.5 py-1 truncate opacity-0 group-hover:opacity-100 transition-opacity">
-                    {ph.petName}
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-      )}
-
-      {tab === "ia" && (
-        <div>
-          <h2 className="text-lg font-bold text-slate-dark font-display mb-4">
-            Resultados IA generados
-            {gens && (
-              <span className="text-sm font-normal text-text-muted ml-2">
-                ({gens.meta.total} en total)
-              </span>
-            )}
-          </h2>
-          <GenerationsGrid gens={gens} loading={gensLoading} />
-          {gens && gens.meta.totalPages > 1 && (
-            <div className="flex items-center justify-between mt-4 text-sm">
-              <p className="text-text-muted">
-                Página {gens.meta.page} de {gens.meta.totalPages}
-              </p>
-              <div className="flex gap-2">
-                <button
-                  disabled={genPage <= 1}
-                  onClick={() => setGenPage((p) => p - 1)}
-                  className="flex items-center gap-1 px-3 py-1.5 rounded-lg border border-[#E0DED9] text-text-main hover:bg-cream disabled:opacity-40 transition-colors"
-                >
-                  <span className="material-symbols-outlined text-[16px]">chevron_left</span>
-                  Anterior
-                </button>
-                <button
-                  disabled={genPage >= gens.meta.totalPages}
-                  onClick={() => setGenPage((p) => p + 1)}
-                  className="flex items-center gap-1 px-3 py-1.5 rounded-lg border border-[#E0DED9] text-text-main hover:bg-cream disabled:opacity-40 transition-colors"
-                >
-                  Siguiente
-                  <span className="material-symbols-outlined text-[16px]">chevron_right</span>
-                </button>
-              </div>
-            </div>
-          )}
-        </div>
-      )}
-
-      {tab === "pedidos" && (
-        <UserOrdersList userId={id} />
-      )}
-    </div>
+                {selectedTab === 4 && <UserOrdersList userId={id} />}
+              </Box>
+            </Tabs>
+          </Card>
+        </Layout.Section>
+      </Layout>
+    </Page>
   );
 }
 
@@ -520,10 +522,12 @@ function GenerationsGrid({
 }) {
   if (loading) {
     return (
-      <div className="flex items-center gap-3 text-text-muted">
-        <span className="material-symbols-outlined animate-spin">progress_activity</span>
-        Cargando generaciones…
-      </div>
+      <InlineStack gap="300" blockAlign="center">
+        <Spinner size="small" />
+        <Text as="span" tone="subdued">
+          Cargando generaciones…
+        </Text>
+      </InlineStack>
     );
   }
 
@@ -531,66 +535,82 @@ function GenerationsGrid({
 
   if (!items || items.length === 0) {
     return (
-      <div className="bg-white rounded-2xl border border-[#E0DED9] p-8 text-center text-text-muted text-sm shadow-sm">
+      <Text as="p" tone="subdued">
         Este usuario no tiene generaciones.
-      </div>
+      </Text>
     );
   }
 
   return (
-    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3">
+    <div
+      style={{
+        display: "grid",
+        gridTemplateColumns: "repeat(auto-fill, minmax(120px, 1fr))",
+        gap: 12,
+      }}
+    >
       {items.map((g) => {
         const imgUrl = g.thumbnailUrl ?? g.resultUrl;
         return (
-          <div
-            key={g.id}
-            className="flex flex-col bg-white rounded-2xl border border-[#E0DED9] overflow-hidden shadow-sm"
-          >
-            <div className="relative aspect-square bg-cream">
-              {imgUrl ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img
-                  src={imgUrl}
-                  alt={g.style?.displayName ?? "Generación"}
-                  className="w-full h-full object-cover"
-                  loading="lazy"
-                />
-              ) : (
-                <div className="w-full h-full flex items-center justify-center">
-                  <span className="material-symbols-outlined text-text-muted text-3xl">
-                    {g.status === "failed" ? "broken_image" : "hourglass_top"}
-                  </span>
-                </div>
-              )}
-            </div>
-            <div className="p-2">
-              <p className="text-xs text-text-muted truncate">
-                {g.style?.displayName ?? "—"}
-              </p>
-              <p className="text-xs text-text-muted truncate">{g.pet?.name ?? "—"}</p>
-              <span
-                className={`mt-1 inline-block text-[10px] font-semibold px-2 py-0.5 rounded-full ${
-                  STATUS_BADGE[g.status] ?? "bg-gray-50 text-gray-500"
-                }`}
+          <Card key={g.id} padding="200">
+            <BlockStack gap="200">
+              <div
+                style={{
+                  aspectRatio: "1",
+                  borderRadius: 6,
+                  overflow: "hidden",
+                  background: "#f6f6f7",
+                }}
               >
-                {g.status}
-              </span>
-            </div>
-          </div>
+                {imgUrl ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={imgUrl}
+                    alt={g.style?.displayName ?? "Generación"}
+                    style={{
+                      width: "100%",
+                      height: "100%",
+                      objectFit: "cover",
+                    }}
+                    loading="lazy"
+                  />
+                ) : (
+                  <div
+                    style={{
+                      width: "100%",
+                      height: "100%",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                    }}
+                  >
+                    <Text as="span" tone="subdued">
+                      —
+                    </Text>
+                  </div>
+                )}
+              </div>
+              <BlockStack gap="050">
+                <Text variant="bodySm" as="span" truncate>
+                  {g.style?.displayName ?? "—"}
+                </Text>
+                <Text variant="bodySm" tone="subdued" as="span" truncate>
+                  {g.pet?.name ?? "—"}
+                </Text>
+                <Badge
+                  tone={GEN_STATUS_TONES[g.status] ?? "enabled"}
+                  size="small"
+                >
+                  {g.status}
+                </Badge>
+              </BlockStack>
+            </BlockStack>
+          </Card>
         );
       })}
     </div>
   );
 }
-
-const PRODUCTION_STATUS_LABELS: Record<string, string> = {
-  paid: "Pagado",
-  in_production: "En producción",
-  shipped: "Enviado",
-  delivered: "Entregado",
-  cancelled: "Cancelado",
-  refunded: "Reembolsado",
-};
 
 function UserOrdersList({ userId }: { userId: string }) {
   const [orders, setOrders] = useState<Paginated<AdminUserOrderListItem> | null>(null);
@@ -599,94 +619,106 @@ function UserOrdersList({ userId }: { userId: string }) {
 
   useEffect(() => {
     setLoading(true);
-    adminApi.users.orders(userId, page).then(setOrders).finally(() => setLoading(false));
+    adminApi.users
+      .orders(userId, page)
+      .then(setOrders)
+      .finally(() => setLoading(false));
   }, [userId, page]);
 
   if (loading) {
     return (
-      <div className="flex items-center gap-3 text-text-muted">
-        <span className="material-symbols-outlined animate-spin">progress_activity</span>
-        Cargando pedidos…
-      </div>
+      <InlineStack gap="300" blockAlign="center">
+        <Spinner size="small" />
+        <Text as="span" tone="subdued">
+          Cargando pedidos…
+        </Text>
+      </InlineStack>
     );
   }
 
   if (!orders?.data.length) {
     return (
-      <div className="bg-white rounded-2xl border border-[#E0DED9] p-12 text-center shadow-sm flex flex-col items-center gap-3">
-        <div className="bg-gray-100 rounded-2xl p-4">
-          <span className="material-symbols-outlined text-gray-400 text-4xl">shopping_bag</span>
-        </div>
-        <p className="text-sm font-semibold text-text-main">Sin pedidos registrados</p>
-        <p className="text-xs text-text-muted">No se encontraron pedidos para este usuario.</p>
-      </div>
+      <EmptyState heading="Sin pedidos registrados" image="">
+        <Text as="p" tone="subdued">
+          No se encontraron pedidos para este usuario.
+        </Text>
+      </EmptyState>
     );
   }
 
   return (
-    <div className="space-y-3">
+    <BlockStack gap="300">
       {orders.data.map((order) => {
-        const thumb = order.items[0]?.generation?.resultUrl ?? order.items[0]?.imageUrl;
+        const thumb =
+          order.items[0]?.generation?.resultUrl ?? order.items[0]?.imageUrl;
         return (
           <Link
             key={order.id}
             href={`/admin/orders/${order.id}`}
-            className="flex items-center gap-4 bg-white rounded-2xl border border-[#E0DED9] shadow-sm p-4 hover:bg-cream/20 transition-colors"
+            style={{ textDecoration: "none" }}
           >
-            <div className="w-12 h-12 rounded-xl border border-[#E0DED9] overflow-hidden bg-cream/40 shrink-0">
-              {thumb ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img src={thumb} alt="" className="w-full h-full object-cover" />
-              ) : (
-                <div className="w-full h-full flex items-center justify-center">
-                  <span className="material-symbols-outlined text-text-muted text-xl">image</span>
+            <Card>
+              <InlineStack gap="400" blockAlign="center">
+                <div style={{ flexShrink: 0 }}>
+                  {thumb ? (
+                    <Thumbnail source={thumb} alt="" size="small" />
+                  ) : (
+                    <div
+                      style={{
+                        width: 40,
+                        height: 40,
+                        borderRadius: 6,
+                        background: "#f6f6f7",
+                        border: "1px solid #e3e3e3",
+                      }}
+                    />
+                  )}
                 </div>
-              )}
-            </div>
-            <div className="flex-1 min-w-0">
-              <p className="font-semibold text-text-main text-sm font-mono">{order.orderNumber}</p>
-              <p className="text-xs text-text-muted mt-0.5">
-                {new Date(order.shopifyCreatedAt).toLocaleDateString("es-ES", {
-                  day: "2-digit",
-                  month: "short",
-                  year: "numeric",
-                })} · {order.items.length} item(s)
-              </p>
-            </div>
-            <div className="text-right shrink-0">
-              <p className="font-semibold text-text-main text-sm">
-                {new Intl.NumberFormat("es-ES", { style: "currency", currency: order.currency }).format(order.totalAmount)}
-              </p>
-              <div className="flex justify-end gap-1 mt-1 flex-wrap">
-                {[...new Set(order.items.map((i) => i.productionStatus))].map((s) => (
-                  <span key={s} className="text-[10px] px-1.5 py-0.5 rounded-full bg-cream text-text-muted font-medium">
-                    {PRODUCTION_STATUS_LABELS[s] ?? s}
-                  </span>
-                ))}
-              </div>
-            </div>
-            <span className="material-symbols-outlined text-text-muted text-[20px]">chevron_right</span>
+                <BlockStack gap="0">
+                  <Text variant="bodyMd" fontWeight="semibold" as="span">
+                    {order.orderNumber}
+                  </Text>
+                  <Text variant="bodySm" tone="subdued" as="span">
+                    {new Date(order.shopifyCreatedAt).toLocaleDateString(
+                      "es-ES",
+                      { day: "2-digit", month: "short", year: "numeric" }
+                    )}{" "}
+                    · {order.items.length} item(s)
+                  </Text>
+                </BlockStack>
+                <BlockStack gap="100" inlineAlign="end">
+                  <Text variant="bodyMd" fontWeight="semibold" as="span">
+                    {new Intl.NumberFormat("es-ES", {
+                      style: "currency",
+                      currency: order.currency,
+                    }).format(order.totalAmount)}
+                  </Text>
+                  <InlineStack gap="100">
+                    {[
+                      ...new Set(order.items.map((i) => i.productionStatus)),
+                    ].map((s) => (
+                      <Badge key={s} size="small" tone="enabled">
+                        {PRODUCTION_STATUS_LABELS[s] ?? s}
+                      </Badge>
+                    ))}
+                  </InlineStack>
+                </BlockStack>
+              </InlineStack>
+            </Card>
           </Link>
         );
       })}
+
       {orders.meta.totalPages > 1 && (
-        <div className="flex justify-center gap-2 pt-2">
-          <button
-            disabled={page <= 1}
-            onClick={() => setPage((p) => p - 1)}
-            className="px-3 py-1.5 rounded-lg border border-[#E0DED9] text-sm text-text-muted hover:bg-cream disabled:opacity-40 transition-colors"
-          >
-            Anterior
-          </button>
-          <button
-            disabled={page >= orders.meta.totalPages}
-            onClick={() => setPage((p) => p + 1)}
-            className="px-3 py-1.5 rounded-lg border border-[#E0DED9] text-sm text-text-muted hover:bg-cream disabled:opacity-40 transition-colors"
-          >
-            Siguiente
-          </button>
-        </div>
+        <InlineStack align="center">
+          <Pagination
+            hasPrevious={page > 1}
+            hasNext={page < orders.meta.totalPages}
+            onPrevious={() => setPage((p) => p - 1)}
+            onNext={() => setPage((p) => p + 1)}
+          />
+        </InlineStack>
       )}
-    </div>
+    </BlockStack>
   );
 }

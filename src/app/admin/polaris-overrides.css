@@ -1,0 +1,18 @@
+/* Override tokens de Polaris a la paleta teal de Claw & Soul */
+:root,
+.Polaris-Page,
+[class*="Polaris-"] {
+  --p-color-bg-fill-brand: #448da6;
+  --p-color-bg-fill-brand-hover: #367a8f;
+  --p-color-bg-fill-brand-active: #2d6a7d;
+  --p-color-bg-fill-brand-selected: #2d6a7d;
+  --p-color-text-brand-on-bg-fill: #ffffff;
+  --p-color-border-brand: #448da6;
+  --p-color-icon-brand: #448da6;
+  --p-color-text-link: #448da6;
+  --p-color-text-link-hover: #367a8f;
+  --p-color-text-link-active: #2d6a7d;
+  --p-color-text-interactive: #448da6;
+  --p-color-text-interactive-hover: #367a8f;
+  --p-color-text-interactive-active: #2d6a7d;
+}

@@ -3,6 +3,25 @@
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
+import {
+  Page,
+  Layout,
+  Card,
+  Badge,
+  Button,
+  Banner,
+  Spinner,
+  Text,
+  InlineStack,
+  BlockStack,
+  Box,
+  Divider,
+  Collapsible,
+  Thumbnail,
+  DescriptionList,
+  TextField,
+} from "@shopify/polaris";
+import { RefreshIcon, ExternalIcon } from "@shopify/polaris-icons";
 import { adminApi, AdminOrderDetail, AdminOrderItem } from "@/entities/admin/api";
 
 const PRODUCTION_STATUS_LABELS: Record<string, string> = {
@@ -14,13 +33,16 @@ const PRODUCTION_STATUS_LABELS: Record<string, string> = {
   refunded: "Reembolsado",
 };
 
-const STATUS_COLORS: Record<string, string> = {
-  paid: "bg-blue-100 text-blue-700",
-  in_production: "bg-yellow-100 text-yellow-700",
-  shipped: "bg-purple-100 text-purple-700",
-  delivered: "bg-green-100 text-green-700",
-  cancelled: "bg-gray-100 text-gray-500",
-  refunded: "bg-red-100 text-red-600",
+const STATUS_TONES: Record<
+  string,
+  "info" | "warning" | "attention" | "success" | "enabled" | "critical"
+> = {
+  paid: "info",
+  in_production: "warning",
+  shipped: "attention",
+  delivered: "success",
+  cancelled: "enabled",
+  refunded: "critical",
 };
 
 const VALID_TRANSITIONS: Record<string, string[]> = {
@@ -50,28 +72,17 @@ function fmtCurrency(amount: number, currency: string) {
   }).format(amount);
 }
 
-function StatusBadge({ status }: { status: string }) {
-  return (
-    <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold ${STATUS_COLORS[status] ?? "bg-gray-100 text-gray-500"}`}>
-      {PRODUCTION_STATUS_LABELS[status] ?? status}
-    </span>
-  );
-}
-
-function AddressBlock({ addr }: { addr: Record<string, string> | null }) {
-  if (!addr) return <span className="text-text-muted text-sm">—</span>;
-  const parts = [
+function formatAddress(addr: Record<string, string> | null): string {
+  if (!addr) return "—";
+  return [
     [addr.first_name, addr.last_name].filter(Boolean).join(" "),
     addr.address1,
     addr.address2,
     [addr.city, addr.province, addr.zip].filter(Boolean).join(" "),
     addr.country,
-  ].filter(Boolean);
-  return (
-    <div className="text-sm text-text-main space-y-0.5">
-      {parts.map((p, i) => <p key={i}>{p}</p>)}
-    </div>
-  );
+  ]
+    .filter(Boolean)
+    .join(", ");
 }
 
 function OrderItemCard({
@@ -129,144 +140,178 @@ function OrderItemCard({
   }
 
   return (
-    <div className="bg-white rounded-2xl border border-[#E0DED9] shadow-sm p-4">
-      <div className="flex gap-4">
-        {/* Thumbnail */}
-        <div className="w-20 h-20 rounded-xl border border-[#E0DED9] overflow-hidden bg-cream/40 shrink-0">
-          {thumb ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img src={thumb} alt="" className="w-full h-full object-cover" />
-          ) : (
-            <div className="w-full h-full flex items-center justify-center">
-              <span className="material-symbols-outlined text-text-muted text-2xl">image</span>
-            </div>
-          )}
-        </div>
-
-        {/* Info */}
-        <div className="flex-1 min-w-0">
-          <div className="flex items-start justify-between gap-3">
-            <div>
-              <p className="font-semibold text-text-main text-sm">{item.title}</p>
-              {item.variantTitle && (
-                <p className="text-xs text-text-muted mt-0.5">{item.variantTitle}</p>
-              )}
-              <div className="flex gap-3 mt-1 text-xs text-text-muted">
-                {item.style && <span>Estilo: {item.style}</span>}
-                {item.size && <span>Tamaño: {item.size}</span>}
-                {item.sku && <span>SKU: {item.sku}</span>}
+    <Card>
+      <BlockStack gap="300">
+        <InlineStack gap="400" blockAlign="start">
+          <div style={{ flexShrink: 0 }}>
+            {thumb ? (
+              <Thumbnail source={thumb} alt={item.title} size="medium" />
+            ) : (
+              <div
+                style={{
+                  width: 60,
+                  height: 60,
+                  background: "#f6f6f7",
+                  border: "1px solid #e3e3e3",
+                  borderRadius: 8,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}
+              >
+                <Text as="span" tone="subdued" variant="bodySm">
+                  —
+                </Text>
               </div>
-            </div>
-            <div className="text-right shrink-0">
-              <p className="font-semibold text-text-main text-sm">
-                {fmtCurrency(item.totalPrice, currency)}
-              </p>
-              <p className="text-xs text-text-muted">{item.quantity} × {fmtCurrency(item.unitPrice, currency)}</p>
-            </div>
+            )}
           </div>
 
-          {/* Generation link */}
-          {item.generation && (
-            <div className="mt-2 flex items-center gap-2 text-xs text-text-muted">
-              <span className="material-symbols-outlined text-[14px]">auto_awesome</span>
-              <span>{item.generation.pet?.name ?? "Mascota"} · {item.generation.style?.displayName ?? "—"}</span>
-            </div>
-          )}
+          <BlockStack gap="100" align="start">
+            <InlineStack align="space-between" gap="200">
+              <BlockStack gap="0">
+                <Text variant="bodyMd" fontWeight="semibold" as="span">
+                  {item.title}
+                </Text>
+                {item.variantTitle && (
+                  <Text variant="bodySm" tone="subdued" as="span">
+                    {item.variantTitle}
+                  </Text>
+                )}
+                <InlineStack gap="200">
+                  {item.style && (
+                    <Text variant="bodySm" tone="subdued" as="span">
+                      Estilo: {item.style}
+                    </Text>
+                  )}
+                  {item.size && (
+                    <Text variant="bodySm" tone="subdued" as="span">
+                      Tamaño: {item.size}
+                    </Text>
+                  )}
+                </InlineStack>
+              </BlockStack>
+              <BlockStack gap="0" inlineAlign="end">
+                <Text variant="bodyMd" fontWeight="semibold" as="span">
+                  {fmtCurrency(item.totalPrice, currency)}
+                </Text>
+                <Text variant="bodySm" tone="subdued" as="span">
+                  {item.quantity} × {fmtCurrency(item.unitPrice, currency)}
+                </Text>
+              </BlockStack>
+            </InlineStack>
 
-          {/* Method badge */}
-          <div className="mt-2 flex items-center gap-2">
-            <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium ${item.fulfillmentMethod === "pod" ? "bg-purple-100 text-purple-700" : "bg-teal-100 text-teal-700"}`}>
-              <span className="material-symbols-outlined text-[13px]">{item.fulfillmentMethod === "pod" ? "local_shipping" : "store"}</span>
-              {item.fulfillmentMethod === "pod" ? "POD" : "Taller"}
-            </span>
-            <StatusBadge status={item.productionStatus} />
-          </div>
-        </div>
-      </div>
+            <InlineStack gap="200" blockAlign="center">
+              <Badge
+                tone={item.fulfillmentMethod === "pod" ? "attention" : "info"}
+              >
+                {item.fulfillmentMethod === "pod" ? "POD" : "Taller"}
+              </Badge>
+              <Badge tone={STATUS_TONES[item.productionStatus] ?? "enabled"}>
+                {PRODUCTION_STATUS_LABELS[item.productionStatus] ?? item.productionStatus}
+              </Badge>
+            </InlineStack>
+          </BlockStack>
+        </InlineStack>
 
-      {err && (
-        <p className="mt-3 text-xs text-red-600 bg-red-50 border border-red-100 rounded-lg px-3 py-2">{err}</p>
-      )}
+        {err && (
+          <Banner tone="critical" onDismiss={() => setErr(null)}>
+            {err}
+          </Banner>
+        )}
 
-      {/* Status changer */}
-      {allowed.length > 0 && (
-        <div className="mt-4 pt-4 border-t border-[#E0DED9] flex items-center gap-2 flex-wrap">
-          <span className="text-xs text-text-muted font-medium">Cambiar estado:</span>
-          {allowed.map((s) => (
-            <button
-              key={s}
-              disabled={updatingStatus}
-              onClick={() => handleStatusChange(s)}
-              className="px-3 py-1.5 rounded-lg text-xs font-semibold border border-[#E0DED9] text-text-main hover:bg-cream disabled:opacity-50 transition-colors"
-            >
-              → {PRODUCTION_STATUS_LABELS[s]}
-            </button>
-          ))}
-        </div>
-      )}
+        {allowed.length > 0 && (
+          <>
+            <Divider />
+            <InlineStack gap="200" blockAlign="center">
+              <Text variant="bodySm" tone="subdued" as="span">
+                Cambiar estado:
+              </Text>
+              {allowed.map((s) => (
+                <Button
+                  key={s}
+                  size="slim"
+                  variant="secondary"
+                  loading={updatingStatus}
+                  onClick={() => handleStatusChange(s)}
+                >
+                  → {PRODUCTION_STATUS_LABELS[s]}
+                </Button>
+              ))}
+            </InlineStack>
+          </>
+        )}
 
-      {/* Tracking */}
-      <div className="mt-3 pt-3 border-t border-[#E0DED9]">
+        <Divider />
+
         {!showTracking ? (
-          <button
+          <Button
+            variant="plain"
+            size="slim"
             onClick={() => setShowTracking(true)}
-            className="flex items-center gap-1 text-xs text-primary hover:underline"
           >
-            <span className="material-symbols-outlined text-[14px]">add</span>
-            Agregar tracking
-          </button>
+            + Agregar tracking
+          </Button>
         ) : (
-          <form onSubmit={handleSaveTracking} className="flex flex-wrap gap-2 items-end">
-            <div className="flex flex-col gap-0.5">
-              <label className="text-xs text-text-muted font-medium">Número</label>
-              <input
-                required
-                value={trackingNumber}
-                onChange={(e) => setTrackingNumber(e.target.value)}
-                placeholder="Ej: 1Z999AA10123456784"
-                className="border border-[#E0DED9] rounded-lg px-3 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-primary/30 w-48"
-              />
-            </div>
-            <div className="flex flex-col gap-0.5">
-              <label className="text-xs text-text-muted font-medium">URL (opcional)</label>
-              <input
-                value={trackingUrl}
-                onChange={(e) => setTrackingUrl(e.target.value)}
-                placeholder="https://track.carrier.com/…"
-                className="border border-[#E0DED9] rounded-lg px-3 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-primary/30 w-56"
-              />
-            </div>
-            <div className="flex flex-col gap-0.5">
-              <label className="text-xs text-text-muted font-medium">Transportista</label>
-              <input
-                value={trackingCarrier}
-                onChange={(e) => setTrackingCarrier(e.target.value)}
-                placeholder="UPS, FedEx…"
-                className="border border-[#E0DED9] rounded-lg px-3 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-primary/30 w-32"
-              />
-            </div>
-            <button
-              type="submit"
-              disabled={savingTracking}
-              className="px-3 py-1.5 bg-primary text-white rounded-lg text-xs font-semibold hover:bg-primary/90 disabled:opacity-60 transition-colors"
-            >
-              {savingTracking ? "Guardando…" : "Guardar"}
-            </button>
+          <form onSubmit={handleSaveTracking}>
+            <InlineStack gap="200" blockAlign="end" wrap>
+              <div style={{ flex: "1 1 180px" }}>
+                <TextField
+                  label="Número de tracking"
+                  value={trackingNumber}
+                  onChange={setTrackingNumber}
+                  placeholder="Ej: 1Z999AA10123456784"
+                  autoComplete="off"
+                />
+              </div>
+              <div style={{ flex: "1 1 200px" }}>
+                <TextField
+                  label="URL (opcional)"
+                  value={trackingUrl}
+                  onChange={setTrackingUrl}
+                  placeholder="https://track.carrier.com/…"
+                  autoComplete="off"
+                />
+              </div>
+              <div style={{ flex: "1 1 140px" }}>
+                <TextField
+                  label="Transportista"
+                  value={trackingCarrier}
+                  onChange={setTrackingCarrier}
+                  placeholder="UPS, FedEx…"
+                  autoComplete="off"
+                />
+              </div>
+              <Button
+                submit
+                variant="primary"
+                size="slim"
+                loading={savingTracking}
+              >
+                Guardar
+              </Button>
+            </InlineStack>
           </form>
         )}
+
         {item.trackingNumber && !showTracking && (
-          <div className="mt-1 flex items-center gap-2 text-xs text-text-muted">
-            <span className="material-symbols-outlined text-[14px]">local_shipping</span>
-            {item.trackingNumber}
+          <InlineStack gap="200" blockAlign="center">
+            <Text variant="bodySm" tone="subdued" as="span">
+              Tracking: {item.trackingNumber}
+            </Text>
             {item.trackingUrl && (
-              <a href={item.trackingUrl} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">
+              <a
+                href={item.trackingUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{ color: "#448da6", fontSize: 13 }}
+              >
                 Ver →
               </a>
             )}
-          </div>
+          </InlineStack>
         )}
-      </div>
-    </div>
+      </BlockStack>
+    </Card>
   );
 }
 
@@ -287,7 +332,9 @@ export default function AdminOrderDetailPage() {
     }
   }
 
-  useEffect(() => { load(); }, [id]); // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => {
+    load();
+  }, [id]); // eslint-disable-line react-hooks/exhaustive-deps
 
   async function handleResync() {
     setResyncing(true);
@@ -299,190 +346,272 @@ export default function AdminOrderDetailPage() {
     }
   }
 
-  const shopifyAdminUrl = order
-    ? `https://clawandsoul.myshopify.com/admin/orders/${order.shopifyOrderId}`
-    : "#";
-
   if (loading) {
     return (
-      <div className="flex-1 flex items-center justify-center">
-        <span className="material-symbols-outlined animate-spin text-primary text-3xl">progress_activity</span>
-      </div>
+      <Box padding="600">
+        <InlineStack align="center" gap="300">
+          <Spinner />
+          <Text as="span" tone="subdued">
+            Cargando pedido…
+          </Text>
+        </InlineStack>
+      </Box>
     );
   }
 
   if (!order) {
     return (
-      <div className="flex-1 flex flex-col items-center justify-center gap-3">
-        <span className="material-symbols-outlined text-4xl text-text-muted">shopping_bag</span>
-        <p className="text-text-muted">Pedido no encontrado</p>
-        <Link href="/admin/orders" className="text-primary hover:underline text-sm">← Volver a pedidos</Link>
-      </div>
+      <Page
+        backAction={{ url: "/admin/orders", content: "Pedidos" }}
+        title="Pedido no encontrado"
+      >
+        <Text as="p" tone="subdued">
+          No se encontró el pedido.
+        </Text>
+      </Page>
     );
   }
 
+  const shopifyAdminUrl = `https://clawandsoul.myshopify.com/admin/orders/${order.shopifyOrderId}`;
+
+  const overallTones = order.items.map((i) => i.productionStatus);
+  const dominantStatus =
+    [...new Set(overallTones)].length === 1 ? overallTones[0] : "mixed";
+
   return (
-    <div className="flex-1 p-8 overflow-y-auto max-w-5xl">
-      {/* Breadcrumb */}
-      <div className="flex items-center gap-2 text-sm text-text-muted mb-6">
-        <Link href="/admin" className="hover:text-text-main">Dashboard</Link>
-        <span className="material-symbols-outlined text-[14px]">chevron_right</span>
-        <Link href="/admin/orders" className="hover:text-text-main">Pedidos</Link>
-        <span className="material-symbols-outlined text-[14px]">chevron_right</span>
-        <span className="text-text-main font-semibold">{order.orderNumber}</span>
-      </div>
-
-      {/* Header */}
-      <div className="flex items-start justify-between gap-4 mb-6">
-        <div>
-          <h1 className="text-2xl font-bold text-text-main">{order.orderNumber}</h1>
-          <p className="text-sm text-text-muted mt-0.5">{fmtDate(order.shopifyCreatedAt)}</p>
-        </div>
-        <div className="flex gap-2 shrink-0">
-          <button
-            onClick={handleResync}
-            disabled={resyncing}
-            className="flex items-center gap-1.5 px-3 py-2 border border-[#E0DED9] rounded-xl text-sm hover:bg-cream disabled:opacity-60 transition-colors"
-          >
-            <span className={`material-symbols-outlined text-[18px] ${resyncing ? "animate-spin" : ""}`}>sync</span>
-            Resincronizar
-          </button>
-          <a
-            href={shopifyAdminUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="flex items-center gap-1.5 px-3 py-2 border border-[#E0DED9] rounded-xl text-sm hover:bg-cream transition-colors"
-          >
-            <span className="material-symbols-outlined text-[18px]">open_in_new</span>
-            Ver en Shopify
-          </a>
-        </div>
-      </div>
-
-      {/* Customer + Totals */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-        <div className="bg-white rounded-2xl border border-[#E0DED9] shadow-sm p-5">
-          <h2 className="font-semibold text-text-main text-sm mb-3">Cliente</h2>
-          {order.user ? (
-            <Link href={`/admin/users/${order.user.id}`} className="text-primary hover:underline text-sm font-medium">
-              {order.user.fullName || order.user.email}
-            </Link>
-          ) : order.customerEmail ? (
-            <p className="text-sm text-text-muted">{order.customerEmail} <span className="text-xs">(invitado)</span></p>
-          ) : (
-            <p className="text-sm text-text-muted">Sin cliente vinculado</p>
-          )}
-          {order.customerPhone && (
-            <p className="text-sm text-text-muted mt-1">{order.customerPhone}</p>
-          )}
-          <div className="mt-4 grid grid-cols-2 gap-3">
-            <div>
-              <p className="text-xs font-semibold text-text-muted mb-1">Dirección de envío</p>
-              <AddressBlock addr={order.shippingAddress} />
-            </div>
-            <div>
-              <p className="text-xs font-semibold text-text-muted mb-1">Dirección de facturación</p>
-              <AddressBlock addr={order.billingAddress} />
-            </div>
-          </div>
-          {order.customerNote && (
-            <div className="mt-3 p-3 bg-cream/40 rounded-xl text-xs text-text-muted">
-              <span className="font-semibold">Nota: </span>{order.customerNote}
-            </div>
-          )}
-        </div>
-
-        <div className="bg-white rounded-2xl border border-[#E0DED9] shadow-sm p-5">
-          <h2 className="font-semibold text-text-main text-sm mb-3">Totales</h2>
-          <div className="space-y-2 text-sm">
-            <div className="flex justify-between">
-              <span className="text-text-muted">Subtotal</span>
-              <span className="font-medium">{fmtCurrency(order.subtotalAmount, order.currency)}</span>
-            </div>
-            {order.shippingAmount != null && (
-              <div className="flex justify-between">
-                <span className="text-text-muted">Envío</span>
-                <span>{fmtCurrency(order.shippingAmount, order.currency)}</span>
-              </div>
-            )}
-            {order.taxAmount != null && (
-              <div className="flex justify-between">
-                <span className="text-text-muted">Impuestos</span>
-                <span>{fmtCurrency(order.taxAmount, order.currency)}</span>
-              </div>
-            )}
-            <div className="flex justify-between pt-2 border-t border-[#E0DED9] font-bold">
-              <span>Total</span>
-              <span>{fmtCurrency(order.totalAmount, order.currency)}</span>
-            </div>
-          </div>
-          <div className="mt-4 flex gap-2 flex-wrap">
-            {order.financialStatus && (
-              <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold ${order.financialStatus === "paid" ? "bg-green-100 text-green-700" : "bg-gray-100 text-gray-500"}`}>
-                {order.financialStatus}
-              </span>
-            )}
-            {order.fulfillmentStatus && (
-              <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-blue-100 text-blue-700">
-                {order.fulfillmentStatus}
-              </span>
-            )}
-          </div>
-        </div>
-      </div>
-
-      {/* Items */}
-      <h2 className="font-bold text-text-main text-base mb-3">Items ({order.items.length})</h2>
-      <div className="space-y-3 mb-6">
-        {order.items.map((item) => (
-          <OrderItemCard
-            key={item.id}
-            item={item}
-            orderId={id}
-            currency={order.currency}
-            onUpdate={load}
-          />
-        ))}
-      </div>
-
-      {/* Events timeline */}
-      {order.events.length > 0 && (
-        <div className="bg-white rounded-2xl border border-[#E0DED9] shadow-sm p-5 mb-6">
-          <h2 className="font-bold text-text-main text-base mb-4">Historial de eventos</h2>
-          <div className="space-y-3">
-            {order.events.map((ev) => (
-              <div key={ev.id} className="flex gap-3 items-start">
-                <div className="w-2 h-2 rounded-full bg-primary mt-1.5 shrink-0" />
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm text-text-main">
-                    <span className="font-medium">{ev.eventType.replace(/_/g, " ")}</span>
-                    {ev.fromStatus && ev.toStatus && (
-                      <span className="text-text-muted"> · {PRODUCTION_STATUS_LABELS[ev.fromStatus] ?? ev.fromStatus} → {PRODUCTION_STATUS_LABELS[ev.toStatus] ?? ev.toStatus}</span>
-                    )}
-                  </p>
-                  <p className="text-xs text-text-muted mt-0.5">{fmtDate(ev.createdAt)} · {ev.source}</p>
-                </div>
-              </div>
+    <Page
+      backAction={{ url: "/admin/orders", content: "Pedidos" }}
+      title={order.orderNumber}
+      subtitle={fmtDate(order.shopifyCreatedAt)}
+      titleMetadata={
+        <Badge tone={STATUS_TONES[dominantStatus] ?? "enabled"}>
+          {PRODUCTION_STATUS_LABELS[dominantStatus] ?? dominantStatus}
+        </Badge>
+      }
+      secondaryActions={[
+        {
+          content: "Resincronizar",
+          icon: RefreshIcon,
+          loading: resyncing,
+          onAction: handleResync,
+        },
+        {
+          content: "Ver en Shopify",
+          icon: ExternalIcon,
+          url: shopifyAdminUrl,
+          external: true,
+        },
+      ]}
+    >
+      <Layout>
+        <Layout.Section>
+          <BlockStack gap="400">
+            <Text variant="headingMd" as="h2">
+              Items ({order.items.length})
+            </Text>
+            {order.items.map((item) => (
+              <OrderItemCard
+                key={item.id}
+                item={item}
+                orderId={id}
+                currency={order.currency}
+                onUpdate={load}
+              />
             ))}
-          </div>
-        </div>
-      )}
 
-      {/* Raw payload */}
-      <details className="bg-white rounded-2xl border border-[#E0DED9] shadow-sm overflow-hidden">
-        <summary
-          className="flex items-center gap-2 px-5 py-3 cursor-pointer text-sm font-semibold text-text-muted hover:bg-cream/30 transition-colors"
-          onClick={() => setShowRaw((v) => !v)}
-        >
-          <span className="material-symbols-outlined text-[18px]">data_object</span>
-          Payload de Shopify (JSON)
-        </summary>
-        {showRaw && (
-          <pre className="px-5 pb-5 text-xs overflow-x-auto text-text-muted whitespace-pre-wrap">
-            {JSON.stringify(order, null, 2)}
-          </pre>
-        )}
-      </details>
-    </div>
+            {order.events.length > 0 && (
+              <Card>
+                <BlockStack gap="300">
+                  <Text variant="headingMd" as="h2">
+                    Historial de eventos
+                  </Text>
+                  {order.events.map((ev, i) => (
+                    <div key={ev.id}>
+                      {i > 0 && <Divider />}
+                      <Box paddingBlock="200">
+                        <InlineStack gap="300" blockAlign="start">
+                          <div
+                            style={{
+                              width: 8,
+                              height: 8,
+                              borderRadius: "50%",
+                              background: "#448da6",
+                              marginTop: 6,
+                              flexShrink: 0,
+                            }}
+                          />
+                          <BlockStack gap="0">
+                            <Text variant="bodyMd" as="span">
+                              <strong>{ev.eventType.replace(/_/g, " ")}</strong>
+                              {ev.fromStatus && ev.toStatus && (
+                                <Text as="span" tone="subdued">
+                                  {" "}
+                                  · {PRODUCTION_STATUS_LABELS[ev.fromStatus] ?? ev.fromStatus} →{" "}
+                                  {PRODUCTION_STATUS_LABELS[ev.toStatus] ?? ev.toStatus}
+                                </Text>
+                              )}
+                            </Text>
+                            <Text variant="bodySm" tone="subdued" as="span">
+                              {fmtDate(ev.createdAt)} · {ev.source}
+                            </Text>
+                          </BlockStack>
+                        </InlineStack>
+                      </Box>
+                    </div>
+                  ))}
+                </BlockStack>
+              </Card>
+            )}
+
+            <Card>
+              <BlockStack gap="300">
+                <Button
+                  variant="plain"
+                  onClick={() => setShowRaw((v) => !v)}
+                  disclosure={showRaw ? "up" : "down"}
+                >
+                  Payload de Shopify (JSON)
+                </Button>
+                <Collapsible id="raw-json" open={showRaw}>
+                  <Box
+                    background="bg-surface-secondary"
+                    padding="400"
+                    borderRadius="200"
+                  >
+                    <pre
+                      style={{
+                        fontSize: 11,
+                        color: "#5c5f62",
+                        overflowX: "auto",
+                        whiteSpace: "pre-wrap",
+                        margin: 0,
+                      }}
+                    >
+                      {JSON.stringify(order, null, 2)}
+                    </pre>
+                  </Box>
+                </Collapsible>
+              </BlockStack>
+            </Card>
+          </BlockStack>
+        </Layout.Section>
+
+        <Layout.Section variant="oneThird">
+          <BlockStack gap="400">
+            <Card>
+              <BlockStack gap="300">
+                <Text variant="headingMd" as="h2">
+                  Cliente
+                </Text>
+                {order.user ? (
+                  <Link href={`/admin/users/${order.user.id}`}>
+                    <Button variant="plain">
+                      {order.user.fullName || order.user.email}
+                    </Button>
+                  </Link>
+                ) : order.customerEmail ? (
+                  <BlockStack gap="0">
+                    <Text as="span">{order.customerEmail}</Text>
+                    <Text as="span" tone="subdued" variant="bodySm">
+                      Invitado
+                    </Text>
+                  </BlockStack>
+                ) : (
+                  <Text as="span" tone="subdued">
+                    Sin cliente vinculado
+                  </Text>
+                )}
+                {order.customerPhone && (
+                  <Text as="span" tone="subdued">
+                    {order.customerPhone}
+                  </Text>
+                )}
+                {order.customerNote && (
+                  <Box
+                    background="bg-surface-secondary"
+                    padding="300"
+                    borderRadius="200"
+                  >
+                    <Text variant="bodySm" tone="subdued" as="span">
+                      <strong>Nota:</strong> {order.customerNote}
+                    </Text>
+                  </Box>
+                )}
+                <Divider />
+                <BlockStack gap="200">
+                  <Text variant="headingSm" as="h3">
+                    Dirección de envío
+                  </Text>
+                  <Text variant="bodySm" tone="subdued" as="span">
+                    {formatAddress(order.shippingAddress)}
+                  </Text>
+                  <Text variant="headingSm" as="h3">
+                    Dirección de facturación
+                  </Text>
+                  <Text variant="bodySm" tone="subdued" as="span">
+                    {formatAddress(order.billingAddress)}
+                  </Text>
+                </BlockStack>
+              </BlockStack>
+            </Card>
+
+            <Card>
+              <BlockStack gap="300">
+                <Text variant="headingMd" as="h2">
+                  Totales
+                </Text>
+                <DescriptionList
+                  items={[
+                    {
+                      term: "Subtotal",
+                      description: fmtCurrency(order.subtotalAmount, order.currency),
+                    },
+                    ...(order.shippingAmount != null
+                      ? [
+                          {
+                            term: "Envío",
+                            description: fmtCurrency(order.shippingAmount, order.currency),
+                          },
+                        ]
+                      : []),
+                    ...(order.taxAmount != null
+                      ? [
+                          {
+                            term: "Impuestos",
+                            description: fmtCurrency(order.taxAmount, order.currency),
+                          },
+                        ]
+                      : []),
+                  ]}
+                />
+                <Divider />
+                <InlineStack align="space-between">
+                  <Text variant="headingSm" fontWeight="bold" as="span">
+                    Total
+                  </Text>
+                  <Text variant="headingSm" fontWeight="bold" as="span">
+                    {fmtCurrency(order.totalAmount, order.currency)}
+                  </Text>
+                </InlineStack>
+                <InlineStack gap="200">
+                  {order.financialStatus && (
+                    <Badge
+                      tone={
+                        order.financialStatus === "paid" ? "success" : "enabled"
+                      }
+                    >
+                      {order.financialStatus}
+                    </Badge>
+                  )}
+                  {order.fulfillmentStatus && (
+                    <Badge tone="info">{order.fulfillmentStatus}</Badge>
+                  )}
+                </InlineStack>
+              </BlockStack>
+            </Card>
+          </BlockStack>
+        </Layout.Section>
+      </Layout>
+    </Page>
   );
 }

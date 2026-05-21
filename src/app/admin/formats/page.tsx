@@ -1,6 +1,18 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import {
+  Page,
+  Card,
+  IndexTable,
+  Badge,
+  Button,
+  Banner,
+  Spinner,
+  Text,
+  InlineStack,
+
+} from "@shopify/polaris";
 import { adminApi, AdminFormat } from "@/entities/admin/api";
 
 export default function AdminFormatsPage() {
@@ -42,92 +54,84 @@ export default function AdminFormatsPage() {
   };
 
   return (
-    <div className="flex flex-col gap-6">
-      <div>
-        <h1 className="text-2xl font-bold text-slate-dark font-display tracking-tight">
-          Formatos
-        </h1>
-        <p className="text-text-muted text-sm mt-1">
-          Dimensiones y proporciones de salida
-        </p>
-      </div>
+    <Page title="Formatos" subtitle="Dimensiones y proporciones de salida">
+      <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+        {error && (
+          <Banner tone="critical" onDismiss={() => setError(null)}>
+            {error}
+          </Banner>
+        )}
 
-      {error && (
-        <div className="flex items-center gap-3 text-red-600 bg-red-50 rounded-xl p-4 text-sm">
-          <span className="material-symbols-outlined">error</span>
-          {error}
-        </div>
-      )}
-
-      {loading ? (
-        <div className="flex items-center gap-3 text-text-muted">
-          <span className="material-symbols-outlined animate-spin">progress_activity</span>
-          Cargando formatos…
-        </div>
-      ) : (
-        <div className="bg-white rounded-2xl border border-[#E0DED9] shadow-sm overflow-hidden">
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b border-[#E0DED9] bg-cream">
-                  <th className="text-left px-5 py-3 font-semibold text-text-muted">Nombre</th>
-                  <th className="text-left px-5 py-3 font-semibold text-text-muted">Proporción</th>
-                  <th className="text-left px-5 py-3 font-semibold text-text-muted">Dimensiones</th>
-                  <th className="text-left px-5 py-3 font-semibold text-text-muted">Opción Shopify</th>
-                  <th className="text-left px-5 py-3 font-semibold text-text-muted">Estado</th>
-                  <th className="text-left px-5 py-3 font-semibold text-text-muted">Acción</th>
-                </tr>
-              </thead>
-              <tbody>
-                {formats.map((f) => (
-                  <tr
-                    key={f.id}
-                    className={`border-b border-[#E0DED9] last:border-0 transition-colors ${
-                      f.isActive ? "hover:bg-cream/50" : "bg-gray-50/50 opacity-60"
-                    }`}
-                  >
-                    <td className="px-5 py-3">
-                      <p className="font-semibold text-text-main">{f.displayName}</p>
-                      <p className="text-xs text-text-muted">{f.name}</p>
-                    </td>
-                    <td className="px-5 py-3 text-text-muted">{f.aspectRatio}</td>
-                    <td className="px-5 py-3 text-text-muted">
+        {loading ? (
+          <Card>
+            <InlineStack align="center" gap="300">
+              <Spinner size="small" />
+              <Text as="span" tone="subdued">
+                Cargando formatos…
+              </Text>
+            </InlineStack>
+          </Card>
+        ) : (
+          <Card padding="0">
+            <IndexTable
+              resourceName={{ singular: "formato", plural: "formatos" }}
+              itemCount={formats.length}
+              headings={[{ title: "Nombre" }, { title: "Proporción" }, { title: "Dimensiones" }, { title: "Opción Shopify" }, { title: "Estado" }, { title: "Acción" }]}
+              selectable={false}
+            >
+              {formats.map((f, index) => (
+                <IndexTable.Row
+                  id={f.id}
+                  key={f.id}
+                  position={index}
+                  tone={f.isActive ? undefined : "subdued"}
+                >
+                  <IndexTable.Cell>
+                    <Text variant="bodyMd" fontWeight="semibold" as="span">
+                      {f.displayName}
+                    </Text>
+                    <br />
+                    <Text variant="bodySm" tone="subdued" as="span">
+                      {f.name}
+                    </Text>
+                  </IndexTable.Cell>
+                  <IndexTable.Cell>
+                    <Text as="span" tone="subdued">
+                      {f.aspectRatio}
+                    </Text>
+                  </IndexTable.Cell>
+                  <IndexTable.Cell>
+                    <Text as="span" tone="subdued">
                       {f.width} × {f.height}
-                    </td>
-                    <td className="px-5 py-3 text-text-muted">
+                    </Text>
+                  </IndexTable.Cell>
+                  <IndexTable.Cell>
+                    <Text as="span" tone="subdued">
                       {f.shopifyVariantOption ?? "—"}
-                    </td>
-                    <td className="px-5 py-3">
-                      <span
-                        className={`text-xs font-semibold px-2.5 py-0.5 rounded-full border ${
-                          f.isActive
-                            ? "bg-emerald-50 text-emerald-700 border-emerald-100"
-                            : "bg-gray-100 text-gray-500 border-gray-200"
-                        }`}
-                      >
-                        {f.isActive ? "Activo" : "Inactivo"}
-                      </span>
-                    </td>
-                    <td className="px-5 py-3">
-                      <button
-                        disabled={toggling === f.id}
-                        onClick={() => handleToggle(f)}
-                        className={`text-xs font-semibold px-3 py-1.5 rounded-lg transition-colors disabled:opacity-50 ${
-                          f.isActive
-                            ? "text-red-600 hover:bg-red-50"
-                            : "text-emerald-600 hover:bg-emerald-50"
-                        }`}
-                      >
-                        {toggling === f.id ? "..." : f.isActive ? "Desactivar" : "Activar"}
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      )}
-    </div>
+                    </Text>
+                  </IndexTable.Cell>
+                  <IndexTable.Cell>
+                    <Badge tone={f.isActive ? "success" : "enabled"}>
+                      {f.isActive ? "Activo" : "Inactivo"}
+                    </Badge>
+                  </IndexTable.Cell>
+                  <IndexTable.Cell>
+                    <Button
+                      variant="plain"
+                      tone={f.isActive ? "critical" : undefined}
+                      size="slim"
+                      loading={toggling === f.id}
+                      onClick={() => handleToggle(f)}
+                    >
+                      {f.isActive ? "Desactivar" : "Activar"}
+                    </Button>
+                  </IndexTable.Cell>
+                </IndexTable.Row>
+              ))}
+            </IndexTable>
+          </Card>
+        )}
+      </div>
+    </Page>
   );
 }

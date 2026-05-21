@@ -3,34 +3,107 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
-import Image from "next/image";
+import { Avatar, Icon } from "@shopify/polaris";
+import {
+  HomeIcon,
+  TeamIcon,
+  OrderIcon,
+  PaintBrushFlatIcon,
+  LayoutColumns3Icon,
+  InventoryIcon,
+} from "@shopify/polaris-icons";
 
 const navItems = [
-  { label: "Dashboard", href: "/admin", icon: "dashboard", exact: true },
-  { label: "Usuarios", href: "/admin/users", icon: "group" },
-  { label: "Pedidos", href: "/admin/orders", icon: "shopping_bag" },
-  { label: "Estilos", href: "/admin/styles", icon: "palette" },
-  { label: "Formatos", href: "/admin/formats", icon: "aspect_ratio" },
-  { label: "Productos & Sync", href: "/admin/products", icon: "inventory_2" },
+  { label: "Dashboard", href: "/admin", icon: HomeIcon, exact: true },
+  { label: "Usuarios", href: "/admin/users", icon: TeamIcon },
+  { label: "Pedidos", href: "/admin/orders", icon: OrderIcon },
+  { label: "Estilos", href: "/admin/styles", icon: PaintBrushFlatIcon },
+  { label: "Formatos", href: "/admin/formats", icon: LayoutColumns3Icon },
+  { label: "Productos & Sync", href: "/admin/products", icon: InventoryIcon },
 ];
 
 export default function AdminSidebar() {
   const pathname = usePathname();
   const { user } = useAuth();
 
+  const initials = user?.fullName
+    ? user.fullName
+        .split(" ")
+        .slice(0, 2)
+        .map((n: string) => n[0])
+        .join("")
+        .toUpperCase()
+    : "AD";
+
   return (
-    <aside className="w-60 shrink-0 flex flex-col min-h-screen bg-background-dark text-white">
+    <aside
+      style={{
+        width: 240,
+        flexShrink: 0,
+        display: "flex",
+        flexDirection: "column",
+        minHeight: "100vh",
+        backgroundColor: "#ffffff",
+        borderRight: "1px solid #e3e3e3",
+      }}
+    >
       {/* Logo */}
-      <div className="px-5 py-6 border-b border-white/10">
-        <Link href="/admin" className="flex items-center justify-center gap-2.5">
-          <h2 className="text-white text-xl lg:text-2xl font-bold leading-tight tracking-[-0.015em] text-center">
-            Claw <span className="text-primary">&</span> Soul
-          </h2>
+      <div
+        style={{
+          padding: "20px 20px 16px",
+          borderBottom: "1px solid #e3e3e3",
+        }}
+      >
+        <Link
+          href="/admin"
+          style={{ textDecoration: "none", display: "block" }}
+        >
+          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+            <div
+              style={{
+                width: 32,
+                height: 32,
+                borderRadius: 8,
+                background: "#448da6",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                flexShrink: 0,
+              }}
+            >
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+                <path
+                  d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 14H9V8h2v8zm4 0h-2V8h2v8z"
+                  fill="white"
+                />
+              </svg>
+            </div>
+            <div>
+              <span
+                style={{
+                  fontSize: 14,
+                  fontWeight: 700,
+                  color: "#202223",
+                  lineHeight: 1.2,
+                  display: "block",
+                }}
+              >
+                Claw{" "}
+                <span style={{ color: "#448da6" }}>&amp;</span>{" "}
+                Soul
+              </span>
+              <span
+                style={{ fontSize: 11, color: "#6d7175", display: "block" }}
+              >
+                Admin
+              </span>
+            </div>
+          </div>
         </Link>
       </div>
 
       {/* Nav */}
-      <nav className="flex-1 px-3 py-4 flex flex-col gap-0.5">
+      <nav style={{ flex: 1, padding: "8px 8px" }}>
         {navItems.map((item) => {
           const isActive = item.exact
             ? pathname === item.href
@@ -39,14 +112,30 @@ export default function AdminSidebar() {
             <Link
               key={item.href}
               href={item.href}
-              className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold transition-all ${
-                isActive
-                  ? "bg-primary text-white"
-                  : "text-white/60 hover:bg-white/10 hover:text-white"
-              }`}
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: 10,
+                padding: "8px 12px",
+                borderRadius: 8,
+                textDecoration: "none",
+                fontSize: 13,
+                fontWeight: isActive ? 600 : 400,
+                color: isActive ? "#448da6" : "#202223",
+                backgroundColor: isActive ? "#e8f3f6" : "transparent",
+                marginBottom: 2,
+                transition: "background 0.12s, color 0.12s",
+                borderLeft: isActive ? "3px solid #448da6" : "3px solid transparent",
+              }}
             >
-              <span className="material-symbols-outlined text-[20px]">
-                {item.icon}
+              <span
+                style={{
+                  color: isActive ? "#448da6" : "#5c5f62",
+                  display: "flex",
+                  flexShrink: 0,
+                }}
+              >
+                <Icon source={item.icon} />
               </span>
               {item.label}
             </Link>
@@ -55,18 +144,42 @@ export default function AdminSidebar() {
       </nav>
 
       {/* Admin card */}
-      <div className="px-3 pb-5">
-        <div className="flex items-center gap-3 px-3 py-3 rounded-xl bg-white/8 border border-white/10">
-          <div className="w-8 h-8 rounded-full bg-primary/30 flex items-center justify-center shrink-0">
-            <span className="material-symbols-outlined text-primary text-[18px]">
-              admin_panel_settings
-            </span>
-          </div>
-          <div className="flex-1 min-w-0">
-            <p className="text-xs font-semibold text-white truncate">
+      <div style={{ padding: "12px 12px 16px" }}>
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: 10,
+            padding: "10px 12px",
+            borderRadius: 8,
+            backgroundColor: "#f6f6f7",
+            border: "1px solid #e3e3e3",
+          }}
+        >
+          <Avatar size="sm" initials={initials} name={user?.fullName ?? "Admin"} />
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <p
+              style={{
+                fontSize: 13,
+                fontWeight: 600,
+                color: "#202223",
+                overflow: "hidden",
+                textOverflow: "ellipsis",
+                whiteSpace: "nowrap",
+                margin: 0,
+              }}
+            >
               {user?.fullName || user?.email || "Admin"}
             </p>
-            <p className="text-[11px] text-white/40">Administrador</p>
+            <p
+              style={{
+                fontSize: 11,
+                color: "#6d7175",
+                margin: 0,
+              }}
+            >
+              Administrador
+            </p>
           </div>
         </div>
       </div>
