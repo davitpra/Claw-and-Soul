@@ -29,6 +29,17 @@ import { useCart } from "@/hooks/useCart";
 import { useAuth } from "@/context/AuthContext";
 ```
 
+### Admin imports
+
+En archivos de `src/app/admin/**` se usan además `@shopify/polaris` y `@shopify/polaris-icons`:
+
+```tsx
+import { Page, Card, IndexTable, Badge, Button, Text, InlineStack, BlockStack } from "@shopify/polaris";
+import { RefreshIcon, TeamIcon, OrderIcon } from "@shopify/polaris-icons";
+```
+
+No importar Material Symbols ni usar clases Tailwind de la storefront (cream, rounded-xl, etc.) dentro de archivos admin.
+
 ---
 
 ## Composición de clases Tailwind

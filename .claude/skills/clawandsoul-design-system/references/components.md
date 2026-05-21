@@ -1,5 +1,7 @@
 # Patrones de Componentes — Claw & Soul
 
+> Estos patrones aplican a la **storefront**. Para componentes en `src/app/admin/**` ver `admin-polaris.md`.
+
 Snippets extraídos de los componentes canónicos del repo. Úsalos como base y adáptalos al contexto.
 
 ---

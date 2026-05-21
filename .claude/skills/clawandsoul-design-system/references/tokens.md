@@ -89,3 +89,20 @@ Los valores son Tailwind estándar (escala 4px base). Los más usados:
 ## Scrollbar
 
 Definido en `globals.css:31-44`. Thumb `#cbd5e1`, hover `#94a3b8`. No tocar salvo rediseño global.
+
+---
+
+## Polaris tokens en `/admin`
+
+En `src/app/admin/**`, los tokens CSS nativos de Polaris (`--p-color-*`) están sobreescritos en `src/app/admin/polaris-overrides.css` para que el teal `#448da6` aparezca en botones primarios, links, badges activos, bordes e iconos de acción:
+
+| Token Polaris | Valor override |
+|---|---|
+| `--p-color-bg-fill-brand` | `#448da6` |
+| `--p-color-bg-fill-brand-hover` | `#367a8f` |
+| `--p-color-text-link` | `#448da6` |
+| `--p-color-border-brand` | `#448da6` |
+| `--p-color-icon-brand` | `#448da6` |
+| `--p-color-text-interactive` | `#448da6` |
+
+No se necesita poner colores Tailwind ni clases `bg-primary` dentro del admin; Polaris los hereda del override automáticamente. Tampoco hardcodear `#448da6` en JSX de componentes Polaris.
