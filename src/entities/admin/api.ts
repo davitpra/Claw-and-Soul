@@ -245,6 +245,26 @@ export interface AdminProduct {
   productType: string | null;
 }
 
+export interface AdminProductVariantLink {
+  format: { id: string; displayName: string };
+  shopifyVariantId: string;
+  shopifyVariantTitle: string;
+  isActive: boolean;
+}
+
+export interface AdminProductUnlinkedVariant {
+  shopifyVariantId: string;
+  shopifyVariantTitle: string;
+  shopifyVariantOption: string | null;
+  reason: string;
+}
+
+export interface AdminProductVariants {
+  product: { id: string; displayName: string };
+  linkedVariants: AdminProductVariantLink[];
+  unlinkedVariants: AdminProductUnlinkedVariant[];
+}
+
 export interface SyncStatus {
   status: string;
   startedAt: string | null;
@@ -309,6 +329,9 @@ export const adminApi = {
   },
   products: {
     list: () => adminFetch<AdminProduct[]>('/admin/products'),
+    getById: (id: string) => adminFetch<AdminProduct>(`/admin/products/${id}`),
+    getVariants: (id: string) =>
+      adminFetch<AdminProductVariants>(`/admin/products/${id}/variants`),
     update: (id: string, body: Partial<AdminProduct>) =>
       adminFetch<AdminProduct>(`/admin/products/${id}`, {
         method: 'PATCH',
@@ -318,6 +341,19 @@ export const adminApi = {
       adminFetch(`/admin/products/${id}`, { method: 'DELETE' }),
     delete: (id: string) =>
       adminFetch(`/admin/products/${id}/permanent`, { method: 'DELETE' }),
+    linkVariant: (
+      productId: string,
+      body: { shopifyVariantId: string; shopifyVariantTitle: string; formatId: string; shopifyVariantOption?: string | null },
+    ) =>
+      adminFetch(`/admin/products/${productId}/variants/link`, {
+        method: 'POST',
+        body: JSON.stringify(body),
+      }),
+    syncVariants: (id: string) =>
+      adminFetch<{ synced: number; skipped: number }>(
+        `/admin/products/${id}/variants/sync`,
+        { method: 'POST' },
+      ),
   },
   sync: {
     trigger: () => adminFetch('/admin/products/sync', { method: 'POST' }),

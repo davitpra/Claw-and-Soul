@@ -11,7 +11,9 @@ import {
   Spinner,
   Text,
   InlineStack,
-
+  Modal,
+  FormLayout,
+  TextField,
 } from "@shopify/polaris";
 import { adminApi, AdminFormat } from "@/entities/admin/api";
 
@@ -20,6 +22,10 @@ export default function AdminFormatsPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [toggling, setToggling] = useState<string | null>(null);
+  const [editing, setEditing] = useState<AdminFormat | null>(null);
+  const [editForm, setEditForm] = useState({ displayName: "", aspectRatio: "", shopifyVariantOption: "" });
+  const [savingEdit, setSavingEdit] = useState(false);
+  const [editError, setEditError] = useState<string | null>(null);
 
   const load = () => {
     setLoading(true);
@@ -36,6 +42,35 @@ export default function AdminFormatsPage() {
   useEffect(() => {
     load();
   }, []);
+
+  const handleEditOpen = (f: AdminFormat) => {
+    setEditForm({
+      displayName: f.displayName,
+      aspectRatio: f.aspectRatio,
+      shopifyVariantOption: f.shopifyVariantOption ?? "",
+    });
+    setEditing(f);
+    setEditError(null);
+  };
+
+  const handleEditSave = async () => {
+    if (!editing) return;
+    setSavingEdit(true);
+    setEditError(null);
+    try {
+      await adminApi.formats.update(editing.id, {
+        displayName: editForm.displayName,
+        aspectRatio: editForm.aspectRatio,
+        shopifyVariantOption: editForm.shopifyVariantOption.trim() || null,
+      });
+      setEditing(null);
+      load();
+    } catch (e: unknown) {
+      setEditError((e as Error).message);
+    } finally {
+      setSavingEdit(false);
+    }
+  };
 
   const handleToggle = async (f: AdminFormat) => {
     setToggling(f.id);
@@ -116,15 +151,24 @@ export default function AdminFormatsPage() {
                     </Badge>
                   </IndexTable.Cell>
                   <IndexTable.Cell>
-                    <Button
-                      variant="plain"
-                      tone={f.isActive ? "critical" : undefined}
-                      size="slim"
-                      loading={toggling === f.id}
-                      onClick={() => handleToggle(f)}
-                    >
-                      {f.isActive ? "Desactivar" : "Activar"}
-                    </Button>
+                    <InlineStack gap="200">
+                      <Button
+                        variant="plain"
+                        size="slim"
+                        onClick={() => handleEditOpen(f)}
+                      >
+                        Editar
+                      </Button>
+                      <Button
+                        variant="plain"
+                        tone={f.isActive ? "critical" : undefined}
+                        size="slim"
+                        loading={toggling === f.id}
+                        onClick={() => handleToggle(f)}
+                      >
+                        {f.isActive ? "Desactivar" : "Activar"}
+                      </Button>
+                    </InlineStack>
                   </IndexTable.Cell>
                 </IndexTable.Row>
               ))}
@@ -132,6 +176,54 @@ export default function AdminFormatsPage() {
           </Card>
         )}
       </div>
+
+      <Modal
+        open={!!editing}
+        onClose={() => { if (!savingEdit) setEditing(null); }}
+        title={`Editar formato — ${editing?.displayName ?? ""}`}
+        primaryAction={{
+          content: "Guardar",
+          loading: savingEdit,
+          onAction: handleEditSave,
+        }}
+        secondaryActions={[
+          {
+            content: "Cancelar",
+            disabled: savingEdit,
+            onAction: () => setEditing(null),
+          },
+        ]}
+      >
+        <Modal.Section>
+          {editError && (
+            <Banner tone="critical" onDismiss={() => setEditError(null)}>
+              {editError}
+            </Banner>
+          )}
+          <FormLayout>
+            <TextField
+              label="Nombre visible"
+              value={editForm.displayName}
+              onChange={(v) => setEditForm((p) => ({ ...p, displayName: v }))}
+              autoComplete="off"
+            />
+            <TextField
+              label="Proporción (aspectRatio)"
+              value={editForm.aspectRatio}
+              onChange={(v) => setEditForm((p) => ({ ...p, aspectRatio: v }))}
+              autoComplete="off"
+              helpText='Ej: "4:3", "1:1", "16:9"'
+            />
+            <TextField
+              label="Opción Shopify (shopifyVariantOption)"
+              value={editForm.shopifyVariantOption}
+              onChange={(v) => setEditForm((p) => ({ ...p, shopifyVariantOption: v }))}
+              autoComplete="off"
+              helpText='Valor exacto del option1 de la variante en Shopify. Ej: "8x10". Dejar vacío para desvincularlo.'
+            />
+          </FormLayout>
+        </Modal.Section>
+      </Modal>
     </Page>
   );
 }

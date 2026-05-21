@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import {
   Page,
   Card,
@@ -299,7 +300,7 @@ export default function AdminProductsPage() {
                 { title: "Estilo asignado" },
                 { title: "Tipo" },
                 { title: "Estado" },
-                { title: "" },
+                { title: "Acciones" },
               ]}
               selectable={false}
             >
@@ -402,6 +403,13 @@ export default function AdminProductsPage() {
                       accessibilityLabel={`Eliminar ${p.displayName}`}
                       onClick={() => setDeletingTarget(p)}
                     />
+                  </IndexTable.Cell>
+                  <IndexTable.Cell>
+                    <Link href={`/admin/products/${p.id}`}>
+                      <Button variant="plain" size="slim">
+                        Ver
+                      </Button>
+                    </Link>
                   </IndexTable.Cell>
                 </IndexTable.Row>
               ))}

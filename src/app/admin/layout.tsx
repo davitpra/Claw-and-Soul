@@ -35,7 +35,7 @@ export default function AdminLayout({
       <div className="flex min-h-screen w-full bg-[#f4f6f8] font-body">
         <AdminSidebar />
         <main className="flex-1 min-w-0 overflow-y-auto">
-          <div className="max-w-[1200px] mx-auto px-6 py-6">{children}</div>
+          <div className="max-w-300 mx-auto px-6 py-6">{children}</div>
         </main>
       </div>
     </PolarisProvider>
