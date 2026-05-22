@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import {
   Page,
@@ -20,8 +19,10 @@ import {
   Select,
   Modal,
   IndexTable,
+  FormLayout,
+  TextField,
 } from "@shopify/polaris";
-import { ExternalIcon, DeleteIcon, RefreshIcon } from "@shopify/polaris-icons";
+import { ExternalIcon, DeleteIcon, RefreshIcon, ViewIcon } from "@shopify/polaris-icons";
 import {
   adminApi,
   AdminProduct,
@@ -41,7 +42,10 @@ export default function AdminProductDetailPage() {
   const [variants, setVariants] = useState<AdminProductVariants | null>(null);
   const [styles, setStyles] = useState<AdminStyle[]>([]);
   const [formats, setFormats] = useState<AdminFormat[]>([]);
-  const [selectedFormat, setSelectedFormat] = useState<Record<string, string>>({});
+  const [allFormats, setAllFormats] = useState<AdminFormat[]>([]);
+  const [selectedFormat, setSelectedFormat] = useState<Record<string, string>>(
+    {},
+  );
   const [linkingVariantId, setLinkingVariantId] = useState<string | null>(null);
   const [shopifyImages, setShopifyImages] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
@@ -51,10 +55,25 @@ export default function AdminProductDetailPage() {
   const [toggling, setToggling] = useState(false);
   const [loadingVariants, setLoadingVariants] = useState(false);
   const [syncingVariants, setSyncingVariants] = useState(false);
-  const [syncResult, setSyncResult] = useState<{ synced: number; skipped: number } | null>(null);
+  const [syncResult, setSyncResult] = useState<{
+    synced: number;
+    skipped: number;
+  } | null>(null);
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [styleId, setStyleId] = useState("");
+  const [editingVariantId, setEditingVariantId] = useState<string | null>(null);
+  const [editFormatId, setEditFormatId] = useState<Record<string, string>>({});
+  const [savingVariantId, setSavingVariantId] = useState<string | null>(null);
+  const [togglingVariantId, setTogglingVariantId] = useState<string | null>(
+    null,
+  );
+  const [formatsModalOpen, setFormatsModalOpen] = useState(false);
+  const [editingFormat, setEditingFormat] = useState<AdminFormat | null>(null);
+  const [editFormatForm, setEditFormatForm] = useState({ displayName: "", aspectRatio: "", shopifyVariantOption: "" });
+  const [savingFormatEdit, setSavingFormatEdit] = useState(false);
+  const [formatEditError, setFormatEditError] = useState<string | null>(null);
+  const [togglingFormat, setTogglingFormat] = useState<string | null>(null);
 
   const loadShopifyImages = async (handle: string) => {
     try {
@@ -65,6 +84,16 @@ export default function AdminProductDetailPage() {
       }>({ query: GET_PRODUCT, variables: { handle } });
       const urls = data.product?.images.edges.map((e) => e.node.url) ?? [];
       setShopifyImages(urls);
+    } catch {
+      // best-effort
+    }
+  };
+
+  const loadFormats = async () => {
+    try {
+      const f = await adminApi.formats.list();
+      setFormats(f.filter((x) => x.isActive));
+      setAllFormats(f);
     } catch {
       // best-effort
     }
@@ -92,6 +121,7 @@ export default function AdminProductDetailPage() {
         setProduct(p);
         setStyles(s.filter((x) => x.isActive));
         setFormats(f.filter((x) => x.isActive));
+        setAllFormats(f);
         setStyleId(p.styleId ?? "");
         if (p.shopifyHandle) loadShopifyImages(p.shopifyHandle);
         loadVariants(p.id);
@@ -150,6 +180,51 @@ export default function AdminProductDetailPage() {
     }
   };
 
+  const handleFormatEditOpen = (f: AdminFormat) => {
+    setEditFormatForm({
+      displayName: f.displayName,
+      aspectRatio: f.aspectRatio,
+      shopifyVariantOption: f.shopifyVariantOption ?? "",
+    });
+    setEditingFormat(f);
+    setFormatEditError(null);
+  };
+
+  const handleFormatEditSave = async () => {
+    if (!editingFormat) return;
+    setSavingFormatEdit(true);
+    setFormatEditError(null);
+    try {
+      await adminApi.formats.update(editingFormat.id, {
+        displayName: editFormatForm.displayName,
+        aspectRatio: editFormatForm.aspectRatio,
+        shopifyVariantOption: editFormatForm.shopifyVariantOption.trim() || null,
+      });
+      setEditingFormat(null);
+      await loadFormats();
+    } catch (e: unknown) {
+      setFormatEditError((e as Error).message);
+    } finally {
+      setSavingFormatEdit(false);
+    }
+  };
+
+  const handleFormatToggle = async (f: AdminFormat) => {
+    setTogglingFormat(f.id);
+    try {
+      if (f.isActive) {
+        await adminApi.formats.deactivate(f.id);
+      } else {
+        await adminApi.formats.update(f.id, { isActive: true });
+      }
+      await loadFormats();
+    } catch (e: unknown) {
+      alert((e as Error).message);
+    } finally {
+      setTogglingFormat(null);
+    }
+  };
+
   const handleToggle = async () => {
     if (!product) return;
     setToggling(true);
@@ -180,6 +255,58 @@ export default function AdminProductDetailPage() {
       setError((e as Error).message);
       setDeleting(false);
       setDeleteOpen(false);
+    }
+  };
+
+  const handleStartEdit = (v: {
+    shopifyVariantId: string;
+    format: { id: string };
+  }) => {
+    setEditingVariantId(v.shopifyVariantId);
+    setEditFormatId((prev) => ({ ...prev, [v.shopifyVariantId]: v.format.id }));
+  };
+
+  const handleCancelEdit = () => setEditingVariantId(null);
+
+  const handleSaveVariant = async (v: {
+    shopifyVariantId: string;
+    format: { id: string };
+  }) => {
+    if (!product) return;
+    const chosenFormatId = editFormatId[v.shopifyVariantId];
+    if (chosenFormatId === v.format.id) {
+      setEditingVariantId(null);
+      return;
+    }
+    setSavingVariantId(v.shopifyVariantId);
+    try {
+      await adminApi.products.updateVariant(product.id, v.shopifyVariantId, {
+        formatId: chosenFormatId,
+      });
+      await loadVariants(product.id);
+      setEditingVariantId(null);
+    } catch (e: unknown) {
+      setError((e as Error).message);
+    } finally {
+      setSavingVariantId(null);
+    }
+  };
+
+  const handleToggleVariantActive = async (v: {
+    shopifyVariantId: string;
+    isActive: boolean;
+  }) => {
+    if (!product) return;
+    setTogglingVariantId(v.shopifyVariantId);
+    try {
+      await adminApi.products.updateVariant(product.id, v.shopifyVariantId, {
+        isActive: !v.isActive,
+      });
+      await loadVariants(product.id);
+    } catch (e: unknown) {
+      setError((e as Error).message);
+    } finally {
+      setTogglingVariantId(null);
     }
   };
 
@@ -247,12 +374,6 @@ export default function AdminProductDetailPage() {
           onAction: handleSyncVariants,
         },
         {
-          content: "Recargar variantes",
-          icon: RefreshIcon,
-          loading: loadingVariants,
-          onAction: () => loadVariants(product.id),
-        },
-        {
           content: "Eliminar",
           icon: DeleteIcon,
           destructive: true,
@@ -285,7 +406,7 @@ export default function AdminProductDetailPage() {
                   <Thumbnail
                     source={assignedStyle.previewUrl}
                     alt={assignedStyle.displayName}
-                    size="small"
+                    size="medium"
                   />
                   <Text variant="bodySm" tone="subdued" as="span">
                     Vista previa del estilo
@@ -299,49 +420,41 @@ export default function AdminProductDetailPage() {
               </InlineStack>
               <Divider />
               <BlockStack gap="150">
-                <Text variant="bodySm" tone="subdued" as="span">
+                <Text variant="bodySm" as="span" fontWeight="bold">
                   Nombre
                 </Text>
-                <Text as="p" fontWeight="semibold">
+                <Text as="p" fontWeight="regular">
                   {product.displayName}
                 </Text>
               </BlockStack>
               {product.description && (
                 <BlockStack gap="150">
-                  <Text variant="bodySm" tone="subdued" as="span">
+                  <Text variant="bodySm" as="span" fontWeight="bold">
                     Descripción
                   </Text>
-                  <Text as="p" tone="subdued">
-                    {product.description}
-                  </Text>
+                  <Text as="p">{product.description}</Text>
                 </BlockStack>
               )}
               <BlockStack gap="150">
-                <Text variant="bodySm" tone="subdued" as="span">
+                <Text variant="bodySm" as="span" fontWeight="bold">
                   Tipo de producto
                 </Text>
-                <Text as="p" fontWeight="semibold">
-                  {product.productType ?? "—"}
-                </Text>
+                <Text as="p">{product.productType ?? "—"}</Text>
               </BlockStack>
               <BlockStack gap="150">
-                <Text variant="bodySm" tone="subdued" as="span">
+                <Text variant="bodySm" as="span" fontWeight="bold">
                   Handle Shopify
                 </Text>
-                <Text as="p" fontWeight="semibold">
-                  {product.shopifyHandle ?? "—"}
-                </Text>
+                <Text as="p">{product.shopifyHandle ?? "—"}</Text>
               </BlockStack>
               <BlockStack gap="150">
-                <Text variant="bodySm" tone="subdued" as="span">
+                <Text variant="bodySm" as="span" fontWeight="bold">
                   Shopify Product ID
                 </Text>
-                <Text as="p" fontWeight="semibold">
-                  {product.shopifyProductId ?? "—"}
-                </Text>
+                <Text as="p">{product.shopifyProductId ?? "—"}</Text>
               </BlockStack>
               <BlockStack gap="150">
-                <Text variant="bodySm" tone="subdued" as="span">
+                <Text variant="bodySm" as="span" fontWeight="bold">
                   Estado
                 </Text>
                 <Badge tone={product.isActive ? "success" : "enabled"}>
@@ -357,7 +470,8 @@ export default function AdminProductDetailPage() {
           <BlockStack gap="400">
             {syncResult && (
               <Banner tone="success" onDismiss={() => setSyncResult(null)}>
-                Variantes resincronizadas: {syncResult.synced} vinculadas, {syncResult.skipped} omitidas.
+                Variantes resincronizadas: {syncResult.synced} vinculadas,{" "}
+                {syncResult.skipped} omitidas.
               </Banner>
             )}
 
@@ -408,7 +522,17 @@ export default function AdminProductDetailPage() {
                       </Badge>
                     )}
                   </InlineStack>
-                  {loadingVariants && <Spinner size="small" />}
+                  <InlineStack gap="200" blockAlign="center">
+                    {loadingVariants && <Spinner size="small" />}
+                    <Button
+                      variant="plain"
+                      size="slim"
+                      icon={ViewIcon}
+                      onClick={() => setFormatsModalOpen(true)}
+                    >
+                      Ver formatos
+                    </Button>
+                  </InlineStack>
                 </InlineStack>
               </Box>
 
@@ -424,6 +548,7 @@ export default function AdminProductDetailPage() {
                       { title: "Formato" },
                       { title: "Variante Shopify" },
                       { title: "Estado" },
+                      { title: "Acciones" },
                     ]}
                     selectable={false}
                     emptyState={
@@ -434,30 +559,130 @@ export default function AdminProductDetailPage() {
                       </Box>
                     }
                   >
-                    {variants.linkedVariants.map((v, idx) => (
-                      <IndexTable.Row
-                        id={v.shopifyVariantId}
-                        key={v.shopifyVariantId}
-                        position={idx}
-                      >
-                        <IndexTable.Cell>
-                          <Badge tone="success">{v.format.displayName}</Badge>
-                        </IndexTable.Cell>
-                        <IndexTable.Cell>
-                          <Text as="p" fontWeight="semibold">
-                            {v.shopifyVariantTitle}
-                          </Text>
-                          <Text variant="bodySm" tone="subdued" as="span">
-                            #{v.shopifyVariantId.replace(/\D/g, "")}
-                          </Text>
-                        </IndexTable.Cell>
-                        <IndexTable.Cell>
-                          <Badge tone={v.isActive ? "success" : "enabled"}>
-                            {v.isActive ? "Activa" : "Inactiva"}
-                          </Badge>
-                        </IndexTable.Cell>
-                      </IndexTable.Row>
-                    ))}
+                    {variants.linkedVariants.map((v, idx) => {
+                      const isEditing = editingVariantId === v.shopifyVariantId;
+                      const isSaving = savingVariantId === v.shopifyVariantId;
+                      const isToggling =
+                        togglingVariantId === v.shopifyVariantId;
+
+                      const formatOptions = formats.map((f) => ({
+                        label: `${f.displayName} (${f.aspectRatio})`,
+                        value: f.id,
+                      }));
+                      const currentFormatInList = formats.some(
+                        (f) => f.id === v.format.id,
+                      );
+                      if (!currentFormatInList) {
+                        formatOptions.unshift({
+                          label: `${v.format.displayName} (inactivo)`,
+                          value: v.format.id,
+                        });
+                      }
+
+                      return (
+                        <IndexTable.Row
+                          id={v.shopifyVariantId}
+                          key={v.shopifyVariantId}
+                          position={idx}
+                        >
+                          <IndexTable.Cell>
+                            {isEditing ? (
+                              <div style={{ minWidth: 220 }}>
+                                <Select
+                                  label="Formato"
+                                  labelHidden
+                                  options={formatOptions}
+                                  value={
+                                    editFormatId[v.shopifyVariantId] ??
+                                    v.format.id
+                                  }
+                                  onChange={(value) =>
+                                    setEditFormatId((prev) => ({
+                                      ...prev,
+                                      [v.shopifyVariantId]: value,
+                                    }))
+                                  }
+                                />
+                              </div>
+                            ) : (
+                              <Badge tone="success">
+                                {v.format.displayName}
+                              </Badge>
+                            )}
+                          </IndexTable.Cell>
+                          <IndexTable.Cell>
+                            <Text as="p" fontWeight="bold">
+                              {v.shopifyVariantTitle}
+                            </Text>
+                            <Text variant="bodySm" tone="subdued" as="span">
+                              #{v.shopifyVariantId.replace(/\D/g, "")}
+                            </Text>
+                          </IndexTable.Cell>
+                          <IndexTable.Cell>
+                            <InlineStack gap="200" blockAlign="center">
+                              <button
+                                type="button"
+                                onClick={() => handleToggleVariantActive(v)}
+                                disabled={isToggling}
+                                aria-label={
+                                  v.isActive
+                                    ? "Desactivar variante"
+                                    : "Activar variante"
+                                }
+                                title={
+                                  v.isActive
+                                    ? "Click para desactivar"
+                                    : "Click para activar"
+                                }
+                                style={{
+                                  background: "transparent",
+                                  border: "none",
+                                  padding: 0,
+                                  cursor: isToggling ? "wait" : "pointer",
+                                  opacity: isToggling ? 0.6 : 1,
+                                }}
+                              >
+                                <Badge
+                                  tone={v.isActive ? "success" : "enabled"}
+                                >
+                                  {v.isActive ? "Activa" : "Inactiva"}
+                                </Badge>
+                              </button>
+                              {isToggling && <Spinner size="small" />}
+                            </InlineStack>
+                          </IndexTable.Cell>
+                          <IndexTable.Cell>
+                            {isEditing ? (
+                              <InlineStack gap="200">
+                                <Button
+                                  variant="primary"
+                                  size="slim"
+                                  loading={isSaving}
+                                  disabled={!editFormatId[v.shopifyVariantId]}
+                                  onClick={() => handleSaveVariant(v)}
+                                >
+                                  Guardar
+                                </Button>
+                                <Button
+                                  size="slim"
+                                  disabled={isSaving}
+                                  onClick={handleCancelEdit}
+                                >
+                                  Cancelar
+                                </Button>
+                              </InlineStack>
+                            ) : (
+                              <Button
+                                size="slim"
+                                onClick={() => handleStartEdit(v)}
+                              >
+                                Editar
+                              </Button>
+                            )}
+                          </IndexTable.Cell>
+                        </IndexTable.Row>
+                      );
+                    })}
                   </IndexTable>
 
                   {variants.unlinkedVariants.length > 0 && (
@@ -469,7 +694,9 @@ export default function AdminProductDetailPage() {
                       <BlockStack gap="300">
                         <Banner tone="warning">
                           {variants.unlinkedVariants.length} variante
-                          {variants.unlinkedVariants.length !== 1 ? "s" : ""}{" "}
+                          {variants.unlinkedVariants.length !== 1
+                            ? "s"
+                            : ""}{" "}
                           sin vincular a ningún formato
                         </Banner>
                         {variants.unlinkedVariants.map((u) => (
@@ -492,9 +719,12 @@ export default function AdminProductDetailPage() {
                               {formats.length === 0 ? (
                                 <Text as="p" variant="bodySm" tone="subdued">
                                   No hay formatos activos.{" "}
-                                  <Link href="/admin/formats">
-                                    Crear o activar un formato
-                                  </Link>
+                                  <Button
+                                    variant="plain"
+                                    onClick={() => setFormatsModalOpen(true)}
+                                  >
+                                    Gestionar formatos
+                                  </Button>
                                 </Text>
                               ) : (
                                 <InlineStack gap="200" blockAlign="end">
@@ -508,8 +738,7 @@ export default function AdminProductDetailPage() {
                                         value: f.id,
                                       }))}
                                       value={
-                                        selectedFormat[u.shopifyVariantId] ??
-                                        ""
+                                        selectedFormat[u.shopifyVariantId] ?? ""
                                       }
                                       onChange={(value) =>
                                         setSelectedFormat((prev) => ({
@@ -582,6 +811,139 @@ export default function AdminProductDetailPage() {
               al producto. Esta acción no se puede deshacer.
             </Text>
           </BlockStack>
+        </Modal.Section>
+      </Modal>
+
+      <Modal
+        open={formatsModalOpen}
+        onClose={() => setFormatsModalOpen(false)}
+        title="Formatos"
+        secondaryActions={[
+          { content: "Cerrar", onAction: () => setFormatsModalOpen(false) },
+        ]}
+        size="large"
+      >
+        <Modal.Section flush>
+          <IndexTable
+            resourceName={{ singular: "formato", plural: "formatos" }}
+            itemCount={allFormats.length}
+            headings={[
+              { title: "Nombre" },
+              { title: "Proporción" },
+              { title: "Dimensiones" },
+              { title: "Opción Shopify" },
+              { title: "Estado" },
+              { title: "Acciones" },
+            ]}
+            selectable={false}
+          >
+            {allFormats.map((f, index) => (
+              <IndexTable.Row
+                id={f.id}
+                key={f.id}
+                position={index}
+                tone={f.isActive ? undefined : "subdued"}
+              >
+                <IndexTable.Cell>
+                  <Text variant="bodyMd" fontWeight="semibold" as="span">
+                    {f.displayName}
+                  </Text>
+                  <br />
+                  <Text variant="bodySm" tone="subdued" as="span">
+                    {f.name}
+                  </Text>
+                </IndexTable.Cell>
+                <IndexTable.Cell>
+                  <Text as="span" tone="subdued">
+                    {f.aspectRatio}
+                  </Text>
+                </IndexTable.Cell>
+                <IndexTable.Cell>
+                  <Text as="span" tone="subdued">
+                    {f.width} × {f.height}
+                  </Text>
+                </IndexTable.Cell>
+                <IndexTable.Cell>
+                  <Text as="span" tone="subdued">
+                    {f.shopifyVariantOption ?? "—"}
+                  </Text>
+                </IndexTable.Cell>
+                <IndexTable.Cell>
+                  {togglingFormat === f.id ? (
+                    <Spinner size="small" />
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={() => handleFormatToggle(f)}
+                      style={{ background: "none", border: 0, padding: 0, cursor: "pointer" }}
+                      aria-label={f.isActive ? "Desactivar formato" : "Activar formato"}
+                    >
+                      <Badge tone={f.isActive ? "success" : "enabled"}>
+                        {f.isActive ? "Activo" : "Inactivo"}
+                      </Badge>
+                    </button>
+                  )}
+                </IndexTable.Cell>
+                <IndexTable.Cell>
+                  <Button
+                    variant="plain"
+                    size="slim"
+                    onClick={() => handleFormatEditOpen(f)}
+                  >
+                    Editar
+                  </Button>
+                </IndexTable.Cell>
+              </IndexTable.Row>
+            ))}
+          </IndexTable>
+        </Modal.Section>
+      </Modal>
+
+      <Modal
+        open={!!editingFormat}
+        onClose={() => { if (!savingFormatEdit) setEditingFormat(null); }}
+        title={`Editar formato — ${editingFormat?.displayName ?? ""}`}
+        primaryAction={{
+          content: "Guardar",
+          loading: savingFormatEdit,
+          onAction: handleFormatEditSave,
+        }}
+        secondaryActions={[
+          {
+            content: "Cancelar",
+            disabled: savingFormatEdit,
+            onAction: () => setEditingFormat(null),
+          },
+        ]}
+      >
+        <Modal.Section>
+          {formatEditError && (
+            <Banner tone="critical" onDismiss={() => setFormatEditError(null)}>
+              {formatEditError}
+            </Banner>
+          )}
+          <FormLayout>
+            <TextField
+              label="Nombre visible"
+              value={editFormatForm.displayName}
+              onChange={(v) => setEditFormatForm((p) => ({ ...p, displayName: v }))}
+              autoComplete="off"
+            />
+            <TextField
+              label="Proporción (aspectRatio)"
+              value={editFormatForm.aspectRatio}
+              onChange={(v) => setEditFormatForm((p) => ({ ...p, aspectRatio: v }))}
+              autoComplete="off"
+              helpText='Ej: "4:3", "1:1", "16:9"'
+            />
+            <TextField
+              label="Opción Shopify (shopifyVariantOption)"
+              value={editFormatForm.shopifyVariantOption}
+              onChange={(v) => setEditFormatForm((p) => ({ ...p, shopifyVariantOption: v }))}
+              autoComplete="off"
+              helpText='Valor exacto del option1 de la variante en Shopify. Ej: "8x10". Dejar vacío para desvincularlo.'
+            />
+          </FormLayout>
         </Modal.Section>
       </Modal>
     </Page>

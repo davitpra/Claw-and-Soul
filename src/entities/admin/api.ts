@@ -354,6 +354,15 @@ export const adminApi = {
         `/admin/products/${id}/variants/sync`,
         { method: 'POST' },
       ),
+    updateVariant: (
+      productId: string,
+      shopifyVariantId: string,
+      body: { formatId?: string; isActive?: boolean },
+    ) =>
+      adminFetch<AdminProductVariantLink>(
+        `/admin/products/${productId}/variants/${shopifyVariantId}`,
+        { method: 'PATCH', body: JSON.stringify(body) },
+      ),
   },
   sync: {
     trigger: () => adminFetch('/admin/products/sync', { method: 'POST' }),
