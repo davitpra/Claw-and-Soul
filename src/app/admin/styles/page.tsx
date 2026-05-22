@@ -1,18 +1,18 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import {
   Page,
   Card,
   IndexTable,
   Badge,
-  Button,
   Banner,
   Spinner,
   Text,
   InlineStack,
   Thumbnail,
-
+  Button,
 } from "@shopify/polaris";
 import { adminApi, AdminStyle } from "@/entities/admin/api";
 
@@ -74,7 +74,7 @@ export default function AdminStylesPage() {
             <IndexTable
               resourceName={{ singular: "estilo", plural: "estilos" }}
               itemCount={styles.length}
-              headings={[{ title: "Vista previa" }, { title: "Nombre" }, { title: "Categoría" }, { title: "Imágenes" }, { title: "Estado" }, { title: "Acción" }]}
+              headings={[{ title: "Vista previa" }, { title: "Nombre" }, { title: "Categoría" }, { title: "Imágenes" }, { title: "Estado" }, { title: "Acciones" }]}
               selectable={false}
             >
               {styles.map((s, index) => (
@@ -111,9 +111,11 @@ export default function AdminStylesPage() {
                     )}
                   </IndexTable.Cell>
                   <IndexTable.Cell>
-                    <Text variant="bodyMd" fontWeight="semibold" as="span">
-                      {s.displayName}
-                    </Text>
+                    <Link href={`/admin/styles/${s.id}`} style={{ textDecoration: "none", color: "inherit" }}>
+                      <Text variant="bodyMd" fontWeight="semibold" as="span">
+                        {s.displayName}
+                      </Text>
+                    </Link>
                     <br />
                     <Text variant="bodySm" tone="subdued" as="span">
                       {s.name}
@@ -128,20 +130,34 @@ export default function AdminStylesPage() {
                     <Text as="span">{s.images.length}</Text>
                   </IndexTable.Cell>
                   <IndexTable.Cell>
-                    <Badge tone={s.isActive ? "success" : "enabled"}>
-                      {s.isActive ? "Activo" : "Inactivo"}
-                    </Badge>
+                    <InlineStack gap="200" blockAlign="center">
+                      <button
+                        type="button"
+                        onClick={() => handleToggle(s)}
+                        disabled={toggling === s.id}
+                        aria-label={s.isActive ? "Desactivar estilo" : "Activar estilo"}
+                        title={s.isActive ? "Click para desactivar" : "Click para activar"}
+                        style={{
+                          background: "transparent",
+                          border: "none",
+                          padding: 0,
+                          cursor: toggling === s.id ? "wait" : "pointer",
+                          opacity: toggling === s.id ? 0.6 : 1,
+                        }}
+                      >
+                        <Badge tone={s.isActive ? "success" : "enabled"}>
+                          {s.isActive ? "Activo" : "Inactivo"}
+                        </Badge>
+                      </button>
+                      {toggling === s.id && <Spinner size="small" />}
+                    </InlineStack>
                   </IndexTable.Cell>
                   <IndexTable.Cell>
-                    <Button
-                      variant="plain"
-                      tone={s.isActive ? "critical" : undefined}
-                      size="slim"
-                      loading={toggling === s.id}
-                      onClick={() => handleToggle(s)}
-                    >
-                      {s.isActive ? "Desactivar" : "Activar"}
-                    </Button>
+                    <Link href={`/admin/styles/${s.id}`}>
+                      <Button variant="plain" size="slim">
+                        Ver
+                      </Button>
+                    </Link>
                   </IndexTable.Cell>
                 </IndexTable.Row>
               ))}

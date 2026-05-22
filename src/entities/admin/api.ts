@@ -208,17 +208,39 @@ export interface OverviewStats {
   };
 }
 
+export interface AdminStyleImage {
+  id: string;
+  styleId: string;
+  imageUrl: string;
+  storageKey: string;
+  caption: string | null;
+  orderIndex: number;
+  isPrimary: boolean;
+  createdAt: string;
+}
+
 export interface AdminStyle {
   id: string;
   name: string;
   displayName: string;
   description: string | null;
   category: string;
+  thanksUrl: string | null;
   isActive: boolean;
+  parameters: Record<string, unknown> | null;
   sortOrder: number;
-  previewUrl: string | null;
   createdAt: string;
-  images: { id: string; imageUrl: string; isPrimary: boolean; orderIndex: number }[];
+  updatedAt: string;
+  strategyKey: string;
+  falModel: string | null;
+  promptTemplate: string | null;
+  visionModel: string | null;
+  visionTemperature: number | null;
+  descriptionExample: string | null;
+  templateVars: Record<string, unknown> | null;
+  previewUrl: string | null;
+  images: AdminStyleImage[];
+  _count?: { generations: number; productReferences: number };
 }
 
 export interface AdminFormat {
@@ -301,6 +323,7 @@ export const adminApi = {
   },
   styles: {
     list: () => adminFetch<AdminStyle[]>('/admin/styles'),
+    getById: (id: string) => adminFetch<AdminStyle>(`/admin/styles/${id}`),
     update: (id: string, body: Partial<AdminStyle>) =>
       adminFetch<AdminStyle>(`/admin/styles/${id}`, {
         method: 'PATCH',
@@ -317,6 +340,13 @@ export const adminApi = {
         body: form,
       });
     },
+    updateImage: (styleId: string, imgId: string, body: { isPrimary?: boolean; orderIndex?: number }) =>
+      adminFetch<AdminStyleImage>(`/admin/styles/${styleId}/images/${imgId}`, {
+        method: 'PATCH',
+        body: JSON.stringify(body),
+      }),
+    deleteImage: (styleId: string, imgId: string) =>
+      adminFetch(`/admin/styles/${styleId}/images/${imgId}`, { method: 'DELETE' }),
   },
   formats: {
     list: () => adminFetch<AdminFormat[]>('/admin/formats'),
