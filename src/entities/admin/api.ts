@@ -243,6 +243,7 @@ export interface AdminProduct {
   styleId: string | null;
   style: { id: string; name: string; displayName: string; previewUrl: string | null } | null;
   productType: string | null;
+  fulfillmentMethod: string;
 }
 
 export interface AdminProductVariantLink {
@@ -434,6 +435,15 @@ export const adminApi = {
       adminFetch(`/admin/orders/${orderId}/items/${itemId}/tracking`, {
         method: 'PATCH',
         body: JSON.stringify(data),
+      }),
+    updateItemFulfillment: (
+      orderId: string,
+      itemId: string,
+      fulfillmentMethod: 'in_house' | 'pod',
+    ) =>
+      adminFetch(`/admin/orders/${orderId}/items/${itemId}/fulfillment`, {
+        method: 'PATCH',
+        body: JSON.stringify({ fulfillmentMethod }),
       }),
     resync: (orderId: string) =>
       adminFetch(`/admin/orders/${orderId}/resync`, { method: 'POST' }),

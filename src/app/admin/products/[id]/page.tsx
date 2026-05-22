@@ -62,6 +62,7 @@ export default function AdminProductDetailPage() {
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [styleId, setStyleId] = useState("");
+  const [fulfillmentMethod, setFulfillmentMethod] = useState<"in_house" | "pod">("in_house");
   const [editingVariantId, setEditingVariantId] = useState<string | null>(null);
   const [editFormatId, setEditFormatId] = useState<Record<string, string>>({});
   const [savingVariantId, setSavingVariantId] = useState<string | null>(null);
@@ -123,6 +124,7 @@ export default function AdminProductDetailPage() {
         setFormats(f.filter((x) => x.isActive));
         setAllFormats(f);
         setStyleId(p.styleId ?? "");
+        setFulfillmentMethod((p.fulfillmentMethod as "in_house" | "pod") ?? "in_house");
         if (p.shopifyHandle) loadShopifyImages(p.shopifyHandle);
         loadVariants(p.id);
       })
@@ -137,6 +139,7 @@ export default function AdminProductDetailPage() {
     try {
       const updated = await adminApi.products.update(product.id, {
         styleId: styleId || null,
+        fulfillmentMethod,
       } as Partial<AdminProduct>);
       setProduct(updated);
     } catch (e: unknown) {
@@ -400,6 +403,16 @@ export default function AdminProductDetailPage() {
                 ]}
                 value={styleId}
                 onChange={setStyleId}
+              />
+              <Select
+                label="Método de fulfillment"
+                options={[
+                  { label: "Taller (in-house)", value: "in_house" },
+                  { label: "POD (proveedor externo)", value: "pod" },
+                ]}
+                value={fulfillmentMethod}
+                onChange={(v) => setFulfillmentMethod(v as "in_house" | "pod")}
+                helpText="Define cómo se cumplirán los pedidos de este producto por defecto."
               />
               {assignedStyle?.previewUrl && (
                 <InlineStack gap="200" blockAlign="center">

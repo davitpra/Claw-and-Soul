@@ -56,6 +56,7 @@ export default function AdminProductsPage() {
   const [deleting, setDeleting] = useState(false);
   const [styles, setStyles] = useState<AdminStyle[]>([]);
   const [savingStyle, setSavingStyle] = useState<string | null>(null);
+  const [savingFulfillment, setSavingFulfillment] = useState<string | null>(null);
   const [imageMap, setImageMap] = useState<Record<string, string>>({});
 
   const loadProducts = () => {
@@ -153,6 +154,22 @@ export default function AdminProductsPage() {
       setError((e as Error).message);
     } finally {
       setDeleting(false);
+    }
+  };
+
+  const handleFulfillmentChange = async (productId: string, value: string) => {
+    const fulfillmentMethod = value as "in_house" | "pod";
+    setSavingFulfillment(productId);
+    setProducts((prev) =>
+      prev.map((p) => (p.id === productId ? { ...p, fulfillmentMethod } : p)),
+    );
+    try {
+      await adminApi.products.update(productId, { fulfillmentMethod });
+    } catch (e: unknown) {
+      setError((e as Error).message);
+      loadProducts();
+    } finally {
+      setSavingFulfillment(null);
     }
   };
 
@@ -298,6 +315,7 @@ export default function AdminProductsPage() {
                 { title: "Producto" },
                 { title: "Handle Shopify" },
                 { title: "Estilo asignado" },
+                { title: "Fulfillment" },
                 { title: "Tipo" },
                 { title: "Estado" },
                 { title: "Acciones" },
@@ -355,6 +373,24 @@ export default function AdminProductsPage() {
                         />
                       </div>
                       {savingStyle === p.id && <Spinner size="small" />}
+                    </InlineStack>
+                  </IndexTable.Cell>
+                  <IndexTable.Cell>
+                    <InlineStack gap="200" blockAlign="center">
+                      <div style={{ minWidth: 170 }}>
+                        <Select
+                          label=""
+                          labelHidden
+                          disabled={savingFulfillment === p.id}
+                          value={p.fulfillmentMethod ?? "in_house"}
+                          onChange={(value) => handleFulfillmentChange(p.id, value)}
+                          options={[
+                            { label: "Taller (in-house)", value: "in_house" },
+                            { label: "POD (externo)", value: "pod" },
+                          ]}
+                        />
+                      </div>
+                      {savingFulfillment === p.id && <Spinner size="small" />}
                     </InlineStack>
                   </IndexTable.Cell>
                   <IndexTable.Cell>

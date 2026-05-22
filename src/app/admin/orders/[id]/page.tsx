@@ -20,6 +20,7 @@ import {
   Thumbnail,
   DescriptionList,
   TextField,
+  Select,
 } from "@shopify/polaris";
 import { RefreshIcon, ExternalIcon } from "@shopify/polaris-icons";
 import { adminApi, AdminOrderDetail, AdminOrderItem } from "@/entities/admin/api";
@@ -102,10 +103,30 @@ function OrderItemCard({
   const [trackingUrl, setTrackingUrl] = useState(item.trackingUrl ?? "");
   const [trackingCarrier, setTrackingCarrier] = useState(item.trackingCarrier ?? "");
   const [savingTracking, setSavingTracking] = useState(false);
+  const [fulfillmentMethod, setFulfillmentMethod] = useState<"in_house" | "pod">(
+    item.fulfillmentMethod as "in_house" | "pod",
+  );
+  const [savingFulfillment, setSavingFulfillment] = useState(false);
   const [err, setErr] = useState<string | null>(null);
 
   const thumb = item.generation?.thumbnailUrl ?? item.generation?.resultUrl ?? item.imageUrl;
   const allowed = VALID_TRANSITIONS[item.productionStatus] ?? [];
+
+  async function handleFulfillmentChange(value: string) {
+    const method = value as "in_house" | "pod";
+    setFulfillmentMethod(method);
+    setSavingFulfillment(true);
+    setErr(null);
+    try {
+      await adminApi.orders.updateItemFulfillment(orderId, item.id, method);
+      onUpdate();
+    } catch (e) {
+      setErr((e as Error).message);
+      setFulfillmentMethod(item.fulfillmentMethod as "in_house" | "pod");
+    } finally {
+      setSavingFulfillment(false);
+    }
+  }
 
   async function handleStatusChange(toStatus: string) {
     setUpdatingStatus(true);
@@ -201,11 +222,19 @@ function OrderItemCard({
             </InlineStack>
 
             <InlineStack gap="200" blockAlign="center">
-              <Badge
-                tone={item.fulfillmentMethod === "pod" ? "attention" : "info"}
-              >
-                {item.fulfillmentMethod === "pod" ? "POD" : "Taller"}
-              </Badge>
+              <div style={{ minWidth: 180 }}>
+                <Select
+                  label=""
+                  labelHidden
+                  options={[
+                    { label: "Taller (in-house)", value: "in_house" },
+                    { label: "POD (proveedor externo)", value: "pod" },
+                  ]}
+                  value={fulfillmentMethod}
+                  onChange={handleFulfillmentChange}
+                  disabled={savingFulfillment}
+                />
+              </div>
               <Badge tone={STATUS_TONES[item.productionStatus] ?? "enabled"}>
                 {PRODUCTION_STATUS_LABELS[item.productionStatus] ?? item.productionStatus}
               </Badge>
