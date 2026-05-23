@@ -57,6 +57,11 @@ export default function AdminStyleDetailPage() {
   const [imageGenConfigId, setImageGenConfigId] =
     useState<string>(UNASSIGNED);
 
+  // Prompt template form state
+  const [promptTemplate, setPromptTemplate] = useState("");
+  const [templateVarsText, setTemplateVarsText] = useState("");
+  const [jsonPromptError, setJsonPromptError] = useState<string | null>(null);
+
   // Image state
   const [uploadingImage, setUploadingImage] = useState(false);
   const [imageActionId, setImageActionId] = useState<string | null>(null);
@@ -73,6 +78,10 @@ export default function AdminStyleDetailPage() {
     setStrategyKey(s.strategyKey ?? "");
     setVisionConfigId(s.visionConfigId ?? UNASSIGNED);
     setImageGenConfigId(s.imageGenConfigId ?? UNASSIGNED);
+    setPromptTemplate(s.promptTemplate ?? "");
+    setTemplateVarsText(
+      s.templateVars ? JSON.stringify(s.templateVars, null, 2) : "",
+    );
   };
 
   const reload = async () => {
@@ -124,6 +133,36 @@ export default function AdminStyleDetailPage() {
         strategyKey,
         visionConfigId: visionConfigId || null,
         imageGenConfigId: imageGenConfigId || null,
+      });
+      setStyle(updated);
+      hydrateForm(updated);
+    } catch (e: unknown) {
+      setSaveError((e as Error).message);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleSavePrompt = async () => {
+    if (!style) return;
+    setJsonPromptError(null);
+    setSaveError(null);
+
+    let parsedTemplateVars: Record<string, unknown> | null = null;
+    if (templateVarsText.trim()) {
+      try {
+        parsedTemplateVars = JSON.parse(templateVarsText);
+      } catch {
+        setJsonPromptError("template_vars: JSON inválido");
+        return;
+      }
+    }
+
+    setSaving(true);
+    try {
+      const updated = await adminApi.styles.update(style.id, {
+        promptTemplate: promptTemplate || undefined,
+        templateVars: parsedTemplateVars ?? undefined,
       });
       setStyle(updated);
       hydrateForm(updated);
@@ -373,6 +412,11 @@ export default function AdminStyleDetailPage() {
                 {saveError}
               </Banner>
             )}
+            {jsonPromptError && (
+              <Banner tone="critical" onDismiss={() => setJsonPromptError(null)}>
+                {jsonPromptError}
+              </Banner>
+            )}
 
             {/* Galería de imágenes */}
             <Card>
@@ -555,6 +599,46 @@ export default function AdminStyleDetailPage() {
               </BlockStack>
             </Card>
 
+            {/* Prompt Template */}
+            <Card>
+              <BlockStack gap="400">
+                <Text variant="headingSm" as="h2">
+                  Prompt Template
+                </Text>
+                <FormLayout>
+                  <TextField
+                    label="prompt_template"
+                    value={promptTemplate}
+                    onChange={setPromptTemplate}
+                    multiline={12}
+                    autoComplete="off"
+                    monospaced
+                    helpText="Prompt completo al VLM. Placeholders: {{petName}}, {{petSpecies}}, {{petBreed}}, {{maxPets}} y los de template_vars."
+                  />
+
+                  <TextField
+                    label="template_vars (JSON)"
+                    value={templateVarsText}
+                    onChange={setTemplateVarsText}
+                    multiline={6}
+                    autoComplete="off"
+                    monospaced
+                    helpText="Variables custom para sustituir {{placeholders}} en prompt_template"
+                  />
+                </FormLayout>
+
+                <InlineStack align="end">
+                  <Button
+                    variant="primary"
+                    loading={saving}
+                    onClick={handleSavePrompt}
+                  >
+                    Guardar cambios
+                  </Button>
+                </InlineStack>
+              </BlockStack>
+            </Card>
+
             {/* Vision Config preview */}
             <Card>
               <BlockStack gap="300">
@@ -687,10 +771,6 @@ function ConfigPreviewField({
 }
 
 function VisionConfigPreview({ config }: { config: AdminVisionConfig }) {
-  const templateVarsCount = config.templateVars
-    ? Object.keys(config.templateVars).length
-    : 0;
-
   return (
     <BlockStack gap="300">
       <InlineStack gap="400" wrap>
@@ -714,30 +794,6 @@ function VisionConfigPreview({ config }: { config: AdminVisionConfig }) {
           }
         />
       </InlineStack>
-
-      {config.promptTemplate && (
-        <BlockStack gap="100">
-          <Text variant="bodySm" as="span" tone="subdued">
-            prompt_template
-          </Text>
-          <Box
-            background="bg-surface-secondary"
-            padding="300"
-            borderRadius="200"
-          >
-            <Text as="p" variant="bodySm" truncate>
-              {config.promptTemplate.split("\n").slice(0, 3).join(" · ")}
-            </Text>
-          </Box>
-        </BlockStack>
-      )}
-
-      {templateVarsCount > 0 && (
-        <Text as="p" variant="bodySm" tone="subdued">
-          {templateVarsCount} variable{templateVarsCount === 1 ? "" : "s"} en{" "}
-          <code>template_vars</code>.
-        </Text>
-      )}
     </BlockStack>
   );
 }

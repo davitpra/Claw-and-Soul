@@ -225,9 +225,8 @@ export interface AdminVisionConfig {
   description: string | null;
   visionModel: string | null;
   visionTemperature: number | null;
-  promptTemplate: string | null;
-  descriptionExample: string | null;
-  templateVars: Record<string, unknown> | null;
+  systemPrompt: string | null;
+  maxTokens: number | null;
   isActive: boolean;
   createdAt: string;
   updatedAt: string;
@@ -262,6 +261,8 @@ export interface AdminStyle {
   createdAt: string;
   updatedAt: string;
   strategyKey: string;
+  promptTemplate: string;
+  templateVars: Record<string, unknown> | null;
   visionConfigId: string | null;
   imageGenConfigId: string | null;
   visionConfig: AdminVisionConfig | null;

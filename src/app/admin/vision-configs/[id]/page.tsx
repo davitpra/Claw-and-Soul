@@ -37,7 +37,6 @@ export default function AdminVisionConfigDetailPage() {
 
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
-  const [jsonError, setJsonError] = useState<string | null>(null);
   const [toggling, setToggling] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
@@ -46,9 +45,8 @@ export default function AdminVisionConfigDetailPage() {
   const [description, setDescription] = useState("");
   const [visionModel, setVisionModel] = useState("");
   const [visionTemperature, setVisionTemperature] = useState("");
-  const [promptTemplate, setPromptTemplate] = useState("");
-  const [descriptionExample, setDescriptionExample] = useState("");
-  const [templateVarsText, setTemplateVarsText] = useState("");
+  const [systemPrompt, setSystemPrompt] = useState("");
+  const [maxTokens, setMaxTokens] = useState("");
 
   const hydrate = (c: AdminVisionConfig) => {
     setName(c.name);
@@ -57,11 +55,8 @@ export default function AdminVisionConfigDetailPage() {
     setVisionTemperature(
       c.visionTemperature !== null ? String(c.visionTemperature) : "",
     );
-    setPromptTemplate(c.promptTemplate ?? "");
-    setDescriptionExample(c.descriptionExample ?? "");
-    setTemplateVarsText(
-      c.templateVars ? JSON.stringify(c.templateVars, null, 2) : "",
-    );
+    setSystemPrompt(c.systemPrompt ?? "");
+    setMaxTokens(c.maxTokens !== null ? String(c.maxTokens) : "");
   };
 
   const reload = async () => {
@@ -90,18 +85,7 @@ export default function AdminVisionConfigDetailPage() {
 
   const handleSave = async () => {
     if (!config) return;
-    setJsonError(null);
     setSaveError(null);
-
-    let parsedTemplateVars: Record<string, unknown> | null = null;
-    if (templateVarsText.trim()) {
-      try {
-        parsedTemplateVars = JSON.parse(templateVarsText);
-      } catch {
-        setJsonError("template_vars: JSON inválido");
-        return;
-      }
-    }
 
     const parsedVisionTemp = visionTemperature.trim()
       ? Number(visionTemperature)
@@ -111,6 +95,16 @@ export default function AdminVisionConfigDetailPage() {
       return;
     }
 
+    let parsedMaxTokens: number | null = null;
+    if (maxTokens.trim()) {
+      const n = Number(maxTokens);
+      if (!Number.isInteger(n) || n < 1) {
+        setSaveError("max_tokens debe ser un entero positivo");
+        return;
+      }
+      parsedMaxTokens = n;
+    }
+
     setSaving(true);
     try {
       const updated = await adminApi.visionConfigs.update(config.id, {
@@ -118,9 +112,8 @@ export default function AdminVisionConfigDetailPage() {
         description: description || undefined,
         visionModel: visionModel || undefined,
         visionTemperature: parsedVisionTemp ?? undefined,
-        promptTemplate: promptTemplate || undefined,
-        descriptionExample: descriptionExample || undefined,
-        templateVars: parsedTemplateVars ?? undefined,
+        systemPrompt: systemPrompt || undefined,
+        maxTokens: parsedMaxTokens ?? undefined,
       });
       setConfig(updated);
       hydrate(updated);
@@ -296,11 +289,6 @@ export default function AdminVisionConfigDetailPage() {
                 {saveError}
               </Banner>
             )}
-            {jsonError && (
-              <Banner tone="critical" onDismiss={() => setJsonError(null)}>
-                {jsonError}
-              </Banner>
-            )}
 
             <Card>
               <BlockStack gap="400">
@@ -347,35 +335,26 @@ export default function AdminVisionConfigDetailPage() {
                       autoComplete="off"
                       helpText="0 – 2"
                     />
+                    <TextField
+                      label="max_tokens"
+                      type="number"
+                      value={maxTokens}
+                      onChange={setMaxTokens}
+                      autoComplete="off"
+                      helpText="Entero ≥ 1. Vacío = default del servicio (400)."
+                    />
                   </FormLayout.Group>
 
                   <TextField
-                    label="prompt_template"
-                    value={promptTemplate}
-                    onChange={setPromptTemplate}
-                    multiline={6}
-                    autoComplete="off"
-                    helpText="Template con [placeholders] para el VLM"
-                  />
-
-                  <TextField
-                    label="description_example"
-                    value={descriptionExample}
-                    onChange={setDescriptionExample}
-                    multiline={6}
-                    autoComplete="off"
-                    helpText="Ejemplo few-shot para guiar la salida del VLM"
-                  />
-
-                  <TextField
-                    label="template_vars (JSON)"
-                    value={templateVarsText}
-                    onChange={setTemplateVarsText}
-                    multiline={6}
+                    label="system_prompt"
+                    value={systemPrompt}
+                    onChange={setSystemPrompt}
+                    multiline={4}
                     autoComplete="off"
                     monospaced
-                    helpText="Variables para sustituir {placeholders} en prompt_template"
+                    helpText="Instrucciones de sistema para el VLM. Vacío = default del servicio."
                   />
+
                 </FormLayout>
 
                 <InlineStack align="end">

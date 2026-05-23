@@ -23,31 +23,18 @@ export default function NewVisionConfigPage() {
   const [description, setDescription] = useState("");
   const [visionModel, setVisionModel] = useState("");
   const [visionTemperature, setVisionTemperature] = useState("");
-  const [promptTemplate, setPromptTemplate] = useState("");
-  const [descriptionExample, setDescriptionExample] = useState("");
-  const [templateVarsText, setTemplateVarsText] = useState("");
+  const [systemPrompt, setSystemPrompt] = useState("");
+  const [maxTokens, setMaxTokens] = useState("");
 
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [jsonError, setJsonError] = useState<string | null>(null);
 
   const handleCreate = async () => {
     setError(null);
-    setJsonError(null);
 
     if (!name.trim()) {
       setError("El nombre es obligatorio.");
       return;
-    }
-
-    let parsedTemplateVars: Record<string, unknown> | undefined;
-    if (templateVarsText.trim()) {
-      try {
-        parsedTemplateVars = JSON.parse(templateVarsText);
-      } catch {
-        setJsonError("template_vars: JSON inválido");
-        return;
-      }
     }
 
     const parsedVisionTemp = visionTemperature.trim()
@@ -58,6 +45,16 @@ export default function NewVisionConfigPage() {
       return;
     }
 
+    let parsedMaxTokens: number | undefined;
+    if (maxTokens.trim()) {
+      const n = Number(maxTokens);
+      if (!Number.isInteger(n) || n < 1) {
+        setError("max_tokens debe ser un entero positivo");
+        return;
+      }
+      parsedMaxTokens = n;
+    }
+
     setSaving(true);
     try {
       const created = await adminApi.visionConfigs.create({
@@ -65,9 +62,8 @@ export default function NewVisionConfigPage() {
         description: description.trim() || undefined,
         visionModel: visionModel.trim() || undefined,
         visionTemperature: parsedVisionTemp,
-        promptTemplate: promptTemplate || undefined,
-        descriptionExample: descriptionExample || undefined,
-        templateVars: parsedTemplateVars,
+        systemPrompt: systemPrompt.trim() || undefined,
+        maxTokens: parsedMaxTokens,
       });
       router.push(`/admin/vision-configs/${created.id}`);
     } catch (e: unknown) {
@@ -88,11 +84,6 @@ export default function NewVisionConfigPage() {
             {error && (
               <Banner tone="critical" onDismiss={() => setError(null)}>
                 {error}
-              </Banner>
-            )}
-            {jsonError && (
-              <Banner tone="critical" onDismiss={() => setJsonError(null)}>
-                {jsonError}
               </Banner>
             )}
 
@@ -144,34 +135,24 @@ export default function NewVisionConfigPage() {
                       autoComplete="off"
                       helpText="0 – 2"
                     />
+                    <TextField
+                      label="max_tokens"
+                      type="number"
+                      value={maxTokens}
+                      onChange={setMaxTokens}
+                      autoComplete="off"
+                      helpText="Entero ≥ 1. Vacío = default del servicio (400)."
+                    />
                   </FormLayout.Group>
 
                   <TextField
-                    label="prompt_template"
-                    value={promptTemplate}
-                    onChange={setPromptTemplate}
-                    multiline={6}
-                    autoComplete="off"
-                    helpText="Template con [placeholders] para el VLM"
-                  />
-
-                  <TextField
-                    label="description_example"
-                    value={descriptionExample}
-                    onChange={setDescriptionExample}
-                    multiline={6}
-                    autoComplete="off"
-                    helpText="Ejemplo few-shot para guiar la salida del VLM"
-                  />
-
-                  <TextField
-                    label="template_vars (JSON)"
-                    value={templateVarsText}
-                    onChange={setTemplateVarsText}
-                    multiline={6}
+                    label="system_prompt"
+                    value={systemPrompt}
+                    onChange={setSystemPrompt}
+                    multiline={4}
                     autoComplete="off"
                     monospaced
-                    helpText="Variables para sustituir {placeholders} en prompt_template"
+                    helpText="Instrucciones de sistema para el VLM. Vacío = default del servicio."
                   />
                 </FormLayout>
               </BlockStack>
