@@ -213,31 +213,59 @@ export interface AdminStyleImage {
   styleId: string;
   imageUrl: string;
   storageKey: string;
-  caption: string | null;
+  altImage: string | null;
   orderIndex: number;
   isPrimary: boolean;
   createdAt: string;
+}
+
+export interface AdminVisionConfig {
+  id: string;
+  name: string;
+  description: string | null;
+  visionModel: string | null;
+  visionTemperature: number | null;
+  promptTemplate: string | null;
+  descriptionExample: string | null;
+  templateVars: Record<string, unknown> | null;
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface AdminImageGenConfig {
+  id: string;
+  name: string;
+  description: string | null;
+  provider: string;
+  model: string | null;
+  parameters: Record<string, unknown> | null;
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface AdminConfigStyleUsage {
+  id: string;
+  name: string;
+  displayName: string;
+  isActive: boolean;
 }
 
 export interface AdminStyle {
   id: string;
   name: string;
   displayName: string;
-  description: string | null;
   category: string;
   thanksUrl: string | null;
   isActive: boolean;
-  parameters: Record<string, unknown> | null;
-  sortOrder: number;
   createdAt: string;
   updatedAt: string;
   strategyKey: string;
-  falModel: string | null;
-  promptTemplate: string | null;
-  visionModel: string | null;
-  visionTemperature: number | null;
-  descriptionExample: string | null;
-  templateVars: Record<string, unknown> | null;
+  visionConfigId: string | null;
+  imageGenConfigId: string | null;
+  visionConfig: AdminVisionConfig | null;
+  imageGenConfig: AdminImageGenConfig | null;
   previewUrl: string | null;
   images: AdminStyleImage[];
   _count?: { generations: number; productReferences: number };
@@ -331,22 +359,68 @@ export const adminApi = {
       }),
     deactivate: (id: string) =>
       adminFetch(`/admin/styles/${id}`, { method: 'DELETE' }),
-    uploadImage: (styleId: string, file: File, caption?: string) => {
+    uploadImage: (styleId: string, file: File, altImage?: string) => {
       const form = new FormData();
       form.append('file', file);
-      if (caption) form.append('caption', caption);
-      return adminFetch(`/admin/styles/${styleId}/images?caption=${encodeURIComponent(caption ?? '')}`, {
+      const qs = altImage ? `?alt_image=${encodeURIComponent(altImage)}` : '';
+      return adminFetch(`/admin/styles/${styleId}/images${qs}`, {
         method: 'POST',
         body: form,
       });
     },
-    updateImage: (styleId: string, imgId: string, body: { isPrimary?: boolean; orderIndex?: number }) =>
+    updateImage: (styleId: string, imgId: string, body: { isPrimary?: boolean; orderIndex?: number; altImage?: string }) =>
       adminFetch<AdminStyleImage>(`/admin/styles/${styleId}/images/${imgId}`, {
         method: 'PATCH',
         body: JSON.stringify(body),
       }),
     deleteImage: (styleId: string, imgId: string) =>
       adminFetch(`/admin/styles/${styleId}/images/${imgId}`, { method: 'DELETE' }),
+  },
+  visionConfigs: {
+    list: () => adminFetch<AdminVisionConfig[]>('/admin/vision-configs'),
+    getById: (id: string) =>
+      adminFetch<AdminVisionConfig>(`/admin/vision-configs/${id}`),
+    create: (body: Partial<AdminVisionConfig>) =>
+      adminFetch<AdminVisionConfig>('/admin/vision-configs', {
+        method: 'POST',
+        body: JSON.stringify(body),
+      }),
+    update: (id: string, body: Partial<AdminVisionConfig>) =>
+      adminFetch<AdminVisionConfig>(`/admin/vision-configs/${id}`, {
+        method: 'PATCH',
+        body: JSON.stringify(body),
+      }),
+    delete: (id: string, force = false) =>
+      adminFetch(`/admin/vision-configs/${id}${force ? '?force=true' : ''}`, {
+        method: 'DELETE',
+      }),
+    getStyles: (id: string) =>
+      adminFetch<AdminConfigStyleUsage[]>(
+        `/admin/vision-configs/${id}/styles`,
+      ),
+  },
+  imageGenConfigs: {
+    list: () => adminFetch<AdminImageGenConfig[]>('/admin/image-gen-configs'),
+    getById: (id: string) =>
+      adminFetch<AdminImageGenConfig>(`/admin/image-gen-configs/${id}`),
+    create: (body: Partial<AdminImageGenConfig>) =>
+      adminFetch<AdminImageGenConfig>('/admin/image-gen-configs', {
+        method: 'POST',
+        body: JSON.stringify(body),
+      }),
+    update: (id: string, body: Partial<AdminImageGenConfig>) =>
+      adminFetch<AdminImageGenConfig>(`/admin/image-gen-configs/${id}`, {
+        method: 'PATCH',
+        body: JSON.stringify(body),
+      }),
+    delete: (id: string, force = false) =>
+      adminFetch(`/admin/image-gen-configs/${id}${force ? '?force=true' : ''}`, {
+        method: 'DELETE',
+      }),
+    getStyles: (id: string) =>
+      adminFetch<AdminConfigStyleUsage[]>(
+        `/admin/image-gen-configs/${id}/styles`,
+      ),
   },
   formats: {
     list: () => adminFetch<AdminFormat[]>('/admin/formats'),

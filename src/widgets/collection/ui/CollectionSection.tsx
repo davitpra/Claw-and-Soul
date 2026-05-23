@@ -16,7 +16,7 @@ interface StyleCardProps {
 
 function StyleCard({ image, badgeLabel }: StyleCardProps) {
   return (
-    <Card imageUrl={image.imageUrl} className={cardSizeClasses}>
+    <Card imageUrl={image.imageUrl} imageAlt={image.altImage ?? undefined} className={cardSizeClasses}>
       <div className="absolute inset-0 bg-linear-to-t from-black/60 via-transparent to-transparent opacity-60" />
       {badgeLabel && (
         <span className="absolute top-3 left-3 bg-primary text-white text-[10px] font-bold uppercase px-2 py-1 rounded-full tracking-wider">

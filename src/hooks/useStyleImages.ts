@@ -8,7 +8,7 @@ export interface StyleImage {
   styleId: string;
   imageUrl: string;
   storageKey: string;
-  caption: string | null;
+  altImage: string | null;
   orderIndex: number;
   isPrimary: boolean;
   createdAt: string;

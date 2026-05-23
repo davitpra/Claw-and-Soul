@@ -90,11 +90,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [user]);
 
   const checkAuth = async () => {
-    // Since tokens are in httpOnly cookies, we need to make an API call to check auth
     try {
       const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api'}/auth/me`, {
         method: 'GET',
-        credentials: 'include', // Send cookies
+        credentials: 'include',
       });
 
       if (response.ok) {
@@ -104,11 +103,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setUser(null);
       }
     } catch (error) {
-      console.error("Error checking auth:", error);
+      // Network errors are expected when the backend is unavailable
+      if (error instanceof TypeError && error.message === 'Failed to fetch') {
+        console.warn('[Auth] Backend unreachable, skipping auth check');
+      } else {
+        console.error('[Auth] Unexpected error checking auth:', error);
+      }
       setUser(null);
+    } finally {
+      setIsLoading(false);
     }
-
-    setIsLoading(false);
   };
 
   const login = async (email: string, password: string) => {
