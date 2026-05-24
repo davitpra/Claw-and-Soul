@@ -32,6 +32,82 @@ import {
 
 const UNASSIGNED = "";
 
+const EXAMPLE_TEMPLATE_VAR_OPTIONS = `{
+  "background": {
+    "type": "select",
+    "label": "Fondo",
+    "options": [
+      { "value": "white", "label": "Blanco" },
+      { "value": "blue", "label": "Azul" }
+    ],
+    "default": "white",
+    "required": true
+  },
+  "colorCount": {
+    "type": "slider",
+    "label": "Cantidad de colores",
+    "min": 3,
+    "max": 10,
+    "step": 1,
+    "default": 5
+  },
+  "accentColor": {
+    "type": "color",
+    "label": "Color de acento",
+    "default": "#448da6"
+  }
+}`;
+
+function validateTemplateVarOptions(value: unknown): string | null {
+  if (value === null) return null;
+  if (typeof value !== "object" || Array.isArray(value)) {
+    return "debe ser un objeto";
+  }
+  for (const [key, raw] of Object.entries(value as Record<string, unknown>)) {
+    if (typeof raw !== "object" || raw === null || Array.isArray(raw)) {
+      return `"${key}" debe ser un objeto`;
+    }
+    const opt = raw as Record<string, unknown>;
+    if (opt.type === "select") {
+      if (!Array.isArray(opt.options) || opt.options.length === 0) {
+        return `"${key}.options" debe ser un array no vacío`;
+      }
+      const allowed = (opt.options as Array<Record<string, unknown>>).map(
+        (o) => o.value,
+      );
+      if (!allowed.includes(opt.default)) {
+        return `"${key}.default" no está en options`;
+      }
+    } else if (opt.type === "slider") {
+      const { min, max, default: def } = opt as {
+        min: number;
+        max: number;
+        default: number;
+      };
+      if (typeof min !== "number" || typeof max !== "number") {
+        return `"${key}.min" y "${key}.max" deben ser números`;
+      }
+      if (min >= max) return `"${key}.min" debe ser menor que "${key}.max"`;
+      if (typeof def !== "number" || def < min || def > max) {
+        return `"${key}.default" fuera del rango [${min}, ${max}]`;
+      }
+    } else if (opt.type === "color") {
+      if (
+        typeof opt.default !== "string" ||
+        !/^#[0-9a-fA-F]{6}$/.test(opt.default)
+      ) {
+        return `"${key}.default" debe ser un hex válido (#RRGGBB)`;
+      }
+    } else {
+      return `"${key}.type" debe ser "select", "slider" o "color"`;
+    }
+    if (typeof opt.label !== "string" || !opt.label.trim()) {
+      return `"${key}.label" es requerido`;
+    }
+  }
+  return null;
+}
+
 export default function AdminStyleDetailPage() {
   const { id } = useParams<{ id: string }>();
 
@@ -60,7 +136,9 @@ export default function AdminStyleDetailPage() {
   // Prompt template form state
   const [promptTemplate, setPromptTemplate] = useState("");
   const [templateVarsText, setTemplateVarsText] = useState("");
+  const [templateVarOptionsText, setTemplateVarOptionsText] = useState("");
   const [jsonPromptError, setJsonPromptError] = useState<string | null>(null);
+  const [jsonOptionsError, setJsonOptionsError] = useState<string | null>(null);
 
   // Image state
   const [uploadingImage, setUploadingImage] = useState(false);
@@ -81,6 +159,11 @@ export default function AdminStyleDetailPage() {
     setPromptTemplate(s.promptTemplate ?? "");
     setTemplateVarsText(
       s.templateVars ? JSON.stringify(s.templateVars, null, 2) : "",
+    );
+    setTemplateVarOptionsText(
+      s.templateVarOptions
+        ? JSON.stringify(s.templateVarOptions, null, 2)
+        : "",
     );
   };
 
@@ -163,6 +246,40 @@ export default function AdminStyleDetailPage() {
       const updated = await adminApi.styles.update(style.id, {
         promptTemplate: promptTemplate || undefined,
         templateVars: parsedTemplateVars ?? undefined,
+      });
+      setStyle(updated);
+      hydrateForm(updated);
+    } catch (e: unknown) {
+      setSaveError((e as Error).message);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleSaveTemplateVarOptions = async () => {
+    if (!style) return;
+    setJsonOptionsError(null);
+    setSaveError(null);
+
+    let parsed: Record<string, unknown> | null = null;
+    if (templateVarOptionsText.trim()) {
+      try {
+        parsed = JSON.parse(templateVarOptionsText);
+      } catch {
+        setJsonOptionsError("template_var_options: JSON inválido");
+        return;
+      }
+      const validationError = validateTemplateVarOptions(parsed);
+      if (validationError) {
+        setJsonOptionsError(`template_var_options: ${validationError}`);
+        return;
+      }
+    }
+
+    setSaving(true);
+    try {
+      const updated = await adminApi.styles.update(style.id, {
+        templateVarOptions: parsed ?? undefined,
       });
       setStyle(updated);
       hydrateForm(updated);
@@ -417,6 +534,11 @@ export default function AdminStyleDetailPage() {
                 {jsonPromptError}
               </Banner>
             )}
+            {jsonOptionsError && (
+              <Banner tone="critical" onDismiss={() => setJsonOptionsError(null)}>
+                {jsonOptionsError}
+              </Banner>
+            )}
 
             {/* Galería de imágenes */}
             <Card>
@@ -639,6 +761,45 @@ export default function AdminStyleDetailPage() {
               </BlockStack>
             </Card>
 
+            {/* Opciones seleccionables por el usuario */}
+            <Card>
+              <BlockStack gap="400">
+                <BlockStack gap="100">
+                  <Text variant="headingSm" as="h2">
+                    Opciones seleccionables por el usuario
+                  </Text>
+                  <Text as="p" tone="subdued" variant="bodySm">
+                    Variables que el usuario final podrá ajustar al generar la
+                    imagen (select / slider / color). Cada key se sustituye en{" "}
+                    <code>prompt_template</code> mediante{" "}
+                    <code>{"{{key}}"}</code>.
+                  </Text>
+                </BlockStack>
+                <FormLayout>
+                  <TextField
+                    label="template_var_options (JSON)"
+                    value={templateVarOptionsText}
+                    onChange={setTemplateVarOptionsText}
+                    multiline={10}
+                    autoComplete="off"
+                    monospaced
+                    placeholder={EXAMPLE_TEMPLATE_VAR_OPTIONS}
+                    helpText="Cada key define un control: { type: 'select'|'slider'|'color', label, default, ... }"
+                  />
+                </FormLayout>
+
+                <InlineStack align="end">
+                  <Button
+                    variant="primary"
+                    loading={saving}
+                    onClick={handleSaveTemplateVarOptions}
+                  >
+                    Guardar cambios
+                  </Button>
+                </InlineStack>
+              </BlockStack>
+            </Card>
+
             {/* Vision Config preview */}
             <Card>
               <BlockStack gap="300">
@@ -807,10 +968,6 @@ function ImageGenConfigPreview({ config }: { config: AdminImageGenConfig }) {
     <BlockStack gap="300">
       <InlineStack gap="400" wrap>
         <ConfigPreviewField label="Nombre" value={config.name} />
-        <ConfigPreviewField
-          label="Provider"
-          value={<Badge tone="info">{config.provider}</Badge>}
-        />
         <ConfigPreviewField label="Modelo" value={config.model ?? "—"} />
         <ConfigPreviewField
           label="Estado"
