@@ -13,6 +13,8 @@ interface IAStyleStepProps {
   isLoading?: boolean;
   error?: string | null;
   isFiltered?: boolean;
+  userSelections?: Record<string, string | number>;
+  onSelectionsChange?: (key: string, val: string | number) => void;
 }
 
 export function IAStyleStep({
@@ -24,6 +26,8 @@ export function IAStyleStep({
   isLoading = false,
   error = null,
   isFiltered = false,
+  userSelections = {},
+  onSelectionsChange,
 }: IAStyleStepProps) {
   return (
     <Container
@@ -76,6 +80,8 @@ export function IAStyleStep({
                 style={style}
                 isSelected={selectedStyle?.name === style.name}
                 onSelect={onStyleSelect}
+                selections={selectedStyle?.name === style.name ? userSelections : {}}
+                onSelectionsChange={onSelectionsChange}
               />
             ))}
           </div>

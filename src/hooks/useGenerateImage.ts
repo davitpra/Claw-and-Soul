@@ -11,6 +11,7 @@ export interface GeneratePayload {
   width?: number;
   height?: number;
   prompt?: string;
+  userSelections?: Record<string, string | number>;
 }
 
 interface GenerationResponse {

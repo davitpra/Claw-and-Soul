@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Style } from "@/entities/art-style/model/styles";
+import { Style, TemplateVarOption } from "@/entities/art-style/model/styles";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001/api";
 
@@ -9,6 +9,7 @@ interface BackendStyle {
   displayName: string;
   previewUrl: string | null;
   thanksUrl: string | null;
+  templateVarOptions: Record<string, TemplateVarOption> | null;
   images: { imageUrl: string }[];
 }
 
@@ -59,6 +60,7 @@ export function useCompatStyles(
             s.images[0]?.imageUrl ??
             "https://placehold.co/400x500?text=Style",
           thanksUrl: s.thanksUrl ?? null,
+          templateVarOptions: s.templateVarOptions ?? null,
         }));
         setStyles(mapped);
       })

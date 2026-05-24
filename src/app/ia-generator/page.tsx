@@ -27,6 +27,7 @@ function IAGeneratorContent() {
   const productRefIdFromUrl = searchParams.get("product_ref_id");
   const formatIdFromUrl = searchParams.get("format_id");
   const styleIdFromUrl = searchParams.get("style_id");
+  const selectionsFromUrl = searchParams.get("selections");
 
   const [pickedProductRefId, setPickedProductRefId] = useState<string | null>(null);
   const [pickedFormatId, setPickedFormatId] = useState<string | null>(null);
@@ -68,6 +69,19 @@ function IAGeneratorContent() {
   const [step, setStep] = useState(1);
   const [photos, setPhotos] = useState<File[]>([]);
   const [selectedStyle, setSelectedStyle] = useState<Style | null>(null);
+  const [userSelections, setUserSelections] = useState<Record<string, string | number>>(() => {
+    if (!selectionsFromUrl) return {};
+    try {
+      const parsed = JSON.parse(selectionsFromUrl) as Record<string, unknown>;
+      const result: Record<string, string | number> = {};
+      for (const [k, v] of Object.entries(parsed)) {
+        if (typeof v === "string" || typeof v === "number") result[k] = v;
+      }
+      return result;
+    } catch {
+      return {};
+    }
+  });
   const [styleSkipResolved, setStyleSkipResolved] = useState(false);
 
   useEffect(() => {
@@ -85,6 +99,17 @@ function IAGeneratorContent() {
     setStyleSkipResolved(true);
   }, [styleIdFromUrl, needsProductSelection, isLoadingStyles, isAuthLoading,
       preselectedStyle, isAuthenticated, styleSkipResolved]);
+
+  const handleStyleSelect = (style: Style) => {
+    setSelectedStyle(style);
+    const defaults: Record<string, string | number> = {};
+    if (style.templateVarOptions) {
+      for (const [key, opt] of Object.entries(style.templateVarOptions)) {
+        if (opt.default !== undefined) defaults[key] = opt.default;
+      }
+    }
+    setUserSelections(defaults);
+  };
 
   const resolvedStyle: Style | null = useMemo(() => {
     if (selectedStyle && displayStyles.find((s) => s.id === selectedStyle.id)) {
@@ -155,12 +180,16 @@ function IAGeneratorContent() {
             <IAStyleStep
               styles={displayStyles}
               selectedStyle={resolvedStyle}
-              onStyleSelect={setSelectedStyle}
+              onStyleSelect={handleStyleSelect}
               onBack={undefined}
               onNext={() => setStep(isAuthenticated ? 3 : 2)}
               isLoading={isLoadingStyles}
               error={stylesError}
               isFiltered={isFiltered}
+              userSelections={userSelections}
+              onSelectionsChange={(key, val) =>
+                setUserSelections((prev) => ({ ...prev, [key]: val }))
+              }
             />
           )}
 
@@ -176,6 +205,7 @@ function IAGeneratorContent() {
               onNext={() => setStep(4)}
               productInfo={effectiveProductInfo}
               styleName={resolvedStyle?.name ?? null}
+              userSelections={userSelections}
             />
           )}
 

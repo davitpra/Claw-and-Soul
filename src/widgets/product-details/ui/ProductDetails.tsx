@@ -6,8 +6,10 @@ import ProductInfo from "@/entities/product/ui/ProductInfo";
 import ProductVariantSelector from "@/entities/product/ui/ProductVariantSelector";
 import PersonalizeButton from "@/features/personalize/ui/PersonalizeButton";
 import ProductAccordions from "./ProductAccordions";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useFormatOptions } from "@/hooks/useFormatOptions";
+import { useStyle } from "@/hooks/useStyle";
+import { StyleOptionsForm } from "@/entities/art-style/ui/StyleOptionsForm";
 
 interface ProductDetailsProps {
   product: ShopifyProduct;
@@ -48,6 +50,31 @@ export default function ProductDetails({
 
   const hasBackendMapping = !!productRefId;
 
+  const { style: detailedStyle } = useStyle(styleId ?? null);
+  const [selectionsState, setSelectionsState] = useState<{
+    styleId: string | null;
+    values: Record<string, string | number>;
+  }>({ styleId: null, values: {} });
+
+  const currentStyleId = detailedStyle?.id ?? null;
+  if (selectionsState.styleId !== currentStyleId) {
+    const defaults: Record<string, string | number> = {};
+    if (detailedStyle?.templateVarOptions) {
+      for (const [key, opt] of Object.entries(
+        detailedStyle.templateVarOptions,
+      )) {
+        if (opt.default !== undefined) defaults[key] = opt.default;
+      }
+    }
+    setSelectionsState({ styleId: currentStyleId, values: defaults });
+  }
+
+  const userSelections = selectionsState.values;
+
+  const hasOptions =
+    detailedStyle?.templateVarOptions &&
+    Object.keys(detailedStyle.templateVarOptions).length > 0;
+
   return (
     <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-16">
       <ProductGallery
@@ -68,6 +95,25 @@ export default function ProductDetails({
             selectedVariantId={selectedVariantId}
             onVariantChange={setSelectedVariantId}
           />
+
+          {hasOptions && (
+            <>
+              <div className="h-px w-full bg-linear-to-r from-text-main/15 via-text-main/5 to-transparent" />
+              <div>
+                <StyleOptionsForm
+                  options={detailedStyle!.templateVarOptions!}
+                  value={userSelections}
+                  onChange={(key, val) =>
+                    setSelectionsState((prev) => ({
+                      ...prev,
+                      values: { ...prev.values, [key]: val },
+                    }))
+                  }
+                />
+              </div>
+            </>
+          )}
+
           <div className="h-px w-full bg-linear-to-r from-text-main/15 via-text-main/5 to-transparent" />
 
           <ProductAccordions html={product.description} />
@@ -81,6 +127,7 @@ export default function ProductDetails({
             isCompatLoading={isLoadingFormats}
             hasBackendMapping={hasBackendMapping}
             backendError={formatsError}
+            userSelections={hasOptions ? userSelections : undefined}
           />
         </div>
       </div>

@@ -12,6 +12,7 @@ interface PersonalizeButtonProps {
   isCompatLoading?: boolean;
   hasBackendMapping?: boolean;
   backendError?: string | null;
+  userSelections?: Record<string, string | number>;
 }
 
 export default function PersonalizeButton({
@@ -23,6 +24,7 @@ export default function PersonalizeButton({
   isCompatLoading = false,
   hasBackendMapping = false,
   backendError = null,
+  userSelections,
 }: PersonalizeButtonProps) {
   const router = useRouter();
 
@@ -40,6 +42,9 @@ export default function PersonalizeButton({
     if (productRefId) params.set("product_ref_id", productRefId);
     if (formatId) params.set("format_id", formatId);
     if (styleId) params.set("style_id", styleId);
+    if (userSelections && Object.keys(userSelections).length > 0) {
+      params.set("selections", JSON.stringify(userSelections));
+    }
     const query = params.toString();
     router.push(`/ia-generator${query ? `?${query}` : ""}`);
   };

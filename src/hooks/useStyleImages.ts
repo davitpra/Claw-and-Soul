@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001/api";
-const NEW_COLLECTION_STYLE_ID = "ac3c581d-a560-4400-9bd7-11c959b2942f";
+const NEW_COLLECTION_STYLE_ID = "49e60bb9-20af-4a01-b30f-3a288a6cabcb";
 
 export interface StyleImage {
   id: string;

@@ -30,6 +30,7 @@ interface IAUploadStepProps {
   onNext: () => void;
   productInfo: SelectedProductInfo | null;
   styleName: string | null;
+  userSelections?: Record<string, string | number>;
 }
 
 const SPECIES_OPTIONS = ["dog", "cat", "bird", "rabbit", "other"];
@@ -58,6 +59,7 @@ export function IAUploadStep({
   onNext,
   productInfo,
   styleName,
+  userSelections,
 }: IAUploadStepProps) {
   const { get, post, authFetchJSON } = useAuthFetch();
   const { generate } = useGenerateImage();
@@ -219,6 +221,10 @@ export function IAUploadStep({
         petPhotoId: petPhotoId ?? undefined,
         formatId,
         productRefId,
+        userSelections:
+          userSelections && Object.keys(userSelections).length > 0
+            ? userSelections
+            : undefined,
       });
 
       // productInfo is null when arriving via URL params without passing through IAProductStep

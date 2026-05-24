@@ -1,18 +1,29 @@
 import { Style } from "@/entities/art-style/model/styles";
 import { Card } from "@/shared/ui/Card";
+import { StyleOptionsForm } from "./StyleOptionsForm";
 
 interface StyleCardProps {
   style: Style;
   isSelected: boolean;
   onSelect: (style: Style) => void;
+  selections?: Record<string, string | number>;
+  onSelectionsChange?: (key: string, val: string | number) => void;
 }
 
-export function StyleCard({ style, isSelected, onSelect }: StyleCardProps) {
+export function StyleCard({
+  style,
+  isSelected,
+  onSelect,
+  selections = {},
+  onSelectionsChange,
+}: StyleCardProps) {
+  const hasOptions =
+    isSelected &&
+    style.templateVarOptions &&
+    Object.keys(style.templateVarOptions).length > 0;
+
   return (
-    <div
-      className="group relative cursor-pointer"
-      onClick={() => onSelect(style)}
-    >
+    <div className="group relative cursor-pointer" onClick={() => onSelect(style)}>
       {isSelected && (
         <div className="absolute -top-3 -right-3 z-20 bg-primary text-white rounded-full p-1.5 shadow-md animate-in zoom-in duration-300">
           <span className="material-symbols-outlined text-lg block">check</span>
@@ -30,6 +41,16 @@ export function StyleCard({ style, isSelected, onSelect }: StyleCardProps) {
           </span>
         </div>
       </Card>
+
+      {hasOptions && (
+        <div className="animate-in slide-in-from-top-2 fade-in duration-300 bg-cream rounded-xl border border-[#E0DED9] mt-2 shadow-sm">
+          <StyleOptionsForm
+            options={style.templateVarOptions!}
+            value={selections}
+            onChange={onSelectionsChange ?? (() => {})}
+          />
+        </div>
+      )}
     </div>
   );
 }
