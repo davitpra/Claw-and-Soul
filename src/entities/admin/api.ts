@@ -236,7 +236,6 @@ export interface AdminImageGenConfig {
   id: string;
   name: string;
   description: string | null;
-  provider: string;
   model: string | null;
   parameters: Record<string, unknown> | null;
   isActive: boolean;
@@ -263,6 +262,7 @@ export interface AdminStyle {
   strategyKey: string;
   promptTemplate: string;
   templateVars: Record<string, unknown> | null;
+  templateVarOptions: Record<string, unknown> | null;
   visionConfigId: string | null;
   imageGenConfigId: string | null;
   visionConfig: AdminVisionConfig | null;

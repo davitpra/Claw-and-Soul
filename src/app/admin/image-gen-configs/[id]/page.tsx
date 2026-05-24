@@ -44,14 +44,12 @@ export default function AdminImageGenConfigDetailPage() {
 
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
-  const [provider, setProvider] = useState("");
   const [model, setModel] = useState("");
   const [parametersText, setParametersText] = useState("");
 
   const hydrate = (c: AdminImageGenConfig) => {
     setName(c.name);
     setDescription(c.description ?? "");
-    setProvider(c.provider ?? "");
     setModel(c.model ?? "");
     setParametersText(
       c.parameters ? JSON.stringify(c.parameters, null, 2) : "",
@@ -102,7 +100,6 @@ export default function AdminImageGenConfigDetailPage() {
       const updated = await adminApi.imageGenConfigs.update(config.id, {
         name,
         description: description || undefined,
-        provider: provider || undefined,
         model: model || undefined,
         parameters: parsedParameters ?? undefined,
       });
@@ -326,22 +323,13 @@ export default function AdminImageGenConfigDetailPage() {
                   Generador
                 </Text>
                 <FormLayout>
-                  <FormLayout.Group>
-                    <TextField
-                      label="provider"
-                      value={provider}
-                      onChange={setProvider}
-                      autoComplete="off"
-                      helpText="ej: fal"
-                    />
-                    <TextField
-                      label="model"
-                      value={model}
-                      onChange={setModel}
-                      autoComplete="off"
-                      helpText="ej: fal-ai/flux/dev"
-                    />
-                  </FormLayout.Group>
+                  <TextField
+                    label="model"
+                    value={model}
+                    onChange={setModel}
+                    autoComplete="off"
+                    helpText="ej: fal-ai/flux/dev"
+                  />
 
                   <TextField
                     label="parameters (JSON)"
@@ -350,7 +338,7 @@ export default function AdminImageGenConfigDetailPage() {
                     multiline={8}
                     autoComplete="off"
                     monospaced
-                    helpText="Parámetros adicionales para la API del provider"
+                    helpText="Parámetros adicionales para la API del modelo"
                   />
                 </FormLayout>
 

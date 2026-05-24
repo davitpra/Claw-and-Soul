@@ -21,7 +21,6 @@ export default function NewImageGenConfigPage() {
 
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
-  const [provider, setProvider] = useState("fal");
   const [model, setModel] = useState("");
   const [parametersText, setParametersText] = useState("");
 
@@ -53,7 +52,6 @@ export default function NewImageGenConfigPage() {
       const created = await adminApi.imageGenConfigs.create({
         name: name.trim(),
         description: description.trim() || undefined,
-        provider: provider.trim() || undefined,
         model: model.trim() || undefined,
         parameters: parsedParameters,
       });
@@ -119,22 +117,13 @@ export default function NewImageGenConfigPage() {
                   Generador
                 </Text>
                 <FormLayout>
-                  <FormLayout.Group>
-                    <TextField
-                      label="provider"
-                      value={provider}
-                      onChange={setProvider}
-                      autoComplete="off"
-                      helpText="ej: fal"
-                    />
-                    <TextField
-                      label="model"
-                      value={model}
-                      onChange={setModel}
-                      autoComplete="off"
-                      helpText="ej: fal-ai/flux/dev"
-                    />
-                  </FormLayout.Group>
+                  <TextField
+                    label="model"
+                    value={model}
+                    onChange={setModel}
+                    autoComplete="off"
+                    helpText="ej: fal-ai/flux/dev"
+                  />
 
                   <TextField
                     label="parameters (JSON)"
@@ -143,7 +132,7 @@ export default function NewImageGenConfigPage() {
                     multiline={8}
                     autoComplete="off"
                     monospaced
-                    helpText="Parámetros adicionales para la API del provider"
+                    helpText="Parámetros adicionales para la API del modelo"
                   />
                 </FormLayout>
               </BlockStack>

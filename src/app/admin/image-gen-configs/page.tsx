@@ -51,7 +51,7 @@ export default function AdminImageGenConfigsPage() {
   return (
     <Page
       title="Image Gen Configs"
-      subtitle="Configuraciones del generador de imágenes (FAL u otros providers)"
+      subtitle="Configuraciones del generador de imágenes"
       primaryAction={{
         content: "Crear image gen config",
         url: "/admin/image-gen-configs/new",
@@ -83,7 +83,6 @@ export default function AdminImageGenConfigsPage() {
               itemCount={configs.length}
               headings={[
                 { title: "Nombre" },
-                { title: "Provider" },
                 { title: "Modelo" },
                 { title: "Estado" },
                 { title: "Acciones" },
@@ -114,9 +113,6 @@ export default function AdminImageGenConfigsPage() {
                         </Text>
                       </>
                     )}
-                  </IndexTable.Cell>
-                  <IndexTable.Cell>
-                    <Badge tone="info">{c.provider}</Badge>
                   </IndexTable.Cell>
                   <IndexTable.Cell>
                     <Text as="span" tone="subdued">
