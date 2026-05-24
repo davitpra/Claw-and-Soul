@@ -24,7 +24,7 @@ import {
   ColorPicker,
   Popover,
 } from "@shopify/polaris";
-import { DeleteIcon } from "@shopify/polaris-icons";
+import { DeleteIcon, ClipboardIcon } from "@shopify/polaris-icons";
 import {
   adminApi,
   AdminStyle,
@@ -164,6 +164,11 @@ export default function AdminStyleDetailPage() {
   const [uploadAlt, setUploadAlt] = useState("");
   const [editingAlt, setEditingAlt] = useState<Record<string, string>>({});
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Image viewer state
+  const [viewingImage, setViewingImage] = useState<AdminStyleImage | null>(null);
+  const [viewerAlt, setViewerAlt] = useState("");
+  const [copiedUrl, setCopiedUrl] = useState(false);
 
   // Test generation state
   const [testGenId, setTestGenId] = useState<string | null>(null);
@@ -455,6 +460,33 @@ export default function AdminStyleDetailPage() {
     } finally {
       setImageActionId(null);
     }
+  };
+
+  const openViewer = (img: AdminStyleImage) => {
+    setViewingImage(img);
+    setViewerAlt(img.altImage ?? "");
+    setCopiedUrl(false);
+  };
+
+  const closeViewer = () => {
+    if (imageActionId) return;
+    setViewingImage(null);
+  };
+
+  const handleViewerSaveAlt = async () => {
+    if (!viewingImage) return;
+    if (viewerAlt === (viewingImage.altImage ?? "")) return;
+    await handleSaveAlt(viewingImage, viewerAlt);
+    setViewingImage((prev) =>
+      prev ? { ...prev, altImage: viewerAlt } : prev,
+    );
+  };
+
+  const handleCopyUrl = async () => {
+    if (!viewingImage) return;
+    await navigator.clipboard.writeText(viewingImage.imageUrl);
+    setCopiedUrl(true);
+    setTimeout(() => setCopiedUrl(false), 1500);
   };
 
   if (loading) {
@@ -1043,11 +1075,24 @@ export default function AdminStyleDetailPage() {
                       >
                         <BlockStack gap="200" inlineAlign="center">
                           <div style={{ position: "relative" }}>
-                            <Thumbnail
-                              source={img.imageUrl}
-                              alt={img.altImage ?? `Imagen ${img.orderIndex}`}
-                              size="large"
-                            />
+                            <button
+                              type="button"
+                              onClick={() => openViewer(img)}
+                              aria-label={`Ver imagen ${img.orderIndex} en pantalla completa`}
+                              style={{
+                                background: "none",
+                                border: 0,
+                                padding: 0,
+                                cursor: "pointer",
+                                display: "block",
+                              }}
+                            >
+                              <Thumbnail
+                                source={img.imageUrl}
+                                alt={img.altImage ?? `Imagen ${img.orderIndex}`}
+                                size="large"
+                              />
+                            </button>
                             {imageActionId === img.id && (
                               <div
                                 style={{
@@ -1229,6 +1274,111 @@ export default function AdminStyleDetailPage() {
             Esta acción eliminará la imagen permanentemente del catálogo y del
             almacenamiento. No se puede deshacer.
           </Text>
+        </Modal.Section>
+      </Modal>
+
+      <Modal
+        open={viewingImage !== null}
+        onClose={closeViewer}
+        title={viewingImage?.altImage || `Imagen ${viewingImage?.orderIndex ?? ""}`}
+        size="large"
+      >
+        <Modal.Section>
+          <Layout>
+            <Layout.Section>
+              <Box
+                background="bg-surface-inverse"
+                borderRadius="200"
+                padding="400"
+              >
+                <div
+                  style={{
+                    display: "flex",
+                    justifyContent: "center",
+                    alignItems: "center",
+                    minHeight: 400,
+                  }}
+                >
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={viewingImage?.imageUrl}
+                    alt={viewingImage?.altImage ?? ""}
+                    style={{
+                      maxWidth: "100%",
+                      maxHeight: "70vh",
+                      objectFit: "contain",
+                    }}
+                  />
+                </div>
+              </Box>
+            </Layout.Section>
+
+            <Layout.Section variant="oneThird">
+              <BlockStack gap="400">
+                <Text variant="headingSm" as="h3">
+                  Información
+                </Text>
+
+                <BlockStack gap="100">
+                  <TextField
+                    label="URL"
+                    value={viewingImage?.imageUrl ?? ""}
+                    readOnly
+                    multiline={3}
+                    autoComplete="off"
+                    connectedRight={
+                      <Button
+                        icon={ClipboardIcon}
+                        onClick={handleCopyUrl}
+                        accessibilityLabel="Copiar URL"
+                      />
+                    }
+                  />
+                  {copiedUrl && (
+                    <Text as="span" tone="success" variant="bodySm">
+                      ¡Copiado!
+                    </Text>
+                  )}
+                </BlockStack>
+
+                <TextField
+                  label="Alt text"
+                  value={viewerAlt}
+                  onChange={setViewerAlt}
+                  onBlur={handleViewerSaveAlt}
+                  placeholder="Descripción de la imagen"
+                  autoComplete="off"
+                  disabled={imageActionId === viewingImage?.id}
+                  helpText="Se guarda al salir del campo"
+                />
+
+                <BlockStack gap="200">
+                  <ConfigPreviewField
+                    label="Subida"
+                    value={
+                      viewingImage
+                        ? new Date(viewingImage.createdAt).toLocaleString("es-ES")
+                        : "—"
+                    }
+                  />
+                  <ConfigPreviewField
+                    label="Orden"
+                    value={String(viewingImage?.orderIndex ?? "—")}
+                  />
+                  <ConfigPreviewField
+                    label="Estado"
+                    value={
+                      viewingImage?.isPrimary ? (
+                        <Badge tone="success">Primaria</Badge>
+                      ) : (
+                        <Badge tone="enabled">Secundaria</Badge>
+                      )
+                    }
+                  />
+                </BlockStack>
+              </BlockStack>
+            </Layout.Section>
+          </Layout>
         </Modal.Section>
       </Modal>
     </Page>
