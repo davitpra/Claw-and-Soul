@@ -20,6 +20,9 @@ import {
   TextField,
   Select,
   FormLayout,
+  RangeSlider,
+  ColorPicker,
+  Popover,
 } from "@shopify/polaris";
 import { DeleteIcon } from "@shopify/polaris-icons";
 import {
@@ -29,8 +32,15 @@ import {
   AdminVisionConfig,
   AdminImageGenConfig,
 } from "@/entities/admin/api";
+import { useAdminGenerationStatus } from "@/hooks/useAdminGenerationStatus";
+import { hexToHsb, hsbToHex, type HsbColor } from "@/lib/colorUtils";
 
 const UNASSIGNED = "";
+
+type TemplateVarOption =
+  | { type: "select"; label: string; options: { value: string; label: string }[]; default: string; required?: boolean }
+  | { type: "slider"; label: string; min: number; max: number; step?: number; default: number }
+  | { type: "color"; label: string; default: string };
 
 const EXAMPLE_TEMPLATE_VAR_OPTIONS = `{
   "background": {
@@ -79,7 +89,11 @@ function validateTemplateVarOptions(value: unknown): string | null {
         return `"${key}.default" no está en options`;
       }
     } else if (opt.type === "slider") {
-      const { min, max, default: def } = opt as {
+      const {
+        min,
+        max,
+        default: def,
+      } = opt as {
         min: number;
         max: number;
         default: number;
@@ -113,9 +127,9 @@ export default function AdminStyleDetailPage() {
 
   const [style, setStyle] = useState<AdminStyle | null>(null);
   const [visionConfigs, setVisionConfigs] = useState<AdminVisionConfig[]>([]);
-  const [imageGenConfigs, setImageGenConfigs] = useState<
-    AdminImageGenConfig[]
-  >([]);
+  const [imageGenConfigs, setImageGenConfigs] = useState<AdminImageGenConfig[]>(
+    [],
+  );
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -126,12 +140,13 @@ export default function AdminStyleDetailPage() {
   // Sidebar form state
   const [displayName, setDisplayName] = useState("");
   const [category, setCategory] = useState("");
+  const [thanksUrl, setThanksUrl] = useState("");
+  const [thanksUrlImgError, setThanksUrlImgError] = useState(false);
 
   // Pipeline form state
   const [strategyKey, setStrategyKey] = useState("");
   const [visionConfigId, setVisionConfigId] = useState<string>(UNASSIGNED);
-  const [imageGenConfigId, setImageGenConfigId] =
-    useState<string>(UNASSIGNED);
+  const [imageGenConfigId, setImageGenConfigId] = useState<string>(UNASSIGNED);
 
   // Prompt template form state
   const [promptTemplate, setPromptTemplate] = useState("");
@@ -150,9 +165,26 @@ export default function AdminStyleDetailPage() {
   const [editingAlt, setEditingAlt] = useState<Record<string, string>>({});
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  // Test generation state
+  const [testGenId, setTestGenId] = useState<string | null>(null);
+  const [testGenRunning, setTestGenRunning] = useState(false);
+  const [testGenError, setTestGenError] = useState<string | null>(null);
+  const [testGenSuccess, setTestGenSuccess] = useState(false);
+  const [testPetName, setTestPetName] = useState("Test Pet");
+  const [testPetSpecies, setTestPetSpecies] = useState("dog");
+  const [testPetBreed, setTestPetBreed] = useState("");
+  const [testAspectRatio, setTestAspectRatio] = useState("");
+  const [userSelections, setUserSelections] = useState<Record<string, string | number>>({});
+  const [colorHsbs, setColorHsbs] = useState<Record<string, HsbColor>>({});
+  const [colorPopovers, setColorPopovers] = useState<Record<string, boolean>>({});
+  const testFileInputRef = useRef<HTMLInputElement>(null);
+
+  const testGenStatus = useAdminGenerationStatus(testGenId);
+
   const hydrateForm = (s: AdminStyle) => {
     setDisplayName(s.displayName);
     setCategory(s.category);
+    setThanksUrl(s.thanksUrl ?? "");
     setStrategyKey(s.strategyKey ?? "");
     setVisionConfigId(s.visionConfigId ?? UNASSIGNED);
     setImageGenConfigId(s.imageGenConfigId ?? UNASSIGNED);
@@ -161,9 +193,7 @@ export default function AdminStyleDetailPage() {
       s.templateVars ? JSON.stringify(s.templateVars, null, 2) : "",
     );
     setTemplateVarOptionsText(
-      s.templateVarOptions
-        ? JSON.stringify(s.templateVarOptions, null, 2)
-        : "",
+      s.templateVarOptions ? JSON.stringify(s.templateVarOptions, null, 2) : "",
     );
   };
 
@@ -190,6 +220,69 @@ export default function AdminStyleDetailPage() {
       .finally(() => setLoading(false));
   }, [id]);
 
+  useEffect(() => {
+    if (!style?.templateVarOptions) return;
+    setUserSelections((prev) => {
+      const next = { ...prev };
+      const newHsbs: Record<string, HsbColor> = {};
+      for (const [key, raw] of Object.entries(style.templateVarOptions as Record<string, unknown>)) {
+        const opt = raw as TemplateVarOption;
+        if (!(key in next)) {
+          next[key] = opt.default as string | number;
+          if (opt.type === "color") {
+            newHsbs[key] = hexToHsb(opt.default as string);
+          }
+        }
+      }
+      if (Object.keys(newHsbs).length > 0) {
+        setColorHsbs((prev) => ({ ...newHsbs, ...prev }));
+      }
+      return next;
+    });
+  }, [style?.templateVarOptions]);
+
+  useEffect(() => {
+    if (testGenStatus.status === "completed") {
+      setTestGenRunning(false);
+      setTestGenId(null);
+      setTestGenSuccess(true);
+      reload();
+    } else if (testGenStatus.status === "failed") {
+      setTestGenRunning(false);
+      setTestGenId(null);
+      setTestGenError(
+        testGenStatus.errorMessage ?? "La generación falló. Revisá los logs.",
+      );
+    }
+  }, [testGenStatus.status]);
+
+  const updateSelection = (key: string, value: string | number) =>
+    setUserSelections((prev) => ({ ...prev, [key]: value }));
+
+  const handleRunTestGeneration = async (
+    e: React.ChangeEvent<HTMLInputElement>,
+  ) => {
+    const file = e.target.files?.[0];
+    if (!file || !style) return;
+    e.target.value = "";
+    setTestGenError(null);
+    setTestGenSuccess(false);
+    setTestGenRunning(true);
+    try {
+      const result = await adminApi.styles.runTestGeneration(style.id, file, {
+        petName: testPetName || undefined,
+        petSpecies: testPetSpecies || undefined,
+        petBreed: testPetBreed || undefined,
+        aspectRatio: testAspectRatio || undefined,
+        userSelections,
+      });
+      setTestGenId(result.generationId);
+    } catch (err: unknown) {
+      setTestGenRunning(false);
+      setTestGenError((err as Error).message);
+    }
+  };
+
   const handleSaveBasics = async () => {
     if (!style) return;
     setSaveError(null);
@@ -198,6 +291,7 @@ export default function AdminStyleDetailPage() {
       const updated = await adminApi.styles.update(style.id, {
         displayName,
         category,
+        thanksUrl: thanksUrl.trim() ? thanksUrl.trim() : null,
       });
       setStyle((prev) => (prev ? { ...prev, ...updated } : updated));
     } catch (e: unknown) {
@@ -433,92 +527,188 @@ export default function AdminStyleDetailPage() {
       <Layout>
         {/* Sidebar */}
         <Layout.Section variant="oneThird">
-          <Card>
-            <BlockStack gap="300">
-              <Text variant="headingSm" as="h2">
-                Editar
-              </Text>
-              <FormLayout>
-                <TextField
-                  label="Nombre visible"
-                  value={displayName}
-                  onChange={setDisplayName}
-                  autoComplete="off"
-                />
-                <TextField
-                  label="Categoría"
-                  value={category}
-                  onChange={setCategory}
-                  autoComplete="off"
-                />
-              </FormLayout>
-              <InlineStack align="end">
-                <Button
-                  variant="primary"
-                  loading={saving}
-                  onClick={handleSaveBasics}
-                >
-                  Guardar cambios
-                </Button>
-              </InlineStack>
-
-              <Divider />
-
-              {style.previewUrl && (
-                <BlockStack gap="100">
-                  <Text variant="bodySm" as="span" fontWeight="bold">
-                    Vista previa
-                  </Text>
-                  <Thumbnail
-                    source={style.previewUrl}
-                    alt={style.displayName}
-                    size="large"
+          <BlockStack gap="200">
+            <Card>
+              <BlockStack gap="300">
+                <Text variant="headingSm" as="h2">
+                  Editar
+                </Text>
+                <FormLayout>
+                  <TextField
+                    label="Nombre visible"
+                    value={displayName}
+                    onChange={setDisplayName}
+                    autoComplete="off"
                   />
-                </BlockStack>
-              )}
+                  <TextField
+                    label="Categoría"
+                    value={category}
+                    onChange={setCategory}
+                    autoComplete="off"
+                  />
+                </FormLayout>
+                <InlineStack align="end">
+                  <Button
+                    variant="primary"
+                    loading={saving}
+                    onClick={handleSaveBasics}
+                  >
+                    Guardar cambios
+                  </Button>
+                </InlineStack>
 
-              <BlockStack gap="100">
-                <Text variant="bodySm" as="span" fontWeight="bold">
-                  Slug
-                </Text>
-                <Text as="p" tone="subdued">
-                  {style.name}
-                </Text>
-              </BlockStack>
+                <Divider />
 
-              <BlockStack gap="100">
-                <Text variant="bodySm" as="span" fontWeight="bold">
-                  Creado
-                </Text>
-                <Text as="p" tone="subdued">
-                  {new Date(style.createdAt).toLocaleString("es-ES")}
-                </Text>
-              </BlockStack>
-
-              {style._count && (
                 <BlockStack gap="100">
                   <Text variant="bodySm" as="span" fontWeight="bold">
-                    Uso
+                    Slug
                   </Text>
                   <Text as="p" tone="subdued">
-                    {style._count.generations} generaciones ·{" "}
-                    {style._count.productReferences} productos
+                    {style.name}
                   </Text>
                 </BlockStack>
-              )}
 
-              {style.thanksUrl && (
                 <BlockStack gap="100">
                   <Text variant="bodySm" as="span" fontWeight="bold">
-                    Thanks URL
+                    Creado
                   </Text>
-                  <Text as="p" tone="subdued" truncate>
-                    {style.thanksUrl}
+                  <Text as="p" tone="subdued">
+                    {new Date(style.createdAt).toLocaleString("es-ES")}
                   </Text>
                 </BlockStack>
-              )}
-            </BlockStack>
-          </Card>
+
+                {style._count && (
+                  <BlockStack gap="100">
+                    <Text variant="bodySm" as="span" fontWeight="bold">
+                      Uso
+                    </Text>
+                    <Text as="p" tone="subdued">
+                      {style._count.generations} generaciones ·{" "}
+                      {style._count.productReferences} productos
+                    </Text>
+                  </BlockStack>
+                )}
+              </BlockStack>
+            </Card>
+            {/* Pipeline (strategy + configs) */}
+            <Card>
+              <BlockStack gap="400">
+                <Text variant="headingSm" as="h2">
+                  Pipeline
+                </Text>
+                <FormLayout>
+                  <TextField
+                    label="strategy_key"
+                    value={strategyKey}
+                    onChange={setStrategyKey}
+                    autoComplete="off"
+                    helpText="Estrategia de pipeline (ej: default)"
+                  />
+
+                  <Select
+                    label="Vision config"
+                    options={visionOptions}
+                    value={visionConfigId}
+                    onChange={setVisionConfigId}
+                    helpText="Configuración del VLM (descripción de la imagen)"
+                  />
+                  <Button
+                    size="slim"
+                    variant="plain"
+                    url="/admin/vision-configs"
+                  >
+                    Gestionar vision models →
+                  </Button>
+
+                  <Select
+                    label="Image gen config"
+                    options={imageGenOptions}
+                    value={imageGenConfigId}
+                    onChange={setImageGenConfigId}
+                    helpText="Configuración del generador de imagen (FAL u otro)"
+                  />
+                  <Button
+                    size="slim"
+                    variant="plain"
+                    url="/admin/image-gen-configs"
+                  >
+                    Gestionar generation models →
+                  </Button>
+                </FormLayout>
+
+                <InlineStack align="end">
+                  <Button
+                    variant="primary"
+                    loading={saving}
+                    onClick={handleSavePipeline}
+                  >
+                    Guardar cambios
+                  </Button>
+                </InlineStack>
+              </BlockStack>
+            </Card>
+            <Card>
+              <BlockStack gap="400">
+                <Text variant="headingSm" as="h2">
+                  Thanks you page URL
+                </Text>
+                <TextField
+                  label="Thanks URL"
+                  type="url"
+                  value={thanksUrl}
+                  onChange={(val) => {
+                    setThanksUrl(val);
+                    setThanksUrlImgError(false);
+                  }}
+                  autoComplete="off"
+                  placeholder="https://…"
+                  helpText="URL a la que se redirige tras una compra exitosa de un producto con este estilo."
+                />
+                {thanksUrl.trim() && (
+                  <BlockStack gap="100">
+                    <Text variant="bodySm" as="span" fontWeight="bold">
+                      Previsualización
+                    </Text>
+                    {thanksUrlImgError ? (
+                      <Box
+                        borderWidth="025"
+                        borderColor="border"
+                        borderRadius="200"
+                        padding="300"
+                      >
+                        <Text as="p" tone="subdued" variant="bodySm">
+                          No se puede previsualizar como imagen. Verifica que la
+                          URL apunte a un recurso de imagen accesible.
+                        </Text>
+                      </Box>
+                    ) : (
+                      <Box
+                        borderWidth="025"
+                        borderColor="border"
+                        borderRadius="200"
+                        padding="200"
+                      >
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img
+                          src={thanksUrl}
+                          alt="Vista previa de Thanks URL"
+                          onError={() => setThanksUrlImgError(true)}
+                          style={{
+                            display: "block",
+                            width: "100%",
+                            height: "auto",
+                            maxHeight: 240,
+                            objectFit: "contain",
+                            borderRadius: 6,
+                          }}
+                        />
+                      </Box>
+                    )}
+                  </BlockStack>
+                )}
+              </BlockStack>
+            </Card>
+          </BlockStack>
         </Layout.Section>
 
         {/* Main */}
@@ -530,15 +720,270 @@ export default function AdminStyleDetailPage() {
               </Banner>
             )}
             {jsonPromptError && (
-              <Banner tone="critical" onDismiss={() => setJsonPromptError(null)}>
+              <Banner
+                tone="critical"
+                onDismiss={() => setJsonPromptError(null)}
+              >
                 {jsonPromptError}
               </Banner>
             )}
             {jsonOptionsError && (
-              <Banner tone="critical" onDismiss={() => setJsonOptionsError(null)}>
+              <Banner
+                tone="critical"
+                onDismiss={() => setJsonOptionsError(null)}
+              >
                 {jsonOptionsError}
               </Banner>
             )}
+
+            {/* Generar imagen de prueba */}
+            <Card>
+              <BlockStack gap="400">
+                <InlineStack align="space-between" blockAlign="center">
+                  <Text variant="headingSm" as="h2">
+                    Generar imagen de prueba
+                  </Text>
+                  {(testGenRunning ||
+                    testGenStatus.status === "processing" ||
+                    testGenStatus.status === "pending") && (
+                    <InlineStack gap="200" blockAlign="center">
+                      <Spinner size="small" />
+                      <Text as="span" tone="subdued">
+                        {testGenStatus.status === "processing"
+                          ? "Generando…"
+                          : "Encolando…"}
+                      </Text>
+                    </InlineStack>
+                  )}
+                </InlineStack>
+                {style.previewUrl && (
+                  <BlockStack gap="100">
+                    <Text variant="bodySm" as="span" fontWeight="bold">
+                      Vista previa
+                    </Text>
+                    <Thumbnail
+                      source={style.previewUrl}
+                      alt={style.displayName}
+                      size="large"
+                    />
+                  </BlockStack>
+                )}
+
+                {testGenError && (
+                  <Banner
+                    tone="critical"
+                    onDismiss={() => setTestGenError(null)}
+                  >
+                    {testGenError}
+                  </Banner>
+                )}
+                {testGenSuccess && (
+                  <Banner
+                    tone="success"
+                    onDismiss={() => setTestGenSuccess(false)}
+                  >
+                    Imagen generada y agregada a la galería.
+                  </Banner>
+                )}
+
+                <FormLayout>
+                  <FormLayout.Group>
+                    <TextField
+                      label="Nombre de mascota"
+                      value={testPetName}
+                      onChange={setTestPetName}
+                      autoComplete="off"
+                      disabled={testGenRunning}
+                    />
+                    <TextField
+                      label="Especie"
+                      value={testPetSpecies}
+                      onChange={setTestPetSpecies}
+                      autoComplete="off"
+                      disabled={testGenRunning}
+                    />
+                    <TextField
+                      label="Raza (opcional)"
+                      value={testPetBreed}
+                      onChange={setTestPetBreed}
+                      autoComplete="off"
+                      disabled={testGenRunning}
+                    />
+                    <Select
+                      label="Aspect ratio"
+                      options={[
+                        { label: "Default (FAL decide)", value: "" },
+                        { label: "1:1 — cuadrado", value: "1:1" },
+                        { label: "4:5 — retrato típico", value: "4:5" },
+                        { label: "3:4 — retrato", value: "3:4" },
+                        { label: "2:3 — retrato vertical", value: "2:3" },
+                        { label: "16:9 — landscape", value: "16:9" },
+                        { label: "9:16 — vertical / stories", value: "9:16" },
+                      ]}
+                      value={testAspectRatio}
+                      onChange={setTestAspectRatio}
+                      disabled={testGenRunning}
+                    />
+                  </FormLayout.Group>
+                </FormLayout>
+
+                {style.templateVarOptions &&
+                  Object.keys(style.templateVarOptions).length > 0 && (
+                    <BlockStack gap="300">
+                      <Text variant="headingXs" as="h3">
+                        Opciones del template
+                      </Text>
+                      <FormLayout>
+                        {Object.entries(
+                          style.templateVarOptions as Record<string, unknown>,
+                        ).map(([key, raw]) => {
+                          const opt = raw as TemplateVarOption;
+                          if (opt.type === "select") {
+                            return (
+                              <Select
+                                key={key}
+                                label={opt.label}
+                                options={[
+                                  ...(opt.required
+                                    ? []
+                                    : [
+                                        {
+                                          label: "— sin selección —",
+                                          value: "",
+                                        },
+                                      ]),
+                                  ...opt.options.map((o) => ({
+                                    label: o.label,
+                                    value: o.value,
+                                  })),
+                                ]}
+                                value={String(
+                                  userSelections[key] ?? opt.default ?? "",
+                                )}
+                                onChange={(v) => updateSelection(key, v)}
+                                disabled={testGenRunning}
+                              />
+                            );
+                          }
+                          if (opt.type === "slider") {
+                            return (
+                              <RangeSlider
+                                key={key}
+                                label={opt.label}
+                                value={Number(
+                                  userSelections[key] ?? opt.default,
+                                )}
+                                min={opt.min}
+                                max={opt.max}
+                                step={opt.step ?? 1}
+                                output
+                                onChange={(v) =>
+                                  updateSelection(key, Number(v))
+                                }
+                                disabled={testGenRunning}
+                              />
+                            );
+                          }
+                          if (opt.type === "color") {
+                            const currentHex = String(
+                              userSelections[key] ?? opt.default,
+                            );
+                            const hsb =
+                              colorHsbs[key] ?? hexToHsb(currentHex);
+                            return (
+                              <BlockStack key={key} gap="100">
+                                <Text as="span" variant="bodyMd">
+                                  {opt.label}
+                                </Text>
+                                <InlineStack gap="200" blockAlign="center">
+                                  <Popover
+                                    active={!!colorPopovers[key]}
+                                    onClose={() =>
+                                      setColorPopovers((p) => ({
+                                        ...p,
+                                        [key]: false,
+                                      }))
+                                    }
+                                    activator={
+                                      <button
+                                        type="button"
+                                        disabled={testGenRunning}
+                                        onClick={() =>
+                                          setColorPopovers((p) => ({
+                                            ...p,
+                                            [key]: !p[key],
+                                          }))
+                                        }
+                                        style={{
+                                          cursor: "pointer",
+                                          padding: "6px 12px",
+                                          border: "1px solid #ccc",
+                                          borderRadius: 4,
+                                          background: "white",
+                                          display: "flex",
+                                          gap: 8,
+                                          alignItems: "center",
+                                          opacity: testGenRunning ? 0.5 : 1,
+                                        }}
+                                      >
+                                        <span
+                                          style={{
+                                            background: currentHex,
+                                            width: 16,
+                                            height: 16,
+                                            borderRadius: 4,
+                                            border: "1px solid #ccc",
+                                            display: "inline-block",
+                                          }}
+                                        />
+                                        <span>{currentHex}</span>
+                                      </button>
+                                    }
+                                  >
+                                    <Box padding="300">
+                                      <ColorPicker
+                                        color={hsb}
+                                        onChange={(newHsb) => {
+                                          setColorHsbs((p) => ({
+                                            ...p,
+                                            [key]: newHsb,
+                                          }));
+                                          updateSelection(
+                                            key,
+                                            hsbToHex(newHsb),
+                                          );
+                                        }}
+                                      />
+                                    </Box>
+                                  </Popover>
+                                </InlineStack>
+                              </BlockStack>
+                            );
+                          }
+                          return null;
+                        })}
+                      </FormLayout>
+                    </BlockStack>
+                  )}
+
+                <InlineStack>
+                  <Button
+                    loading={testGenRunning}
+                    disabled={testGenRunning}
+                    onClick={() => testFileInputRef.current?.click()}
+                  >
+                    Elegir foto y generar
+                  </Button>
+                  <input
+                    ref={testFileInputRef}
+                    type="file"
+                    accept="image/*"
+                    hidden
+                    onChange={handleRunTestGeneration}
+                  />
+                </InlineStack>
+              </BlockStack>
+            </Card>
 
             {/* Galería de imágenes */}
             <Card>
@@ -677,50 +1122,6 @@ export default function AdminStyleDetailPage() {
               </BlockStack>
             </Card>
 
-            {/* Pipeline (strategy + configs) */}
-            <Card>
-              <BlockStack gap="400">
-                <Text variant="headingSm" as="h2">
-                  Pipeline
-                </Text>
-                <FormLayout>
-                  <TextField
-                    label="strategy_key"
-                    value={strategyKey}
-                    onChange={setStrategyKey}
-                    autoComplete="off"
-                    helpText="Estrategia de pipeline (ej: default)"
-                  />
-
-                  <Select
-                    label="Vision config"
-                    options={visionOptions}
-                    value={visionConfigId}
-                    onChange={setVisionConfigId}
-                    helpText="Configuración del VLM (descripción de la imagen)"
-                  />
-
-                  <Select
-                    label="Image gen config"
-                    options={imageGenOptions}
-                    value={imageGenConfigId}
-                    onChange={setImageGenConfigId}
-                    helpText="Configuración del generador de imagen (FAL u otro)"
-                  />
-                </FormLayout>
-
-                <InlineStack align="end">
-                  <Button
-                    variant="primary"
-                    loading={saving}
-                    onClick={handleSavePipeline}
-                  >
-                    Guardar cambios
-                  </Button>
-                </InlineStack>
-              </BlockStack>
-            </Card>
-
             {/* Prompt Template */}
             <Card>
               <BlockStack gap="400">
@@ -799,84 +1200,6 @@ export default function AdminStyleDetailPage() {
                 </InlineStack>
               </BlockStack>
             </Card>
-
-            {/* Vision Config preview */}
-            <Card>
-              <BlockStack gap="300">
-                <InlineStack align="space-between" blockAlign="center">
-                  <Text variant="headingSm" as="h2">
-                    Vision Config enlazado
-                  </Text>
-                  <InlineStack gap="100">
-                    {style.visionConfig && (
-                      <Button
-                        size="slim"
-                        url={`/admin/vision-configs/${style.visionConfig.id}`}
-                      >
-                        Editar este config
-                      </Button>
-                    )}
-                    <Button
-                      size="slim"
-                      variant="plain"
-                      url="/admin/vision-configs"
-                    >
-                      Gestionar todos →
-                    </Button>
-                  </InlineStack>
-                </InlineStack>
-
-                {style.visionConfig ? (
-                  <VisionConfigPreview config={style.visionConfig} />
-                ) : (
-                  <Box padding="400">
-                    <Text as="p" tone="subdued" alignment="center">
-                      Este estilo no tiene un vision config asignado.
-                      Selecciona uno arriba y guarda los cambios.
-                    </Text>
-                  </Box>
-                )}
-              </BlockStack>
-            </Card>
-
-            {/* Image Gen Config preview */}
-            <Card>
-              <BlockStack gap="300">
-                <InlineStack align="space-between" blockAlign="center">
-                  <Text variant="headingSm" as="h2">
-                    Image Gen Config enlazado
-                  </Text>
-                  <InlineStack gap="100">
-                    {style.imageGenConfig && (
-                      <Button
-                        size="slim"
-                        url={`/admin/image-gen-configs/${style.imageGenConfig.id}`}
-                      >
-                        Editar este config
-                      </Button>
-                    )}
-                    <Button
-                      size="slim"
-                      variant="plain"
-                      url="/admin/image-gen-configs"
-                    >
-                      Gestionar todos →
-                    </Button>
-                  </InlineStack>
-                </InlineStack>
-
-                {style.imageGenConfig ? (
-                  <ImageGenConfigPreview config={style.imageGenConfig} />
-                ) : (
-                  <Box padding="400">
-                    <Text as="p" tone="subdued" alignment="center">
-                      Este estilo no tiene un image gen config asignado.
-                      Selecciona uno arriba y guarda los cambios.
-                    </Text>
-                  </Box>
-                )}
-              </BlockStack>
-            </Card>
           </BlockStack>
         </Layout.Section>
       </Layout>
@@ -936,10 +1259,7 @@ function VisionConfigPreview({ config }: { config: AdminVisionConfig }) {
     <BlockStack gap="300">
       <InlineStack gap="400" wrap>
         <ConfigPreviewField label="Nombre" value={config.name} />
-        <ConfigPreviewField
-          label="Modelo"
-          value={config.visionModel ?? "—"}
-        />
+        <ConfigPreviewField label="Modelo" value={config.visionModel ?? "—"} />
         <ConfigPreviewField
           label="Temperatura"
           value={

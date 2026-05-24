@@ -376,6 +376,35 @@ export const adminApi = {
       }),
     deleteImage: (styleId: string, imgId: string) =>
       adminFetch(`/admin/styles/${styleId}/images/${imgId}`, { method: 'DELETE' }),
+    runTestGeneration: (
+      styleId: string,
+      file: File,
+      options?: {
+        petName?: string;
+        petSpecies?: string;
+        petBreed?: string;
+        aspectRatio?: string;
+        userSelections?: Record<string, string | number>;
+      },
+    ) => {
+      const form = new FormData();
+      form.append('file', file);
+      if (options?.petName) form.append('petName', options.petName);
+      if (options?.petSpecies) form.append('petSpecies', options.petSpecies);
+      if (options?.petBreed) form.append('petBreed', options.petBreed);
+      if (options?.aspectRatio) form.append('aspectRatio', options.aspectRatio);
+      if (options?.userSelections && Object.keys(options.userSelections).length > 0) {
+        form.append('userSelections', JSON.stringify(options.userSelections));
+      }
+      return adminFetch<{ generationId: string; status: string }>(
+        `/admin/styles/${styleId}/test-generation`,
+        { method: 'POST', body: form },
+      );
+    },
+    testGenerationStatus: (generationId: string) =>
+      adminFetch<{ status: string; progress: number | null; errorMessage: string | null }>(
+        `/generations/${generationId}/status`,
+      ),
   },
   visionConfigs: {
     list: () => adminFetch<AdminVisionConfig[]>('/admin/vision-configs'),
