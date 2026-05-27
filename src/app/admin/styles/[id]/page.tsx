@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import {
   Page,
   Layout,
@@ -23,14 +23,34 @@ import {
   RangeSlider,
   ColorPicker,
   Popover,
+  Collapsible,
 } from "@shopify/polaris";
-import { DeleteIcon, ClipboardIcon } from "@shopify/polaris-icons";
+import { DeleteIcon, ClipboardIcon, PlusIcon } from "@shopify/polaris-icons";
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  type DragEndEvent,
+} from "@dnd-kit/core";
+import {
+  SortableContext,
+  sortableKeyboardCoordinates,
+  rectSortingStrategy,
+  useSortable,
+  arrayMove,
+} from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
 import {
   adminApi,
   AdminStyle,
   AdminStyleImage,
+  AdminImageGeneration,
   AdminVisionConfig,
   AdminImageGenConfig,
+  AdminPet,
 } from "@/entities/admin/api";
 import { useAdminGenerationStatus } from "@/hooks/useAdminGenerationStatus";
 import { hexToHsb, hsbToHex, type HsbColor } from "@/lib/colorUtils";
@@ -38,9 +58,26 @@ import { hexToHsb, hsbToHex, type HsbColor } from "@/lib/colorUtils";
 const UNASSIGNED = "";
 
 type TemplateVarOption =
-  | { type: "select"; label: string; options: { value: string; label: string }[]; default: string; required?: boolean }
-  | { type: "slider"; label: string; min: number; max: number; step?: number; default: number }
+  | {
+      type: "select";
+      label: string;
+      options: { value: string; label: string }[];
+      default: string;
+      required?: boolean;
+    }
+  | {
+      type: "slider";
+      label: string;
+      min: number;
+      max: number;
+      step?: number;
+      default: number;
+    }
   | { type: "color"; label: string; default: string };
+
+const EXAMPLE_TEMPLATE_VARS = `{
+  "colorCount": 5
+  }`;
 
 const EXAMPLE_TEMPLATE_VAR_OPTIONS = `{
   "background": {
@@ -124,6 +161,7 @@ function validateTemplateVarOptions(value: unknown): string | null {
 
 export default function AdminStyleDetailPage() {
   const { id } = useParams<{ id: string }>();
+  const router = useRouter();
 
   const [style, setStyle] = useState<AdminStyle | null>(null);
   const [visionConfigs, setVisionConfigs] = useState<AdminVisionConfig[]>([]);
@@ -136,8 +174,11 @@ export default function AdminStyleDetailPage() {
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
   const [toggling, setToggling] = useState(false);
+  const [duplicating, setDuplicating] = useState(false);
 
   // Sidebar form state
+  const [name, setName] = useState("");
+  const [nameError, setNameError] = useState<string | null>(null);
   const [displayName, setDisplayName] = useState("");
   const [category, setCategory] = useState("");
   const [thanksUrl, setThanksUrl] = useState("");
@@ -161,32 +202,64 @@ export default function AdminStyleDetailPage() {
   const [deletingImage, setDeletingImage] = useState<AdminStyleImage | null>(
     null,
   );
-  const [uploadAlt, setUploadAlt] = useState("");
-  const [editingAlt, setEditingAlt] = useState<Record<string, string>>({});
+  const [reorderingImages, setReorderingImages] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Image viewer state
-  const [viewingImage, setViewingImage] = useState<AdminStyleImage | null>(null);
+  const [viewingImage, setViewingImage] = useState<AdminStyleImage | null>(
+    null,
+  );
   const [viewerAlt, setViewerAlt] = useState("");
   const [copiedUrl, setCopiedUrl] = useState(false);
+  const [imageGeneration, setImageGeneration] =
+    useState<AdminImageGeneration | null>(null);
+  const [imageGenerationLoading, setImageGenerationLoading] = useState(false);
+  const [imageGenerationError, setImageGenerationError] = useState<
+    string | null
+  >(null);
+  const [imageGenerationNotFound, setImageGenerationNotFound] = useState(false);
+  const [copiedFinalPrompt, setCopiedFinalPrompt] = useState(false);
+  const [metadataOpen, setMetadataOpen] = useState(false);
 
   // Test generation state
   const [testGenId, setTestGenId] = useState<string | null>(null);
   const [testGenRunning, setTestGenRunning] = useState(false);
   const [testGenError, setTestGenError] = useState<string | null>(null);
   const [testGenSuccess, setTestGenSuccess] = useState(false);
-  const [testPetName, setTestPetName] = useState("Test Pet");
-  const [testPetSpecies, setTestPetSpecies] = useState("dog");
-  const [testPetBreed, setTestPetBreed] = useState("");
-  const [testAspectRatio, setTestAspectRatio] = useState("");
-  const [userSelections, setUserSelections] = useState<Record<string, string | number>>({});
+  const [testAspectRatio, setTestAspectRatio] = useState("4:5");
+  const [userSelections, setUserSelections] = useState<
+    Record<string, string | number>
+  >({});
   const [colorHsbs, setColorHsbs] = useState<Record<string, HsbColor>>({});
-  const [colorPopovers, setColorPopovers] = useState<Record<string, boolean>>({});
-  const testFileInputRef = useRef<HTMLInputElement>(null);
+  const [colorPopovers, setColorPopovers] = useState<Record<string, boolean>>(
+    {},
+  );
+  // Pet gallery state
+  const [myPets, setMyPets] = useState<AdminPet[]>([]);
+  const [petsLoading, setPetsLoading] = useState(false);
+  const [selectedPetId, setSelectedPetId] = useState<string>("");
+  const [selectedPhotoId, setSelectedPhotoId] = useState<string | null>(null);
+  const [newPetModalOpen, setNewPetModalOpen] = useState(false);
+  const [newPetName, setNewPetName] = useState("");
+  const [newPetSpecies, setNewPetSpecies] = useState("dog");
+  const [newPetBreed, setNewPetBreed] = useState("");
+  const [creatingPet, setCreatingPet] = useState(false);
+  const [createPetError, setCreatePetError] = useState<string | null>(null);
+  const [uploadingPetPhoto, setUploadingPetPhoto] = useState(false);
+  const petPhotoInputRef = useRef<HTMLInputElement>(null);
 
   const testGenStatus = useAdminGenerationStatus(testGenId);
 
+  const dndSensors = useSensors(
+    useSensor(PointerSensor),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    }),
+  );
+
   const hydrateForm = (s: AdminStyle) => {
+    setName(s.name);
+    setNameError(null);
     setDisplayName(s.displayName);
     setCategory(s.category);
     setThanksUrl(s.thanksUrl ?? "");
@@ -206,7 +279,6 @@ export default function AdminStyleDetailPage() {
     const s = await adminApi.styles.getById(id);
     setStyle(s);
     hydrateForm(s);
-    setEditingAlt({});
   };
 
   useEffect(() => {
@@ -225,12 +297,31 @@ export default function AdminStyleDetailPage() {
       .finally(() => setLoading(false));
   }, [id]);
 
+  const loadPets = async () => {
+    setPetsLoading(true);
+    try {
+      const pets = await adminApi.pets.list();
+      setMyPets(pets);
+      setSelectedPetId((prev) => (prev ? prev : (pets[0]?.id ?? "")));
+    } catch {
+      // silent — pets not critical to page load
+    } finally {
+      setPetsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    void loadPets();
+  }, []);
+
   useEffect(() => {
     if (!style?.templateVarOptions) return;
     setUserSelections((prev) => {
       const next = { ...prev };
       const newHsbs: Record<string, HsbColor> = {};
-      for (const [key, raw] of Object.entries(style.templateVarOptions as Record<string, unknown>)) {
+      for (const [key, raw] of Object.entries(
+        style.templateVarOptions as Record<string, unknown>,
+      )) {
         const opt = raw as TemplateVarOption;
         if (!(key in next)) {
           next[key] = opt.default as string | number;
@@ -264,20 +355,14 @@ export default function AdminStyleDetailPage() {
   const updateSelection = (key: string, value: string | number) =>
     setUserSelections((prev) => ({ ...prev, [key]: value }));
 
-  const handleRunTestGeneration = async (
-    e: React.ChangeEvent<HTMLInputElement>,
-  ) => {
-    const file = e.target.files?.[0];
-    if (!file || !style) return;
-    e.target.value = "";
+  const handleRunTestGeneration = async () => {
+    if (!style || !selectedPhotoId) return;
     setTestGenError(null);
     setTestGenSuccess(false);
     setTestGenRunning(true);
     try {
-      const result = await adminApi.styles.runTestGeneration(style.id, file, {
-        petName: testPetName || undefined,
-        petSpecies: testPetSpecies || undefined,
-        petBreed: testPetBreed || undefined,
+      const result = await adminApi.styles.runTestGeneration(style.id, {
+        petPhotoId: selectedPhotoId,
         aspectRatio: testAspectRatio || undefined,
         userSelections,
       });
@@ -288,12 +373,85 @@ export default function AdminStyleDetailPage() {
     }
   };
 
+  const handleUploadPetPhoto = async (
+    e: React.ChangeEvent<HTMLInputElement>,
+  ) => {
+    const file = e.target.files?.[0];
+    if (!file || !selectedPetId) return;
+    e.target.value = "";
+    setUploadingPetPhoto(true);
+    try {
+      const photo = await adminApi.pets.uploadPhoto(selectedPetId, file);
+      setMyPets((prev) =>
+        prev.map((p) =>
+          p.id === selectedPetId ? { ...p, photos: [...p.photos, photo] } : p,
+        ),
+      );
+      setSelectedPhotoId(photo.id);
+    } catch (err: unknown) {
+      setTestGenError((err as Error).message);
+    } finally {
+      setUploadingPetPhoto(false);
+    }
+  };
+
+  const handleCreatePet = async () => {
+    if (!newPetName.trim()) return;
+    setCreatingPet(true);
+    setCreatePetError(null);
+    try {
+      const pet = await adminApi.pets.create({
+        name: newPetName.trim(),
+        species: newPetSpecies,
+        breed: newPetBreed.trim() || undefined,
+      });
+      setMyPets((prev) => [pet, ...prev]);
+      setSelectedPetId(pet.id);
+      setSelectedPhotoId(null);
+      setNewPetModalOpen(false);
+      setNewPetName("");
+      setNewPetBreed("");
+      setNewPetSpecies("dog");
+    } catch (err: unknown) {
+      setCreatePetError((err as Error).message);
+    } finally {
+      setCreatingPet(false);
+    }
+  };
+
   const handleSaveBasics = async () => {
     if (!style) return;
     setSaveError(null);
+
+    const trimmedName = name.trim();
+    if (!trimmedName) {
+      setNameError("Requerido");
+      return;
+    }
+    if (!/^[a-z0-9_-]+$/.test(trimmedName)) {
+      setNameError("Solo minúsculas, números, '-' y '_'");
+      return;
+    }
+    if (trimmedName.length > 100) {
+      setNameError("Máximo 100 caracteres");
+      return;
+    }
+
+    if (trimmedName !== style.name) {
+      const all = await adminApi.styles.list();
+      const duplicate = all.find(
+        (s) => s.name === trimmedName && s.id !== style.id,
+      );
+      if (duplicate) {
+        setNameError("Ya existe un estilo con ese slug");
+        return;
+      }
+    }
+
     setSaving(true);
     try {
       const updated = await adminApi.styles.update(style.id, {
+        name: trimmedName !== style.name ? trimmedName : undefined,
         displayName,
         category,
         thanksUrl: thanksUrl.trim() ? thanksUrl.trim() : null,
@@ -327,7 +485,25 @@ export default function AdminStyleDetailPage() {
 
   const handleSavePrompt = async () => {
     if (!style) return;
+    setSaveError(null);
+    setSaving(true);
+    try {
+      const updated = await adminApi.styles.update(style.id, {
+        promptTemplate,
+      });
+      setStyle(updated);
+      hydrateForm(updated);
+    } catch (e: unknown) {
+      setSaveError((e as Error).message);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleSaveTemplateVars = async () => {
+    if (!style) return;
     setJsonPromptError(null);
+    setJsonOptionsError(null);
     setSaveError(null);
 
     let parsedTemplateVars: Record<string, unknown> | null = null;
@@ -340,35 +516,15 @@ export default function AdminStyleDetailPage() {
       }
     }
 
-    setSaving(true);
-    try {
-      const updated = await adminApi.styles.update(style.id, {
-        promptTemplate: promptTemplate || undefined,
-        templateVars: parsedTemplateVars ?? undefined,
-      });
-      setStyle(updated);
-      hydrateForm(updated);
-    } catch (e: unknown) {
-      setSaveError((e as Error).message);
-    } finally {
-      setSaving(false);
-    }
-  };
-
-  const handleSaveTemplateVarOptions = async () => {
-    if (!style) return;
-    setJsonOptionsError(null);
-    setSaveError(null);
-
-    let parsed: Record<string, unknown> | null = null;
+    let parsedOptions: Record<string, unknown> | null = null;
     if (templateVarOptionsText.trim()) {
       try {
-        parsed = JSON.parse(templateVarOptionsText);
+        parsedOptions = JSON.parse(templateVarOptionsText);
       } catch {
         setJsonOptionsError("template_var_options: JSON inválido");
         return;
       }
-      const validationError = validateTemplateVarOptions(parsed);
+      const validationError = validateTemplateVarOptions(parsedOptions);
       if (validationError) {
         setJsonOptionsError(`template_var_options: ${validationError}`);
         return;
@@ -378,7 +534,8 @@ export default function AdminStyleDetailPage() {
     setSaving(true);
     try {
       const updated = await adminApi.styles.update(style.id, {
-        templateVarOptions: parsed ?? undefined,
+        templateVars: parsedTemplateVars,
+        templateVarOptions: parsedOptions,
       });
       setStyle(updated);
       hydrateForm(updated);
@@ -406,14 +563,47 @@ export default function AdminStyleDetailPage() {
     }
   };
 
+  const handleDuplicate = async () => {
+    if (!style) return;
+    setDuplicating(true);
+    setSaveError(null);
+    try {
+      const all = await adminApi.styles.list();
+      const taken = new Set(all.map((s) => s.name));
+      const base = `${style.name}-copia`;
+      let candidate = base;
+      let n = 2;
+      while (taken.has(candidate)) {
+        candidate = `${base}-${n}`;
+        n++;
+      }
+      const created = await adminApi.styles.create({
+        name: candidate,
+        displayName: `${style.displayName} (copia)`,
+        category: style.category,
+        thanksUrl: style.thanksUrl ?? undefined,
+        strategyKey: style.strategyKey ?? undefined,
+        promptTemplate: style.promptTemplate ?? undefined,
+        templateVars: style.templateVars ?? undefined,
+        templateVarOptions: style.templateVarOptions ?? undefined,
+        visionConfigId: style.visionConfigId ?? undefined,
+        imageGenConfigId: style.imageGenConfigId ?? undefined,
+        isActive: false,
+      });
+      router.push(`/admin/styles/${created.id}`);
+    } catch (e: unknown) {
+      setSaveError((e as Error).message ?? "Error al duplicar el estilo");
+      setDuplicating(false);
+    }
+  };
+
   const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file || !style) return;
     e.target.value = "";
     setUploadingImage(true);
     try {
-      await adminApi.styles.uploadImage(style.id, file, uploadAlt || undefined);
-      setUploadAlt("");
+      await adminApi.styles.uploadImage(style.id, file);
       await reload();
     } catch (err: unknown) {
       setSaveError((err as Error).message);
@@ -435,16 +625,56 @@ export default function AdminStyleDetailPage() {
     }
   };
 
-  const handleSetPrimary = async (img: AdminStyleImage) => {
+  const handleDragEnd = async (event: DragEndEvent) => {
     if (!style) return;
-    setImageActionId(img.id);
+    const { active, over } = event;
+    if (!over || active.id === over.id) return;
+
+    const oldIndex = style.images.findIndex((img) => img.id === active.id);
+    const newIndex = style.images.findIndex((img) => img.id === over.id);
+    if (oldIndex < 0 || newIndex < 0) return;
+
+    const prevImages = style.images;
+    const reordered = arrayMove(prevImages, oldIndex, newIndex).map(
+      (img, i) => ({ ...img, orderIndex: i, isPrimary: i === 0 }),
+    );
+
+    setStyle((prev) => (prev ? { ...prev, images: reordered } : prev));
+    setReorderingImages(true);
+
     try {
-      await adminApi.styles.updateImage(style.id, img.id, { isPrimary: true });
+      const styleId = style.id;
+      const newPrimary = reordered[0];
+      const prevPrimary = prevImages[0];
+
+      if (newPrimary?.id && newPrimary.id !== prevPrimary?.id) {
+        await adminApi.styles.updateImage(styleId, newPrimary.id, {
+          isPrimary: true,
+          orderIndex: 0,
+        });
+      }
+
+      await Promise.all(
+        reordered
+          .filter((img, i) => {
+            if (!img.id) return false;
+            if (img.id === newPrimary?.id) return false;
+            const prev = prevImages.find((p) => p.id === img.id);
+            return !!prev && prev.orderIndex !== i;
+          })
+          .map((img) =>
+            adminApi.styles.updateImage(styleId, img.id, {
+              orderIndex: img.orderIndex,
+            }),
+          ),
+      );
+
       await reload();
     } catch (err: unknown) {
       setSaveError((err as Error).message);
+      await reload();
     } finally {
-      setImageActionId(null);
+      setReorderingImages(false);
     }
   };
 
@@ -473,13 +703,46 @@ export default function AdminStyleDetailPage() {
     setViewingImage(null);
   };
 
+  useEffect(() => {
+    if (!viewingImage) {
+      setImageGeneration(null);
+      setImageGenerationError(null);
+      setImageGenerationNotFound(false);
+      setMetadataOpen(false);
+      return;
+    }
+    let cancelled = false;
+    setImageGeneration(null);
+    setImageGenerationError(null);
+    setImageGenerationNotFound(false);
+    setImageGenerationLoading(true);
+    adminApi.styles
+      .getImageGeneration(viewingImage.styleId, viewingImage.id)
+      .then((res) => {
+        if (cancelled) return;
+        setImageGenerationNotFound(res.generation === null);
+        setImageGeneration(res.generation);
+      })
+      .catch((err: unknown) => {
+        if (cancelled) return;
+        setImageGenerationError(
+          (err as Error).message ?? "Error al cargar generación",
+        );
+      })
+      .finally(() => {
+        if (!cancelled) setImageGenerationLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [viewingImage?.id]);
+
   const handleViewerSaveAlt = async () => {
     if (!viewingImage) return;
     if (viewerAlt === (viewingImage.altImage ?? "")) return;
     await handleSaveAlt(viewingImage, viewerAlt);
-    setViewingImage((prev) =>
-      prev ? { ...prev, altImage: viewerAlt } : prev,
-    );
+    setViewingImage((prev) => (prev ? { ...prev, altImage: viewerAlt } : prev));
   };
 
   const handleCopyUrl = async () => {
@@ -487,6 +750,13 @@ export default function AdminStyleDetailPage() {
     await navigator.clipboard.writeText(viewingImage.imageUrl);
     setCopiedUrl(true);
     setTimeout(() => setCopiedUrl(false), 1500);
+  };
+
+  const handleCopyFinalPrompt = async () => {
+    const text = imageGeneration?.finalPrompt ?? imageGeneration?.prompt ?? "";
+    await navigator.clipboard.writeText(text);
+    setCopiedFinalPrompt(true);
+    setTimeout(() => setCopiedFinalPrompt(false), 1500);
   };
 
   if (loading) {
@@ -550,13 +820,622 @@ export default function AdminStyleDetailPage() {
       }
       secondaryActions={[
         {
+          content: "Duplicar",
+          loading: duplicating,
+          disabled: toggling,
+          onAction: handleDuplicate,
+        },
+        {
           content: style.isActive ? "Desactivar" : "Activar",
           loading: toggling,
+          disabled: duplicating,
           onAction: handleToggle,
         },
       ]}
     >
       <Layout>
+        {/* Main */}
+        <Layout.Section>
+          <BlockStack gap="400">
+            {saveError && (
+              <Banner tone="critical" onDismiss={() => setSaveError(null)}>
+                {saveError}
+              </Banner>
+            )}
+            {jsonPromptError && (
+              <Banner
+                tone="critical"
+                onDismiss={() => setJsonPromptError(null)}
+              >
+                {jsonPromptError}
+              </Banner>
+            )}
+            {jsonOptionsError && (
+              <Banner
+                tone="critical"
+                onDismiss={() => setJsonOptionsError(null)}
+              >
+                {jsonOptionsError}
+              </Banner>
+            )}
+
+            {/* Generar imagen de prueba */}
+            <Card>
+              <BlockStack gap="400">
+                <InlineStack align="space-between" blockAlign="center">
+                  <Text variant="headingSm" as="h2">
+                    Generar imagen de prueba
+                  </Text>
+                  {(testGenRunning ||
+                    testGenStatus.status === "processing" ||
+                    testGenStatus.status === "pending") && (
+                    <InlineStack gap="200" blockAlign="center">
+                      <Spinner size="small" />
+                      <Text as="span" tone="subdued">
+                        {testGenStatus.status === "processing"
+                          ? "Generando…"
+                          : "Encolando…"}
+                      </Text>
+                    </InlineStack>
+                  )}
+                </InlineStack>
+
+                {testGenError && (
+                  <Banner
+                    tone="critical"
+                    onDismiss={() => setTestGenError(null)}
+                  >
+                    {testGenError}
+                  </Banner>
+                )}
+                {testGenSuccess && (
+                  <Banner
+                    tone="success"
+                    onDismiss={() => setTestGenSuccess(false)}
+                  >
+                    Imagen generada y agregada a la galería.
+                  </Banner>
+                )}
+
+                {/* Selección de mascota */}
+                <BlockStack gap="300">
+                  <InlineStack align="space-between" blockAlign="center">
+                    <Text variant="headingXs" as="h3">
+                      Mascota
+                    </Text>
+                    <Button
+                      size="slim"
+                      icon={PlusIcon}
+                      onClick={() => setNewPetModalOpen(true)}
+                      disabled={testGenRunning}
+                    >
+                      Nueva mascota
+                    </Button>
+                  </InlineStack>
+
+                  {petsLoading ? (
+                    <InlineStack gap="200" blockAlign="center">
+                      <Spinner size="small" />
+                      <Text as="span" tone="subdued">
+                        Cargando mascotas…
+                      </Text>
+                    </InlineStack>
+                  ) : myPets.length === 0 ? (
+                    <Text as="p" tone="subdued">
+                      No tenés mascotas guardadas. Creá una para reutilizar
+                      fotos.
+                    </Text>
+                  ) : (
+                    <Select
+                      label="Seleccionar mascota"
+                      options={myPets.map((p) => ({
+                        label: `${p.name} (${p.species}${p.breed ? ` · ${p.breed}` : ""})`,
+                        value: p.id,
+                      }))}
+                      value={selectedPetId}
+                      onChange={(v) => {
+                        setSelectedPetId(v);
+                        setSelectedPhotoId(null);
+                      }}
+                      disabled={testGenRunning}
+                    />
+                  )}
+
+                  {/* Grid de fotos de la mascota seleccionada */}
+                  {selectedPetId &&
+                    (() => {
+                      const pet = myPets.find((p) => p.id === selectedPetId);
+                      if (!pet) return null;
+                      return (
+                        <BlockStack gap="200">
+                          <Text as="p" variant="bodySm" tone="subdued">
+                            Seleccioná una foto para usar en la generación
+                          </Text>
+                          <InlineStack gap="200" wrap>
+                            {pet.photos.map((photo) => (
+                              <button
+                                key={photo.id}
+                                type="button"
+                                onClick={() => setSelectedPhotoId(photo.id)}
+                                disabled={testGenRunning}
+                                style={{
+                                  padding: 0,
+                                  border:
+                                    selectedPhotoId === photo.id
+                                      ? "3px solid #448da6"
+                                      : "3px solid transparent",
+                                  borderRadius: 8,
+                                  cursor: testGenRunning
+                                    ? "not-allowed"
+                                    : "pointer",
+                                  background: "none",
+                                  opacity: testGenRunning ? 0.6 : 1,
+                                  lineHeight: 0,
+                                }}
+                              >
+                                <Thumbnail
+                                  source={photo.photoUrl}
+                                  alt={pet.name}
+                                  size="large"
+                                />
+                              </button>
+                            ))}
+                            <button
+                              type="button"
+                              onClick={() => petPhotoInputRef.current?.click()}
+                              disabled={testGenRunning || uploadingPetPhoto}
+                              style={{
+                                width: 80,
+                                height: 80,
+                                border: "2px dashed #ccc",
+                                borderRadius: 8,
+                                cursor:
+                                  testGenRunning || uploadingPetPhoto
+                                    ? "not-allowed"
+                                    : "pointer",
+                                background: "#fafafa",
+                                display: "flex",
+                                flexDirection: "column",
+                                alignItems: "center",
+                                justifyContent: "center",
+                                gap: 4,
+                                opacity:
+                                  testGenRunning || uploadingPetPhoto ? 0.5 : 1,
+                              }}
+                            >
+                              {uploadingPetPhoto ? (
+                                <Spinner size="small" />
+                              ) : (
+                                <>
+                                  <Text
+                                    as="span"
+                                    variant="bodyXs"
+                                    tone="subdued"
+                                  >
+                                    + Subir
+                                  </Text>
+                                  <Text
+                                    as="span"
+                                    variant="bodyXs"
+                                    tone="subdued"
+                                  >
+                                    foto
+                                  </Text>
+                                </>
+                              )}
+                            </button>
+                          </InlineStack>
+                          {selectedPhotoId && (
+                            <Text as="p" variant="bodySm" tone="success">
+                              Foto seleccionada ✓
+                            </Text>
+                          )}
+                        </BlockStack>
+                      );
+                    })()}
+                </BlockStack>
+
+                <input
+                  ref={petPhotoInputRef}
+                  type="file"
+                  accept="image/*"
+                  hidden
+                  onChange={handleUploadPetPhoto}
+                />
+
+                <Text variant="headingXs" as="h3">
+                  Formato de imagen
+                </Text>
+
+                <FormLayout>
+                  <FormLayout.Group>
+                    <Select
+                      label="Aspect ratio"
+                      options={[
+                        { label: "Default (FAL decide)", value: "" },
+                        { label: "1:1 — cuadrado", value: "1:1" },
+                        { label: "4:5 — retrato típico", value: "4:5" },
+                        { label: "3:4 — retrato", value: "3:4" },
+                        { label: "2:3 — retrato vertical", value: "2:3" },
+                        { label: "16:9 — landscape", value: "16:9" },
+                        { label: "9:16 — vertical / stories", value: "9:16" },
+                      ]}
+                      value={testAspectRatio}
+                      onChange={setTestAspectRatio}
+                      disabled={testGenRunning}
+                    />
+                  </FormLayout.Group>
+                </FormLayout>
+
+                {style.templateVarOptions &&
+                  Object.keys(style.templateVarOptions).length > 0 && (
+                    <BlockStack gap="300">
+                      <Text variant="headingXs" as="h3">
+                        Opciones del template
+                      </Text>
+                      <FormLayout>
+                        {Object.entries(
+                          style.templateVarOptions as Record<string, unknown>,
+                        ).map(([key, raw]) => {
+                          const opt = raw as TemplateVarOption;
+                          if (opt.type === "select") {
+                            return (
+                              <Select
+                                key={key}
+                                label={opt.label}
+                                options={[
+                                  ...(opt.required
+                                    ? []
+                                    : [
+                                        {
+                                          label: "— sin selección —",
+                                          value: "",
+                                        },
+                                      ]),
+                                  ...opt.options.map((o) => ({
+                                    label: o.label,
+                                    value: o.value,
+                                  })),
+                                ]}
+                                value={String(
+                                  userSelections[key] ?? opt.default ?? "",
+                                )}
+                                onChange={(v) => updateSelection(key, v)}
+                                disabled={testGenRunning}
+                              />
+                            );
+                          }
+                          if (opt.type === "slider") {
+                            return (
+                              <RangeSlider
+                                key={key}
+                                label={opt.label}
+                                value={Number(
+                                  userSelections[key] ?? opt.default,
+                                )}
+                                min={opt.min}
+                                max={opt.max}
+                                step={opt.step ?? 1}
+                                output
+                                onChange={(v) =>
+                                  updateSelection(key, Number(v))
+                                }
+                                disabled={testGenRunning}
+                              />
+                            );
+                          }
+                          if (opt.type === "color") {
+                            const currentHex = String(
+                              userSelections[key] ?? opt.default,
+                            );
+                            const hsb = colorHsbs[key] ?? hexToHsb(currentHex);
+                            return (
+                              <BlockStack key={key} gap="100">
+                                <Text as="span" variant="bodyMd">
+                                  {opt.label}
+                                </Text>
+                                <InlineStack gap="200" blockAlign="center">
+                                  <Popover
+                                    active={!!colorPopovers[key]}
+                                    onClose={() =>
+                                      setColorPopovers((p) => ({
+                                        ...p,
+                                        [key]: false,
+                                      }))
+                                    }
+                                    activator={
+                                      <button
+                                        type="button"
+                                        disabled={testGenRunning}
+                                        onClick={() =>
+                                          setColorPopovers((p) => ({
+                                            ...p,
+                                            [key]: !p[key],
+                                          }))
+                                        }
+                                        style={{
+                                          cursor: "pointer",
+                                          padding: "6px 12px",
+                                          border: "1px solid #ccc",
+                                          borderRadius: 4,
+                                          background: "white",
+                                          display: "flex",
+                                          gap: 8,
+                                          alignItems: "center",
+                                          opacity: testGenRunning ? 0.5 : 1,
+                                        }}
+                                      >
+                                        <span
+                                          style={{
+                                            background: currentHex,
+                                            width: 16,
+                                            height: 16,
+                                            borderRadius: 4,
+                                            border: "1px solid #ccc",
+                                            display: "inline-block",
+                                          }}
+                                        />
+                                        <span>{currentHex}</span>
+                                      </button>
+                                    }
+                                  >
+                                    <Box padding="300">
+                                      <ColorPicker
+                                        color={hsb}
+                                        onChange={(newHsb) => {
+                                          setColorHsbs((p) => ({
+                                            ...p,
+                                            [key]: newHsb,
+                                          }));
+                                          updateSelection(
+                                            key,
+                                            hsbToHex(newHsb),
+                                          );
+                                        }}
+                                      />
+                                    </Box>
+                                  </Popover>
+                                </InlineStack>
+                              </BlockStack>
+                            );
+                          }
+                          return null;
+                        })}
+                      </FormLayout>
+                    </BlockStack>
+                  )}
+
+                <InlineStack>
+                  <Button
+                    variant="primary"
+                    loading={testGenRunning}
+                    disabled={testGenRunning || !selectedPhotoId}
+                    onClick={handleRunTestGeneration}
+                  >
+                    Generar imagen
+                  </Button>
+                </InlineStack>
+              </BlockStack>
+            </Card>
+
+            {/* Modal nueva mascota */}
+            <Modal
+              open={newPetModalOpen}
+              onClose={() => {
+                setNewPetModalOpen(false);
+                setCreatePetError(null);
+                setNewPetName("");
+                setNewPetBreed("");
+                setNewPetSpecies("dog");
+              }}
+              title="Nueva mascota"
+              primaryAction={{
+                content: "Crear mascota",
+                onAction: handleCreatePet,
+                loading: creatingPet,
+                disabled: !newPetName.trim() || creatingPet,
+              }}
+              secondaryActions={[
+                {
+                  content: "Cancelar",
+                  onAction: () => setNewPetModalOpen(false),
+                },
+              ]}
+            >
+              <Modal.Section>
+                <BlockStack gap="400">
+                  {createPetError && (
+                    <Banner tone="critical">{createPetError}</Banner>
+                  )}
+                  <FormLayout>
+                    <TextField
+                      label="Nombre"
+                      value={newPetName}
+                      onChange={setNewPetName}
+                      autoComplete="off"
+                      disabled={creatingPet}
+                    />
+                    <Select
+                      label="Especie"
+                      options={[
+                        { label: "Perro", value: "dog" },
+                        { label: "Gato", value: "cat" },
+                        { label: "Ave", value: "bird" },
+                        { label: "Conejo", value: "rabbit" },
+                        { label: "Otro", value: "other" },
+                      ]}
+                      value={newPetSpecies}
+                      onChange={setNewPetSpecies}
+                      disabled={creatingPet}
+                    />
+                    <TextField
+                      label="Raza (opcional)"
+                      value={newPetBreed}
+                      onChange={setNewPetBreed}
+                      autoComplete="off"
+                      disabled={creatingPet}
+                    />
+                  </FormLayout>
+                </BlockStack>
+              </Modal.Section>
+            </Modal>
+
+            {/* Galería de imágenes */}
+            <Card>
+              <BlockStack gap="400">
+                <InlineStack align="space-between" blockAlign="center">
+                  <InlineStack gap="200" blockAlign="center">
+                    <Text variant="headingSm" as="h2">
+                      Galería de imágenes
+                    </Text>
+                    <Badge tone="info">{String(style.images.length)}</Badge>
+                  </InlineStack>
+                  {(uploadingImage || reorderingImages) && (
+                    <Spinner size="small" />
+                  )}
+                </InlineStack>
+
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/*"
+                  hidden
+                  onChange={handleUpload}
+                />
+
+                {style.images.length === 0 ? (
+                  <div
+                    style={{
+                      display: "grid",
+                      gridTemplateColumns: "repeat(5, 1fr)",
+                      gap: 8,
+                    }}
+                  >
+                    <UploadTile
+                      uploading={uploadingImage}
+                      onClick={() => fileInputRef.current?.click()}
+                    />
+                  </div>
+                ) : (
+                  <DndContext
+                    sensors={dndSensors}
+                    collisionDetection={closestCenter}
+                    onDragEnd={handleDragEnd}
+                  >
+                    <SortableContext
+                      items={style.images.map((i) => i.id)}
+                      strategy={rectSortingStrategy}
+                    >
+                      <div
+                        style={{
+                          display: "grid",
+                          gridTemplateColumns: "repeat(5, 1fr)",
+                          gap: 8,
+                        }}
+                      >
+                        {style.images.map((img, idx) => (
+                          <SortableImageTile
+                            key={img.id}
+                            img={img}
+                            isPrimary={idx === 0}
+                            isLoading={
+                              imageActionId === img.id || reorderingImages
+                            }
+                            onView={() => openViewer(img)}
+                            onDelete={() => setDeletingImage(img)}
+                          />
+                        ))}
+                        <UploadTile
+                          uploading={uploadingImage}
+                          onClick={() => fileInputRef.current?.click()}
+                        />
+                      </div>
+                    </SortableContext>
+                  </DndContext>
+                )}
+              </BlockStack>
+            </Card>
+
+            {/* Prompt Template */}
+            <Card>
+              <BlockStack gap="400">
+                <Text variant="headingSm" as="h2">
+                  Prompt Template
+                </Text>
+                <FormLayout>
+                  <TextField
+                    label="prompt_template"
+                    value={promptTemplate}
+                    onChange={setPromptTemplate}
+                    multiline={12}
+                    autoComplete="off"
+                    monospaced
+                    helpText="Prompt completo al VLM. Placeholders: {{petName}}, {{petSpecies}}, {{petBreed}}, {{maxPets}} y los de template_vars."
+                  />
+                </FormLayout>
+
+                <InlineStack align="end">
+                  <Button
+                    variant="primary"
+                    loading={saving}
+                    onClick={handleSavePrompt}
+                  >
+                    Guardar cambios
+                  </Button>
+                </InlineStack>
+              </BlockStack>
+            </Card>
+
+            {/* Opciones seleccionables por el usuario */}
+            <Card>
+              <BlockStack gap="400">
+                <BlockStack gap="100">
+                  <Text variant="headingSm" as="h2">
+                    Opciones de usuario
+                  </Text>
+                  <Text as="p" tone="subdued" variant="bodySm">
+                    Variables que el usuario final podrá ajustar al generar la
+                    imagen (select / slider / color). Cada key se sustituye en{" "}
+                    <code>prompt_template</code> mediante{" "}
+                    <code>{"{{key}}"}</code>.
+                  </Text>
+                </BlockStack>
+                <FormLayout>
+                  <TextField
+                    label="template_vars (JSON)"
+                    value={templateVarsText}
+                    onChange={setTemplateVarsText}
+                    multiline={6}
+                    autoComplete="off"
+                    monospaced
+                    placeholder={EXAMPLE_TEMPLATE_VARS}
+                    helpText=" Posibles Variables custom"
+                  />
+                  <TextField
+                    label="template_var_options (JSON)"
+                    value={templateVarOptionsText}
+                    onChange={setTemplateVarOptionsText}
+                    multiline={10}
+                    autoComplete="off"
+                    monospaced
+                    placeholder={EXAMPLE_TEMPLATE_VAR_OPTIONS}
+                    helpText="Cada key define un control: { type: 'select'|'slider'|'color', label, default, ... }"
+                  />
+                </FormLayout>
+
+                <InlineStack align="end">
+                  <Button
+                    variant="primary"
+                    loading={saving}
+                    onClick={handleSaveTemplateVars}
+                  >
+                    Guardar cambios
+                  </Button>
+                </InlineStack>
+              </BlockStack>
+            </Card>
+          </BlockStack>
+        </Layout.Section>
         {/* Sidebar */}
         <Layout.Section variant="oneThird">
           <BlockStack gap="200">
@@ -571,6 +1450,18 @@ export default function AdminStyleDetailPage() {
                     value={displayName}
                     onChange={setDisplayName}
                     autoComplete="off"
+                  />
+                  <TextField
+                    label="Slug"
+                    value={name}
+                    onChange={(v) => {
+                      setName(v);
+                      setNameError(null);
+                    }}
+                    autoComplete="off"
+                    error={nameError ?? undefined}
+                    maxLength={100}
+                    helpText="Solo minúsculas, números, '-' y '_'. Ej: watercolor-classic"
                   />
                   <TextField
                     label="Categoría"
@@ -590,15 +1481,6 @@ export default function AdminStyleDetailPage() {
                 </InlineStack>
 
                 <Divider />
-
-                <BlockStack gap="100">
-                  <Text variant="bodySm" as="span" fontWeight="bold">
-                    Slug
-                  </Text>
-                  <Text as="p" tone="subdued">
-                    {style.name}
-                  </Text>
-                </BlockStack>
 
                 <BlockStack gap="100">
                   <Text variant="bodySm" as="span" fontWeight="bold">
@@ -742,511 +1624,6 @@ export default function AdminStyleDetailPage() {
             </Card>
           </BlockStack>
         </Layout.Section>
-
-        {/* Main */}
-        <Layout.Section>
-          <BlockStack gap="400">
-            {saveError && (
-              <Banner tone="critical" onDismiss={() => setSaveError(null)}>
-                {saveError}
-              </Banner>
-            )}
-            {jsonPromptError && (
-              <Banner
-                tone="critical"
-                onDismiss={() => setJsonPromptError(null)}
-              >
-                {jsonPromptError}
-              </Banner>
-            )}
-            {jsonOptionsError && (
-              <Banner
-                tone="critical"
-                onDismiss={() => setJsonOptionsError(null)}
-              >
-                {jsonOptionsError}
-              </Banner>
-            )}
-
-            {/* Generar imagen de prueba */}
-            <Card>
-              <BlockStack gap="400">
-                <InlineStack align="space-between" blockAlign="center">
-                  <Text variant="headingSm" as="h2">
-                    Generar imagen de prueba
-                  </Text>
-                  {(testGenRunning ||
-                    testGenStatus.status === "processing" ||
-                    testGenStatus.status === "pending") && (
-                    <InlineStack gap="200" blockAlign="center">
-                      <Spinner size="small" />
-                      <Text as="span" tone="subdued">
-                        {testGenStatus.status === "processing"
-                          ? "Generando…"
-                          : "Encolando…"}
-                      </Text>
-                    </InlineStack>
-                  )}
-                </InlineStack>
-                {style.previewUrl && (
-                  <BlockStack gap="100">
-                    <Text variant="bodySm" as="span" fontWeight="bold">
-                      Vista previa
-                    </Text>
-                    <Thumbnail
-                      source={style.previewUrl}
-                      alt={style.displayName}
-                      size="large"
-                    />
-                  </BlockStack>
-                )}
-
-                {testGenError && (
-                  <Banner
-                    tone="critical"
-                    onDismiss={() => setTestGenError(null)}
-                  >
-                    {testGenError}
-                  </Banner>
-                )}
-                {testGenSuccess && (
-                  <Banner
-                    tone="success"
-                    onDismiss={() => setTestGenSuccess(false)}
-                  >
-                    Imagen generada y agregada a la galería.
-                  </Banner>
-                )}
-
-                <FormLayout>
-                  <FormLayout.Group>
-                    <TextField
-                      label="Nombre de mascota"
-                      value={testPetName}
-                      onChange={setTestPetName}
-                      autoComplete="off"
-                      disabled={testGenRunning}
-                    />
-                    <TextField
-                      label="Especie"
-                      value={testPetSpecies}
-                      onChange={setTestPetSpecies}
-                      autoComplete="off"
-                      disabled={testGenRunning}
-                    />
-                    <TextField
-                      label="Raza (opcional)"
-                      value={testPetBreed}
-                      onChange={setTestPetBreed}
-                      autoComplete="off"
-                      disabled={testGenRunning}
-                    />
-                    <Select
-                      label="Aspect ratio"
-                      options={[
-                        { label: "Default (FAL decide)", value: "" },
-                        { label: "1:1 — cuadrado", value: "1:1" },
-                        { label: "4:5 — retrato típico", value: "4:5" },
-                        { label: "3:4 — retrato", value: "3:4" },
-                        { label: "2:3 — retrato vertical", value: "2:3" },
-                        { label: "16:9 — landscape", value: "16:9" },
-                        { label: "9:16 — vertical / stories", value: "9:16" },
-                      ]}
-                      value={testAspectRatio}
-                      onChange={setTestAspectRatio}
-                      disabled={testGenRunning}
-                    />
-                  </FormLayout.Group>
-                </FormLayout>
-
-                {style.templateVarOptions &&
-                  Object.keys(style.templateVarOptions).length > 0 && (
-                    <BlockStack gap="300">
-                      <Text variant="headingXs" as="h3">
-                        Opciones del template
-                      </Text>
-                      <FormLayout>
-                        {Object.entries(
-                          style.templateVarOptions as Record<string, unknown>,
-                        ).map(([key, raw]) => {
-                          const opt = raw as TemplateVarOption;
-                          if (opt.type === "select") {
-                            return (
-                              <Select
-                                key={key}
-                                label={opt.label}
-                                options={[
-                                  ...(opt.required
-                                    ? []
-                                    : [
-                                        {
-                                          label: "— sin selección —",
-                                          value: "",
-                                        },
-                                      ]),
-                                  ...opt.options.map((o) => ({
-                                    label: o.label,
-                                    value: o.value,
-                                  })),
-                                ]}
-                                value={String(
-                                  userSelections[key] ?? opt.default ?? "",
-                                )}
-                                onChange={(v) => updateSelection(key, v)}
-                                disabled={testGenRunning}
-                              />
-                            );
-                          }
-                          if (opt.type === "slider") {
-                            return (
-                              <RangeSlider
-                                key={key}
-                                label={opt.label}
-                                value={Number(
-                                  userSelections[key] ?? opt.default,
-                                )}
-                                min={opt.min}
-                                max={opt.max}
-                                step={opt.step ?? 1}
-                                output
-                                onChange={(v) =>
-                                  updateSelection(key, Number(v))
-                                }
-                                disabled={testGenRunning}
-                              />
-                            );
-                          }
-                          if (opt.type === "color") {
-                            const currentHex = String(
-                              userSelections[key] ?? opt.default,
-                            );
-                            const hsb =
-                              colorHsbs[key] ?? hexToHsb(currentHex);
-                            return (
-                              <BlockStack key={key} gap="100">
-                                <Text as="span" variant="bodyMd">
-                                  {opt.label}
-                                </Text>
-                                <InlineStack gap="200" blockAlign="center">
-                                  <Popover
-                                    active={!!colorPopovers[key]}
-                                    onClose={() =>
-                                      setColorPopovers((p) => ({
-                                        ...p,
-                                        [key]: false,
-                                      }))
-                                    }
-                                    activator={
-                                      <button
-                                        type="button"
-                                        disabled={testGenRunning}
-                                        onClick={() =>
-                                          setColorPopovers((p) => ({
-                                            ...p,
-                                            [key]: !p[key],
-                                          }))
-                                        }
-                                        style={{
-                                          cursor: "pointer",
-                                          padding: "6px 12px",
-                                          border: "1px solid #ccc",
-                                          borderRadius: 4,
-                                          background: "white",
-                                          display: "flex",
-                                          gap: 8,
-                                          alignItems: "center",
-                                          opacity: testGenRunning ? 0.5 : 1,
-                                        }}
-                                      >
-                                        <span
-                                          style={{
-                                            background: currentHex,
-                                            width: 16,
-                                            height: 16,
-                                            borderRadius: 4,
-                                            border: "1px solid #ccc",
-                                            display: "inline-block",
-                                          }}
-                                        />
-                                        <span>{currentHex}</span>
-                                      </button>
-                                    }
-                                  >
-                                    <Box padding="300">
-                                      <ColorPicker
-                                        color={hsb}
-                                        onChange={(newHsb) => {
-                                          setColorHsbs((p) => ({
-                                            ...p,
-                                            [key]: newHsb,
-                                          }));
-                                          updateSelection(
-                                            key,
-                                            hsbToHex(newHsb),
-                                          );
-                                        }}
-                                      />
-                                    </Box>
-                                  </Popover>
-                                </InlineStack>
-                              </BlockStack>
-                            );
-                          }
-                          return null;
-                        })}
-                      </FormLayout>
-                    </BlockStack>
-                  )}
-
-                <InlineStack>
-                  <Button
-                    loading={testGenRunning}
-                    disabled={testGenRunning}
-                    onClick={() => testFileInputRef.current?.click()}
-                  >
-                    Elegir foto y generar
-                  </Button>
-                  <input
-                    ref={testFileInputRef}
-                    type="file"
-                    accept="image/*"
-                    hidden
-                    onChange={handleRunTestGeneration}
-                  />
-                </InlineStack>
-              </BlockStack>
-            </Card>
-
-            {/* Galería de imágenes */}
-            <Card>
-              <BlockStack gap="400">
-                <InlineStack align="space-between" blockAlign="center">
-                  <InlineStack gap="200" blockAlign="center">
-                    <Text variant="headingSm" as="h2">
-                      Galería de imágenes
-                    </Text>
-                    <Badge tone="info">{String(style.images.length)}</Badge>
-                  </InlineStack>
-                  <InlineStack gap="200" blockAlign="center">
-                    {uploadingImage && <Spinner size="small" />}
-                    <div style={{ width: 200 }}>
-                      <TextField
-                        label=""
-                        labelHidden
-                        placeholder="Alt de la imagen (opcional)"
-                        value={uploadAlt}
-                        onChange={setUploadAlt}
-                        autoComplete="off"
-                        disabled={uploadingImage}
-                      />
-                    </div>
-                    <Button
-                      size="slim"
-                      loading={uploadingImage}
-                      onClick={() => fileInputRef.current?.click()}
-                    >
-                      Subir imagen
-                    </Button>
-                    <input
-                      ref={fileInputRef}
-                      type="file"
-                      accept="image/*"
-                      hidden
-                      onChange={handleUpload}
-                    />
-                  </InlineStack>
-                </InlineStack>
-
-                {style.images.length === 0 ? (
-                  <Box padding="400">
-                    <Text as="p" tone="subdued" alignment="center">
-                      Sin imágenes. Sube la primera imagen para este estilo.
-                    </Text>
-                  </Box>
-                ) : (
-                  <InlineStack gap="400" wrap>
-                    {style.images.map((img) => (
-                      <Box
-                        key={img.id}
-                        borderWidth="025"
-                        borderColor="border"
-                        borderRadius="200"
-                        padding="300"
-                      >
-                        <BlockStack gap="200" inlineAlign="center">
-                          <div style={{ position: "relative" }}>
-                            <button
-                              type="button"
-                              onClick={() => openViewer(img)}
-                              aria-label={`Ver imagen ${img.orderIndex} en pantalla completa`}
-                              style={{
-                                background: "none",
-                                border: 0,
-                                padding: 0,
-                                cursor: "pointer",
-                                display: "block",
-                              }}
-                            >
-                              <Thumbnail
-                                source={img.imageUrl}
-                                alt={img.altImage ?? `Imagen ${img.orderIndex}`}
-                                size="large"
-                              />
-                            </button>
-                            {imageActionId === img.id && (
-                              <div
-                                style={{
-                                  position: "absolute",
-                                  inset: 0,
-                                  display: "flex",
-                                  alignItems: "center",
-                                  justifyContent: "center",
-                                  background: "rgba(255,255,255,0.7)",
-                                  borderRadius: 6,
-                                }}
-                              >
-                                <Spinner size="small" />
-                              </div>
-                            )}
-                          </div>
-
-                          {img.isPrimary && (
-                            <Badge tone="success">Primaria</Badge>
-                          )}
-
-                          <TextField
-                            label="Alt"
-                            labelHidden
-                            placeholder="Alt de la imagen"
-                            value={editingAlt[img.id] ?? img.altImage ?? ""}
-                            onChange={(val) =>
-                              setEditingAlt((prev) => ({
-                                ...prev,
-                                [img.id]: val,
-                              }))
-                            }
-                            onBlur={() => {
-                              const val = editingAlt[img.id];
-                              if (
-                                val !== undefined &&
-                                val !== (img.altImage ?? "")
-                              ) {
-                                handleSaveAlt(img, val);
-                              }
-                            }}
-                            autoComplete="off"
-                            disabled={imageActionId !== null}
-                          />
-
-                          <InlineStack gap="100">
-                            {!img.isPrimary && (
-                              <Button
-                                size="slim"
-                                variant="plain"
-                                disabled={imageActionId !== null}
-                                onClick={() => handleSetPrimary(img)}
-                              >
-                                Marcar primaria
-                              </Button>
-                            )}
-                            <Button
-                              size="slim"
-                              variant="plain"
-                              tone="critical"
-                              icon={DeleteIcon}
-                              disabled={imageActionId !== null}
-                              accessibilityLabel="Eliminar imagen"
-                              onClick={() => setDeletingImage(img)}
-                            />
-                          </InlineStack>
-                        </BlockStack>
-                      </Box>
-                    ))}
-                  </InlineStack>
-                )}
-              </BlockStack>
-            </Card>
-
-            {/* Prompt Template */}
-            <Card>
-              <BlockStack gap="400">
-                <Text variant="headingSm" as="h2">
-                  Prompt Template
-                </Text>
-                <FormLayout>
-                  <TextField
-                    label="prompt_template"
-                    value={promptTemplate}
-                    onChange={setPromptTemplate}
-                    multiline={12}
-                    autoComplete="off"
-                    monospaced
-                    helpText="Prompt completo al VLM. Placeholders: {{petName}}, {{petSpecies}}, {{petBreed}}, {{maxPets}} y los de template_vars."
-                  />
-
-                  <TextField
-                    label="template_vars (JSON)"
-                    value={templateVarsText}
-                    onChange={setTemplateVarsText}
-                    multiline={6}
-                    autoComplete="off"
-                    monospaced
-                    helpText="Variables custom para sustituir {{placeholders}} en prompt_template"
-                  />
-                </FormLayout>
-
-                <InlineStack align="end">
-                  <Button
-                    variant="primary"
-                    loading={saving}
-                    onClick={handleSavePrompt}
-                  >
-                    Guardar cambios
-                  </Button>
-                </InlineStack>
-              </BlockStack>
-            </Card>
-
-            {/* Opciones seleccionables por el usuario */}
-            <Card>
-              <BlockStack gap="400">
-                <BlockStack gap="100">
-                  <Text variant="headingSm" as="h2">
-                    Opciones seleccionables por el usuario
-                  </Text>
-                  <Text as="p" tone="subdued" variant="bodySm">
-                    Variables que el usuario final podrá ajustar al generar la
-                    imagen (select / slider / color). Cada key se sustituye en{" "}
-                    <code>prompt_template</code> mediante{" "}
-                    <code>{"{{key}}"}</code>.
-                  </Text>
-                </BlockStack>
-                <FormLayout>
-                  <TextField
-                    label="template_var_options (JSON)"
-                    value={templateVarOptionsText}
-                    onChange={setTemplateVarOptionsText}
-                    multiline={10}
-                    autoComplete="off"
-                    monospaced
-                    placeholder={EXAMPLE_TEMPLATE_VAR_OPTIONS}
-                    helpText="Cada key define un control: { type: 'select'|'slider'|'color', label, default, ... }"
-                  />
-                </FormLayout>
-
-                <InlineStack align="end">
-                  <Button
-                    variant="primary"
-                    loading={saving}
-                    onClick={handleSaveTemplateVarOptions}
-                  >
-                    Guardar cambios
-                  </Button>
-                </InlineStack>
-              </BlockStack>
-            </Card>
-          </BlockStack>
-        </Layout.Section>
       </Layout>
 
       <Modal
@@ -1280,7 +1657,9 @@ export default function AdminStyleDetailPage() {
       <Modal
         open={viewingImage !== null}
         onClose={closeViewer}
-        title={viewingImage?.altImage || `Imagen ${viewingImage?.orderIndex ?? ""}`}
+        title={
+          viewingImage?.altImage || `Imagen ${viewingImage?.orderIndex ?? ""}`
+        }
         size="large"
       >
         <Modal.Section>
@@ -1357,7 +1736,9 @@ export default function AdminStyleDetailPage() {
                     label="Subida"
                     value={
                       viewingImage
-                        ? new Date(viewingImage.createdAt).toLocaleString("es-ES")
+                        ? new Date(viewingImage.createdAt).toLocaleString(
+                            "es-ES",
+                          )
                         : "—"
                     }
                   />
@@ -1375,6 +1756,234 @@ export default function AdminStyleDetailPage() {
                       )
                     }
                   />
+                </BlockStack>
+
+                <Divider />
+
+                <BlockStack gap="300">
+                  <Text variant="headingSm" as="h3">
+                    Generación
+                  </Text>
+
+                  {imageGenerationLoading && (
+                    <Spinner
+                      accessibilityLabel="Cargando generación"
+                      size="small"
+                    />
+                  )}
+
+                  {!imageGenerationLoading && imageGenerationError && (
+                    <Banner tone="critical">{imageGenerationError}</Banner>
+                  )}
+
+                  {!imageGenerationLoading &&
+                    !imageGenerationError &&
+                    imageGenerationNotFound && (
+                      <Banner tone="info">
+                        Esta imagen no tiene generación asociada (fue subida
+                        manualmente).
+                      </Banner>
+                    )}
+
+                  {!imageGenerationLoading &&
+                    !imageGenerationError &&
+                    imageGeneration && (
+                      <BlockStack gap="300">
+                        <ConfigPreviewField
+                          label="Estado"
+                          value={
+                            <Badge
+                              tone={
+                                imageGeneration.status === "completed"
+                                  ? "success"
+                                  : imageGeneration.status === "failed"
+                                    ? "critical"
+                                    : "attention"
+                              }
+                            >
+                              {imageGeneration.status}
+                            </Badge>
+                          }
+                        />
+
+                        {imageGeneration.processingTimeSeconds !== null && (
+                          <ConfigPreviewField
+                            label="Tiempo"
+                            value={`${imageGeneration.processingTimeSeconds}s`}
+                          />
+                        )}
+
+                        <ConfigPreviewField
+                          label="Proveedor"
+                          value={
+                            imageGeneration.falRequestId
+                              ? `${imageGeneration.provider} · ${imageGeneration.falRequestId}`
+                              : imageGeneration.provider
+                          }
+                        />
+
+                        {imageGeneration.metadata &&
+                          typeof imageGeneration.metadata === "object" && (
+                            <>
+                              {(
+                                imageGeneration.metadata as Record<
+                                  string,
+                                  unknown
+                                >
+                              ).petContext && (
+                                <ConfigPreviewField
+                                  label="Contexto de mascota"
+                                  value={(() => {
+                                    const pc = (
+                                      imageGeneration.metadata as Record<
+                                        string,
+                                        unknown
+                                      >
+                                    ).petContext as Record<string, string>;
+                                    return [
+                                      pc.petName,
+                                      pc.petSpecies,
+                                      pc.petBreed,
+                                    ]
+                                      .filter(Boolean)
+                                      .join(" · ");
+                                  })()}
+                                />
+                              )}
+
+                              {(
+                                imageGeneration.metadata as Record<
+                                  string,
+                                  unknown
+                                >
+                              ).inputPhotoUrl && (
+                                <ConfigPreviewField
+                                  label="Foto de entrada"
+                                  value={
+                                    <a
+                                      href={
+                                        (
+                                          imageGeneration.metadata as Record<
+                                            string,
+                                            unknown
+                                          >
+                                        ).inputPhotoUrl as string
+                                      }
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                    >
+                                      Ver foto
+                                    </a>
+                                  }
+                                />
+                              )}
+
+                              {(
+                                imageGeneration.metadata as Record<
+                                  string,
+                                  unknown
+                                >
+                              ).compatConstraints &&
+                                typeof (
+                                  imageGeneration.metadata as Record<
+                                    string,
+                                    unknown
+                                  >
+                                ).compatConstraints === "object" && (
+                                  <ConfigPreviewField
+                                    label="Aspect ratio"
+                                    value={String(
+                                      (
+                                        (
+                                          imageGeneration.metadata as Record<
+                                            string,
+                                            unknown
+                                          >
+                                        ).compatConstraints as Record<
+                                          string,
+                                          unknown
+                                        >
+                                      ).aspectRatio ?? "—",
+                                    )}
+                                  />
+                                )}
+                            </>
+                          )}
+
+                        <BlockStack gap="100">
+                          <TextField
+                            label={
+                              imageGeneration.finalPrompt
+                                ? "Final prompt"
+                                : "Prompt (plantilla original)"
+                            }
+                            value={
+                              imageGeneration.finalPrompt ??
+                              imageGeneration.prompt
+                            }
+                            readOnly
+                            multiline={6}
+                            autoComplete="off"
+                            helpText={
+                              !imageGeneration.finalPrompt
+                                ? "La generación no guardó el prompt final procesado"
+                                : undefined
+                            }
+                            connectedRight={
+                              <Button
+                                icon={ClipboardIcon}
+                                onClick={handleCopyFinalPrompt}
+                                accessibilityLabel="Copiar prompt"
+                              />
+                            }
+                          />
+                          {copiedFinalPrompt && (
+                            <Text as="span" tone="success" variant="bodySm">
+                              ¡Copiado!
+                            </Text>
+                          )}
+                        </BlockStack>
+
+                        {imageGeneration.metadata && (
+                          <BlockStack gap="100">
+                            <Button
+                              variant="plain"
+                              disclosure={metadataOpen ? "up" : "down"}
+                              onClick={() => setMetadataOpen((prev) => !prev)}
+                            >
+                              Ver metadata completa (JSON)
+                            </Button>
+                            <Collapsible
+                              open={metadataOpen}
+                              id="image-generation-metadata"
+                            >
+                              <Box
+                                background="bg-surface-secondary"
+                                padding="300"
+                                borderRadius="200"
+                              >
+                                <pre
+                                  style={{
+                                    fontSize: 12,
+                                    whiteSpace: "pre-wrap",
+                                    wordBreak: "break-all",
+                                    maxHeight: 300,
+                                    overflowY: "auto",
+                                    margin: 0,
+                                  }}
+                                >
+                                  {JSON.stringify(
+                                    imageGeneration.metadata,
+                                    null,
+                                    2,
+                                  )}
+                                </pre>
+                              </Box>
+                            </Collapsible>
+                          </BlockStack>
+                        )}
+                      </BlockStack>
+                    )}
                 </BlockStack>
               </BlockStack>
             </Layout.Section>
@@ -1404,57 +2013,146 @@ function ConfigPreviewField({
   );
 }
 
-function VisionConfigPreview({ config }: { config: AdminVisionConfig }) {
+function SortableImageTile({
+  img,
+  isPrimary,
+  isLoading,
+  onView,
+  onDelete,
+}: {
+  img: AdminStyleImage;
+  isPrimary: boolean;
+  isLoading: boolean;
+  onView: () => void;
+  onDelete: () => void;
+}) {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: img.id });
+
+  const tileStyle: React.CSSProperties = {
+    gridColumn: isPrimary ? "span 2" : "span 1",
+    gridRow: isPrimary ? "span 2" : "span 1",
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+    position: "relative",
+    borderRadius: 8,
+    overflow: "hidden",
+    border: "1px solid var(--p-color-border)",
+    aspectRatio: "1 / 1",
+    cursor: "grab",
+    background: "var(--p-color-bg-surface)",
+  };
+
   return (
-    <BlockStack gap="300">
-      <InlineStack gap="400" wrap>
-        <ConfigPreviewField label="Nombre" value={config.name} />
-        <ConfigPreviewField label="Modelo" value={config.visionModel ?? "—"} />
-        <ConfigPreviewField
-          label="Temperatura"
-          value={
-            config.visionTemperature !== null ? config.visionTemperature : "—"
-          }
+    <div ref={setNodeRef} style={tileStyle} {...attributes} {...listeners}>
+      <button
+        type="button"
+        onClick={onView}
+        onPointerDown={(e) => e.stopPropagation()}
+        aria-label={`Ver imagen ${img.orderIndex}`}
+        style={{
+          display: "block",
+          width: "100%",
+          height: "100%",
+          border: 0,
+          padding: 0,
+          background: "none",
+          cursor: "pointer",
+        }}
+      >
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src={img.imageUrl}
+          alt={img.altImage ?? ""}
+          draggable={false}
+          style={{
+            display: "block",
+            width: "100%",
+            height: "100%",
+            objectFit: "cover",
+          }}
         />
-        <ConfigPreviewField
-          label="Estado"
-          value={
-            <Badge tone={config.isActive ? "success" : "enabled"}>
-              {config.isActive ? "Activo" : "Inactivo"}
-            </Badge>
-          }
-        />
-      </InlineStack>
-    </BlockStack>
+      </button>
+
+      {isLoading && (
+        <div
+          style={{
+            position: "absolute",
+            inset: 0,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            background: "rgba(255,255,255,0.7)",
+          }}
+        >
+          <Spinner size="small" />
+        </div>
+      )}
+
+      <button
+        type="button"
+        aria-label="Eliminar imagen"
+        onPointerDown={(e) => e.stopPropagation()}
+        onClick={onDelete}
+        style={{
+          position: "absolute",
+          top: 6,
+          right: 6,
+          background: "rgba(255,255,255,0.9)",
+          border: "1px solid var(--p-color-border)",
+          borderRadius: 6,
+          padding: "4px 6px",
+          cursor: "pointer",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          lineHeight: 0,
+        }}
+      >
+        <DeleteIcon width={16} height={16} />
+      </button>
+    </div>
   );
 }
 
-function ImageGenConfigPreview({ config }: { config: AdminImageGenConfig }) {
-  const parametersCount = config.parameters
-    ? Object.keys(config.parameters).length
-    : 0;
-
+function UploadTile({
+  uploading,
+  onClick,
+}: {
+  uploading: boolean;
+  onClick: () => void;
+}) {
   return (
-    <BlockStack gap="300">
-      <InlineStack gap="400" wrap>
-        <ConfigPreviewField label="Nombre" value={config.name} />
-        <ConfigPreviewField label="Modelo" value={config.model ?? "—"} />
-        <ConfigPreviewField
-          label="Estado"
-          value={
-            <Badge tone={config.isActive ? "success" : "enabled"}>
-              {config.isActive ? "Activo" : "Inactivo"}
-            </Badge>
-          }
-        />
-      </InlineStack>
-
-      {parametersCount > 0 && (
-        <Text as="p" variant="bodySm" tone="subdued">
-          {parametersCount} parámetro{parametersCount === 1 ? "" : "s"} en{" "}
-          <code>parameters</code>.
-        </Text>
+    <button
+      type="button"
+      onClick={onClick}
+      disabled={uploading}
+      style={{
+        aspectRatio: "1 / 1",
+        border: "1px dashed var(--p-color-border)",
+        borderRadius: 8,
+        background: "var(--p-color-bg-surface-secondary)",
+        cursor: uploading ? "default" : "pointer",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        opacity: uploading ? 0.6 : 1,
+        flexDirection: "column",
+        gap: 4,
+      }}
+    >
+      {uploading ? (
+        <Spinner size="small" />
+      ) : (
+        <PlusIcon width={24} height={24} />
       )}
-    </BlockStack>
+    </button>
   );
 }
