@@ -11,9 +11,12 @@ import {
   Spinner,
   Text,
   InlineStack,
+  BlockStack,
   Thumbnail,
   Button,
+  Modal,
 } from "@shopify/polaris";
+import { DeleteIcon } from "@shopify/polaris-icons";
 import { adminApi, AdminStyle } from "@/entities/admin/api";
 
 export default function AdminStylesPage() {
@@ -21,6 +24,8 @@ export default function AdminStylesPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [toggling, setToggling] = useState<string | null>(null);
+  const [deletingTarget, setDeletingTarget] = useState<AdminStyle | null>(null);
+  const [deleting, setDeleting] = useState(false);
 
   const load = () => {
     setLoading(true);
@@ -51,6 +56,20 @@ export default function AdminStylesPage() {
     }
   };
 
+  const handleDelete = async () => {
+    if (!deletingTarget) return;
+    setDeleting(true);
+    try {
+      await adminApi.styles.delete(deletingTarget.id);
+      setDeletingTarget(null);
+      load();
+    } catch (e: unknown) {
+      setError((e as Error).message);
+    } finally {
+      setDeleting(false);
+    }
+  };
+
   return (
     <Page title="Estilos" subtitle="Catálogo de estilos de IA disponibles">
       <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
@@ -74,7 +93,7 @@ export default function AdminStylesPage() {
             <IndexTable
               resourceName={{ singular: "estilo", plural: "estilos" }}
               itemCount={styles.length}
-              headings={[{ title: "Vista previa" }, { title: "Nombre" }, { title: "Categoría" }, { title: "Imágenes" }, { title: "Estado" }, { title: "Acciones" }]}
+              headings={[{ title: "Vista previa" }, { title: "Nombre" }, { title: "Categoría" }, { title: "Imágenes" }, { title: "Estado" }, { title: "Eliminar" }, { title: "Acciones" }]}
               selectable={false}
             >
               {styles.map((s, index) => (
@@ -153,6 +172,16 @@ export default function AdminStylesPage() {
                     </InlineStack>
                   </IndexTable.Cell>
                   <IndexTable.Cell>
+                    <Button
+                      variant="plain"
+                      tone="critical"
+                      size="slim"
+                      icon={DeleteIcon}
+                      accessibilityLabel={`Eliminar ${s.displayName}`}
+                      onClick={() => setDeletingTarget(s)}
+                    />
+                  </IndexTable.Cell>
+                  <IndexTable.Cell>
                     <Link href={`/admin/styles/${s.id}`}>
                       <Button variant="plain" size="slim">
                         Ver
@@ -165,6 +194,48 @@ export default function AdminStylesPage() {
           </Card>
         )}
       </div>
+      <Modal
+        open={deletingTarget !== null}
+        onClose={() => {
+          if (!deleting) setDeletingTarget(null);
+        }}
+        title="¿Eliminar estilo permanentemente?"
+        primaryAction={{
+          content: "Eliminar",
+          destructive: true,
+          loading: deleting,
+          onAction: handleDelete,
+        }}
+        secondaryActions={[
+          {
+            content: "Cancelar",
+            disabled: deleting,
+            onAction: () => setDeletingTarget(null),
+          },
+        ]}
+      >
+        <Modal.Section>
+          <BlockStack gap="200">
+            <Text as="p">
+              Se eliminará{" "}
+              <Text as="span" fontWeight="semibold">
+                {deletingTarget?.displayName}
+              </Text>{" "}
+              de forma permanente.
+            </Text>
+            <Text as="p" tone="subdued">
+              Las imágenes del estilo se borrarán también del almacenamiento.
+              Las referencias de producto perderán el vínculo con este estilo.
+              Esta acción no se puede deshacer.
+            </Text>
+            {(deletingTarget?._count?.generations ?? 0) > 0 && (
+              <Text as="p" tone="critical">
+                Este estilo tiene {deletingTarget!._count!.generations} generación(es) asociada(s) y no podrá eliminarse. Desactívalo en su lugar.
+              </Text>
+            )}
+          </BlockStack>
+        </Modal.Section>
+      </Modal>
     </Page>
   );
 }

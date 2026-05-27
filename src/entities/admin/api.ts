@@ -208,6 +208,30 @@ export interface OverviewStats {
   };
 }
 
+export interface AdminPetPhoto {
+  id: string;
+  petId: string;
+  photoUrl: string;
+  photoStorageKey: string;
+  isPrimary: boolean;
+  orderIndex: number;
+  createdAt: string;
+}
+
+export interface AdminPet {
+  id: string;
+  userId: string;
+  name: string;
+  species: string;
+  breed: string | null;
+  age: number | null;
+  description: string | null;
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
+  photos: AdminPetPhoto[];
+}
+
 export interface AdminStyleImage {
   id: string;
   styleId: string;
@@ -217,6 +241,20 @@ export interface AdminStyleImage {
   orderIndex: number;
   isPrimary: boolean;
   createdAt: string;
+}
+
+export interface AdminImageGeneration {
+  id: string;
+  prompt: string;
+  finalPrompt: string | null;
+  metadata: Record<string, unknown> | null;
+  visionAnalysis: Record<string, unknown> | null;
+  provider: string;
+  falRequestId: string | null;
+  processingTimeSeconds: number | null;
+  status: string;
+  createdAt: string;
+  completedAt: string | null;
 }
 
 export interface AdminVisionConfig {
@@ -353,6 +391,11 @@ export const adminApi = {
   styles: {
     list: () => adminFetch<AdminStyle[]>('/admin/styles'),
     getById: (id: string) => adminFetch<AdminStyle>(`/admin/styles/${id}`),
+    create: (body: Partial<AdminStyle>) =>
+      adminFetch<AdminStyle>('/admin/styles', {
+        method: 'POST',
+        body: JSON.stringify(body),
+      }),
     update: (id: string, body: Partial<AdminStyle>) =>
       adminFetch<AdminStyle>(`/admin/styles/${id}`, {
         method: 'PATCH',
@@ -360,6 +403,8 @@ export const adminApi = {
       }),
     deactivate: (id: string) =>
       adminFetch(`/admin/styles/${id}`, { method: 'DELETE' }),
+    delete: (id: string) =>
+      adminFetch(`/admin/styles/${id}/permanent`, { method: 'DELETE' }),
     uploadImage: (styleId: string, file: File, altImage?: string) => {
       const form = new FormData();
       form.append('file', file);
@@ -378,8 +423,9 @@ export const adminApi = {
       adminFetch(`/admin/styles/${styleId}/images/${imgId}`, { method: 'DELETE' }),
     runTestGeneration: (
       styleId: string,
-      file: File,
-      options?: {
+      options: {
+        file?: File;
+        petPhotoId?: string;
         petName?: string;
         petSpecies?: string;
         petBreed?: string;
@@ -388,12 +434,13 @@ export const adminApi = {
       },
     ) => {
       const form = new FormData();
-      form.append('file', file);
-      if (options?.petName) form.append('petName', options.petName);
-      if (options?.petSpecies) form.append('petSpecies', options.petSpecies);
-      if (options?.petBreed) form.append('petBreed', options.petBreed);
-      if (options?.aspectRatio) form.append('aspectRatio', options.aspectRatio);
-      if (options?.userSelections && Object.keys(options.userSelections).length > 0) {
+      if (options.file) form.append('file', options.file);
+      if (options.petPhotoId) form.append('petPhotoId', options.petPhotoId);
+      if (options.petName) form.append('petName', options.petName);
+      if (options.petSpecies) form.append('petSpecies', options.petSpecies);
+      if (options.petBreed) form.append('petBreed', options.petBreed);
+      if (options.aspectRatio) form.append('aspectRatio', options.aspectRatio);
+      if (options.userSelections && Object.keys(options.userSelections).length > 0) {
         form.append('userSelections', JSON.stringify(options.userSelections));
       }
       return adminFetch<{ generationId: string; status: string }>(
@@ -405,6 +452,23 @@ export const adminApi = {
       adminFetch<{ status: string; progress: number | null; errorMessage: string | null }>(
         `/generations/${generationId}/status`,
       ),
+    getImageGeneration: (styleId: string, imageId: string) =>
+      adminFetch<{ generation: AdminImageGeneration | null }>(
+        `/admin/styles/${styleId}/images/${imageId}/generation`,
+      ),
+  },
+  pets: {
+    list: () => adminFetch<AdminPet[]>('/pets'),
+    create: (body: { name: string; species: string; breed?: string; age?: number; description?: string }) =>
+      adminFetch<AdminPet>('/pets', { method: 'POST', body: JSON.stringify(body) }),
+    uploadPhoto: (petId: string, file: File, isPrimary = false) => {
+      const form = new FormData();
+      form.append('photo', file);
+      const qs = isPrimary ? '?isPrimary=true' : '';
+      return adminFetch<AdminPetPhoto>(`/pets/${petId}/photos${qs}`, { method: 'POST', body: form });
+    },
+    deletePhoto: (petId: string, photoId: string) =>
+      adminFetch(`/pets/${petId}/photos/${photoId}`, { method: 'DELETE' }),
   },
   visionConfigs: {
     list: () => adminFetch<AdminVisionConfig[]>('/admin/vision-configs'),
