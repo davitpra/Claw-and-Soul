@@ -186,6 +186,7 @@ export default function AdminStyleDetailPage() {
 
   // Pipeline form state
   const [strategyKey, setStrategyKey] = useState("");
+  const [strategyKeys, setStrategyKeys] = useState<string[]>([]);
   const [visionConfigId, setVisionConfigId] = useState<string>(UNASSIGNED);
   const [imageGenConfigId, setImageGenConfigId] = useState<string>(UNASSIGNED);
 
@@ -195,6 +196,11 @@ export default function AdminStyleDetailPage() {
   const [templateVarOptionsText, setTemplateVarOptionsText] = useState("");
   const [jsonPromptError, setJsonPromptError] = useState<string | null>(null);
   const [jsonOptionsError, setJsonOptionsError] = useState<string | null>(null);
+
+  // Reference image state (style-transfer strategy)
+  const [uploadingRefImage, setUploadingRefImage] = useState(false);
+  const [removingRefImage, setRemovingRefImage] = useState(false);
+  const refImageInputRef = useRef<HTMLInputElement>(null);
 
   // Image state
   const [uploadingImage, setUploadingImage] = useState(false);
@@ -286,11 +292,13 @@ export default function AdminStyleDetailPage() {
       adminApi.styles.getById(id),
       adminApi.visionConfigs.list(),
       adminApi.imageGenConfigs.list(),
+      adminApi.strategies.list(),
     ])
-      .then(([s, vc, igc]) => {
+      .then(([s, vc, igc, sk]) => {
         setStyle(s);
         setVisionConfigs(vc);
         setImageGenConfigs(igc);
+        setStrategyKeys(sk);
         hydrateForm(s);
       })
       .catch((e: Error) => setError(e.message))
@@ -806,6 +814,13 @@ export default function AdminStyleDetailPage() {
         label: c.isActive ? c.name : `${c.name} (inactivo)`,
         value: c.id,
       })),
+  ];
+
+  const strategyOptions = [
+    ...strategyKeys.map((k) => ({ label: k, value: k })),
+    ...(strategyKey && !strategyKeys.includes(strategyKey)
+      ? [{ label: `${strategyKey} (no registrada)`, value: strategyKey }]
+      : []),
   ];
 
   return (
@@ -1510,13 +1525,91 @@ export default function AdminStyleDetailPage() {
                 <Text variant="headingSm" as="h2">
                   Pipeline
                 </Text>
+                <BlockStack gap="200">
+                  <Text variant="bodySm" as="p" fontWeight="bold">
+                    Imagen de referencia (style-transfer)
+                  </Text>
+                  {style.styleReferenceUrl ? (
+                    <BlockStack gap="200">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img
+                        src={style.styleReferenceUrl}
+                        alt="Referencia de estilo"
+                        style={{
+                          maxWidth: 160,
+                          borderRadius: 8,
+                          border: "1px solid #ddd",
+                        }}
+                      />
+                      <InlineStack gap="200">
+                        <Button
+                          size="slim"
+                          loading={uploadingRefImage}
+                          onClick={() => refImageInputRef.current?.click()}
+                        >
+                          Cambiar
+                        </Button>
+                        <Button
+                          size="slim"
+                          tone="critical"
+                          loading={removingRefImage}
+                          onClick={async () => {
+                            setRemovingRefImage(true);
+                            try {
+                              await adminApi.styles.removeReferenceImage(id);
+                              await reload();
+                            } catch (e) {
+                              console.error(e);
+                            } finally {
+                              setRemovingRefImage(false);
+                            }
+                          }}
+                        >
+                          Eliminar
+                        </Button>
+                      </InlineStack>
+                    </BlockStack>
+                  ) : (
+                    <Button
+                      size="slim"
+                      loading={uploadingRefImage}
+                      onClick={() => refImageInputRef.current?.click()}
+                    >
+                      Subir imagen de referencia
+                    </Button>
+                  )}
+                  <Text variant="bodySm" as="p" tone="subdued">
+                    Requerida para estrategias de tipo style-transfer. Define el
+                    estilo visual, pose y composición.
+                  </Text>
+                  <input
+                    ref={refImageInputRef}
+                    type="file"
+                    accept="image/*"
+                    hidden
+                    onChange={async (e) => {
+                      const file = e.target.files?.[0];
+                      if (!file) return;
+                      setUploadingRefImage(true);
+                      try {
+                        await adminApi.styles.uploadReferenceImage(id, file);
+                        await reload();
+                      } catch (err) {
+                        console.error(err);
+                      } finally {
+                        setUploadingRefImage(false);
+                        e.target.value = "";
+                      }
+                    }}
+                  />
+                </BlockStack>
                 <FormLayout>
-                  <TextField
+                  <Select
                     label="strategy_key"
+                    options={strategyOptions}
                     value={strategyKey}
                     onChange={setStrategyKey}
-                    autoComplete="off"
-                    helpText="Estrategia de pipeline (ej: default)"
+                    helpText="Estrategia de pipeline registrada en el backend"
                   />
 
                   <Select

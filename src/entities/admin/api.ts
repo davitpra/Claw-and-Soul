@@ -306,6 +306,8 @@ export interface AdminStyle {
   visionConfig: AdminVisionConfig | null;
   imageGenConfig: AdminImageGenConfig | null;
   previewUrl: string | null;
+  styleReferenceUrl: string | null;
+  styleReferenceStorageKey: string | null;
   images: AdminStyleImage[];
   _count?: { generations: number; productReferences: number };
 }
@@ -405,6 +407,18 @@ export const adminApi = {
       adminFetch(`/admin/styles/${id}`, { method: 'DELETE' }),
     delete: (id: string) =>
       adminFetch(`/admin/styles/${id}/permanent`, { method: 'DELETE' }),
+    uploadReferenceImage: (styleId: string, file: File) => {
+      const form = new FormData();
+      form.append('file', file);
+      return adminFetch<AdminStyle>(`/admin/styles/${styleId}/reference-image`, {
+        method: 'POST',
+        body: form,
+      });
+    },
+    removeReferenceImage: (styleId: string) =>
+      adminFetch<AdminStyle>(`/admin/styles/${styleId}/reference-image`, {
+        method: 'DELETE',
+      }),
     uploadImage: (styleId: string, file: File, altImage?: string) => {
       const form = new FormData();
       form.append('file', file);
@@ -469,6 +483,9 @@ export const adminApi = {
     },
     deletePhoto: (petId: string, photoId: string) =>
       adminFetch(`/pets/${petId}/photos/${photoId}`, { method: 'DELETE' }),
+  },
+  strategies: {
+    list: () => adminFetch<string[]>('/admin/strategies'),
   },
   visionConfigs: {
     list: () => adminFetch<AdminVisionConfig[]>('/admin/vision-configs'),
