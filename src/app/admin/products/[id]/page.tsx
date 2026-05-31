@@ -30,6 +30,8 @@ import {
   AdminFormat,
   AdminProductVariants,
   AdminProductUnlinkedVariant,
+  AdminProductVariantLink,
+  PodConfig,
 } from "@/entities/admin/api";
 import { shopifyFetch } from "@/lib/shopify/client";
 import { GET_PRODUCT } from "@/lib/shopify/queries/products";
@@ -75,6 +77,17 @@ export default function AdminProductDetailPage() {
   const [savingFormatEdit, setSavingFormatEdit] = useState(false);
   const [formatEditError, setFormatEditError] = useState<string | null>(null);
   const [togglingFormat, setTogglingFormat] = useState<string | null>(null);
+
+  // POD config editor state
+  const [podConfigVariant, setPodConfigVariant] = useState<AdminProductVariantLink | null>(null);
+  const [podConfigForm, setPodConfigForm] = useState<{
+    material: string; type: string; orientation: string;
+    width: string; height: string; additional: string;
+  }>({ material: '', type: '', orientation: 'horizontal', width: '', height: '', additional: '' });
+  const [podProviderSelected, setPodProviderSelected] = useState<string>('pictorem');
+  const [availableProviders, setAvailableProviders] = useState<string[]>(['pictorem']);
+  const [savingPodConfig, setSavingPodConfig] = useState(false);
+  const [podConfigError, setPodConfigError] = useState<string | null>(null);
 
   const loadShopifyImages = async (handle: string) => {
     try {
@@ -270,6 +283,60 @@ export default function AdminProductDetailPage() {
   };
 
   const handleCancelEdit = () => setEditingVariantId(null);
+
+  const handleOpenPodConfig = async (v: AdminProductVariantLink) => {
+    const cfg = v.podConfig;
+    setPodConfigForm({
+      material: (cfg?.material as string) ?? '',
+      type: (cfg?.type as string) ?? '',
+      orientation: (cfg?.orientation as string) ?? 'horizontal',
+      width: cfg?.width != null ? String(cfg.width) : '',
+      height: cfg?.height != null ? String(cfg.height) : '',
+      additional: Array.isArray(cfg?.additional) ? (cfg.additional as string[]).join(', ') : '',
+    });
+    setPodProviderSelected(v.podProvider ?? 'pictorem');
+    setPodConfigVariant(v);
+    setPodConfigError(null);
+    try {
+      const { providers } = await adminApi.orders.podProviders();
+      setAvailableProviders(providers);
+    } catch {
+      // keep defaults if the request fails
+    }
+  };
+
+  const handleSavePodConfig = async () => {
+    if (!product || !podConfigVariant) return;
+    const { material, type, orientation, width, height, additional } = podConfigForm;
+    if (!material.trim() || !type.trim() || !width.trim() || !height.trim()) {
+      setPodConfigError('Material, tipo, ancho y alto son obligatorios.');
+      return;
+    }
+    const config: PodConfig = {
+      material: material.trim(),
+      type: type.trim(),
+      orientation: orientation.trim() || 'horizontal',
+      width: parseFloat(width),
+      height: parseFloat(height),
+      additional: additional.trim()
+        ? additional.split(',').map((s) => s.trim()).filter(Boolean)
+        : undefined,
+    };
+    setSavingPodConfig(true);
+    setPodConfigError(null);
+    try {
+      await adminApi.products.updateVariant(product.id, podConfigVariant.shopifyVariantId, {
+        podProvider: podProviderSelected,
+        podConfig: config,
+      });
+      await loadVariants(product.id);
+      setPodConfigVariant(null);
+    } catch (e: unknown) {
+      setPodConfigError((e as Error).message);
+    } finally {
+      setSavingPodConfig(false);
+    }
+  };
 
   const handleSaveVariant = async (v: {
     shopifyVariantId: string;
@@ -561,6 +628,7 @@ export default function AdminProductDetailPage() {
                       { title: "Formato" },
                       { title: "Variante Shopify" },
                       { title: "Estado" },
+                      ...(fulfillmentMethod === "pod" ? [{ title: "POD Config" }] : []),
                       { title: "Acciones" },
                     ]}
                     selectable={false}
@@ -664,34 +732,67 @@ export default function AdminProductDetailPage() {
                               {isToggling && <Spinner size="small" />}
                             </InlineStack>
                           </IndexTable.Cell>
+                          {fulfillmentMethod === "pod" && (
+                            <IndexTable.Cell>
+                              {v.podConfig ? (
+                                <BlockStack gap="050">
+                                  <InlineStack gap="100" blockAlign="center">
+                                    <Badge tone="success">Configurado</Badge>
+                                    {v.podProvider && (
+                                      <Badge>{v.podProvider}</Badge>
+                                    )}
+                                  </InlineStack>
+                                  <Text variant="bodySm" tone="subdued" as="span">
+                                    {String(v.podConfig.material)} / {String(v.podConfig.type)}
+                                  </Text>
+                                  <Text variant="bodySm" tone="subdued" as="span">
+                                    {String(v.podConfig.width)}&quot; × {String(v.podConfig.height)}&quot;
+                                  </Text>
+                                </BlockStack>
+                              ) : (
+                                <Badge tone="warning">Sin config</Badge>
+                              )}
+                            </IndexTable.Cell>
+                          )}
                           <IndexTable.Cell>
-                            {isEditing ? (
-                              <InlineStack gap="200">
+                            <InlineStack gap="200">
+                              {isEditing ? (
+                                <>
+                                  <Button
+                                    variant="primary"
+                                    size="slim"
+                                    loading={isSaving}
+                                    disabled={!editFormatId[v.shopifyVariantId]}
+                                    onClick={() => handleSaveVariant(v)}
+                                  >
+                                    Guardar
+                                  </Button>
+                                  <Button
+                                    size="slim"
+                                    disabled={isSaving}
+                                    onClick={handleCancelEdit}
+                                  >
+                                    Cancelar
+                                  </Button>
+                                </>
+                              ) : (
                                 <Button
-                                  variant="primary"
                                   size="slim"
-                                  loading={isSaving}
-                                  disabled={!editFormatId[v.shopifyVariantId]}
-                                  onClick={() => handleSaveVariant(v)}
+                                  onClick={() => handleStartEdit(v)}
                                 >
-                                  Guardar
+                                  Editar
                                 </Button>
+                              )}
+                              {fulfillmentMethod === "pod" && !isEditing && (
                                 <Button
                                   size="slim"
-                                  disabled={isSaving}
-                                  onClick={handleCancelEdit}
+                                  variant={v.podConfig ? "secondary" : "primary"}
+                                  onClick={() => handleOpenPodConfig(v)}
                                 >
-                                  Cancelar
+                                  POD Config
                                 </Button>
-                              </InlineStack>
-                            ) : (
-                              <Button
-                                size="slim"
-                                onClick={() => handleStartEdit(v)}
-                              >
-                                Editar
-                              </Button>
-                            )}
+                              )}
+                            </InlineStack>
                           </IndexTable.Cell>
                         </IndexTable.Row>
                       );
@@ -909,6 +1010,97 @@ export default function AdminProductDetailPage() {
               </IndexTable.Row>
             ))}
           </IndexTable>
+        </Modal.Section>
+      </Modal>
+
+      {/* Modal — POD Config por variante */}
+      <Modal
+        open={!!podConfigVariant}
+        onClose={() => { if (!savingPodConfig) setPodConfigVariant(null); }}
+        title={`POD Config — ${podConfigVariant?.shopifyVariantTitle ?? ""}`}
+        primaryAction={{
+          content: "Guardar",
+          loading: savingPodConfig,
+          onAction: handleSavePodConfig,
+        }}
+        secondaryActions={[
+          {
+            content: "Cancelar",
+            disabled: savingPodConfig,
+            onAction: () => setPodConfigVariant(null),
+          },
+        ]}
+      >
+        <Modal.Section>
+          {podConfigError && (
+            <Banner tone="critical" onDismiss={() => setPodConfigError(null)}>
+              {podConfigError}
+            </Banner>
+          )}
+          <FormLayout>
+            <Select
+              label="Proveedor POD"
+              options={availableProviders.map((p) => ({ label: p, value: p }))}
+              value={podProviderSelected}
+              onChange={(v) => setPodProviderSelected(v)}
+              helpText="Distribuidor que recibirá este ítem al pagarse el pedido"
+            />
+            <FormLayout.Group>
+              <TextField
+                label="Material *"
+                value={podConfigForm.material}
+                onChange={(v) => setPodConfigForm((p) => ({ ...p, material: v }))}
+                placeholder="canvas, metal, paper, wood, panel…"
+                autoComplete="off"
+                helpText="Código de material del proveedor (ej: canvas)"
+              />
+              <TextField
+                label="Tipo *"
+                value={podConfigForm.type}
+                onChange={(v) => setPodConfigForm((p) => ({ ...p, type: v }))}
+                placeholder="stretched, roll, al, alw, hd, poster…"
+                autoComplete="off"
+                helpText="Subtipo del material (ej: stretched para canvas)"
+              />
+            </FormLayout.Group>
+            <FormLayout.Group>
+              <TextField
+                label="Ancho (pulgadas) *"
+                value={podConfigForm.width}
+                onChange={(v) => setPodConfigForm((p) => ({ ...p, width: v }))}
+                placeholder="30"
+                autoComplete="off"
+                type="number"
+              />
+              <TextField
+                label="Alto (pulgadas) *"
+                value={podConfigForm.height}
+                onChange={(v) => setPodConfigForm((p) => ({ ...p, height: v }))}
+                placeholder="24"
+                autoComplete="off"
+                type="number"
+              />
+            </FormLayout.Group>
+            <Select
+              label="Orientación"
+              options={[
+                { label: "Horizontal (landscape)", value: "horizontal" },
+                { label: "Vertical (portrait)", value: "vertical" },
+                { label: "Cuadrado", value: "square" },
+              ]}
+              value={podConfigForm.orientation}
+              onChange={(v) => setPodConfigForm((p) => ({ ...p, orientation: v }))}
+              helpText="Se deriva automáticamente del formato si se deja en horizontal."
+            />
+            <TextField
+              label="Opciones adicionales"
+              value={podConfigForm.additional}
+              onChange={(v) => setPodConfigForm((p) => ({ ...p, additional: v }))}
+              placeholder="c15, mirrorimage, boxclassic…"
+              autoComplete="off"
+              helpText="Lista separada por comas de opciones Pictorem (mounting, wrap, packaging, etc.)"
+            />
+          </FormLayout>
         </Modal.Section>
       </Modal>
 

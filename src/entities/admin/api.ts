@@ -92,6 +92,7 @@ export interface AdminOrderItem {
   unitPrice: number;
   totalPrice: number;
   imageUrl: string | null;
+  printImageUrl: string | null;
   style: string | null;
   size: string | null;
   fulfillmentMethod: string;
@@ -337,11 +338,22 @@ export interface AdminProduct {
   fulfillmentMethod: string;
 }
 
+export interface PodConfig {
+  material: string;
+  type: string;
+  orientation?: string;
+  width: number;
+  height: number;
+  additional?: string[];
+}
+
 export interface AdminProductVariantLink {
   format: { id: string; displayName: string };
   shopifyVariantId: string;
   shopifyVariantTitle: string;
   isActive: boolean;
+  podProvider?: string | null;
+  podConfig?: PodConfig | null;
 }
 
 export interface AdminProductUnlinkedVariant {
@@ -573,7 +585,12 @@ export const adminApi = {
     updateVariant: (
       productId: string,
       shopifyVariantId: string,
-      body: { formatId?: string; isActive?: boolean },
+      body: {
+        formatId?: string;
+        isActive?: boolean;
+        podProvider?: string | null;
+        podConfig?: PodConfig | null;
+      },
     ) =>
       adminFetch<AdminProductVariantLink>(
         `/admin/products/${productId}/variants/${shopifyVariantId}`,
@@ -667,5 +684,38 @@ export const adminApi = {
         method: 'POST',
         body: JSON.stringify({ userId }),
       }),
+    podSubmit: (orderId: string, itemId: string, force = false) =>
+      adminFetch<{ ok: boolean; queued: boolean; orderItemId: string }>(
+        `/admin/orders/${orderId}/items/${itemId}/pod/submit`,
+        { method: 'POST', body: JSON.stringify({ force }) },
+      ),
+    podSync: (orderId: string, itemId: string) =>
+      adminFetch<{ ok: boolean; orderItemId: string }>(
+        `/admin/orders/${orderId}/items/${itemId}/pod/sync`,
+        { method: 'POST' },
+      ),
+    podHealth: () =>
+      adminFetch<Array<{ provider: string; ok: boolean; apiUrl: string; message: string }>>(
+        '/admin/orders/pod/health',
+      ),
+    podProviders: () =>
+      adminFetch<{ providers: string[] }>('/admin/orders/pod/providers'),
+    podSettings: () =>
+      adminFetch<{ enabled: boolean; source: 'db' | 'env-default' }>(
+        '/admin/orders/pod/settings',
+      ),
+    podSetEnabled: (enabled: boolean) =>
+      adminFetch<{ enabled: boolean }>('/admin/orders/pod/settings', {
+        method: 'PATCH',
+        body: JSON.stringify({ enabled }),
+      }),
+    uploadPrintImage: (orderId: string, itemId: string, file: File) => {
+      const form = new FormData();
+      form.append('file', file);
+      return adminFetch<{ printImageUrl: string }>(
+        `/admin/orders/${orderId}/items/${itemId}/print-image`,
+        { method: 'POST', body: form },
+      );
+    },
   },
 };

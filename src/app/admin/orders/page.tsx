@@ -19,7 +19,7 @@ import {
   ChoiceList,
   Thumbnail,
   EmptyState,
-
+  Modal,
 } from "@shopify/polaris";
 import { RefreshIcon } from "@shopify/polaris-icons";
 import { adminApi, AdminOrderListItem, Paginated } from "@/entities/admin/api";
@@ -92,6 +92,14 @@ export default function AdminOrdersPage() {
   const [method, setMethod] = useState<string[]>([]);
   const [syncing, setSyncing] = useState(false);
   const [syncMsg, setSyncMsg] = useState<{ text: string; tone: "info" | "success" | "critical" } | null>(null);
+  const [testingPod, setTestingPod] = useState(false);
+  const [podHealthMsg, setPodHealthMsg] = useState<{ text: string; tone: "success" | "critical" } | null>(null);
+
+  // POD switch state
+  const [podEnabled, setPodEnabled] = useState<boolean | null>(null);
+  const [podToggling, setPodToggling] = useState(false);
+  const [podSwitchMsg, setPodSwitchMsg] = useState<{ text: string; tone: "success" | "critical" } | null>(null);
+  const [confirmActivateOpen, setConfirmActivateOpen] = useState(false);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -112,6 +120,31 @@ export default function AdminOrdersPage() {
     load();
   }, [load]);
 
+  // Load POD setting on mount
+  useEffect(() => {
+    adminApi.orders.podSettings().then((res) => setPodEnabled(res.enabled)).catch(() => {});
+  }, []);
+
+  async function handleTestPod() {
+    setTestingPod(true);
+    setPodHealthMsg(null);
+    try {
+      const results = await adminApi.orders.podHealth();
+      const allOk = results.every((r) => r.ok);
+      const lines = results.map((r) =>
+        r.ok ? `✓ ${r.provider} · ${r.apiUrl}` : `✗ ${r.provider}: ${r.message}`,
+      );
+      setPodHealthMsg({
+        text: lines.join(' | '),
+        tone: allOk ? "success" : "critical",
+      });
+    } catch (err) {
+      setPodHealthMsg({ text: `Error: ${(err as Error).message}`, tone: "critical" });
+    } finally {
+      setTestingPod(false);
+    }
+  }
+
   async function handleSync() {
     setSyncing(true);
     setSyncMsg(null);
@@ -126,6 +159,35 @@ export default function AdminOrdersPage() {
       setSyncMsg({ text: `Error: ${(err as Error).message}`, tone: "critical" });
     } finally {
       setSyncing(false);
+    }
+  }
+
+  function handlePodToggleRequest() {
+    if (!podEnabled) {
+      // Activar es la acción peligrosa → pedir confirmación
+      setConfirmActivateOpen(true);
+    } else {
+      // Desactivar es seguro → directo
+      applyPodEnabled(false);
+    }
+  }
+
+  async function applyPodEnabled(next: boolean) {
+    setPodToggling(true);
+    setPodSwitchMsg(null);
+    try {
+      const res = await adminApi.orders.podSetEnabled(next);
+      setPodEnabled(res.enabled);
+      setPodSwitchMsg({
+        text: res.enabled
+          ? "Envío automático a Pictorem activado. Los nuevos pedidos pagados se enviarán a producción."
+          : "Envío automático a Pictorem desactivado. Los pedidos pagados quedarán pendientes.",
+        tone: res.enabled ? "success" : "critical",
+      });
+    } catch (err) {
+      setPodSwitchMsg({ text: `Error al cambiar el estado: ${(err as Error).message}`, tone: "critical" });
+    } finally {
+      setPodToggling(false);
     }
   }
 
@@ -202,16 +264,63 @@ export default function AdminOrdersPage() {
         loading: syncing,
         onAction: handleSync,
       }}
+      secondaryActions={[
+        {
+          content: testingPod ? "Probando…" : "Probar conexión Pictorem",
+          loading: testingPod,
+          onAction: handleTestPod,
+        },
+      ]}
     >
       <BlockStack gap="400">
+        {podHealthMsg && (
+          <Banner tone={podHealthMsg.tone} onDismiss={() => setPodHealthMsg(null)}>
+            {podHealthMsg.text}
+          </Banner>
+        )}
         {syncMsg && (
-          <Banner
-            tone={syncMsg.tone}
-            onDismiss={() => setSyncMsg(null)}
-          >
+          <Banner tone={syncMsg.tone} onDismiss={() => setSyncMsg(null)}>
             {syncMsg.text}
           </Banner>
         )}
+        {podSwitchMsg && (
+          <Banner tone={podSwitchMsg.tone} onDismiss={() => setPodSwitchMsg(null)}>
+            {podSwitchMsg.text}
+          </Banner>
+        )}
+
+        {/* POD auto-fulfillment switch */}
+        <Card>
+          <InlineStack align="space-between" blockAlign="center" gap="400">
+            <BlockStack gap="100">
+              <InlineStack gap="200" blockAlign="center">
+                <Text variant="headingSm" as="h2">
+                  Envío automático a Pictorem (POD)
+                </Text>
+                {podEnabled === null ? (
+                  <Spinner size="small" />
+                ) : (
+                  <Badge tone={podEnabled ? "success" : "critical"}>
+                    {podEnabled ? "Activo" : "Desactivado"}
+                  </Badge>
+                )}
+              </InlineStack>
+              <Text as="p" tone="subdued" variant="bodySm">
+                {podEnabled
+                  ? "Los pedidos pagados se envían automáticamente a Pictorem para producción."
+                  : "Los pedidos pagados quedan pendientes y no se envían a Pictorem. Útil en modo testeo."}
+              </Text>
+            </BlockStack>
+            <Button
+              variant={podEnabled ? "secondary" : "primary"}
+              loading={podToggling}
+              disabled={podEnabled === null}
+              onClick={handlePodToggleRequest}
+            >
+              {podEnabled ? "Desactivar" : "Activar"}
+            </Button>
+          </InlineStack>
+        </Card>
 
         <Card padding="0">
           <Box
@@ -254,7 +363,7 @@ export default function AdminOrdersPage() {
           ) : !orders?.data.length ? (
             <EmptyState
               heading="No hay pedidos con estos filtros"
-              image=""
+              image="https://cdn.shopify.com/s/files/1/0262/4071/2726/files/emptystate-files.png"
             >
               <Text as="p" tone="subdued">
                 Intenta ajustar los filtros o sincronizar desde Shopify.
@@ -367,6 +476,39 @@ export default function AdminOrdersPage() {
           )}
         </Card>
       </BlockStack>
+
+      {/* Confirmation modal: only shown when activating (dangerous direction) */}
+      <Modal
+        open={confirmActivateOpen}
+        onClose={() => setConfirmActivateOpen(false)}
+        title="¿Activar envío automático a Pictorem?"
+        primaryAction={{
+          content: "Sí, activar",
+          destructive: false,
+          loading: podToggling,
+          onAction: () => {
+            setConfirmActivateOpen(false);
+            applyPodEnabled(true);
+          },
+        }}
+        secondaryActions={[
+          {
+            content: "Cancelar",
+            onAction: () => setConfirmActivateOpen(false),
+          },
+        ]}
+      >
+        <Modal.Section>
+          <BlockStack gap="200">
+            <Text as="p">
+              Al activar esta opción, <Text as="span" fontWeight="semibold">todos los pedidos pagados se enviarán automáticamente a Pictorem</Text> para producción real.
+            </Text>
+            <Text as="p" tone="subdued">
+              Asegúrate de que no estás en modo de prueba. Los pedidos enviados a Pictorem generarán una orden de producción real y pueden tener coste.
+            </Text>
+          </BlockStack>
+        </Modal.Section>
+      </Modal>
     </Page>
   );
 }
