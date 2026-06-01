@@ -21,6 +21,7 @@ import {
   IndexTable,
   FormLayout,
   TextField,
+  ChoiceList,
 } from "@shopify/polaris";
 import { ExternalIcon, DeleteIcon, RefreshIcon, ViewIcon } from "@shopify/polaris-icons";
 import {
@@ -32,6 +33,9 @@ import {
   AdminProductUnlinkedVariant,
   AdminProductVariantLink,
   PodConfig,
+  PodCatalog,
+  PodCatalogMaterial,
+  PodCatalogType,
 } from "@/entities/admin/api";
 import { shopifyFetch } from "@/lib/shopify/client";
 import { GET_PRODUCT } from "@/lib/shopify/queries/products";
@@ -82,10 +86,12 @@ export default function AdminProductDetailPage() {
   const [podConfigVariant, setPodConfigVariant] = useState<AdminProductVariantLink | null>(null);
   const [podConfigForm, setPodConfigForm] = useState<{
     material: string; type: string; orientation: string;
-    width: string; height: string; additional: string;
-  }>({ material: '', type: '', orientation: 'horizontal', width: '', height: '', additional: '' });
+    sizeKey: string; additional: string[];
+  }>({ material: '', type: '', orientation: 'horizontal', sizeKey: '', additional: [] });
   const [podProviderSelected, setPodProviderSelected] = useState<string>('pictorem');
   const [availableProviders, setAvailableProviders] = useState<string[]>(['pictorem']);
+  const [podCatalog, setPodCatalog] = useState<PodCatalog | null>(null);
+  const [podCatalogLoading, setPodCatalogLoading] = useState(false);
   const [savingPodConfig, setSavingPodConfig] = useState(false);
   const [podConfigError, setPodConfigError] = useState<string | null>(null);
 
@@ -286,41 +292,46 @@ export default function AdminProductDetailPage() {
 
   const handleOpenPodConfig = async (v: AdminProductVariantLink) => {
     const cfg = v.podConfig;
-    setPodConfigForm({
-      material: (cfg?.material as string) ?? '',
-      type: (cfg?.type as string) ?? '',
-      orientation: (cfg?.orientation as string) ?? 'horizontal',
-      width: cfg?.width != null ? String(cfg.width) : '',
-      height: cfg?.height != null ? String(cfg.height) : '',
-      additional: Array.isArray(cfg?.additional) ? (cfg.additional as string[]).join(', ') : '',
-    });
+    const material = (cfg?.material as string) ?? '';
+    const type = (cfg?.type as string) ?? '';
+    const width = cfg?.width != null ? Number(cfg.width) : 0;
+    const height = cfg?.height != null ? Number(cfg.height) : 0;
+    const sizeKey = width && height ? `${width}x${height}` : '';
+    const additional = Array.isArray(cfg?.additional) ? (cfg.additional as string[]) : [];
+    setPodConfigForm({ material, type, orientation: (cfg?.orientation as string) ?? 'horizontal', sizeKey, additional });
     setPodProviderSelected(v.podProvider ?? 'pictorem');
     setPodConfigVariant(v);
     setPodConfigError(null);
+    setPodCatalogLoading(true);
     try {
-      const { providers } = await adminApi.orders.podProviders();
+      const [catalog, { providers }] = await Promise.all([
+        adminApi.orders.podCatalog(),
+        adminApi.orders.podProviders(),
+      ]);
+      setPodCatalog(catalog);
       setAvailableProviders(providers);
     } catch {
-      // keep defaults if the request fails
+      // best-effort — keep defaults if request fails
+    } finally {
+      setPodCatalogLoading(false);
     }
   };
 
   const handleSavePodConfig = async () => {
     if (!product || !podConfigVariant) return;
-    const { material, type, orientation, width, height, additional } = podConfigForm;
-    if (!material.trim() || !type.trim() || !width.trim() || !height.trim()) {
-      setPodConfigError('Material, tipo, ancho y alto son obligatorios.');
+    const { material, type, orientation, sizeKey, additional } = podConfigForm;
+    if (!material || !type || !sizeKey) {
+      setPodConfigError('Material, tipo y tamaño son obligatorios.');
       return;
     }
+    const [w, h] = sizeKey.split('x').map(Number);
     const config: PodConfig = {
-      material: material.trim(),
-      type: type.trim(),
-      orientation: orientation.trim() || 'horizontal',
-      width: parseFloat(width),
-      height: parseFloat(height),
-      additional: additional.trim()
-        ? additional.split(',').map((s) => s.trim()).filter(Boolean)
-        : undefined,
+      material,
+      type,
+      orientation: orientation || 'horizontal',
+      width: w,
+      height: h,
+      additional: additional.length > 0 ? additional : undefined,
     };
     setSavingPodConfig(true);
     setPodConfigError(null);
@@ -1037,70 +1048,111 @@ export default function AdminProductDetailPage() {
               {podConfigError}
             </Banner>
           )}
-          <FormLayout>
-            <Select
-              label="Proveedor POD"
-              options={availableProviders.map((p) => ({ label: p, value: p }))}
-              value={podProviderSelected}
-              onChange={(v) => setPodProviderSelected(v)}
-              helpText="Distribuidor que recibirá este ítem al pagarse el pedido"
-            />
-            <FormLayout.Group>
-              <TextField
-                label="Material *"
-                value={podConfigForm.material}
-                onChange={(v) => setPodConfigForm((p) => ({ ...p, material: v }))}
-                placeholder="canvas, metal, paper, wood, panel…"
-                autoComplete="off"
-                helpText="Código de material del proveedor (ej: canvas)"
+          {podCatalogLoading ? (
+            <InlineStack align="center" gap="300">
+              <Spinner size="small" />
+              <Text as="span" tone="subdued">Cargando catálogo…</Text>
+            </InlineStack>
+          ) : (
+            <FormLayout>
+              <Select
+                label="Proveedor POD"
+                options={availableProviders.map((p) => ({ label: p, value: p }))}
+                value={podProviderSelected}
+                onChange={(v) => setPodProviderSelected(v)}
+                helpText="Distribuidor que recibirá este ítem al pagarse el pedido"
               />
-              <TextField
-                label="Tipo *"
-                value={podConfigForm.type}
-                onChange={(v) => setPodConfigForm((p) => ({ ...p, type: v }))}
-                placeholder="stretched, roll, al, alw, hd, poster…"
-                autoComplete="off"
-                helpText="Subtipo del material (ej: stretched para canvas)"
-              />
-            </FormLayout.Group>
-            <FormLayout.Group>
-              <TextField
-                label="Ancho (pulgadas) *"
-                value={podConfigForm.width}
-                onChange={(v) => setPodConfigForm((p) => ({ ...p, width: v }))}
-                placeholder="30"
-                autoComplete="off"
-                type="number"
-              />
-              <TextField
-                label="Alto (pulgadas) *"
-                value={podConfigForm.height}
-                onChange={(v) => setPodConfigForm((p) => ({ ...p, height: v }))}
-                placeholder="24"
-                autoComplete="off"
-                type="number"
-              />
-            </FormLayout.Group>
-            <Select
-              label="Orientación"
-              options={[
-                { label: "Horizontal (landscape)", value: "horizontal" },
-                { label: "Vertical (portrait)", value: "vertical" },
-                { label: "Cuadrado", value: "square" },
-              ]}
-              value={podConfigForm.orientation}
-              onChange={(v) => setPodConfigForm((p) => ({ ...p, orientation: v }))}
-              helpText="Se deriva automáticamente del formato si se deja en horizontal."
-            />
-            <TextField
-              label="Opciones adicionales"
-              value={podConfigForm.additional}
-              onChange={(v) => setPodConfigForm((p) => ({ ...p, additional: v }))}
-              placeholder="c15, mirrorimage, boxclassic…"
-              autoComplete="off"
-              helpText="Lista separada por comas de opciones Pictorem (mounting, wrap, packaging, etc.)"
-            />
-          </FormLayout>
+              {(() => {
+                const catalog = podCatalog;
+                const selMat: PodCatalogMaterial | undefined = catalog?.materials.find(
+                  (m) => m.code === podConfigForm.material,
+                );
+                const selType: PodCatalogType | undefined = selMat?.types.find(
+                  (t) => t.code === podConfigForm.type,
+                );
+                return (
+                  <>
+                    <FormLayout.Group>
+                      <Select
+                        label="Material *"
+                        placeholder="Seleccionar material"
+                        options={
+                          catalog
+                            ? catalog.materials.map((m) => ({ label: m.label, value: m.code }))
+                            : [{ label: podConfigForm.material || '—', value: podConfigForm.material }]
+                        }
+                        value={podConfigForm.material}
+                        onChange={(v) =>
+                          setPodConfigForm((p) => ({ ...p, material: v, type: '', sizeKey: '', additional: [] }))
+                        }
+                      />
+                      <Select
+                        label="Tipo *"
+                        placeholder="Seleccionar tipo"
+                        disabled={!podConfigForm.material}
+                        options={
+                          selMat
+                            ? selMat.types.map((t) => ({ label: t.label, value: t.code }))
+                            : [{ label: podConfigForm.type || '—', value: podConfigForm.type }]
+                        }
+                        value={podConfigForm.type}
+                        onChange={(v) =>
+                          setPodConfigForm((p) => ({ ...p, type: v, sizeKey: '', additional: [] }))
+                        }
+                      />
+                    </FormLayout.Group>
+                    <Select
+                      label="Tamaño *"
+                      placeholder="Seleccionar tamaño"
+                      disabled={!podConfigForm.type}
+                      options={
+                        selMat
+                          ? selMat.sizes.map((s) => ({
+                              label: s.label,
+                              value: `${s.width}x${s.height}`,
+                            }))
+                          : []
+                      }
+                      value={podConfigForm.sizeKey}
+                      onChange={(v) => setPodConfigForm((p) => ({ ...p, sizeKey: v }))}
+                    />
+                    <Select
+                      label="Orientación"
+                      options={[
+                        { label: "Horizontal (landscape)", value: "horizontal" },
+                        { label: "Vertical (portrait)", value: "vertical" },
+                        { label: "Cuadrado", value: "square" },
+                      ]}
+                      value={podConfigForm.orientation}
+                      onChange={(v) => setPodConfigForm((p) => ({ ...p, orientation: v }))}
+                      helpText="Se deriva automáticamente del formato si se deja en horizontal."
+                    />
+                    {selType && selType.options.length > 1 && (
+                      <ChoiceList
+                        title="Opciones adicionales"
+                        choices={selType.options.map((o) => ({ label: o.label, value: o.code }))}
+                        selected={
+                          podConfigForm.additional.length > 0
+                            ? [
+                                selType.options.find(
+                                  (o) =>
+                                    JSON.stringify(o.additional) ===
+                                    JSON.stringify(podConfigForm.additional),
+                                )?.code ?? 'none',
+                              ]
+                            : ['none']
+                        }
+                        onChange={(vals) => {
+                          const chosen = selType.options.find((o) => o.code === vals[0]);
+                          setPodConfigForm((p) => ({ ...p, additional: chosen?.additional ?? [] }));
+                        }}
+                      />
+                    )}
+                  </>
+                );
+              })()}
+            </FormLayout>
+          )}
         </Modal.Section>
       </Modal>
 

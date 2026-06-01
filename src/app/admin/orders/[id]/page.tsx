@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
 import {
@@ -22,8 +22,18 @@ import {
   TextField,
   Select,
 } from "@shopify/polaris";
-import { RefreshIcon, ExternalIcon } from "@shopify/polaris-icons";
-import { adminApi, AdminOrderDetail, AdminOrderItem } from "@/entities/admin/api";
+import {
+  RefreshIcon,
+  ExternalIcon,
+  SendIcon,
+  ResetIcon,
+  ImageIcon,
+} from "@shopify/polaris-icons";
+import {
+  adminApi,
+  AdminOrderDetail,
+  AdminOrderItem,
+} from "@/entities/admin/api";
 
 const PRODUCTION_STATUS_LABELS: Record<string, string> = {
   paid: "Pagado",
@@ -99,18 +109,76 @@ function OrderItemCard({
 }) {
   const [updatingStatus, setUpdatingStatus] = useState(false);
   const [showTracking, setShowTracking] = useState(!!item.trackingNumber);
-  const [trackingNumber, setTrackingNumber] = useState(item.trackingNumber ?? "");
-  const [trackingUrl, setTrackingUrl] = useState(item.trackingUrl ?? "");
-  const [trackingCarrier, setTrackingCarrier] = useState(item.trackingCarrier ?? "");
-  const [savingTracking, setSavingTracking] = useState(false);
-  const [fulfillmentMethod, setFulfillmentMethod] = useState<"in_house" | "pod">(
-    item.fulfillmentMethod as "in_house" | "pod",
+  const [trackingNumber, setTrackingNumber] = useState(
+    item.trackingNumber ?? "",
   );
+  const [trackingUrl, setTrackingUrl] = useState(item.trackingUrl ?? "");
+  const [trackingCarrier, setTrackingCarrier] = useState(
+    item.trackingCarrier ?? "",
+  );
+  const [savingTracking, setSavingTracking] = useState(false);
+  const [fulfillmentMethod, setFulfillmentMethod] = useState<
+    "in_house" | "pod"
+  >(item.fulfillmentMethod as "in_house" | "pod");
   const [savingFulfillment, setSavingFulfillment] = useState(false);
+  const [submittingPod, setSubmittingPod] = useState(false);
+  const [syncingPod, setSyncingPod] = useState(false);
+  const [uploadingImage, setUploadingImage] = useState(false);
   const [err, setErr] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const thumb = item.generation?.thumbnailUrl ?? item.generation?.resultUrl ?? item.imageUrl;
+  const thumb =
+    item.printImageUrl ??
+    item.generation?.thumbnailUrl ??
+    item.generation?.resultUrl ??
+    item.imageUrl;
   const allowed = VALID_TRANSITIONS[item.productionStatus] ?? [];
+
+  async function handlePodSubmit(force = false) {
+    setSubmittingPod(true);
+    setErr(null);
+    try {
+      await adminApi.orders.podSubmit(orderId, item.id, force);
+      onUpdate();
+    } catch (e) {
+      setErr((e as Error).message);
+    } finally {
+      setSubmittingPod(false);
+    }
+  }
+
+  async function handlePodSync() {
+    setSyncingPod(true);
+    setErr(null);
+    try {
+      await adminApi.orders.podSync(orderId, item.id);
+      onUpdate();
+    } catch (e) {
+      setErr((e as Error).message);
+    } finally {
+      setSyncingPod(false);
+    }
+  }
+
+  async function handleUploadImage(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    e.target.value = "";
+    if (!file.type.startsWith("image/")) {
+      setErr("El archivo debe ser una imagen");
+      return;
+    }
+    setUploadingImage(true);
+    setErr(null);
+    try {
+      await adminApi.orders.uploadPrintImage(orderId, item.id, file);
+      onUpdate();
+    } catch (e) {
+      setErr((e as Error).message);
+    } finally {
+      setUploadingImage(false);
+    }
+  }
 
   async function handleFulfillmentChange(value: string) {
     const method = value as "in_house" | "pod";
@@ -165,26 +233,46 @@ function OrderItemCard({
       <BlockStack gap="300">
         <InlineStack gap="400" blockAlign="start">
           <div style={{ flexShrink: 0 }}>
-            {thumb ? (
-              <Thumbnail source={thumb} alt={item.title} size="medium" />
-            ) : (
-              <div
-                style={{
-                  width: 60,
-                  height: 60,
-                  background: "#f6f6f7",
-                  border: "1px solid #e3e3e3",
-                  borderRadius: 8,
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                }}
+            <BlockStack gap="100" inlineAlign="center">
+              {thumb ? (
+                <Thumbnail source={thumb} alt={item.title} size="medium" />
+              ) : (
+                <div
+                  style={{
+                    width: 60,
+                    height: 60,
+                    background: "#f6f6f7",
+                    border: "1px solid #e3e3e3",
+                    borderRadius: 8,
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                  }}
+                >
+                  <Text as="span" tone="subdued" variant="bodySm">
+                    —
+                  </Text>
+                </div>
+              )}
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                hidden
+                onChange={handleUploadImage}
+              />
+              <Button
+                size="micro"
+                icon={ImageIcon}
+                loading={uploadingImage}
+                onClick={() => fileInputRef.current?.click()}
               >
-                <Text as="span" tone="subdued" variant="bodySm">
-                  —
-                </Text>
-              </div>
-            )}
+                {item.printImageUrl ? "Reemplazar" : "Subir imagen"}
+              </Button>
+              {item.printImageUrl && (
+                <Badge tone="info">Imagen personalizada</Badge>
+              )}
+            </BlockStack>
           </div>
 
           <BlockStack gap="100" align="start">
@@ -236,7 +324,8 @@ function OrderItemCard({
                 />
               </div>
               <Badge tone={STATUS_TONES[item.productionStatus] ?? "enabled"}>
-                {PRODUCTION_STATUS_LABELS[item.productionStatus] ?? item.productionStatus}
+                {PRODUCTION_STATUS_LABELS[item.productionStatus] ??
+                  item.productionStatus}
               </Badge>
             </InlineStack>
           </BlockStack>
@@ -267,6 +356,50 @@ function OrderItemCard({
                 </Button>
               ))}
             </InlineStack>
+          </>
+        )}
+
+        {/* POD section — visible only when fulfillmentMethod is pod */}
+        {fulfillmentMethod === "pod" && (
+          <>
+            <Divider />
+            <BlockStack gap="200">
+              <InlineStack gap="200" blockAlign="center">
+                <Text variant="bodySm" fontWeight="semibold" as="span">
+                  Pictorem POD
+                </Text>
+                {item.podOrderId ? (
+                  <Badge tone="info">{`#${item.podOrderId}`}</Badge>
+                ) : (
+                  <Badge tone="enabled">Sin enviar</Badge>
+                )}
+                {item.podProvider && (
+                  <Text variant="bodySm" tone="subdued" as="span">
+                    · {item.podProvider}
+                  </Text>
+                )}
+              </InlineStack>
+              <InlineStack gap="200">
+                <Button
+                  size="slim"
+                  icon={SendIcon}
+                  loading={submittingPod}
+                  onClick={() => handlePodSubmit(!!item.podOrderId)}
+                >
+                  {item.podOrderId ? "Re-enviar" : "Enviar a Pictorem"}
+                </Button>
+                {item.podOrderId && (
+                  <Button
+                    size="slim"
+                    icon={ResetIcon}
+                    loading={syncingPod}
+                    onClick={handlePodSync}
+                  >
+                    Actualizar estado
+                  </Button>
+                )}
+              </InlineStack>
+            </BlockStack>
           </>
         )}
 
@@ -475,8 +608,12 @@ export default function AdminOrderDetailPage() {
                               {ev.fromStatus && ev.toStatus && (
                                 <Text as="span" tone="subdued">
                                   {" "}
-                                  · {PRODUCTION_STATUS_LABELS[ev.fromStatus] ?? ev.fromStatus} →{" "}
-                                  {PRODUCTION_STATUS_LABELS[ev.toStatus] ?? ev.toStatus}
+                                  ·{" "}
+                                  {PRODUCTION_STATUS_LABELS[ev.fromStatus] ??
+                                    ev.fromStatus}{" "}
+                                  →{" "}
+                                  {PRODUCTION_STATUS_LABELS[ev.toStatus] ??
+                                    ev.toStatus}
                                 </Text>
                               )}
                             </Text>
@@ -593,13 +730,19 @@ export default function AdminOrderDetailPage() {
                   items={[
                     {
                       term: "Subtotal",
-                      description: fmtCurrency(order.subtotalAmount, order.currency),
+                      description: fmtCurrency(
+                        order.subtotalAmount,
+                        order.currency,
+                      ),
                     },
                     ...(order.shippingAmount != null
                       ? [
                           {
                             term: "Envío",
-                            description: fmtCurrency(order.shippingAmount, order.currency),
+                            description: fmtCurrency(
+                              order.shippingAmount,
+                              order.currency,
+                            ),
                           },
                         ]
                       : []),
@@ -607,7 +750,10 @@ export default function AdminOrderDetailPage() {
                       ? [
                           {
                             term: "Impuestos",
-                            description: fmtCurrency(order.taxAmount, order.currency),
+                            description: fmtCurrency(
+                              order.taxAmount,
+                              order.currency,
+                            ),
                           },
                         ]
                       : []),

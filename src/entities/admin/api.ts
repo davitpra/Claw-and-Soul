@@ -369,6 +369,35 @@ export interface AdminProductVariants {
   unlinkedVariants: AdminProductUnlinkedVariant[];
 }
 
+export interface PodCatalogOption {
+  code: string;
+  label: string;
+  additional: string[];
+}
+
+export interface PodCatalogType {
+  code: string;
+  label: string;
+  options: PodCatalogOption[];
+}
+
+export interface PodCatalogSize {
+  width: number;
+  height: number;
+  label: string;
+}
+
+export interface PodCatalogMaterial {
+  code: string;
+  label: string;
+  types: PodCatalogType[];
+  sizes: PodCatalogSize[];
+}
+
+export interface PodCatalog {
+  materials: PodCatalogMaterial[];
+}
+
 export interface SyncStatus {
   status: string;
   startedAt: string | null;
@@ -694,6 +723,8 @@ export const adminApi = {
         `/admin/orders/${orderId}/items/${itemId}/pod/sync`,
         { method: 'POST' },
       ),
+    podCatalog: () =>
+      adminFetch<PodCatalog>('/admin/orders/pod/catalog'),
     podHealth: () =>
       adminFetch<Array<{ provider: string; ok: boolean; apiUrl: string; message: string }>>(
         '/admin/orders/pod/health',
