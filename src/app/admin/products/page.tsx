@@ -431,21 +431,21 @@ export default function AdminProductsPage() {
                     </InlineStack>
                   </IndexTable.Cell>
                   <IndexTable.Cell>
-                    <Button
-                      variant="plain"
-                      tone="critical"
-                      size="slim"
-                      icon={DeleteIcon}
-                      accessibilityLabel={`Eliminar ${p.displayName}`}
-                      onClick={() => setDeletingTarget(p)}
-                    />
-                  </IndexTable.Cell>
-                  <IndexTable.Cell>
-                    <Link href={`/admin/products/${p.id}`}>
-                      <Button variant="plain" size="slim">
-                        Ver
-                      </Button>
-                    </Link>
+                    <InlineStack gap="200" blockAlign="center">
+                      <Link href={`/admin/products/${p.id}`}>
+                        <Button variant="plain" size="slim">
+                          Ver
+                        </Button>
+                      </Link>
+                      <Button
+                        variant="plain"
+                        tone="critical"
+                        size="slim"
+                        icon={DeleteIcon}
+                        accessibilityLabel={`Eliminar ${p.displayName}`}
+                        onClick={() => setDeletingTarget(p)}
+                      />
+                    </InlineStack>
                   </IndexTable.Cell>
                 </IndexTable.Row>
               ))}

@@ -362,7 +362,7 @@ export default function AdminUserDetailPage() {
                       Mascotas ({user.pets.length})
                     </Text>
                     {user.pets.length === 0 ? (
-                      <EmptyState heading="Sin mascotas registradas" image="">
+                      <EmptyState heading="Sin mascotas registradas" image="https://cdn.shopify.com/s/files/1/0262/4071/2726/files/emptystate-files.png">
                         <Text as="p" tone="subdued">
                           Este usuario no tiene mascotas.
                         </Text>
@@ -436,7 +436,7 @@ export default function AdminUserDetailPage() {
                       Imágenes subidas ({allPhotos.length})
                     </Text>
                     {allPhotos.length === 0 ? (
-                      <EmptyState heading="Sin imágenes" image="">
+                      <EmptyState heading="Sin imágenes" image="https://cdn.shopify.com/s/files/1/0262/4071/2726/files/emptystate-files.png">
                         <Text as="p" tone="subdued">
                           Sin fotos subidas.
                         </Text>
@@ -638,7 +638,7 @@ function UserOrdersList({ userId }: { userId: string }) {
 
   if (!orders?.data.length) {
     return (
-      <EmptyState heading="Sin pedidos registrados" image="">
+      <EmptyState heading="Sin pedidos registrados" image="https://cdn.shopify.com/s/files/1/0262/4071/2726/files/emptystate-files.png">
         <Text as="p" tone="subdued">
           No se encontraron pedidos para este usuario.
         </Text>
