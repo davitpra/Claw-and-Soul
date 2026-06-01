@@ -386,8 +386,7 @@ function OrderItemCard({
                 (cancelInfo ? (
                   <Banner tone="info">
                     Cancelado{cancelInfo.refunded ? " y reembolsado" : ""} en
-                    Shopify por la app. Recuerda eliminar el presupuesto (remove
-                    quote) en Pictorem si aún no lo hiciste.
+                    Shopify por la app.
                   </Banner>
                 ) : (
                   <Banner tone="warning">
