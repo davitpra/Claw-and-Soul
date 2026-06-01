@@ -369,16 +369,24 @@ export interface AdminProductVariants {
   unlinkedVariants: AdminProductUnlinkedVariant[];
 }
 
-export interface PodCatalogOption {
-  code: string;
+export interface PodCatalogChoice {
+  value: string;
   label: string;
-  additional: string[];
+  codes: string[];
+}
+
+export interface PodCatalogOptionGroup {
+  key: string;
+  label: string;
+  control: 'select' | 'checkbox';
+  choices: PodCatalogChoice[];
+  default: string;
 }
 
 export interface PodCatalogType {
   code: string;
   label: string;
-  options: PodCatalogOption[];
+  optionGroups: PodCatalogOptionGroup[];
 }
 
 export interface PodCatalogSize {

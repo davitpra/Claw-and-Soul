@@ -21,7 +21,7 @@ import {
   IndexTable,
   FormLayout,
   TextField,
-  ChoiceList,
+  Checkbox,
 } from "@shopify/polaris";
 import { ExternalIcon, DeleteIcon, RefreshIcon, ViewIcon } from "@shopify/polaris-icons";
 import {
@@ -36,6 +36,7 @@ import {
   PodCatalog,
   PodCatalogMaterial,
   PodCatalogType,
+  PodCatalogOptionGroup,
 } from "@/entities/admin/api";
 import { shopifyFetch } from "@/lib/shopify/client";
 import { GET_PRODUCT } from "@/lib/shopify/queries/products";
@@ -86,8 +87,8 @@ export default function AdminProductDetailPage() {
   const [podConfigVariant, setPodConfigVariant] = useState<AdminProductVariantLink | null>(null);
   const [podConfigForm, setPodConfigForm] = useState<{
     material: string; type: string; orientation: string;
-    sizeKey: string; additional: string[];
-  }>({ material: '', type: '', orientation: 'horizontal', sizeKey: '', additional: [] });
+    sizeKey: string; additionalOpts: Record<string, string>;
+  }>({ material: '', type: '', orientation: 'horizontal', sizeKey: '', additionalOpts: {} });
   const [podProviderSelected, setPodProviderSelected] = useState<string>('pictorem');
   const [availableProviders, setAvailableProviders] = useState<string[]>(['pictorem']);
   const [podCatalog, setPodCatalog] = useState<PodCatalog | null>(null);
@@ -297,8 +298,8 @@ export default function AdminProductDetailPage() {
     const width = cfg?.width != null ? Number(cfg.width) : 0;
     const height = cfg?.height != null ? Number(cfg.height) : 0;
     const sizeKey = width && height ? `${width}x${height}` : '';
-    const additional = Array.isArray(cfg?.additional) ? (cfg.additional as string[]) : [];
-    setPodConfigForm({ material, type, orientation: (cfg?.orientation as string) ?? 'horizontal', sizeKey, additional });
+    const rawAdditional = Array.isArray(cfg?.additional) ? (cfg.additional as string[]) : [];
+    setPodConfigForm({ material, type, orientation: (cfg?.orientation as string) ?? 'horizontal', sizeKey, additionalOpts: {} });
     setPodProviderSelected(v.podProvider ?? 'pictorem');
     setPodConfigVariant(v);
     setPodConfigError(null);
@@ -310,6 +311,19 @@ export default function AdminProductDetailPage() {
       ]);
       setPodCatalog(catalog);
       setAvailableProviders(providers);
+      // Reconstruct additionalOpts from saved additional codes
+      const mat = catalog.materials.find((m) => m.code === material);
+      const typ = mat?.types.find((t) => t.code === type);
+      if (typ) {
+        const opts: Record<string, string> = {};
+        for (const group of typ.optionGroups) {
+          const match = group.choices.find(
+            (c) => c.codes.length > 0 && c.codes.every((code) => rawAdditional.includes(code)),
+          );
+          opts[group.key] = match?.value ?? group.default;
+        }
+        setPodConfigForm((p) => ({ ...p, additionalOpts: opts }));
+      }
     } catch {
       // best-effort — keep defaults if request fails
     } finally {
@@ -319,12 +333,22 @@ export default function AdminProductDetailPage() {
 
   const handleSavePodConfig = async () => {
     if (!product || !podConfigVariant) return;
-    const { material, type, orientation, sizeKey, additional } = podConfigForm;
+    const { material, type, orientation, sizeKey, additionalOpts } = podConfigForm;
     if (!material || !type || !sizeKey) {
       setPodConfigError('Material, tipo y tamaño son obligatorios.');
       return;
     }
     const [w, h] = sizeKey.split('x').map(Number);
+    // Build additional from optionGroups in order (canonical Pictorem order)
+    const selMat = podCatalog?.materials.find((m) => m.code === material);
+    const selTyp = selMat?.types.find((t) => t.code === type);
+    const additional: string[] = [];
+    if (selTyp) {
+      for (const group of selTyp.optionGroups) {
+        const chosen = group.choices.find((c) => c.value === (additionalOpts[group.key] ?? group.default));
+        if (chosen) additional.push(...chosen.codes);
+      }
+    }
     const config: PodConfig = {
       material,
       type,
@@ -1083,7 +1107,7 @@ export default function AdminProductDetailPage() {
                         }
                         value={podConfigForm.material}
                         onChange={(v) =>
-                          setPodConfigForm((p) => ({ ...p, material: v, type: '', sizeKey: '', additional: [] }))
+                          setPodConfigForm((p) => ({ ...p, material: v, type: '', sizeKey: '', additionalOpts: {} }))
                         }
                       />
                       <Select
@@ -1097,7 +1121,7 @@ export default function AdminProductDetailPage() {
                         }
                         value={podConfigForm.type}
                         onChange={(v) =>
-                          setPodConfigForm((p) => ({ ...p, type: v, sizeKey: '', additional: [] }))
+                          setPodConfigForm((p) => ({ ...p, type: v, sizeKey: '', additionalOpts: {} }))
                         }
                       />
                     </FormLayout.Group>
@@ -1127,27 +1151,34 @@ export default function AdminProductDetailPage() {
                       onChange={(v) => setPodConfigForm((p) => ({ ...p, orientation: v }))}
                       helpText="Se deriva automáticamente del formato si se deja en horizontal."
                     />
-                    {selType && selType.options.length > 1 && (
-                      <ChoiceList
-                        title="Opciones adicionales"
-                        choices={selType.options.map((o) => ({ label: o.label, value: o.code }))}
-                        selected={
-                          podConfigForm.additional.length > 0
-                            ? [
-                                selType.options.find(
-                                  (o) =>
-                                    JSON.stringify(o.additional) ===
-                                    JSON.stringify(podConfigForm.additional),
-                                )?.code ?? 'none',
-                              ]
-                            : ['none']
-                        }
-                        onChange={(vals) => {
-                          const chosen = selType.options.find((o) => o.code === vals[0]);
-                          setPodConfigForm((p) => ({ ...p, additional: chosen?.additional ?? [] }));
-                        }}
-                      />
-                    )}
+                    {selType && selType.optionGroups.length > 0 && selType.optionGroups.map((group: PodCatalogOptionGroup) => {
+                      const selectedValue = podConfigForm.additionalOpts[group.key] ?? group.default;
+                      if (group.control === 'select') {
+                        return (
+                          <Select
+                            key={group.key}
+                            label={group.label}
+                            options={group.choices.map((c) => ({ label: c.label, value: c.value }))}
+                            value={selectedValue}
+                            onChange={(v) =>
+                              setPodConfigForm((p) => ({ ...p, additionalOpts: { ...p.additionalOpts, [group.key]: v } }))
+                            }
+                          />
+                        );
+                      }
+                      const onChoice = group.choices.find((c) => c.value !== group.default);
+                      return (
+                        <Checkbox
+                          key={group.key}
+                          label={onChoice?.label ?? group.label}
+                          checked={selectedValue !== group.default}
+                          onChange={(checked) => {
+                            const newVal = checked ? (onChoice?.value ?? '') : group.default;
+                            setPodConfigForm((p) => ({ ...p, additionalOpts: { ...p.additionalOpts, [group.key]: newVal } }));
+                          }}
+                        />
+                      );
+                    })}
                   </>
                 );
               })()}
