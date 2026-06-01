@@ -713,6 +713,23 @@ export const adminApi = {
         method: 'POST',
         body: JSON.stringify({ userId }),
       }),
+    cancel: (
+      orderId: string,
+      body: {
+        itemIds?: string[];
+        reason?: string;
+        refund?: boolean;
+        restock?: boolean;
+      },
+    ) =>
+      adminFetch<{
+        cancelledItemIds: string[];
+        shopifyAction: 'order_cancel' | 'partial_refund';
+        warnings: string[];
+      }>(`/admin/orders/${orderId}/cancel`, {
+        method: 'POST',
+        body: JSON.stringify(body),
+      }),
     podSubmit: (orderId: string, itemId: string, force = false) =>
       adminFetch<{ ok: boolean; queued: boolean; orderItemId: string }>(
         `/admin/orders/${orderId}/items/${itemId}/pod/submit`,
