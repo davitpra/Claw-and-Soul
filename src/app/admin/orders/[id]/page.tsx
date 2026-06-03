@@ -30,12 +30,14 @@ import {
   SendIcon,
   ResetIcon,
   ImageIcon,
+  MagicIcon,
 } from "@shopify/polaris-icons";
 import {
   adminApi,
   AdminOrderDetail,
   AdminOrderItem,
 } from "@/entities/admin/api";
+import EnhanceImageModal from "./EnhanceImageModal";
 
 const PRODUCTION_STATUS_LABELS: Record<string, string> = {
   pending: "Pago pendiente",
@@ -104,6 +106,65 @@ function formatAddress(addr: Record<string, string> | null): string {
     .join(", ");
 }
 
+function ImagePreviewModal({
+  src,
+  title,
+  onClose,
+}: {
+  src: string;
+  title: string;
+  onClose: () => void;
+}) {
+  const [dims, setDims] = useState<{ w: number; h: number } | null>(null);
+
+  return (
+    <Modal
+      open
+      onClose={onClose}
+      title={title}
+      size="large"
+      secondaryActions={[{ content: "Cerrar", onAction: onClose }]}
+    >
+      <Modal.Section>
+        <BlockStack gap="300" inlineAlign="center">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={src}
+            alt={title}
+            onLoad={(e) =>
+              setDims({
+                w: e.currentTarget.naturalWidth,
+                h: e.currentTarget.naturalHeight,
+              })
+            }
+            style={{
+              maxWidth: "100%",
+              maxHeight: "70vh",
+              borderRadius: 8,
+              objectFit: "contain",
+            }}
+          />
+          <InlineStack gap="300" blockAlign="center">
+            <Text as="span" tone="subdued" variant="bodySm">
+              {dims
+                ? `Resolución: ${dims.w} × ${dims.h} px`
+                : "Cargando resolución…"}
+            </Text>
+            <a
+              href={src}
+              target="_blank"
+              rel="noopener noreferrer"
+              style={{ color: "#448da6", fontSize: 13 }}
+            >
+              Abrir original →
+            </a>
+          </InlineStack>
+        </BlockStack>
+      </Modal.Section>
+    </Modal>
+  );
+}
+
 function OrderItemCard({
   item,
   orderId,
@@ -136,6 +197,8 @@ function OrderItemCard({
   const [submittingPod, setSubmittingPod] = useState(false);
   const [syncingPod, setSyncingPod] = useState(false);
   const [uploadingImage, setUploadingImage] = useState(false);
+  const [showEnhance, setShowEnhance] = useState(false);
+  const [showImage, setShowImage] = useState(false);
   const [err, setErr] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -144,6 +207,9 @@ function OrderItemCard({
     item.generation?.thumbnailUrl ??
     item.generation?.resultUrl ??
     item.imageUrl;
+  // Full-resolution image for the large preview (skip the small thumbnail).
+  const fullImage =
+    item.printImageUrl ?? item.generation?.resultUrl ?? item.imageUrl ?? thumb;
   const allowed = VALID_TRANSITIONS[item.productionStatus] ?? [];
 
   async function handlePodSubmit(force = false) {
@@ -241,13 +307,41 @@ function OrderItemCard({
   }
 
   return (
-    <Card>
+    <>
+      {showEnhance && (
+        <EnhanceImageModal
+          orderId={orderId}
+          itemId={item.id}
+          onClose={() => setShowEnhance(false)}
+          onApplied={onUpdate}
+        />
+      )}
+      {showImage && fullImage && (
+        <ImagePreviewModal
+          src={fullImage}
+          title={item.title}
+          onClose={() => setShowImage(false)}
+        />
+      )}
+      <Card>
       <BlockStack gap="300">
         <InlineStack gap="400" blockAlign="start">
           <div style={{ flexShrink: 0 }}>
             <BlockStack gap="100" inlineAlign="center">
               {thumb ? (
-                <Thumbnail source={thumb} alt={item.title} size="medium" />
+                <button
+                  type="button"
+                  onClick={() => setShowImage(true)}
+                  title="Ver imagen en grande"
+                  style={{
+                    border: "none",
+                    background: "none",
+                    padding: 0,
+                    cursor: "zoom-in",
+                  }}
+                >
+                  <Thumbnail source={thumb} alt={item.title} size="medium" />
+                </button>
               ) : (
                 <div
                   style={{
@@ -280,6 +374,13 @@ function OrderItemCard({
                 onClick={() => fileInputRef.current?.click()}
               >
                 {item.printImageUrl ? "Reemplazar" : "Subir imagen"}
+              </Button>
+              <Button
+                size="micro"
+                icon={MagicIcon}
+                onClick={() => setShowEnhance(true)}
+              >
+                Mejorar imagen
               </Button>
               {item.printImageUrl && (
                 <Badge tone="info">Imagen personalizada</Badge>
@@ -504,7 +605,8 @@ function OrderItemCard({
           </InlineStack>
         )}
       </BlockStack>
-    </Card>
+      </Card>
+    </>
   );
 }
 

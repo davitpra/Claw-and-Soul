@@ -773,5 +773,49 @@ export const adminApi = {
         { method: 'POST', body: form },
       );
     },
+    enhanceInfo: (orderId: string, itemId: string) =>
+      adminFetch<EnhanceInfo>(
+        `/admin/orders/${orderId}/items/${itemId}/enhance-info`,
+      ),
+    enhancePreview: (
+      orderId: string,
+      itemId: string,
+      options: EnhanceOptions,
+    ) =>
+      adminFetch<{ previewUrl: string; willUpscale: boolean }>(
+        `/admin/orders/${orderId}/items/${itemId}/enhance-preview`,
+        { method: 'POST', body: JSON.stringify(options) },
+      ),
+    enhance: (orderId: string, itemId: string, options: EnhanceOptions) =>
+      adminFetch<{ printImageUrl: string }>(
+        `/admin/orders/${orderId}/items/${itemId}/enhance`,
+        { method: 'POST', body: JSON.stringify(options) },
+      ),
+    enhanceRevert: (orderId: string, itemId: string) =>
+      adminFetch<{ printImageUrl: null }>(
+        `/admin/orders/${orderId}/items/${itemId}/enhance/revert`,
+        { method: 'POST' },
+      ),
   },
 };
+
+export interface EnhanceOptions {
+  engine?: "cloudinary" | "sharp";
+  upscale?: 0 | 2 | 4;
+  sharpen?: number;
+  contrast?: number;
+  brightness?: number;
+  saturation?: number;
+  autoColor?: boolean;
+  improve?: boolean;
+}
+
+export interface EnhanceInfo {
+  isPod: boolean;
+  sourceUrl: string | null;
+  currentPx: { width: number; height: number } | null;
+  printInches: { width: number; height: number } | null;
+  currentDpi: number | null;
+  recommendedUpscale: 0 | 2 | 4;
+  alreadyEnhanced: boolean;
+}
