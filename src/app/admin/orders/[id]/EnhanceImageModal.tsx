@@ -8,7 +8,6 @@ import {
   Text,
   Banner,
   Button,
-  ButtonGroup,
   Select,
   RangeSlider,
   Checkbox,
@@ -18,22 +17,27 @@ import {
   Divider,
 } from "@shopify/polaris";
 import { adminApi, EnhanceInfo, EnhanceOptions } from "@/entities/admin/api";
+import ImagePreviewModal from "./ImagePreviewModal";
 
 const TARGET_DPI = 150;
 
-type Engine = "cloudinary" | "sharp";
-
-function autoPreset(info: EnhanceInfo | null, engine: Engine): EnhanceOptions {
+function autoPreset(info: EnhanceInfo | null): EnhanceOptions {
   return {
-    engine,
     upscale: info?.recommendedUpscale ?? 2,
     improve: true,
     sharpen: 60,
-    autoColor: true,
   };
 }
 
-function ImageBox({ src, alt }: { src: string | null; alt: string }) {
+function ImageBox({
+  src,
+  alt,
+  onClick,
+}: {
+  src: string | null;
+  alt: string;
+  onClick?: () => void;
+}) {
   if (!src) {
     return (
       <div
@@ -54,14 +58,27 @@ function ImageBox({ src, alt }: { src: string | null; alt: string }) {
       </div>
     );
   }
-  return (
+  const img = (
     // eslint-disable-next-line @next/next/no-img-element
     <img
       src={src}
       alt={alt}
-      style={{ maxWidth: 200, maxHeight: 200, borderRadius: 8 }}
+      style={{ maxWidth: 200, maxHeight: 200, borderRadius: 8, display: "block" }}
     />
   );
+  if (onClick) {
+    return (
+      <button
+        type="button"
+        onClick={onClick}
+        title="Ver en grande"
+        style={{ border: "none", background: "none", padding: 0, cursor: "zoom-in" }}
+      >
+        {img}
+      </button>
+    );
+  }
+  return img;
 }
 
 export default function EnhanceImageModal({
@@ -80,7 +97,6 @@ export default function EnhanceImageModal({
   const [printDims, setPrintDims] = useState<{ w: number; h: number } | null>(
     null,
   );
-  const [engine, setEngine] = useState<Engine>("sharp");
   const [options, setOptions] = useState<EnhanceOptions>({ upscale: 0 });
   const [advancedOpen, setAdvancedOpen] = useState(false);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
@@ -88,6 +104,7 @@ export default function EnhanceImageModal({
   const [applying, setApplying] = useState(false);
   const [reverting, setReverting] = useState(false);
   const [err, setErr] = useState<string | null>(null);
+  const [zoom, setZoom] = useState<{ src: string; title: string } | null>(null);
 
   useEffect(() => {
     let active = true;
@@ -114,19 +131,11 @@ export default function EnhanceImageModal({
     [],
   );
 
-  function changeEngine(next: Engine) {
-    setEngine(next);
-    setPreviewUrl(null);
-  }
-
   async function handlePreview() {
     setPreviewing(true);
     setErr(null);
     try {
-      const res = await adminApi.orders.enhancePreview(orderId, itemId, {
-        ...options,
-        engine,
-      });
+      const res = await adminApi.orders.enhancePreview(orderId, itemId, options);
       setPreviewUrl(res.previewUrl);
     } catch (e) {
       setErr((e as Error).message);
@@ -165,8 +174,7 @@ export default function EnhanceImageModal({
   const dpi = info?.sourceDpi ?? null;
   const lowDpi = dpi !== null && dpi < TARGET_DPI;
   // Measure the DELIVERED print image (same file/method as PrintProofModal) so both
-  // modals agree — a server-side probe of the storage key under-reports the
-  // Cloudinary engine, whose upscale lives in the delivery URL, not the stored asset.
+  // modals always agree on the real print DPI.
   const printDpi =
     printDims && info?.printInches
       ? Math.floor(
@@ -185,6 +193,14 @@ export default function EnhanceImageModal({
   const canEnhance = hasSource && !busy && !loadingInfo;
 
   return (
+    <>
+    {zoom && (
+      <ImagePreviewModal
+        src={zoom.src}
+        title={zoom.title}
+        onClose={() => setZoom(null)}
+      />
+    )}
     <Modal
       open
       onClose={onClose}
@@ -193,7 +209,7 @@ export default function EnhanceImageModal({
         content: "Aplicar y guardar",
         loading: applying,
         disabled: !canEnhance,
-        onAction: () => applyWith({ ...options, engine }),
+        onAction: () => applyWith(options),
       }}
       secondaryActions={[
         { content: "Cancelar", onAction: onClose, disabled: busy },
@@ -282,45 +298,54 @@ export default function EnhanceImageModal({
               </Banner>
             ) : null}
 
-            {/* Engine selector */}
-            <BlockStack gap="100">
-              <Text as="span" variant="bodySm" tone="subdued">
-                Motor de mejora
-              </Text>
-              <ButtonGroup variant="segmented">
-                <Button
-                  pressed={engine === "sharp"}
-                  disabled={busy}
-                  onClick={() => changeEngine("sharp")}
-                >
-                  Motor B · sharp + IA
-                </Button>
-                <Button
-                  pressed={engine === "cloudinary"}
-                  disabled={busy}
-                  onClick={() => changeEngine("cloudinary")}
-                >
-                  Motor A · Cloudinary
-                </Button>
-              </ButtonGroup>
-            </BlockStack>
-
             {/* Before / after */}
             <InlineStack gap="400" align="start" wrap>
               <BlockStack gap="100" inlineAlign="center">
                 <Text as="span" variant="bodySm" tone="subdued">
                   Original
                 </Text>
-                <ImageBox src={info?.sourceUrl ?? null} alt="Original" />
+                <ImageBox
+                  src={info?.sourceUrl ?? null}
+                  alt="Original"
+                  onClick={
+                    info?.sourceUrl
+                      ? () => setZoom({ src: info.sourceUrl!, title: "Original" })
+                      : undefined
+                  }
+                />
               </BlockStack>
               <BlockStack gap="100" inlineAlign="center">
                 <Text as="span" variant="bodySm" tone="subdued">
-                  Vista previa
+                  {previewUrl
+                    ? "Vista previa"
+                    : info?.alreadyEnhanced
+                      ? "Resultado actual"
+                      : "Vista previa"}
                 </Text>
-                <ImageBox
-                  src={previewUrl ?? info?.sourceUrl ?? null}
-                  alt="Vista previa"
-                />
+                {(() => {
+                  const previewSrc =
+                    previewUrl ??
+                    info?.printImageUrl ??
+                    info?.sourceUrl ??
+                    null;
+                  return (
+                    <ImageBox
+                      src={previewSrc}
+                      alt="Vista previa"
+                      onClick={
+                        previewSrc
+                          ? () =>
+                              setZoom({
+                                src: previewSrc,
+                                title: previewUrl
+                                  ? "Vista previa"
+                                  : "Resultado actual",
+                              })
+                          : undefined
+                      }
+                    />
+                  );
+                })()}
               </BlockStack>
             </InlineStack>
             <Text as="span" variant="bodySm" tone="subdued">
@@ -333,7 +358,7 @@ export default function EnhanceImageModal({
               fullWidth
               loading={applying}
               disabled={!canEnhance}
-              onClick={() => applyWith(autoPreset(info, engine))}
+              onClick={() => applyWith(autoPreset(info))}
             >
               ✨ Auto-mejorar
             </Button>
@@ -395,12 +420,8 @@ export default function EnhanceImageModal({
                   output
                 />
                 <Checkbox
-                  label="Balance de color automático"
-                  checked={options.autoColor ?? false}
-                  onChange={(v) => updateOption("autoColor", v)}
-                />
-                <Checkbox
-                  label="Mejora automática (improve)"
+                  label="Mejora automática"
+                  helpText="Auto-niveles: normaliza el rango tonal de la imagen."
                   checked={options.improve ?? false}
                   onChange={(v) => updateOption("improve", v)}
                 />
@@ -440,5 +461,6 @@ export default function EnhanceImageModal({
         )}
       </Modal.Section>
     </Modal>
+    </>
   );
 }
