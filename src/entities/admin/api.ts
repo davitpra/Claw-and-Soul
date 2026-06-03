@@ -800,13 +800,11 @@ export const adminApi = {
 };
 
 export interface EnhanceOptions {
-  engine?: "cloudinary" | "sharp";
   upscale?: 0 | 2 | 4;
   sharpen?: number;
   contrast?: number;
   brightness?: number;
   saturation?: number;
-  autoColor?: boolean;
   improve?: boolean;
   fitToFormat?: boolean;
 }
