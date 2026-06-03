@@ -31,6 +31,7 @@ import {
   ResetIcon,
   ImageIcon,
   MagicIcon,
+  ViewIcon,
 } from "@shopify/polaris-icons";
 import {
   adminApi,
@@ -38,6 +39,7 @@ import {
   AdminOrderItem,
 } from "@/entities/admin/api";
 import EnhanceImageModal from "./EnhanceImageModal";
+import PrintProofModal from "./PrintProofModal";
 
 const PRODUCTION_STATUS_LABELS: Record<string, string> = {
   pending: "Pago pendiente",
@@ -198,6 +200,7 @@ function OrderItemCard({
   const [syncingPod, setSyncingPod] = useState(false);
   const [uploadingImage, setUploadingImage] = useState(false);
   const [showEnhance, setShowEnhance] = useState(false);
+  const [showProof, setShowProof] = useState(false);
   const [showImage, setShowImage] = useState(false);
   const [err, setErr] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -316,6 +319,14 @@ function OrderItemCard({
           onApplied={onUpdate}
         />
       )}
+      {showProof && (
+        <PrintProofModal
+          orderId={orderId}
+          item={item}
+          onClose={() => setShowProof(false)}
+          onApplied={onUpdate}
+        />
+      )}
       {showImage && fullImage && (
         <ImagePreviewModal
           src={fullImage}
@@ -381,6 +392,13 @@ function OrderItemCard({
                 onClick={() => setShowEnhance(true)}
               >
                 Mejorar imagen
+              </Button>
+              <Button
+                size="micro"
+                icon={ViewIcon}
+                onClick={() => setShowProof(true)}
+              >
+                Vista de prueba
               </Button>
               {item.printImageUrl && (
                 <Badge tone="info">Imagen personalizada</Badge>

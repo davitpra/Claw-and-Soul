@@ -77,6 +77,9 @@ export default function EnhanceImageModal({
 }) {
   const [info, setInfo] = useState<EnhanceInfo | null>(null);
   const [loadingInfo, setLoadingInfo] = useState(true);
+  const [printDims, setPrintDims] = useState<{ w: number; h: number } | null>(
+    null,
+  );
   const [engine, setEngine] = useState<Engine>("sharp");
   const [options, setOptions] = useState<EnhanceOptions>({ upscale: 0 });
   const [advancedOpen, setAdvancedOpen] = useState(false);
@@ -159,8 +162,25 @@ export default function EnhanceImageModal({
   }
 
   const busy = applying || reverting;
-  const dpi = info?.currentDpi ?? null;
+  const dpi = info?.sourceDpi ?? null;
   const lowDpi = dpi !== null && dpi < TARGET_DPI;
+  // Measure the DELIVERED print image (same file/method as PrintProofModal) so both
+  // modals agree — a server-side probe of the storage key under-reports the
+  // Cloudinary engine, whose upscale lives in the delivery URL, not the stored asset.
+  const printDpi =
+    printDims && info?.printInches
+      ? Math.floor(
+          Math.min(
+            printDims.w / info.printInches.width,
+            printDims.h / info.printInches.height,
+          ),
+        )
+      : null;
+  // The current print file is already print-ready — don't nag about the source DPI.
+  const printReady =
+    Boolean(info?.alreadyEnhanced) &&
+    printDpi !== null &&
+    printDpi >= TARGET_DPI;
   const hasSource = Boolean(info?.sourceUrl);
   const canEnhance = hasSource && !busy && !loadingInfo;
 
@@ -203,15 +223,41 @@ export default function EnhanceImageModal({
               </Banner>
             )}
 
+            {/* Measure the delivered print image off-screen (same method as
+                PrintProofModal) to compute the real print DPI. */}
+            {info?.printImageUrl && (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={info.printImageUrl}
+                alt=""
+                aria-hidden
+                onLoad={(e) =>
+                  setPrintDims({
+                    w: e.currentTarget.naturalWidth,
+                    h: e.currentTarget.naturalHeight,
+                  })
+                }
+                style={{ display: "none" }}
+              />
+            )}
+
             {/* Print-readiness */}
-            {hasSource && info?.printInches && (
+            {hasSource && info?.printInches && printReady ? (
+              <Banner tone="success">
+                Imagen ya mejorada a ~<strong>{printDpi} DPI</strong> para
+                impresión de {info.printInches.width}″ × {info.printInches.height}
+                ″{dpi !== null ? ` (origen ${dpi} DPI)` : ""}. No hace falta más
+                upscale.
+              </Banner>
+            ) : hasSource && info?.printInches ? (
               <Banner
                 tone={dpi === null ? "info" : lowDpi ? "warning" : "success"}
               >
                 {dpi !== null ? (
                   <>
-                    Resolución actual ~<strong>{dpi} DPI</strong> para impresión
-                    de {info.printInches.width}″ × {info.printInches.height}″
+                    Resolución de origen ~<strong>{dpi} DPI</strong> para
+                    impresión de {info.printInches.width}″ ×{" "}
+                    {info.printInches.height}″
                     {lowDpi ? (
                       <>
                         {" "}
@@ -234,7 +280,7 @@ export default function EnhanceImageModal({
                   </>
                 )}
               </Banner>
-            )}
+            ) : null}
 
             {/* Engine selector */}
             <BlockStack gap="100">
@@ -357,6 +403,12 @@ export default function EnhanceImageModal({
                   label="Mejora automática (improve)"
                   checked={options.improve ?? false}
                   onChange={(v) => updateOption("improve", v)}
+                />
+                <Checkbox
+                  label="Ajustar al formato (recorte centrado)"
+                  helpText="Recorta la imagen al ratio exacto del producto para que Pictorem no la recorte."
+                  checked={options.fitToFormat ?? false}
+                  onChange={(v) => updateOption("fitToFormat", v)}
                 />
                 <Box>
                   <Button

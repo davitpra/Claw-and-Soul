@@ -808,14 +808,16 @@ export interface EnhanceOptions {
   saturation?: number;
   autoColor?: boolean;
   improve?: boolean;
+  fitToFormat?: boolean;
 }
 
 export interface EnhanceInfo {
   isPod: boolean;
   sourceUrl: string | null;
-  currentPx: { width: number; height: number } | null;
+  sourcePx: { width: number; height: number } | null;
   printInches: { width: number; height: number } | null;
-  currentDpi: number | null;
+  sourceDpi: number | null;
+  printImageUrl: string | null;
   recommendedUpscale: 0 | 2 | 4;
   alreadyEnhanced: boolean;
 }
