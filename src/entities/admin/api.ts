@@ -800,13 +800,19 @@ export const adminApi = {
 };
 
 export interface EnhanceOptions {
+  upscaleFactor?: number;
   upscale?: 0 | 2 | 4;
+  targetDpi?: number;
   sharpen?: number;
   contrast?: number;
   brightness?: number;
   saturation?: number;
   improve?: boolean;
   fitToFormat?: boolean;
+  format?: 'jpeg' | 'png';
+  bleed?: boolean;
+  bleedColor?: string;
+  previewUpscale?: boolean;
 }
 
 export interface EnhanceInfo {
@@ -816,6 +822,7 @@ export interface EnhanceInfo {
   printInches: { width: number; height: number } | null;
   sourceDpi: number | null;
   printImageUrl: string | null;
+  bleedColor: string;
   recommendedUpscale: 0 | 2 | 4;
   alreadyEnhanced: boolean;
 }

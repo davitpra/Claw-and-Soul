@@ -31,16 +31,14 @@ import {
   ResetIcon,
   ImageIcon,
   MagicIcon,
-  ViewIcon,
 } from "@shopify/polaris-icons";
 import {
   adminApi,
   AdminOrderDetail,
   AdminOrderItem,
 } from "@/entities/admin/api";
-import EnhanceImageModal from "./EnhanceImageModal";
 import ImagePreviewModal from "./ImagePreviewModal";
-import PrintProofModal from "./PrintProofModal";
+import PrintStudioModal from "./PrintStudioModal";
 
 const PRODUCTION_STATUS_LABELS: Record<string, string> = {
   pending: "Pago pendiente",
@@ -141,8 +139,7 @@ function OrderItemCard({
   const [submittingPod, setSubmittingPod] = useState(false);
   const [syncingPod, setSyncingPod] = useState(false);
   const [uploadingImage, setUploadingImage] = useState(false);
-  const [showEnhance, setShowEnhance] = useState(false);
-  const [showProof, setShowProof] = useState(false);
+  const [showStudio, setShowStudio] = useState(false);
   const [showImage, setShowImage] = useState(false);
   const [err, setErr] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -253,19 +250,11 @@ function OrderItemCard({
 
   return (
     <>
-      {showEnhance && (
-        <EnhanceImageModal
-          orderId={orderId}
-          itemId={item.id}
-          onClose={() => setShowEnhance(false)}
-          onApplied={onUpdate}
-        />
-      )}
-      {showProof && (
-        <PrintProofModal
+      {showStudio && (
+        <PrintStudioModal
           orderId={orderId}
           item={item}
-          onClose={() => setShowProof(false)}
+          onClose={() => setShowStudio(false)}
           onApplied={onUpdate}
         />
       )}
@@ -331,16 +320,9 @@ function OrderItemCard({
               <Button
                 size="micro"
                 icon={MagicIcon}
-                onClick={() => setShowEnhance(true)}
+                onClick={() => setShowStudio(true)}
               >
-                Mejorar imagen
-              </Button>
-              <Button
-                size="micro"
-                icon={ViewIcon}
-                onClick={() => setShowProof(true)}
-              >
-                Vista de prueba
+                Editar para impresión
               </Button>
               {item.printImageUrl && (
                 <Badge tone="info">Imagen personalizada</Badge>
