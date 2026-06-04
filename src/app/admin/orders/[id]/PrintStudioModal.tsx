@@ -23,6 +23,8 @@ import ImagePreviewModal from "./ImagePreviewModal";
 
 const GOOD_DPI = 300;
 const LOW_DPI = 200;
+// Resolution the backend caps the saved print master at (matches PRINT_DPI server-side).
+const PRINT_DPI = 300;
 const DEFAULT_UPSCALE_FACTOR = 2;
 
 function dpiTone(dpi: number | null): "success" | "warning" | "critical" {
@@ -58,6 +60,7 @@ export default function PrintStudioModal({
 
   // Controls
   const [upscaleFactor, setUpscaleFactor] = useState(DEFAULT_UPSCALE_FACTOR);
+  const [upscaling, setUpscaling] = useState(false);
   const [format, setFormat] = useState<"jpeg" | "png">("jpeg");
   const [sharpen, setSharpen] = useState(0);
   const [contrast, setContrast] = useState(0);
@@ -106,6 +109,10 @@ export default function PrintStudioModal({
             if (data.recommendedUpscale > 0) {
               setUpscaleFactor(data.recommendedUpscale);
             }
+          } else {
+            // Already enhanced — reset slider to 1 so the user must explicitly
+            // choose a factor before re-running the AI upscale.
+            setUpscaleFactor(1);
           }
         }
       } catch (e) {
@@ -136,7 +143,7 @@ export default function PrintStudioModal({
     invalidatePreview();
   }
 
-  const busy = applying || reverting;
+  const busy = applying || reverting || upscaling;
   const hasSource = Boolean(info?.sourceUrl);
   const canAct = hasSource && !busy && !loadingInfo;
   const printInches = info?.printInches ?? null;
@@ -163,8 +170,10 @@ export default function PrintStudioModal({
       : null;
 
   // Theoretical target pixel size and DPI after upscale (computed client-side,
-  // no backend call needed — upscale only runs on save).
-  const targetPx =
+  // no backend call needed — upscale only runs on save). The backend caps the
+  // saved master at PRINT_DPI, so we cap the displayed values too — otherwise a
+  // high factor would falsely promise e.g. 600 DPI when the result will be 300.
+  const rawTargetPx =
     info?.sourcePx && upscaleFactor > 1
       ? {
           w: Math.round(info.sourcePx.width * upscaleFactor),
@@ -173,15 +182,26 @@ export default function PrintStudioModal({
       : info?.sourcePx
         ? { w: info.sourcePx.width, h: info.sourcePx.height }
         : null;
-  const theoreticalDpi =
-    targetPx && printInches
+  const rawDpi =
+    rawTargetPx && printInches
       ? Math.floor(
           Math.min(
-            targetPx.w / printInches.width,
-            targetPx.h / printInches.height,
+            rawTargetPx.w / printInches.width,
+            rawTargetPx.h / printInches.height,
           ),
         )
       : null;
+  // When the raw upscale would exceed PRINT_DPI, the backend downscales to it.
+  const capScale =
+    rawDpi !== null && rawDpi > PRINT_DPI ? PRINT_DPI / rawDpi : 1;
+  const targetPx = rawTargetPx
+    ? {
+        w: Math.round(rawTargetPx.w * capScale),
+        h: Math.round(rawTargetPx.h * capScale),
+      }
+    : null;
+  const theoreticalDpi =
+    rawDpi !== null ? Math.min(rawDpi, PRINT_DPI) : null;
 
   // ── Print guide geometry ────────────────────────────────────────────────
   // The stage container always includes the 3mm bleed on each side.
@@ -230,12 +250,44 @@ export default function PrintStudioModal({
     }
   }
 
-  async function handleSave() {
-    setApplying(true);
+  async function handleUpscale() {
+    setUpscaling(true);
     setErr(null);
     try {
       const opts: EnhanceOptions = {
         upscaleFactor: upscaleFactor > 1 ? upscaleFactor : undefined,
+        sharpen: sharpen || undefined,
+        contrast: contrast || undefined,
+        brightness: brightness || undefined,
+        saturation: saturation || undefined,
+        improve: improve || undefined,
+        fitToFormat: fitToFormat || undefined,
+        bleed: bleedEnabled || undefined,
+        bleedColor: bleedEnabled ? bleedColor : undefined,
+        format,
+      };
+      const { printImageUrl } = await adminApi.orders.enhance(orderId, item.id, opts);
+      setInfo((prev) =>
+        prev ? { ...prev, printImageUrl, alreadyEnhanced: true, hasUpscaledBase: true } : prev,
+      );
+      setPreviewUrl(null);
+      setSavedUrl(printImageUrl);
+      setSavedOk(true);
+      onApplied();
+    } catch (e) {
+      setErr((e as Error).message);
+    } finally {
+      setUpscaling(false);
+    }
+  }
+
+  async function handleSave() {
+    setApplying(true);
+    setErr(null);
+    try {
+      // Never pass upscaleFactor here — "Guardar" only re-applies colour/bleed
+      // adjustments on the existing high-res base (or original if not upscaled yet).
+      const opts: EnhanceOptions = {
         sharpen: sharpen || undefined,
         contrast: contrast || undefined,
         brightness: brightness || undefined,
@@ -251,8 +303,6 @@ export default function PrintStudioModal({
         item.id,
         opts,
       );
-      // Update info optimistically so displayUrl shows the new image immediately
-      // even before the parent reloads — avoids flash of old image on reopen.
       setInfo((prev) =>
         prev ? { ...prev, printImageUrl, alreadyEnhanced: true } : prev,
       );
@@ -586,6 +636,12 @@ export default function PrintStudioModal({
                     <Text as="p" variant="headingSm">
                       Upscale con IA
                     </Text>
+                    {info?.hasUpscaledBase && (
+                      <Banner tone="info">
+                        Imagen ya agrandada con IA. Usa el botón para volver a ejecutar
+                        el motor desde la imagen original con un factor diferente.
+                      </Banner>
+                    )}
                     <RangeSlider
                       label="Factor de upscale"
                       min={1}
@@ -611,8 +667,20 @@ export default function PrintStudioModal({
                       </Badge>
                     </InlineStack>
                     <Text as="span" variant="bodySm" tone="subdued">
-                      El upscale real se aplica al guardar.
+                      Solo este botón ejecuta el motor de IA. Los ajustes de abajo se
+                      guardan sin volver a agrandar.
                     </Text>
+                    <Box>
+                      <Button
+                        loading={upscaling}
+                        disabled={!canAct || upscaleFactor <= 1}
+                        onClick={handleUpscale}
+                      >
+                        {info?.hasUpscaledBase
+                          ? "Volver a agrandar con IA"
+                          : "Agrandar con IA"}
+                      </Button>
+                    </Box>
                   </BlockStack>
 
                   <Divider />

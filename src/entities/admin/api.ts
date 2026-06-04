@@ -825,4 +825,5 @@ export interface EnhanceInfo {
   bleedColor: string;
   recommendedUpscale: 0 | 2 | 4;
   alreadyEnhanced: boolean;
+  hasUpscaledBase: boolean;
 }
