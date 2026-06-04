@@ -142,6 +142,7 @@ export interface AdminOrderDetail {
   shippingAmount: number | null;
   taxAmount: number | null;
   totalAmount: number;
+  productionCost: number | null;
   shippingAddress: Record<string, string> | null;
   billingAddress: Record<string, string> | null;
   customerNote: string | null;
@@ -748,6 +749,36 @@ export const adminApi = {
         `/admin/orders/${orderId}/items/${itemId}/pod/sync`,
         { method: 'POST' },
       ),
+    productionCostEstimate: (orderId: string) =>
+      adminFetch<{
+        amount: number;
+        currency: string;
+        itemsPriced: number;
+        itemsTotal: number;
+        partial: boolean;
+        fxUnavailable: boolean;
+      }>(`/admin/orders/${orderId}/production-cost/estimate`),
+    updateProductionCost: (orderId: string, productionCost: number | null) =>
+      adminFetch<{ productionCost: number | null }>(
+        `/admin/orders/${orderId}/production-cost`,
+        { method: 'PATCH', body: JSON.stringify({ productionCost }) },
+      ),
+    podPrice: (orderId: string, itemId: string) =>
+      adminFetch<{
+        list: number;
+        discount: number;
+        subtotal: number;
+        total: number;
+        currency: string;
+        preorderCode: string;
+        billing: {
+          currency: string;
+          subtotal: number;
+          total: number;
+          rate: number;
+          rateDate: string;
+        } | null;
+      }>(`/admin/orders/${orderId}/items/${itemId}/pod/price`),
     podCatalog: () =>
       adminFetch<PodCatalog>('/admin/orders/pod/catalog'),
     podHealth: () =>

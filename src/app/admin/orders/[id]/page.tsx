@@ -138,6 +138,18 @@ function OrderItemCard({
   const [savingFulfillment, setSavingFulfillment] = useState(false);
   const [submittingPod, setSubmittingPod] = useState(false);
   const [syncingPod, setSyncingPod] = useState(false);
+  const [loadingPrice, setLoadingPrice] = useState(false);
+  const [podPrice, setPodPrice] = useState<{
+    subtotal: number;
+    total: number;
+    currency: string;
+    billing: {
+      currency: string;
+      subtotal: number;
+      total: number;
+      rateDate: string;
+    } | null;
+  } | null>(null);
   const [uploadingImage, setUploadingImage] = useState(false);
   const [showStudio, setShowStudio] = useState(false);
   const [showImage, setShowImage] = useState(false);
@@ -177,6 +189,24 @@ function OrderItemCard({
       setErr((e as Error).message);
     } finally {
       setSyncingPod(false);
+    }
+  }
+
+  async function handlePodPrice() {
+    setLoadingPrice(true);
+    setErr(null);
+    try {
+      const price = await adminApi.orders.podPrice(orderId, item.id);
+      setPodPrice({
+        subtotal: price.subtotal,
+        total: price.total,
+        currency: price.currency,
+        billing: price.billing,
+      });
+    } catch (e) {
+      setErr((e as Error).message);
+    } finally {
+      setLoadingPrice(false);
     }
   }
 
@@ -361,6 +391,40 @@ function OrderItemCard({
                 <Text variant="bodySm" tone="subdued" as="span">
                   {item.quantity} × {fmtCurrency(item.unitPrice, currency)}
                 </Text>
+                {item.fulfillmentMethod === "pod" &&
+                  (podPrice ? (
+                    <BlockStack gap="0" inlineAlign="end">
+                      <Text variant="bodySm" tone="subdued" as="span">
+                        Costo Pictorem:{" "}
+                        {fmtCurrency(podPrice.subtotal, podPrice.currency)}{" "}
+                        ({fmtCurrency(podPrice.total, podPrice.currency)} c/imp.)
+                      </Text>
+                      {podPrice.billing && (
+                        <Text variant="bodySm" tone="subdued" as="span">
+                          ≈{" "}
+                          {fmtCurrency(
+                            podPrice.billing.subtotal,
+                            podPrice.billing.currency,
+                          )}{" "}
+                          (
+                          {fmtCurrency(
+                            podPrice.billing.total,
+                            podPrice.billing.currency,
+                          )}{" "}
+                          c/imp.) · FX {podPrice.billing.rateDate}
+                        </Text>
+                      )}
+                    </BlockStack>
+                  ) : (
+                    <Button
+                      variant="plain"
+                      size="micro"
+                      loading={loadingPrice}
+                      onClick={handlePodPrice}
+                    >
+                      Consultar precio Pictorem
+                    </Button>
+                  ))}
               </BlockStack>
             </InlineStack>
 
@@ -680,12 +744,17 @@ export default function AdminOrderDetailPage() {
   const [showRaw, setShowRaw] = useState(false);
   const [cancelItemIds, setCancelItemIds] = useState<string[] | null>(null);
   const [cancelWarnings, setCancelWarnings] = useState<string[]>([]);
+  const [productionCostInput, setProductionCostInput] = useState("");
+  const [savingCost, setSavingCost] = useState(false);
+  const [estimating, setEstimating] = useState(false);
+  const [estimateWarning, setEstimateWarning] = useState<string | null>(null);
 
   async function load() {
     setLoading(true);
     try {
       const data = await adminApi.orders.detail(id);
       setOrder(data);
+      setProductionCostInput(data.productionCost?.toString() ?? "");
     } finally {
       setLoading(false);
     }
@@ -702,6 +771,45 @@ export default function AdminOrderDetailPage() {
       await load();
     } finally {
       setResyncing(false);
+    }
+  }
+
+  async function handleSaveCost() {
+    setSavingCost(true);
+    try {
+      const parsed = productionCostInput.trim()
+        ? parseFloat(productionCostInput)
+        : null;
+      await adminApi.orders.updateProductionCost(
+        id,
+        parsed != null && !isNaN(parsed) ? parsed : null,
+      );
+      await load();
+    } finally {
+      setSavingCost(false);
+    }
+  }
+
+  async function handleEstimateCost() {
+    if (!order) return;
+    setEstimating(true);
+    setEstimateWarning(null);
+    try {
+      const est = await adminApi.orders.productionCostEstimate(id);
+      setProductionCostInput(est.amount.toFixed(2));
+      if (est.fxUnavailable) {
+        setEstimateWarning(
+          `FX no disponible — valor en USD (la orden es ${order.currency}). Edita si es necesario.`,
+        );
+      } else if (est.partial) {
+        setEstimateWarning(
+          `Solo se cotizaron ${est.itemsPriced} de ${est.itemsTotal} items POD (algunos sin configuración).`,
+        );
+      }
+    } catch {
+      setEstimateWarning("No se pudo obtener el costo de Pictorem.");
+    } finally {
+      setEstimating(false);
     }
   }
 
@@ -1011,6 +1119,70 @@ export default function AdminOrderDetailPage() {
                     {fmtCurrency(order.totalAmount, order.currency)}
                   </Text>
                 </InlineStack>
+                <Divider />
+                <BlockStack gap="200">
+                  <InlineStack align="space-between" blockAlign="center">
+                    <Text variant="bodySm" fontWeight="semibold" as="span">
+                      Costo de producción
+                    </Text>
+                    <Button
+                      variant="plain"
+                      size="micro"
+                      loading={estimating}
+                      onClick={handleEstimateCost}
+                    >
+                      Traer de Pictorem
+                    </Button>
+                  </InlineStack>
+                  {estimateWarning && (
+                    <Text variant="bodySm" tone="subdued" as="p">
+                      {estimateWarning}
+                    </Text>
+                  )}
+                  <InlineStack gap="200" blockAlign="center">
+                    <div style={{ flex: 1 }}>
+                      <TextField
+                        label="Costo de producción"
+                        labelHidden
+                        type="number"
+                        prefix={order.currency}
+                        value={productionCostInput}
+                        onChange={(v) => {
+                          setProductionCostInput(v);
+                          setEstimateWarning(null);
+                        }}
+                        autoComplete="off"
+                      />
+                    </div>
+                    <Button
+                      variant="primary"
+                      size="slim"
+                      loading={savingCost}
+                      disabled={productionCostInput === (order.productionCost?.toString() ?? "")}
+                      onClick={handleSaveCost}
+                    >
+                      Guardar
+                    </Button>
+                  </InlineStack>
+                  {productionCostInput !== "" && !isNaN(parseFloat(productionCostInput)) && (
+                    (() => {
+                      const cost = parseFloat(productionCostInput);
+                      const margin = order.totalAmount - cost;
+                      const tone = margin >= 0 ? "success" : "critical";
+                      return (
+                        <InlineStack align="space-between">
+                          <Text variant="bodySm" tone="subdued" as="span">
+                            Margen estimado
+                          </Text>
+                          <Text variant="bodySm" tone={tone} fontWeight="semibold" as="span">
+                            {fmtCurrency(margin, order.currency)}
+                          </Text>
+                        </InlineStack>
+                      );
+                    })()
+                  )}
+                </BlockStack>
+                <Divider />
                 <InlineStack gap="200">
                   {order.financialStatus && (
                     <Badge
