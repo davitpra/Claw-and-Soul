@@ -102,6 +102,8 @@ export interface AdminOrderItem {
   trackingCarrier: string | null;
   podProvider: string | null;
   podOrderId: string | null;
+  podLeadTimeDays: number | null;
+  podEstimatedReadyAt: string | null;
   notes: string | null;
   shippedAt: string | null;
   deliveredAt: string | null;
@@ -788,6 +790,14 @@ export const adminApi = {
           rateDate: string;
         } | null;
       }>(`/admin/orders/${orderId}/items/${itemId}/pod/price`),
+    podLeadTime: (orderId: string, itemId: string) =>
+      adminFetch<{
+        leadTime: number | null;
+        unit: string;
+        label: string | null;
+        preorderCode: string;
+        estimatedReadyAt: string | null;
+      }>(`/admin/orders/${orderId}/items/${itemId}/pod/leadtime`),
     podCatalog: () =>
       adminFetch<PodCatalog>('/admin/orders/pod/catalog'),
     podHealth: () =>

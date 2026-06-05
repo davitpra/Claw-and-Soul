@@ -76,6 +76,9 @@ const VALID_TRANSITIONS: Record<string, string[]> = {
 /** Production states from which an item can still be cancelled (not yet shipped). */
 const CANCELLABLE_STATUSES = ["pending", "paid", "in_production"];
 
+/** Full Pictorem price/invoice detail for a single order item. */
+type PodPriceDetail = Awaited<ReturnType<typeof adminApi.orders.podPrice>>;
+
 function fmtDate(iso: string) {
   return new Date(iso).toLocaleString("es-ES", {
     day: "2-digit",
@@ -138,30 +141,6 @@ function OrderItemCard({
   const [savingFulfillment, setSavingFulfillment] = useState(false);
   const [submittingPod, setSubmittingPod] = useState(false);
   const [syncingPod, setSyncingPod] = useState(false);
-  const [loadingPrice, setLoadingPrice] = useState(false);
-  const [showInvoice, setShowInvoice] = useState(false);
-  const [podPrice, setPodPrice] = useState<{
-    subtotal: number;
-    taxPercentage: number;
-    taxAmount: number;
-    discount: number;
-    total: number;
-    currency: string;
-    components: Array<{
-      code: string;
-      label: string;
-      list: number;
-      discount: number;
-      net: number;
-    }>;
-    billing: {
-      currency: string;
-      subtotal: number;
-      total: number;
-      rate: number;
-      rateDate: string;
-    } | null;
-  } | null>(null);
   const [uploadingImage, setUploadingImage] = useState(false);
   const [showStudio, setShowStudio] = useState(false);
   const [showImage, setShowImage] = useState(false);
@@ -201,28 +180,6 @@ function OrderItemCard({
       setErr((e as Error).message);
     } finally {
       setSyncingPod(false);
-    }
-  }
-
-  async function handlePodPrice() {
-    setLoadingPrice(true);
-    setErr(null);
-    try {
-      const price = await adminApi.orders.podPrice(orderId, item.id);
-      setPodPrice({
-        subtotal: price.subtotal,
-        taxPercentage: price.taxPercentage,
-        taxAmount: price.taxAmount,
-        discount: price.discount,
-        total: price.total,
-        currency: price.currency,
-        components: price.components,
-        billing: price.billing,
-      });
-    } catch (e) {
-      setErr((e as Error).message);
-    } finally {
-      setLoadingPrice(false);
     }
   }
 
@@ -312,415 +269,287 @@ function OrderItemCard({
         />
       )}
       <Card>
-      <BlockStack gap="300">
-        <InlineStack gap="400" blockAlign="start">
-          <div style={{ flexShrink: 0 }}>
-            <BlockStack gap="100" inlineAlign="center">
-              {thumb ? (
-                <button
-                  type="button"
-                  onClick={() => setShowImage(true)}
-                  title="Ver imagen en grande"
-                  style={{
-                    border: "none",
-                    background: "none",
-                    padding: 0,
-                    cursor: "zoom-in",
-                  }}
-                >
-                  <Thumbnail source={thumb} alt={item.title} size="medium" />
-                </button>
-              ) : (
-                <div
-                  style={{
-                    width: 60,
-                    height: 60,
-                    background: "#f6f6f7",
-                    border: "1px solid #e3e3e3",
-                    borderRadius: 8,
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                  }}
-                >
-                  <Text as="span" tone="subdued" variant="bodySm">
-                    —
-                  </Text>
-                </div>
-              )}
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept="image/*"
-                hidden
-                onChange={handleUploadImage}
-              />
-              <Button
-                size="micro"
-                icon={ImageIcon}
-                loading={uploadingImage}
-                onClick={() => fileInputRef.current?.click()}
-              >
-                {item.printImageUrl ? "Reemplazar" : "Subir imagen"}
-              </Button>
-              <Button
-                size="micro"
-                icon={MagicIcon}
-                onClick={() => setShowStudio(true)}
-              >
-                Editar para impresión
-              </Button>
-              {item.printImageUrl && (
-                <Badge tone="info">Imagen personalizada</Badge>
-              )}
-            </BlockStack>
-          </div>
-
-          <BlockStack gap="100" align="start">
-            <InlineStack align="space-between" gap="200">
-              <BlockStack gap="0">
-                <Text variant="bodyMd" fontWeight="semibold" as="span">
-                  {item.title}
-                </Text>
-                {item.variantTitle && (
-                  <Text variant="bodySm" tone="subdued" as="span">
-                    {item.variantTitle}
-                  </Text>
+        <BlockStack gap="300">
+          <InlineStack gap="400" blockAlign="start">
+            <div style={{ flexShrink: 0 }}>
+              <BlockStack gap="100" inlineAlign="center">
+                {thumb ? (
+                  <button
+                    type="button"
+                    onClick={() => setShowImage(true)}
+                    title="Ver imagen en grande"
+                    style={{
+                      border: "none",
+                      background: "none",
+                      padding: 0,
+                      cursor: "zoom-in",
+                    }}
+                  >
+                    <Thumbnail source={thumb} alt={item.title} size="medium" />
+                  </button>
+                ) : (
+                  <div
+                    style={{
+                      width: 60,
+                      height: 60,
+                      background: "#f6f6f7",
+                      border: "1px solid #e3e3e3",
+                      borderRadius: 8,
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                    }}
+                  >
+                    <Text as="span" tone="subdued" variant="bodySm">
+                      —
+                    </Text>
+                  </div>
                 )}
-                <InlineStack gap="200">
-                  {item.style && (
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/*"
+                  hidden
+                  onChange={handleUploadImage}
+                />
+                <Button
+                  size="micro"
+                  icon={ImageIcon}
+                  loading={uploadingImage}
+                  onClick={() => fileInputRef.current?.click()}
+                >
+                  {item.printImageUrl ? "Reemplazar" : "Subir imagen"}
+                </Button>
+                <Button
+                  size="micro"
+                  icon={MagicIcon}
+                  onClick={() => setShowStudio(true)}
+                >
+                  Editar para impresión
+                </Button>
+                {item.printImageUrl && (
+                  <Badge tone="info">Imagen personalizada</Badge>
+                )}
+              </BlockStack>
+            </div>
+
+            <BlockStack gap="100" align="start">
+              <InlineStack align="space-between" gap="200">
+                <BlockStack gap="0">
+                  <Text variant="bodyMd" fontWeight="semibold" as="span">
+                    {item.title}
+                  </Text>
+                  {item.variantTitle && (
                     <Text variant="bodySm" tone="subdued" as="span">
-                      Estilo: {item.style}
+                      {item.variantTitle}
                     </Text>
                   )}
-                  {item.size && (
+                  <InlineStack gap="200">
+                    {item.style && (
+                      <Text variant="bodySm" tone="subdued" as="span">
+                        Estilo: {item.style}
+                      </Text>
+                    )}
+                    {item.size && (
+                      <Text variant="bodySm" tone="subdued" as="span">
+                        Tamaño: {item.size}
+                      </Text>
+                    )}
+                  </InlineStack>
+                </BlockStack>
+                <BlockStack gap="0" inlineAlign="end">
+                  <Text variant="bodyMd" fontWeight="semibold" as="span">
+                    {fmtCurrency(item.totalPrice, currency)}
+                  </Text>
+                  <Text variant="bodySm" tone="subdued" as="span">
+                    {item.quantity} × {fmtCurrency(item.unitPrice, currency)}
+                  </Text>
+                </BlockStack>
+              </InlineStack>
+
+              <InlineStack gap="200" blockAlign="center">
+                <div style={{ minWidth: 180 }}>
+                  <Select
+                    label=""
+                    labelHidden
+                    options={[
+                      { label: "Taller (in-house)", value: "in_house" },
+                      { label: "POD (proveedor externo)", value: "pod" },
+                    ]}
+                    value={fulfillmentMethod}
+                    onChange={handleFulfillmentChange}
+                    disabled={savingFulfillment}
+                  />
+                </div>
+                <Badge tone={STATUS_TONES[item.productionStatus] ?? "enabled"}>
+                  {PRODUCTION_STATUS_LABELS[item.productionStatus] ??
+                    item.productionStatus}
+                </Badge>
+              </InlineStack>
+            </BlockStack>
+          </InlineStack>
+
+          {err && (
+            <Banner tone="critical" onDismiss={() => setErr(null)}>
+              {err}
+            </Banner>
+          )}
+
+          {allowed.length > 0 && (
+            <>
+              <Divider />
+              <InlineStack gap="200" blockAlign="center">
+                <Text variant="bodySm" tone="subdued" as="span">
+                  Cambiar estado:
+                </Text>
+                {allowed.map((s) => (
+                  <Button
+                    key={s}
+                    size="slim"
+                    variant="secondary"
+                    tone={s === "cancelled" ? "critical" : undefined}
+                    loading={updatingStatus}
+                    onClick={() =>
+                      s === "cancelled"
+                        ? onRequestCancel([item.id])
+                        : handleStatusChange(s)
+                    }
+                  >
+                    → {PRODUCTION_STATUS_LABELS[s]}
+                  </Button>
+                ))}
+              </InlineStack>
+            </>
+          )}
+
+          {/* POD section — visible only when fulfillmentMethod is pod */}
+          {fulfillmentMethod === "pod" && (
+            <>
+              <Divider />
+              <BlockStack gap="200">
+                {item.productionStatus === "cancelled" &&
+                  item.podOrderId &&
+                  (cancelInfo ? (
+                    <Banner tone="info">
+                      Cancelado{cancelInfo.refunded ? " y reembolsado" : ""} en
+                      Shopify por la app.
+                    </Banner>
+                  ) : (
+                    <Banner tone="warning">
+                      Orden #{item.podOrderId} eliminada en Pictorem (remove
+                      quote). Verifica si debes{" "}
+                      <strong>reembolsar al cliente en Shopify</strong>.
+                    </Banner>
+                  ))}
+                <InlineStack gap="200" blockAlign="center">
+                  <Text variant="bodySm" fontWeight="semibold" as="span">
+                    Pictorem POD
+                  </Text>
+                  {item.podOrderId ? (
+                    <Badge tone="info">{`#${item.podOrderId}`}</Badge>
+                  ) : (
+                    <Badge tone="enabled">Sin enviar</Badge>
+                  )}
+                  {item.podProvider && (
                     <Text variant="bodySm" tone="subdued" as="span">
-                      Tamaño: {item.size}
+                      · {item.podProvider}
                     </Text>
                   )}
                 </InlineStack>
-              </BlockStack>
-              <BlockStack gap="0" inlineAlign="end">
-                <Text variant="bodyMd" fontWeight="semibold" as="span">
-                  {fmtCurrency(item.totalPrice, currency)}
-                </Text>
-                <Text variant="bodySm" tone="subdued" as="span">
-                  {item.quantity} × {fmtCurrency(item.unitPrice, currency)}
-                </Text>
-                {item.fulfillmentMethod === "pod" &&
-                  (podPrice ? (
-                    <BlockStack gap="0" inlineAlign="end">
-                      <Text variant="bodySm" tone="subdued" as="span">
-                        Costo Pictorem:{" "}
-                        {fmtCurrency(podPrice.subtotal, podPrice.currency)}{" "}
-                        ({fmtCurrency(podPrice.total, podPrice.currency)} c/imp.)
-                      </Text>
-                      {podPrice.billing && (
-                        <Text variant="bodySm" tone="subdued" as="span">
-                          ≈{" "}
-                          {fmtCurrency(
-                            podPrice.billing.subtotal,
-                            podPrice.billing.currency,
-                          )}{" "}
-                          (
-                          {fmtCurrency(
-                            podPrice.billing.total,
-                            podPrice.billing.currency,
-                          )}{" "}
-                          c/imp.) · FX {podPrice.billing.rateDate}
-                        </Text>
-                      )}
-                      {podPrice.components.length > 0 && (
-                        <Button
-                          variant="plain"
-                          size="micro"
-                          disclosure={showInvoice ? "up" : "down"}
-                          onClick={() => setShowInvoice((v) => !v)}
-                        >
-                          {showInvoice ? "Ocultar detalle" : "Ver detalle de factura"}
-                        </Button>
-                      )}
-                    </BlockStack>
-                  ) : (
-                    <Button
-                      variant="plain"
-                      size="micro"
-                      loading={loadingPrice}
-                      onClick={handlePodPrice}
-                    >
-                      Consultar precio Pictorem
-                    </Button>
-                  ))}
-              </BlockStack>
-            </InlineStack>
-
-            {podPrice && podPrice.components.length > 0 && (
-              <Collapsible
-                open={showInvoice}
-                id={`invoice-${item.id}`}
-                transition={{
-                  duration: "150ms",
-                  timingFunction: "ease-in-out",
-                }}
-              >
-                <Box
-                  background="bg-surface-secondary"
-                  padding="300"
-                  borderRadius="200"
-                >
-                  <BlockStack gap="150">
-                    <Text variant="headingSm" as="h3">
-                      Detalle de factura Pictorem ({podPrice.currency})
-                    </Text>
-                    {podPrice.components.map((c) => (
-                      <InlineStack key={c.code} align="space-between">
-                        <Text variant="bodySm" as="span">
-                          {c.label}
-                        </Text>
-                        <Text variant="bodySm" as="span">
-                          {c.list === 0
-                            ? "Gratis"
-                            : fmtCurrency(c.list, podPrice.currency)}
-                        </Text>
-                      </InlineStack>
-                    ))}
-                    <Divider />
-                    {podPrice.discount > 0 && (
-                      <InlineStack align="space-between">
-                        <Text variant="bodySm" tone="subdued" as="span">
-                          Descuento revendedor
-                        </Text>
-                        <Text variant="bodySm" tone="success" as="span">
-                          −{fmtCurrency(podPrice.discount, podPrice.currency)}
-                        </Text>
-                      </InlineStack>
-                    )}
-                    <InlineStack align="space-between">
-                      <Text variant="bodySm" tone="subdued" as="span">
-                        Subtotal
-                      </Text>
-                      <Text variant="bodySm" as="span">
-                        {fmtCurrency(podPrice.subtotal, podPrice.currency)}
-                      </Text>
-                    </InlineStack>
-                    {podPrice.taxAmount > 0 && (
-                      <InlineStack align="space-between">
-                        <Text variant="bodySm" tone="subdued" as="span">
-                          Impuestos (
-                          {Math.round(podPrice.taxPercentage * 100)}%)
-                        </Text>
-                        <Text variant="bodySm" as="span">
-                          {fmtCurrency(podPrice.taxAmount, podPrice.currency)}
-                        </Text>
-                      </InlineStack>
-                    )}
-                    <InlineStack align="space-between">
-                      <Text variant="bodySm" fontWeight="bold" as="span">
-                        Total
-                      </Text>
-                      <Text variant="bodySm" fontWeight="bold" as="span">
-                        {fmtCurrency(podPrice.total, podPrice.currency)}
-                      </Text>
-                    </InlineStack>
-                    {podPrice.billing && (
-                      <Text variant="bodySm" tone="subdued" as="span">
-                        ≈{" "}
-                        {fmtCurrency(
-                          podPrice.billing.total,
-                          podPrice.billing.currency,
-                        )}{" "}
-                        a tipo de cambio {podPrice.billing.rate.toFixed(4)} (
-                        {podPrice.billing.rateDate})
-                      </Text>
-                    )}
-                  </BlockStack>
-                </Box>
-              </Collapsible>
-            )}
-
-            <InlineStack gap="200" blockAlign="center">
-              <div style={{ minWidth: 180 }}>
-                <Select
-                  label=""
-                  labelHidden
-                  options={[
-                    { label: "Taller (in-house)", value: "in_house" },
-                    { label: "POD (proveedor externo)", value: "pod" },
-                  ]}
-                  value={fulfillmentMethod}
-                  onChange={handleFulfillmentChange}
-                  disabled={savingFulfillment}
-                />
-              </div>
-              <Badge tone={STATUS_TONES[item.productionStatus] ?? "enabled"}>
-                {PRODUCTION_STATUS_LABELS[item.productionStatus] ??
-                  item.productionStatus}
-              </Badge>
-            </InlineStack>
-          </BlockStack>
-        </InlineStack>
-
-        {err && (
-          <Banner tone="critical" onDismiss={() => setErr(null)}>
-            {err}
-          </Banner>
-        )}
-
-        {allowed.length > 0 && (
-          <>
-            <Divider />
-            <InlineStack gap="200" blockAlign="center">
-              <Text variant="bodySm" tone="subdued" as="span">
-                Cambiar estado:
-              </Text>
-              {allowed.map((s) => (
-                <Button
-                  key={s}
-                  size="slim"
-                  variant="secondary"
-                  tone={s === "cancelled" ? "critical" : undefined}
-                  loading={updatingStatus}
-                  onClick={() =>
-                    s === "cancelled"
-                      ? onRequestCancel([item.id])
-                      : handleStatusChange(s)
-                  }
-                >
-                  → {PRODUCTION_STATUS_LABELS[s]}
-                </Button>
-              ))}
-            </InlineStack>
-          </>
-        )}
-
-        {/* POD section — visible only when fulfillmentMethod is pod */}
-        {fulfillmentMethod === "pod" && (
-          <>
-            <Divider />
-            <BlockStack gap="200">
-              {item.productionStatus === "cancelled" &&
-                item.podOrderId &&
-                (cancelInfo ? (
-                  <Banner tone="info">
-                    Cancelado{cancelInfo.refunded ? " y reembolsado" : ""} en
-                    Shopify por la app.
-                  </Banner>
-                ) : (
-                  <Banner tone="warning">
-                    Orden #{item.podOrderId} eliminada en Pictorem (remove
-                    quote). Verifica si debes{" "}
-                    <strong>reembolsar al cliente en Shopify</strong>.
-                  </Banner>
-                ))}
-              <InlineStack gap="200" blockAlign="center">
-                <Text variant="bodySm" fontWeight="semibold" as="span">
-                  Pictorem POD
-                </Text>
-                {item.podOrderId ? (
-                  <Badge tone="info">{`#${item.podOrderId}`}</Badge>
-                ) : (
-                  <Badge tone="enabled">Sin enviar</Badge>
-                )}
-                {item.podProvider && (
-                  <Text variant="bodySm" tone="subdued" as="span">
-                    · {item.podProvider}
-                  </Text>
-                )}
-              </InlineStack>
-              <InlineStack gap="200">
-                <Button
-                  size="slim"
-                  icon={SendIcon}
-                  loading={submittingPod}
-                  onClick={() => handlePodSubmit(!!item.podOrderId)}
-                >
-                  {item.podOrderId ? "Re-enviar" : "Enviar a Pictorem"}
-                </Button>
-                {item.podOrderId && (
+                <InlineStack gap="200">
                   <Button
                     size="slim"
-                    icon={ResetIcon}
-                    loading={syncingPod}
-                    onClick={handlePodSync}
+                    icon={SendIcon}
+                    loading={submittingPod}
+                    onClick={() => handlePodSubmit(!!item.podOrderId)}
                   >
-                    Actualizar estado
+                    {item.podOrderId ? "Re-enviar" : "Enviar a Pictorem"}
                   </Button>
-                )}
+                  {item.podOrderId && (
+                    <Button
+                      size="slim"
+                      icon={ResetIcon}
+                      loading={syncingPod}
+                      onClick={handlePodSync}
+                    >
+                      Actualizar estado
+                    </Button>
+                  )}
+                </InlineStack>
+              </BlockStack>
+            </>
+          )}
+
+          <Divider />
+
+          {!showTracking ? (
+            <Button
+              variant="plain"
+              size="slim"
+              onClick={() => setShowTracking(true)}
+            >
+              + Agregar tracking
+            </Button>
+          ) : (
+            <form onSubmit={handleSaveTracking}>
+              <InlineStack gap="200" blockAlign="end" wrap>
+                <div style={{ flex: "1 1 180px" }}>
+                  <TextField
+                    label="Número de tracking"
+                    value={trackingNumber}
+                    onChange={setTrackingNumber}
+                    placeholder="Ej: 1Z999AA10123456784"
+                    autoComplete="off"
+                  />
+                </div>
+                <div style={{ flex: "1 1 200px" }}>
+                  <TextField
+                    label="URL (opcional)"
+                    value={trackingUrl}
+                    onChange={setTrackingUrl}
+                    placeholder="https://track.carrier.com/…"
+                    autoComplete="off"
+                  />
+                </div>
+                <div style={{ flex: "1 1 140px" }}>
+                  <TextField
+                    label="Transportista"
+                    value={trackingCarrier}
+                    onChange={setTrackingCarrier}
+                    placeholder="UPS, FedEx…"
+                    autoComplete="off"
+                  />
+                </div>
+                <Button
+                  submit
+                  variant="primary"
+                  size="slim"
+                  loading={savingTracking}
+                >
+                  Guardar
+                </Button>
               </InlineStack>
-            </BlockStack>
-          </>
-        )}
+            </form>
+          )}
 
-        <Divider />
-
-        {!showTracking ? (
-          <Button
-            variant="plain"
-            size="slim"
-            onClick={() => setShowTracking(true)}
-          >
-            + Agregar tracking
-          </Button>
-        ) : (
-          <form onSubmit={handleSaveTracking}>
-            <InlineStack gap="200" blockAlign="end" wrap>
-              <div style={{ flex: "1 1 180px" }}>
-                <TextField
-                  label="Número de tracking"
-                  value={trackingNumber}
-                  onChange={setTrackingNumber}
-                  placeholder="Ej: 1Z999AA10123456784"
-                  autoComplete="off"
-                />
-              </div>
-              <div style={{ flex: "1 1 200px" }}>
-                <TextField
-                  label="URL (opcional)"
-                  value={trackingUrl}
-                  onChange={setTrackingUrl}
-                  placeholder="https://track.carrier.com/…"
-                  autoComplete="off"
-                />
-              </div>
-              <div style={{ flex: "1 1 140px" }}>
-                <TextField
-                  label="Transportista"
-                  value={trackingCarrier}
-                  onChange={setTrackingCarrier}
-                  placeholder="UPS, FedEx…"
-                  autoComplete="off"
-                />
-              </div>
-              <Button
-                submit
-                variant="primary"
-                size="slim"
-                loading={savingTracking}
-              >
-                Guardar
-              </Button>
+          {item.trackingNumber && !showTracking && (
+            <InlineStack gap="200" blockAlign="center">
+              <Text variant="bodySm" tone="subdued" as="span">
+                Tracking: {item.trackingNumber}
+              </Text>
+              {item.trackingUrl && (
+                <a
+                  href={item.trackingUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  style={{ color: "#448da6", fontSize: 13 }}
+                >
+                  Ver →
+                </a>
+              )}
             </InlineStack>
-          </form>
-        )}
-
-        {item.trackingNumber && !showTracking && (
-          <InlineStack gap="200" blockAlign="center">
-            <Text variant="bodySm" tone="subdued" as="span">
-              Tracking: {item.trackingNumber}
-            </Text>
-            {item.trackingUrl && (
-              <a
-                href={item.trackingUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                style={{ color: "#448da6", fontSize: 13 }}
-              >
-                Ver →
-              </a>
-            )}
-          </InlineStack>
-        )}
-      </BlockStack>
+          )}
+        </BlockStack>
       </Card>
     </>
   );
@@ -846,6 +675,140 @@ function CancelOrderModal({
   );
 }
 
+type LeadTimeResult = {
+  leadTime: number | null;
+  label: string | null;
+  estimatedReadyAt: string | null;
+};
+
+function fmtShortDate(iso: string): string {
+  return new Date(iso).toLocaleDateString("es-ES", {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+  });
+}
+
+function ProductionLeadTimeCard({
+  order,
+  orderId,
+}: {
+  order: AdminOrderDetail;
+  orderId: string;
+}) {
+  const podItems = order.items.filter((i) => i.fulfillmentMethod === "pod");
+
+  // Pre-populate from DB values already saved on each item
+  const [results, setResults] = useState<Record<string, LeadTimeResult | null>>(
+    () =>
+      Object.fromEntries(
+        podItems
+          .filter((i) => i.podLeadTimeDays != null)
+          .map((i) => [
+            i.id,
+            {
+              leadTime: i.podLeadTimeDays,
+              label:
+                i.podLeadTimeDays != null
+                  ? `${i.podLeadTimeDays} días hábiles`
+                  : null,
+              estimatedReadyAt: i.podEstimatedReadyAt,
+            },
+          ]),
+      ),
+  );
+  const [loadingItem, setLoadingItem] = useState<Record<string, boolean>>({});
+  const [errors, setErrors] = useState<Record<string, string | null>>({});
+
+  if (podItems.length === 0) return null;
+
+  async function handleConsult(itemId: string) {
+    setLoadingItem((prev) => ({ ...prev, [itemId]: true }));
+    setErrors((prev) => ({ ...prev, [itemId]: null }));
+    try {
+      const res = await adminApi.orders.podLeadTime(orderId, itemId);
+      setResults((prev) => ({
+        ...prev,
+        [itemId]: {
+          leadTime: res.leadTime,
+          label: res.label,
+          estimatedReadyAt: res.estimatedReadyAt,
+        },
+      }));
+    } catch (e) {
+      setErrors((prev) => ({ ...prev, [itemId]: (e as Error).message }));
+    } finally {
+      setLoadingItem((prev) => ({ ...prev, [itemId]: false }));
+    }
+  }
+
+  return (
+    <Card>
+      <BlockStack gap="300">
+        <Text variant="headingMd" as="h2">
+          Lead time de producción
+        </Text>
+        {podItems.map((item, i) => {
+          const result = results[item.id];
+          const err = errors[item.id];
+          return (
+            <div key={item.id}>
+              {i > 0 && <Divider />}
+              <Box paddingBlock="200">
+                <BlockStack gap="100">
+                  <InlineStack align="space-between" blockAlign="center">
+                    <BlockStack gap="0">
+                      <Text variant="bodyMd" fontWeight="semibold" as="span">
+                        {item.title}
+                      </Text>
+                      {(item.size || item.style) && (
+                        <Text variant="bodySm" tone="subdued" as="span">
+                          {[item.size, item.style].filter(Boolean).join(" · ")}
+                        </Text>
+                      )}
+                    </BlockStack>
+                    <InlineStack gap="200" blockAlign="center">
+                      {result?.leadTime != null && (
+                        <Badge tone="info">
+                          {result.label ?? `${result.leadTime} días hábiles`}
+                        </Badge>
+                      )}
+                      <Button
+                        size="slim"
+                        variant={result ? "plain" : "secondary"}
+                        loading={loadingItem[item.id]}
+                        onClick={() => handleConsult(item.id)}
+                      >
+                        {result ? "Actualizar" : "Consultar"}
+                      </Button>
+                    </InlineStack>
+                  </InlineStack>
+                  {result?.estimatedReadyAt && (
+                    <Text variant="bodySm" tone="subdued" as="span">
+                      Listo aprox.:{" "}
+                      <strong>{fmtShortDate(result.estimatedReadyAt)}</strong>
+                    </Text>
+                  )}
+                  {err && (
+                    <Banner
+                      tone="critical"
+                      onDismiss={() =>
+                        setErrors((prev) => ({ ...prev, [item.id]: null }))
+                      }
+                    >
+                      {err}
+                    </Banner>
+                  )}
+                </BlockStack>
+              </Box>
+            </div>
+          );
+        })}
+      </BlockStack>
+    </Card>
+  );
+}
+
 export default function AdminOrderDetailPage() {
   const { id } = useParams<{ id: string }>();
   const [order, setOrder] = useState<AdminOrderDetail | null>(null);
@@ -858,6 +821,12 @@ export default function AdminOrderDetailPage() {
   const [savingCost, setSavingCost] = useState(false);
   const [estimating, setEstimating] = useState(false);
   const [estimateWarning, setEstimateWarning] = useState<string | null>(null);
+  const [invoiceLines, setInvoiceLines] = useState<
+    { itemId: string; title: string; price: PodPriceDetail }[] | null
+  >(null);
+  const [consultingInvoice, setConsultingInvoice] = useState(false);
+  const [showOrderInvoice, setShowOrderInvoice] = useState(false);
+  const [invoiceErr, setInvoiceErr] = useState<string | null>(null);
 
   async function load() {
     setLoading(true);
@@ -897,6 +866,45 @@ export default function AdminOrderDetailPage() {
       await load();
     } finally {
       setSavingCost(false);
+    }
+  }
+
+  async function handleConsultInvoice() {
+    if (!order) return;
+    const podItems = order.items.filter(
+      (it) => it.fulfillmentMethod === "pod",
+    );
+    if (podItems.length === 0) return;
+    setConsultingInvoice(true);
+    setInvoiceErr(null);
+    try {
+      const results = await Promise.all(
+        podItems.map(async (it) => {
+          try {
+            const price = await adminApi.orders.podPrice(id, it.id);
+            return { itemId: it.id, title: it.title, price };
+          } catch {
+            return null;
+          }
+        }),
+      );
+      const lines = results.filter(
+        (r): r is { itemId: string; title: string; price: PodPriceDetail } =>
+          r !== null,
+      );
+      setInvoiceLines(lines);
+      setShowOrderInvoice(true);
+      if (lines.length === 0) {
+        setInvoiceErr("No se pudo cotizar ningún item POD en Pictorem.");
+      } else if (lines.length < podItems.length) {
+        setInvoiceErr(
+          `Solo se cotizaron ${lines.length} de ${podItems.length} items POD (algunos sin configuración).`,
+        );
+      }
+    } catch (e) {
+      setInvoiceErr((e as Error).message);
+    } finally {
+      setConsultingInvoice(false);
     }
   }
 
@@ -1268,13 +1276,17 @@ export default function AdminOrderDetailPage() {
                       variant="primary"
                       size="slim"
                       loading={savingCost}
-                      disabled={productionCostInput === (order.productionCost?.toString() ?? "")}
+                      disabled={
+                        productionCostInput ===
+                        (order.productionCost?.toString() ?? "")
+                      }
                       onClick={handleSaveCost}
                     >
                       Guardar
                     </Button>
                   </InlineStack>
-                  {productionCostInput !== "" && !isNaN(parseFloat(productionCostInput)) && (
+                  {productionCostInput !== "" &&
+                    !isNaN(parseFloat(productionCostInput)) &&
                     (() => {
                       const cost = parseFloat(productionCostInput);
                       const margin = order.totalAmount - cost;
@@ -1284,14 +1296,256 @@ export default function AdminOrderDetailPage() {
                           <Text variant="bodySm" tone="subdued" as="span">
                             Margen estimado
                           </Text>
-                          <Text variant="bodySm" tone={tone} fontWeight="semibold" as="span">
+                          <Text
+                            variant="bodySm"
+                            tone={tone}
+                            fontWeight="semibold"
+                            as="span"
+                          >
                             {fmtCurrency(margin, order.currency)}
                           </Text>
                         </InlineStack>
                       );
-                    })()
-                  )}
+                    })()}
                 </BlockStack>
+                {order.items.some((it) => it.fulfillmentMethod === "pod") && (
+                  <>
+                    <Divider />
+                    <BlockStack gap="200">
+                      <InlineStack align="space-between" blockAlign="center">
+                        <Text variant="bodySm" fontWeight="semibold" as="span">
+                          Precio Pictorem
+                        </Text>
+                        <Button
+                          variant="plain"
+                          size="micro"
+                          loading={consultingInvoice}
+                          disclosure={
+                            invoiceLines
+                              ? showOrderInvoice
+                                ? "up"
+                                : "down"
+                              : undefined
+                          }
+                          onClick={
+                            invoiceLines
+                              ? () => setShowOrderInvoice((v) => !v)
+                              : handleConsultInvoice
+                          }
+                        >
+                          {invoiceLines
+                            ? showOrderInvoice
+                              ? "Ocultar detalle de factura"
+                              : "Ver detalle de factura"
+                            : "Consultar precio Pictorem"}
+                        </Button>
+                      </InlineStack>
+                      {invoiceErr && (
+                        <Text variant="bodySm" tone="subdued" as="p">
+                          {invoiceErr}
+                        </Text>
+                      )}
+                      {invoiceLines && invoiceLines.length > 0 && (
+                        <Collapsible
+                          open={showOrderInvoice}
+                          id="order-invoice"
+                          transition={{
+                            duration: "150ms",
+                            timingFunction: "ease-in-out",
+                          }}
+                        >
+                          <Box
+                            background="bg-surface-secondary"
+                            padding="300"
+                            borderRadius="200"
+                          >
+                            <BlockStack gap="300">
+                              {invoiceLines.map((line, idx) => (
+                                <BlockStack gap="150" key={line.itemId}>
+                                  {invoiceLines.length > 1 && (
+                                    <Text variant="headingSm" as="h3">
+                                      {line.title}
+                                    </Text>
+                                  )}
+                                  {line.price.components.map((c) => (
+                                    <InlineStack
+                                      key={c.code}
+                                      align="space-between"
+                                    >
+                                      <Text variant="bodySm" as="span">
+                                        {c.label}
+                                      </Text>
+                                      <Text variant="bodySm" as="span">
+                                        {c.list === 0
+                                          ? "Gratis"
+                                          : fmtCurrency(
+                                              c.list,
+                                              line.price.currency,
+                                            )}
+                                      </Text>
+                                    </InlineStack>
+                                  ))}
+                                  <Divider />
+                                  {line.price.discount > 0 && (
+                                    <InlineStack align="space-between">
+                                      <Text
+                                        variant="bodySm"
+                                        tone="subdued"
+                                        as="span"
+                                      >
+                                        Descuento revendedor
+                                      </Text>
+                                      <Text
+                                        variant="bodySm"
+                                        tone="success"
+                                        as="span"
+                                      >
+                                        −
+                                        {fmtCurrency(
+                                          line.price.discount,
+                                          line.price.currency,
+                                        )}
+                                      </Text>
+                                    </InlineStack>
+                                  )}
+                                  <InlineStack align="space-between">
+                                    <Text
+                                      variant="bodySm"
+                                      tone="subdued"
+                                      as="span"
+                                    >
+                                      Subtotal
+                                    </Text>
+                                    <Text variant="bodySm" as="span">
+                                      {fmtCurrency(
+                                        line.price.subtotal,
+                                        line.price.currency,
+                                      )}
+                                    </Text>
+                                  </InlineStack>
+                                  {line.price.taxAmount > 0 && (
+                                    <InlineStack align="space-between">
+                                      <Text
+                                        variant="bodySm"
+                                        tone="subdued"
+                                        as="span"
+                                      >
+                                        Impuestos (
+                                        {Math.round(
+                                          line.price.taxPercentage * 100,
+                                        )}
+                                        %)
+                                      </Text>
+                                      <Text variant="bodySm" as="span">
+                                        {fmtCurrency(
+                                          line.price.taxAmount,
+                                          line.price.currency,
+                                        )}
+                                      </Text>
+                                    </InlineStack>
+                                  )}
+                                  <InlineStack align="space-between">
+                                    <Text
+                                      variant="bodySm"
+                                      fontWeight="bold"
+                                      as="span"
+                                    >
+                                      Total ({line.price.currency})
+                                    </Text>
+                                    <Text
+                                      variant="bodySm"
+                                      fontWeight="bold"
+                                      as="span"
+                                    >
+                                      {fmtCurrency(
+                                        line.price.total,
+                                        line.price.currency,
+                                      )}
+                                    </Text>
+                                  </InlineStack>
+                                  {line.price.billing && (
+                                    <Text
+                                      variant="bodySm"
+                                      tone="subdued"
+                                      as="span"
+                                    >
+                                      ≈{" "}
+                                      {fmtCurrency(
+                                        line.price.billing.total,
+                                        line.price.billing.currency,
+                                      )}{" "}
+                                      · FX {line.price.billing.rateDate}
+                                    </Text>
+                                  )}
+                                  {idx < invoiceLines.length - 1 && <Divider />}
+                                </BlockStack>
+                              ))}
+                              {invoiceLines.length > 1 &&
+                                (() => {
+                                  const cur = invoiceLines[0].price.currency;
+                                  const grand = invoiceLines.reduce(
+                                    (s, l) => s + l.price.total,
+                                    0,
+                                  );
+                                  const allBilled = invoiceLines.every(
+                                    (l) => l.price.billing,
+                                  );
+                                  const billCur =
+                                    invoiceLines[0].price.billing?.currency;
+                                  const grandBill = allBilled
+                                    ? invoiceLines.reduce(
+                                        (s, l) =>
+                                          s + (l.price.billing?.total ?? 0),
+                                        0,
+                                      )
+                                    : null;
+                                  return (
+                                    <>
+                                      <Divider />
+                                      <InlineStack align="space-between">
+                                        <Text
+                                          variant="bodyMd"
+                                          fontWeight="bold"
+                                          as="span"
+                                        >
+                                          Total Pictorem
+                                        </Text>
+                                        <Text
+                                          variant="bodyMd"
+                                          fontWeight="bold"
+                                          as="span"
+                                        >
+                                          {fmtCurrency(grand, cur)}
+                                        </Text>
+                                      </InlineStack>
+                                      {grandBill != null && billCur && (
+                                        <InlineStack align="space-between">
+                                          <Text
+                                            variant="bodySm"
+                                            tone="subdued"
+                                            as="span"
+                                          >
+                                            ≈ en {billCur}
+                                          </Text>
+                                          <Text
+                                            variant="bodySm"
+                                            tone="subdued"
+                                            as="span"
+                                          >
+                                            {fmtCurrency(grandBill, billCur)}
+                                          </Text>
+                                        </InlineStack>
+                                      )}
+                                    </>
+                                  );
+                                })()}
+                            </BlockStack>
+                          </Box>
+                        </Collapsible>
+                      )}
+                    </BlockStack>
+                  </>
+                )}
                 <Divider />
                 <InlineStack gap="200">
                   {order.financialStatus && (
@@ -1309,6 +1563,7 @@ export default function AdminOrderDetailPage() {
                 </InlineStack>
               </BlockStack>
             </Card>
+            <ProductionLeadTimeCard order={order} orderId={id} />
           </BlockStack>
         </Layout.Section>
       </Layout>
