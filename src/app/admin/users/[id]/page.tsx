@@ -28,8 +28,24 @@ import {
   AdminUserDetail,
   AdminUserGeneration,
   AdminUserOrderListItem,
+  CustomerExpenses,
   Paginated,
 } from "@/entities/admin/api";
+
+const EXPENSE_CATEGORY_LABELS: Record<string, string> = {
+  pod_production: "Producción (Pictorem)",
+  image_generation: "Generación de imagen",
+  image_upscale: "Agrandar imagen",
+  manual: "Manual",
+};
+
+function fmtCurrency(amount: number, currency: string) {
+  return new Intl.NumberFormat("es-ES", {
+    style: "currency",
+    currency,
+    minimumFractionDigits: 2,
+  }).format(amount);
+}
 
 function getInitials(fullName: string | null, email: string): string {
   if (fullName) {
@@ -96,6 +112,8 @@ export default function AdminUserDetailPage() {
   const [gensLoading, setGensLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [selectedTab, setSelectedTab] = useState(0);
+  const [expenses, setExpenses] = useState<CustomerExpenses | null>(null);
+  const [loadingExpenses, setLoadingExpenses] = useState(true);
 
   useEffect(() => {
     adminApi.users
@@ -103,6 +121,15 @@ export default function AdminUserDetailPage() {
       .then(setUser)
       .catch((e: Error) => setError(e.message))
       .finally(() => setLoading(false));
+  }, [id]);
+
+  useEffect(() => {
+    let alive = true;
+    adminApi.users
+      .expenses(id)
+      .then((data) => { if (alive) { setExpenses(data); setLoadingExpenses(false); } })
+      .catch(() => { if (alive) setLoadingExpenses(false); });
+    return () => { alive = false; };
   }, [id]);
 
   useEffect(() => {
@@ -260,6 +287,44 @@ export default function AdminUserDetailPage() {
                     </div>
                   ))}
                 </Grid>
+              </BlockStack>
+            </Card>
+
+            {/* Gastos del cliente */}
+            <Card>
+              <BlockStack gap="300">
+                <Text variant="headingSm" as="h2">
+                  Gastos acumulados
+                </Text>
+                {loadingExpenses && <Spinner size="small" />}
+                {!loadingExpenses && expenses && (
+                  <BlockStack gap="200">
+                    {Object.entries(expenses.byCategory).map(([cat, total]) => (
+                      <InlineStack key={cat} align="space-between" blockAlign="center">
+                        <Text as="span" tone="subdued">
+                          {EXPENSE_CATEGORY_LABELS[cat] ?? cat}
+                        </Text>
+                        <Text as="span">
+                          ≈ {fmtCurrency(total, expenses.baseCurrency)}
+                        </Text>
+                      </InlineStack>
+                    ))}
+                    {Object.keys(expenses.byCategory).length > 0 && <Divider />}
+                    <InlineStack align="space-between" blockAlign="center">
+                      <Text as="span" fontWeight="semibold">
+                        Total gastos
+                      </Text>
+                      <Text as="span" fontWeight="semibold">
+                        ≈ {fmtCurrency(expenses.grandTotal, expenses.baseCurrency)}
+                      </Text>
+                    </InlineStack>
+                    {expenses.items.length === 0 && (
+                      <Text as="p" tone="subdued">
+                        Sin gastos registrados aún.
+                      </Text>
+                    )}
+                  </BlockStack>
+                )}
               </BlockStack>
             </Card>
           </BlockStack>

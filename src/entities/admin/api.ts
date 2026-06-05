@@ -419,6 +419,59 @@ export interface SyncStatus {
   productsDeactivated: number | null;
 }
 
+export interface ExpenseItem {
+  id: string;
+  category: string;
+  provider: string | null;
+  providerRef: string | null;
+  amount: number;
+  currency: string;
+  amountBase: number | null;
+  baseCurrency: string | null;
+  fxRate: number | null;
+  detail: Record<string, unknown> | null;
+  note: string | null;
+  source: string;
+  orderId: string | null;
+  orderItemId: string | null;
+  generationId: string | null;
+  createdAt: string;
+}
+
+export interface OrderExpenses {
+  items: ExpenseItem[];
+  summary: Record<string, { count: number; totalBase: number }>;
+  grandTotal: number;
+  baseCurrency: string;
+}
+
+export interface CustomerExpenses {
+  items: ExpenseItem[];
+  byCategory: Record<string, number>;
+  grandTotal: number;
+  baseCurrency: string;
+}
+
+export interface ExpensesSummary {
+  period: string;
+  baseCurrency: string;
+  byCategory: Record<string, { total: number; count: number }>;
+  grandTotal: number;
+  count: number;
+}
+
+export interface ProviderRate {
+  id: string;
+  provider: string;
+  model: string;
+  unit: string;
+  amount: number;
+  currency: string;
+  isActive: boolean;
+  updatedAt: string;
+  updatedBy: string | null;
+}
+
 async function adminFetch<T>(path: string, options: RequestInit = {}): Promise<T> {
   const res = await fetch(`${API_URL}${path}`, {
     ...options,
@@ -659,6 +712,8 @@ export const adminApi = {
       adminFetch<Paginated<AdminUserOrderListItem>>(
         `/admin/users/${id}/orders?page=${page}&limit=10`,
       ),
+    expenses: (id: string) =>
+      adminFetch<CustomerExpenses>(`/admin/users/${id}/expenses`),
   },
   orders: {
     list: (params: {
@@ -815,6 +870,15 @@ export const adminApi = {
         method: 'PATCH',
         body: JSON.stringify({ enabled }),
       }),
+    podFxRate: () =>
+      adminFetch<{ rate: number; source: 'db' | 'env' | 'default' }>(
+        '/admin/orders/pod/fx-rate',
+      ),
+    podSetFxRate: (rate: number) =>
+      adminFetch<{ rate: number }>('/admin/orders/pod/fx-rate', {
+        method: 'PATCH',
+        body: JSON.stringify({ rate }),
+      }),
     uploadPrintImage: (orderId: string, itemId: string, file: File) => {
       const form = new FormData();
       form.append('file', file);
@@ -846,6 +910,30 @@ export const adminApi = {
         `/admin/orders/${orderId}/items/${itemId}/enhance/revert`,
         { method: 'POST' },
       ),
+    expenses: (orderId: string) =>
+      adminFetch<OrderExpenses>(`/admin/orders/${orderId}/expenses`),
+    addExpense: (
+      orderId: string,
+      body: { amount: number; currency: string; note?: string },
+    ) =>
+      adminFetch<ExpenseItem>(`/admin/orders/${orderId}/expenses`, {
+        method: 'POST',
+        body: JSON.stringify(body),
+      }),
+    deleteExpense: (id: string) =>
+      adminFetch(`/admin/expenses/${id}`, { method: 'DELETE' }),
+  },
+  expenses: {
+    summary: (period: '7d' | '30d' | '90d' | 'all' = '30d') =>
+      adminFetch<ExpensesSummary>(`/admin/expenses/summary?period=${period}`),
+  },
+  expenseRates: {
+    list: () => adminFetch<ProviderRate[]>('/admin/expense-rates'),
+    update: (id: string, body: { amount?: number; unit?: string; currency?: string }) =>
+      adminFetch<ProviderRate>(`/admin/expense-rates/${id}`, {
+        method: 'PATCH',
+        body: JSON.stringify(body),
+      }),
   },
 };
 
