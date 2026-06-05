@@ -768,9 +768,18 @@ export const adminApi = {
         list: number;
         discount: number;
         subtotal: number;
+        taxPercentage: number;
+        taxAmount: number;
         total: number;
         currency: string;
         preorderCode: string;
+        components: Array<{
+          code: string;
+          label: string;
+          list: number;
+          discount: number;
+          net: number;
+        }>;
         billing: {
           currency: string;
           subtotal: number;

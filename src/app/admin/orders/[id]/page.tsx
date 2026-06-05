@@ -139,14 +139,26 @@ function OrderItemCard({
   const [submittingPod, setSubmittingPod] = useState(false);
   const [syncingPod, setSyncingPod] = useState(false);
   const [loadingPrice, setLoadingPrice] = useState(false);
+  const [showInvoice, setShowInvoice] = useState(false);
   const [podPrice, setPodPrice] = useState<{
     subtotal: number;
+    taxPercentage: number;
+    taxAmount: number;
+    discount: number;
     total: number;
     currency: string;
+    components: Array<{
+      code: string;
+      label: string;
+      list: number;
+      discount: number;
+      net: number;
+    }>;
     billing: {
       currency: string;
       subtotal: number;
       total: number;
+      rate: number;
       rateDate: string;
     } | null;
   } | null>(null);
@@ -199,8 +211,12 @@ function OrderItemCard({
       const price = await adminApi.orders.podPrice(orderId, item.id);
       setPodPrice({
         subtotal: price.subtotal,
+        taxPercentage: price.taxPercentage,
+        taxAmount: price.taxAmount,
+        discount: price.discount,
         total: price.total,
         currency: price.currency,
+        components: price.components,
         billing: price.billing,
       });
     } catch (e) {
@@ -414,6 +430,16 @@ function OrderItemCard({
                           c/imp.) · FX {podPrice.billing.rateDate}
                         </Text>
                       )}
+                      {podPrice.components.length > 0 && (
+                        <Button
+                          variant="plain"
+                          size="micro"
+                          disclosure={showInvoice ? "up" : "down"}
+                          onClick={() => setShowInvoice((v) => !v)}
+                        >
+                          {showInvoice ? "Ocultar detalle" : "Ver detalle de factura"}
+                        </Button>
+                      )}
                     </BlockStack>
                   ) : (
                     <Button
@@ -427,6 +453,90 @@ function OrderItemCard({
                   ))}
               </BlockStack>
             </InlineStack>
+
+            {podPrice && podPrice.components.length > 0 && (
+              <Collapsible
+                open={showInvoice}
+                id={`invoice-${item.id}`}
+                transition={{
+                  duration: "150ms",
+                  timingFunction: "ease-in-out",
+                }}
+              >
+                <Box
+                  background="bg-surface-secondary"
+                  padding="300"
+                  borderRadius="200"
+                >
+                  <BlockStack gap="150">
+                    <Text variant="headingSm" as="h3">
+                      Detalle de factura Pictorem ({podPrice.currency})
+                    </Text>
+                    {podPrice.components.map((c) => (
+                      <InlineStack key={c.code} align="space-between">
+                        <Text variant="bodySm" as="span">
+                          {c.label}
+                        </Text>
+                        <Text variant="bodySm" as="span">
+                          {c.list === 0
+                            ? "Gratis"
+                            : fmtCurrency(c.list, podPrice.currency)}
+                        </Text>
+                      </InlineStack>
+                    ))}
+                    <Divider />
+                    {podPrice.discount > 0 && (
+                      <InlineStack align="space-between">
+                        <Text variant="bodySm" tone="subdued" as="span">
+                          Descuento revendedor
+                        </Text>
+                        <Text variant="bodySm" tone="success" as="span">
+                          −{fmtCurrency(podPrice.discount, podPrice.currency)}
+                        </Text>
+                      </InlineStack>
+                    )}
+                    <InlineStack align="space-between">
+                      <Text variant="bodySm" tone="subdued" as="span">
+                        Subtotal
+                      </Text>
+                      <Text variant="bodySm" as="span">
+                        {fmtCurrency(podPrice.subtotal, podPrice.currency)}
+                      </Text>
+                    </InlineStack>
+                    {podPrice.taxAmount > 0 && (
+                      <InlineStack align="space-between">
+                        <Text variant="bodySm" tone="subdued" as="span">
+                          Impuestos (
+                          {Math.round(podPrice.taxPercentage * 100)}%)
+                        </Text>
+                        <Text variant="bodySm" as="span">
+                          {fmtCurrency(podPrice.taxAmount, podPrice.currency)}
+                        </Text>
+                      </InlineStack>
+                    )}
+                    <InlineStack align="space-between">
+                      <Text variant="bodySm" fontWeight="bold" as="span">
+                        Total
+                      </Text>
+                      <Text variant="bodySm" fontWeight="bold" as="span">
+                        {fmtCurrency(podPrice.total, podPrice.currency)}
+                      </Text>
+                    </InlineStack>
+                    {podPrice.billing && (
+                      <Text variant="bodySm" tone="subdued" as="span">
+                        ≈{" "}
+                        {fmtCurrency(
+                          podPrice.billing.total,
+                          podPrice.billing.currency,
+                        )}{" "}
+                        a tipo de cambio {podPrice.billing.rate.toFixed(4)} (
+                        {podPrice.billing.rateDate})
+                      </Text>
+                    )}
+                  </BlockStack>
+                </Box>
+              </Collapsible>
+            )}
 
             <InlineStack gap="200" blockAlign="center">
               <div style={{ minWidth: 180 }}>
