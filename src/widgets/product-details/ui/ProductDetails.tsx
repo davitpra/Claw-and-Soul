@@ -36,6 +36,24 @@ export default function ProductDetails({
     }
   }, [selectedVariant, setMainImage]);
 
+  const setOption = selectedVariant?.selectedOptions.find(
+    (o) => o.name.toLowerCase() === "set",
+  );
+
+  const otherSetImage =
+    setOption && selectedVariant
+      ? (product.variants.edges.find(
+          ({ node }) =>
+            node.id !== selectedVariant.id &&
+            node.selectedOptions.every((o) =>
+              o.name.toLowerCase() === "set"
+                ? o.value !== setOption.value
+                : selectedVariant.selectedOptions.find((s) => s.name === o.name)
+                    ?.value === o.value,
+            ),
+        )?.node.image?.url ?? null)
+      : null;
+
   const {
     productRefId,
     styleId,
@@ -80,7 +98,7 @@ export default function ProductDetails({
       <ProductGallery
         product={product}
         mainImage={mainImage}
-        onImageSelect={setMainImage}
+        otherSetImage={otherSetImage}
         variantImage={selectedVariant?.image?.url}
       />
 
@@ -96,9 +114,18 @@ export default function ProductDetails({
             onVariantChange={setSelectedVariantId}
           />
 
+          <div className="h-px w-full bg-linear-to-r from-text-main/15 via-text-main/5 to-transparent" />
+
+          <ProductAccordions html={product.description} />
+
+          <div className="h-px w-full bg-linear-to-r from-text-main/15 via-text-main/5 to-transparent" />
+          <div className="flex flex-col gap-1">
+            <span className="text-primary font-bold tracking-wider uppercase text-xs">
+              Make It Yours
+            </span>
+          </div>
           {hasOptions && (
             <>
-              <div className="h-px w-full bg-linear-to-r from-text-main/15 via-text-main/5 to-transparent" />
               <div>
                 <StyleOptionsForm
                   options={detailedStyle!.templateVarOptions!}
@@ -113,10 +140,6 @@ export default function ProductDetails({
               </div>
             </>
           )}
-
-          <div className="h-px w-full bg-linear-to-r from-text-main/15 via-text-main/5 to-transparent" />
-
-          <ProductAccordions html={product.description} />
 
           <PersonalizeButton
             product={product}

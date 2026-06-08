@@ -77,7 +77,7 @@ export default function ProductVariantSelector({
 
   return (
     <div className="flex flex-col gap-1">
-      {optionNames.map((optionName) => (
+      {optionNames.filter((n) => n.toLowerCase() !== "set").map((optionName) => (
         <div
           key={optionName}
           className="flex items-center border border-primary/40 rounded-lg overflow-hidden"
