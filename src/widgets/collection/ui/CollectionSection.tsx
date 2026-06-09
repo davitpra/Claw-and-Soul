@@ -9,6 +9,11 @@ import { Card } from "@/shared/ui/Card";
 const cardSizeClasses =
   "flex-[0_0_72%] sm:flex-[0_0_45%] md:flex-[0_0_33%] lg:flex-[0_0_22%] min-w-0";
 
+// Aspecto de "poster flotando": esquinas redondeadas, sombra teñida en teal
+// oscuro y una ligera elevación al pasar el cursor.
+const posterClasses =
+  "shadow-[0_18px_40px_-12px_rgba(16,54,66,0.45)] transition-all duration-300 ease-out hover:-translate-y-2 hover:shadow-[0_30px_55px_-12px_rgba(16,54,66,0.55)]";
+
 interface StyleCardProps {
   image: StyleImage;
   badgeLabel?: string;
@@ -16,10 +21,14 @@ interface StyleCardProps {
 
 function StyleCard({ image, badgeLabel }: StyleCardProps) {
   return (
-    <Card imageUrl={image.imageUrl} imageAlt={image.altImage ?? undefined} className={cardSizeClasses}>
-      <div className="absolute inset-0 bg-linear-to-t from-black/60 via-transparent to-transparent opacity-60" />
+    <Card
+      imageUrl={image.imageUrl}
+      imageAlt={image.altImage ?? undefined}
+      naturalAspect
+      className={`${cardSizeClasses} ${posterClasses}`}
+    >
       {badgeLabel && (
-        <span className="absolute top-3 left-3 bg-primary text-white text-[10px] font-bold uppercase px-2 py-1 rounded-full tracking-wider">
+        <span className="absolute top-3 left-3 bg-primary text-white text-[10px] font-bold uppercase px-2 py-1 tracking-wider">
           {badgeLabel}
         </span>
       )}
