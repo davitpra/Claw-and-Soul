@@ -2,6 +2,7 @@
 
 import { ShopifyProduct } from "@/lib/shopify";
 import ProductGallery from "@/entities/product/ui/ProductGallery";
+import { getOtherSetImage } from "@/entities/product/lib/getOtherSetImage";
 import ProductInfo from "@/entities/product/ui/ProductInfo";
 import ProductVariantSelector from "@/entities/product/ui/ProductVariantSelector";
 import PersonalizeButton from "@/features/personalize/ui/PersonalizeButton";
@@ -36,23 +37,7 @@ export default function ProductDetails({
     }
   }, [selectedVariant, setMainImage]);
 
-  const setOption = selectedVariant?.selectedOptions.find(
-    (o) => o.name.toLowerCase() === "set",
-  );
-
-  const otherSetImage =
-    setOption && selectedVariant
-      ? (product.variants.edges.find(
-          ({ node }) =>
-            node.id !== selectedVariant.id &&
-            node.selectedOptions.every((o) =>
-              o.name.toLowerCase() === "set"
-                ? o.value !== setOption.value
-                : selectedVariant.selectedOptions.find((s) => s.name === o.name)
-                    ?.value === o.value,
-            ),
-        )?.node.image?.url ?? null)
-      : null;
+  const otherSetImage = getOtherSetImage(product, selectedVariant);
 
   const {
     productRefId,

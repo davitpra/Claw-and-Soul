@@ -28,7 +28,7 @@ export default function ProductGallery({
           priority
         />
       </div>
-      {otherSetImage && (
+      {/* {otherSetImage && (
         <div className="w-full overflow-hidden bg-white rounded-xl group">
           <Image
             src={otherSetImage}
@@ -39,7 +39,7 @@ export default function ProductGallery({
             className={`w-full h-auto max-h-[75vh] object-contain transition-transform duration-700 group-hover:scale-105`}
           />
         </div>
-      )}
+      )} */}
     </div>
   );
 }
