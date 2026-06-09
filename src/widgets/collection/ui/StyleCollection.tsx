@@ -10,16 +10,23 @@ interface StyleCollectionProps {
   showCta?: boolean;
 }
 
-export default function StyleCollection({ handle, styleId: styleIdProp, showCta = true }: StyleCollectionProps) {
+export default function StyleCollection({
+  handle,
+  styleId: styleIdProp,
+}: StyleCollectionProps) {
   const { styleId: derivedStyleId, isLoading: styleLoading } = useProductStyle(
-    styleIdProp ? null : (handle ?? null)
+    styleIdProp ? null : (handle ?? null),
   );
 
   const resolvedStyleId = styleIdProp ?? derivedStyleId;
-  const { images, isLoading: imagesLoading, error } = useStyleImages(resolvedStyleId);
+  const {
+    images,
+    isLoading: imagesLoading,
+    error,
+  } = useStyleImages(resolvedStyleId);
 
   const isLoading = (styleIdProp ? false : styleLoading) || imagesLoading;
-  const title = "Other pets in this style";
+  const title = "Minimalist Art Styles";
 
   return (
     <CollectionSection
@@ -27,8 +34,6 @@ export default function StyleCollection({ handle, styleId: styleIdProp, showCta 
       isLoading={isLoading}
       error={error}
       title={title}
-      ctaHref={showCta ? "/ia-generator" : undefined}
-      ctaLabel={showCta ? "Ver más estilos" : undefined}
     />
   );
 }

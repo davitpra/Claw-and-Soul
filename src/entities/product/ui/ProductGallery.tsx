@@ -13,7 +13,6 @@ interface ProductGalleryProps {
 export default function ProductGallery({
   product,
   mainImage,
-  otherSetImage,
 }: ProductGalleryProps) {
   return (
     <div className="lg:col-span-7 flex flex-col gap-8">
@@ -28,18 +27,6 @@ export default function ProductGallery({
           priority
         />
       </div>
-      {/* {otherSetImage && (
-        <div className="w-full overflow-hidden bg-white rounded-xl group">
-          <Image
-            src={otherSetImage}
-            alt={`${product.title} - set`}
-            width={0}
-            height={0}
-            sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 600px"
-            className={`w-full h-auto max-h-[75vh] object-contain transition-transform duration-700 group-hover:scale-105`}
-          />
-        </div>
-      )} */}
     </div>
   );
 }

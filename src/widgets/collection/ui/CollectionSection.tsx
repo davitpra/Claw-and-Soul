@@ -21,18 +21,25 @@ interface StyleCardProps {
 
 function StyleCard({ image, badgeLabel }: StyleCardProps) {
   return (
-    <Card
-      imageUrl={image.imageUrl}
-      imageAlt={image.altImage ?? undefined}
-      naturalAspect
-      className={`${cardSizeClasses} ${posterClasses}`}
-    >
-      {badgeLabel && (
-        <span className="absolute top-3 left-3 bg-primary text-white text-[10px] font-bold uppercase px-2 py-1 tracking-wider">
-          {badgeLabel}
-        </span>
+    <div className={cardSizeClasses}>
+      <Card
+        imageUrl={image.imageUrl}
+        imageAlt={image.altImage ?? undefined}
+        naturalAspect
+        className={posterClasses}
+      >
+        {badgeLabel && (
+          <span className="absolute top-3 left-3 bg-primary text-white text-[10px] font-bold uppercase px-2 py-1 tracking-wider">
+            {badgeLabel}
+          </span>
+        )}
+      </Card>
+      {image.altImage && (
+        <h3 className="mt-1 text-center text-lg font-bold text-[#103642]">
+          {image.altImage}
+        </h3>
       )}
-    </Card>
+    </div>
   );
 }
 
@@ -74,9 +81,14 @@ export default function CollectionSection({
   return (
     <section className={`py-20 ${background}`}>
       <Container>
-        <h2 className="text-4xl font-black text-[#103642] leading-[1.1] tracking-tight text-center mb-10">
-          {title}
-        </h2>
+        <div className="flex flex-col gap-1">
+          <span className="text-center text-primary font-bold tracking-wider uppercase text-md">
+            Choose Your Style
+          </span>
+          <h2 className="text-4xl font-black text-[#103642] leading-[1.1] tracking-tight text-center mb-10">
+            {title}
+          </h2>
+        </div>
 
         <Carousel gap="gap-8">
           {isLoading

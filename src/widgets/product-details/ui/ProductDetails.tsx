@@ -2,7 +2,6 @@
 
 import { ShopifyProduct } from "@/lib/shopify";
 import ProductGallery from "@/entities/product/ui/ProductGallery";
-import { getOtherSetImage } from "@/entities/product/lib/getOtherSetImage";
 import ProductInfo from "@/entities/product/ui/ProductInfo";
 import ProductVariantSelector from "@/entities/product/ui/ProductVariantSelector";
 import PersonalizeButton from "@/features/personalize/ui/PersonalizeButton";
@@ -36,8 +35,6 @@ export default function ProductDetails({
       setMainImage(selectedVariant.image.url);
     }
   }, [selectedVariant, setMainImage]);
-
-  const otherSetImage = getOtherSetImage(product, selectedVariant);
 
   const {
     productRefId,
@@ -83,7 +80,6 @@ export default function ProductDetails({
       <ProductGallery
         product={product}
         mainImage={mainImage}
-        otherSetImage={otherSetImage}
         variantImage={selectedVariant?.image?.url}
       />
 
@@ -105,7 +101,7 @@ export default function ProductDetails({
 
           <div className="h-px w-full bg-linear-to-r from-text-main/15 via-text-main/5 to-transparent" />
           <div className="flex flex-col gap-1">
-            <span className="text-primary font-bold tracking-wider uppercase text-xs">
+            <span className="text-primary font-bold tracking-wider uppercase text-sm">
               Make It Yours
             </span>
           </div>
