@@ -5,6 +5,7 @@ import ProductFAQ from "@/widgets/product-faq/ui/ProductFAQ";
 import { ProductTemplateProps } from "./ProductPageTemplate";
 import { StyleCollection } from "@/widgets/collection";
 import { RoomView } from "@/widgets/room-view";
+import { Reviews } from "@/widgets/reviews";
 
 export default function PosterTemplate({
   product,
@@ -30,6 +31,7 @@ export default function PosterTemplate({
       </div>
       <StyleCollection handle={handle} />
       <RoomView product={product} selectedVariantId={selectedVariantId} />
+      <Reviews />
       <ProductFAQ faqs={faqs} />
     </>
   );
