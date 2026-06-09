@@ -34,7 +34,7 @@ interface IAUploadStepProps {
 }
 
 const SPECIES_OPTIONS = ["dog", "cat", "bird", "rabbit", "other"];
-const MAX_PHOTOS = 1;
+const MAX_PHOTOS = 4;
 
 /**
  * Componente IAUploadStep
@@ -123,6 +123,18 @@ export function IAUploadStep({
     e.target.value = "";
   };
 
+  const removePhoto = (index: number) => {
+    onPhotosChange(photos.filter((_, i) => i !== index));
+  };
+
+  // Mueve la foto seleccionada al inicio para que sea la principal.
+  const makePrimary = (index: number) => {
+    if (index === 0) return;
+    const next = [...photos];
+    const [chosen] = next.splice(index, 1);
+    onPhotosChange([chosen, ...next]);
+  };
+
   const selectPet = (pet: Pet) => {
     setActivePet(pet);
     setForm({
@@ -142,15 +154,22 @@ export function IAUploadStep({
     setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }));
   };
 
+  // Sube todas las fotos en orden: la primera como principal (isPrimary=true) y
+  // el resto como secundarias. Devuelve la foto principal para usar su id.
   const uploadPhoto = async (petId: string): Promise<PetPhoto | null> => {
-    if (!photos[0]) return null;
-    const formData = new FormData();
-    formData.append("photo", photos[0]);
-    const result = await authFetchJSON<PetPhoto>(
-      `/pets/${petId}/photos?isPrimary=true`,
-      { method: "POST", body: formData },
-    );
-    return result;
+    if (photos.length === 0) return null;
+    let primaryPhoto: PetPhoto | null = null;
+    for (let i = 0; i < photos.length; i++) {
+      const formData = new FormData();
+      formData.append("photo", photos[i]);
+      const raw = await authFetchJSON<{ data: PetPhoto } | PetPhoto>(
+        `/pets/${petId}/photos?isPrimary=${i === 0}`,
+        { method: "POST", body: formData },
+      );
+      const photo = "data" in raw ? raw.data : raw;
+      if (i === 0) primaryPhoto = photo;
+    }
+    return primaryPhoto;
   };
 
   // Maneja el envío del formulario: guarda o actualiza la mascota, sube la foto y llama a la API de generación de IA
@@ -265,10 +284,10 @@ export function IAUploadStep({
           {/* ── LEFT: Photo Upload ── */}
           <div className="flex flex-col">
             <h2 className="text-xl font-bold text-slate-dark mb-4">
-              Upload Pet Photo
+              Upload Pet Photos
             </h2>
 
-            {/* Drop zone */}
+            {/* Main preview / drop zone */}
             <div
               className={`group relative rounded-xl overflow-hidden cursor-pointer transition-all duration-300 flex-1 min-h-50 ${
                 displayPhoto
@@ -289,6 +308,7 @@ export function IAUploadStep({
               <input
                 type="file"
                 accept="image/*"
+                multiple
                 className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
                 onChange={handleFileInput}
               />
@@ -308,16 +328,18 @@ export function IAUploadStep({
                       photo_camera
                     </span>
                     <p className="text-white text-sm font-semibold tracking-wide">
-                      Click to change photo
+                      {photos.length >= MAX_PHOTOS
+                        ? "Remove a photo to add another"
+                        : "Click to add more photos"}
                     </p>
                   </div>
 
-                  {/* Success badge */}
-                  <div className="absolute top-3 left-3 z-20 flex items-center gap-1.5 bg-black/50 backdrop-blur-sm text-white text-xs font-semibold px-2.5 py-1.5 rounded-full pointer-events-none">
-                    <span className="material-symbols-outlined text-green-400 text-[14px]">
-                      check_circle
+                  {/* Primary badge */}
+                  <div className="absolute top-3 left-3 z-20 flex items-center gap-1.5 bg-primary text-white text-xs font-semibold px-2.5 py-1.5 rounded-full pointer-events-none">
+                    <span className="material-symbols-outlined text-[14px]">
+                      star
                     </span>
-                    Photo ready
+                    Principal
                   </div>
 
                   {/* Remove button */}
@@ -325,8 +347,8 @@ export function IAUploadStep({
                     type="button"
                     onClick={(e) => {
                       e.stopPropagation();
-                      onPhotosChange([]);
-                      setExistingPhotoUrl(null);
+                      if (photos.length > 0) removePhoto(0);
+                      else setExistingPhotoUrl(null);
                     }}
                     className="absolute top-3 right-3 z-20 size-7 bg-black/50 backdrop-blur-sm rounded-full flex items-center justify-center text-white hover:bg-red-500 transition-colors"
                   >
@@ -352,20 +374,82 @@ export function IAUploadStep({
                     {isDragging ? "Drop it here!" : "Click or drag & drop"}
                   </p>
                   <p className="text-xs text-slate-400">
-                    JPG, PNG, WEBP · Max 10 MB
+                    JPG, PNG, WEBP · Max 10 MB · up to {MAX_PHOTOS} photos
                   </p>
                 </>
               )}
             </div>
 
-            {!displayPhoto && (
-              <p className="mt-3 text-xs text-slate-400 text-center flex items-center justify-center gap-1">
-                <span className="material-symbols-outlined text-[14px] text-amber-400">
-                  lightbulb
-                </span>
-                Good lighting and a clear face make the best results
-              </p>
+            {/* Thumbnail strip */}
+            {previews.length > 0 && (
+              <div className="mt-3 grid grid-cols-4 gap-2">
+                {previews.map((src, i) => (
+                  <div
+                    key={src}
+                    className={`group/thumb relative aspect-square rounded-lg overflow-hidden border-2 ${
+                      i === 0 ? "border-primary" : "border-slate-200"
+                    }`}
+                  >
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={src}
+                      alt={`Pet photo ${i + 1}`}
+                      className="absolute inset-0 w-full h-full object-cover"
+                    />
+
+                    {i === 0 ? (
+                      <span className="absolute bottom-0 inset-x-0 bg-primary text-white text-[10px] font-semibold text-center py-0.5 pointer-events-none">
+                        Principal
+                      </span>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={() => makePrimary(i)}
+                        title="Hacer principal"
+                        className="absolute bottom-1 left-1 z-10 size-6 bg-black/50 backdrop-blur-sm rounded-full flex items-center justify-center text-white opacity-0 group-hover/thumb:opacity-100 hover:bg-primary transition-all"
+                      >
+                        <span className="material-symbols-outlined text-[14px]">
+                          star
+                        </span>
+                      </button>
+                    )}
+
+                    <button
+                      type="button"
+                      onClick={() => removePhoto(i)}
+                      title="Quitar foto"
+                      className="absolute top-1 right-1 z-10 size-6 bg-black/50 backdrop-blur-sm rounded-full flex items-center justify-center text-white opacity-0 group-hover/thumb:opacity-100 hover:bg-red-500 transition-all"
+                    >
+                      <span className="material-symbols-outlined text-[14px]">
+                        close
+                      </span>
+                    </button>
+                  </div>
+                ))}
+
+                {photos.length < MAX_PHOTOS && (
+                  <label className="relative aspect-square rounded-lg border-2 border-dashed border-slate-300 flex items-center justify-center cursor-pointer text-slate-400 hover:border-primary hover:text-primary transition-colors">
+                    <input
+                      type="file"
+                      accept="image/*"
+                      multiple
+                      className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                      onChange={handleFileInput}
+                    />
+                    <span className="material-symbols-outlined text-2xl">
+                      add_a_photo
+                    </span>
+                  </label>
+                )}
+              </div>
             )}
+
+            <p className="mt-3 text-xs text-slate-400 text-center flex items-center justify-center gap-1">
+              <span className="material-symbols-outlined text-[14px] text-amber-400">
+                lightbulb
+              </span>
+              Sube de 1 a {MAX_PHOTOS} fotos · la primera es la principal
+            </p>
           </div>
 
           {/* ── RIGHT: Pet Details ── */}
