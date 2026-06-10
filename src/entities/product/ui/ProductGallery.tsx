@@ -2,30 +2,74 @@
 
 import { ShopifyProduct } from "@/lib/shopify";
 import Image from "next/image";
+import { Carousel } from "@/shared/ui/Carousel";
 
 interface ProductGalleryProps {
   product: ShopifyProduct;
   mainImage: string;
   otherSetImage?: string | null;
   variantImage?: string | null;
+  firstImageScale?: number;
 }
 
 export default function ProductGallery({
   product,
   mainImage,
+  otherSetImage,
+  variantImage,
+  firstImageScale = 1,
 }: ProductGalleryProps) {
+  const primaryImage = variantImage || mainImage;
+  const images = [primaryImage, otherSetImage].filter((src): src is string =>
+    Boolean(src),
+  );
+  const uniqueImages = Array.from(new Set(images));
+
+  const imageClassName =
+    "w-full h-auto bg-white shadow-[0_14px_32px_-12px_rgba(16,54,66,0.40)] transition-all duration-300 ease-out";
+  const hoverClassName =
+    "hover:-translate-y-1.5 hover:shadow-[0_22px_40px_-14px_rgba(16,54,66,0.50)]";
+  const sizes = "(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 600px";
+
+  const firstImageStyle = { width: `${firstImageScale * 100}%` };
+
+  const isCarousel = uniqueImages.length > 1;
+
   return (
     <div className="lg:col-span-7 flex flex-col gap-8">
-      <div className="w-full p-6 md:p-10 group">
-        <Image
-          src={mainImage}
-          alt={product.title}
-          width={0}
-          height={0}
-          sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 600px"
-          className="w-full h-auto bg-white shadow-[0_30px_55px_-15px_rgba(0,0,0,0.55)] transition-shadow duration-300 group-hover:shadow-[0_40px_65px_-25px_rgba(0,0,0,0.65)]"
-          priority
-        />
+      <div className={`w-full group ${isCarousel ? "" : "p-6 md:p-10"}`}>
+        {isCarousel ? (
+          <Carousel showArrows={false} showDots autoplayMs={5000} loop>
+            {uniqueImages.map((src, i) => (
+              <div
+                key={src}
+                className="flex-[0_0_100%] min-w-0 flex items-center justify-center px-6 md:px-10 pt-6 pb-12"
+              >
+                <Image
+                  src={src}
+                  alt={product.title}
+                  width={0}
+                  height={0}
+                  sizes={sizes}
+                  className={`${imageClassName} ${i === 0 ? hoverClassName : ""}`}
+                  style={i === 0 ? firstImageStyle : undefined}
+                  priority={i === 0}
+                />
+              </div>
+            ))}
+          </Carousel>
+        ) : (
+          <Image
+            src={primaryImage}
+            alt={product.title}
+            width={0}
+            height={0}
+            sizes={sizes}
+            className={`${imageClassName} ${hoverClassName}`}
+            style={firstImageStyle}
+            priority
+          />
+        )}
       </div>
     </div>
   );

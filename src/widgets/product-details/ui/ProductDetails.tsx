@@ -10,6 +10,8 @@ import { useEffect, useState } from "react";
 import { useFormatOptions } from "@/hooks/useFormatOptions";
 import { useStyle } from "@/hooks/useStyle";
 import { StyleOptionsForm } from "@/entities/art-style/ui/StyleOptionsForm";
+import { getOtherSetImage } from "@/entities/product/lib/getOtherSetImage";
+import { getSizeScale } from "@/entities/product/lib/getSizeScale";
 
 interface ProductDetailsProps {
   product: ShopifyProduct;
@@ -71,6 +73,10 @@ export default function ProductDetails({
 
   const userSelections = selectionsState.values;
 
+  const otherSetImage = getOtherSetImage(product, selectedVariant);
+
+  const firstImageScale = getSizeScale(product, selectedVariant);
+
   const hasOptions =
     detailedStyle?.templateVarOptions &&
     Object.keys(detailedStyle.templateVarOptions).length > 0;
@@ -80,7 +86,9 @@ export default function ProductDetails({
       <ProductGallery
         product={product}
         mainImage={mainImage}
+        otherSetImage={otherSetImage}
         variantImage={selectedVariant?.image?.url}
+        firstImageScale={firstImageScale}
       />
 
       <div className="lg:col-span-5 flex flex-col h-full">
