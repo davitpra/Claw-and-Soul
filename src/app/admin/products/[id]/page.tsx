@@ -5,42 +5,36 @@ import { useParams, useRouter } from "next/navigation";
 import {
   Page,
   Layout,
-  Card,
   Badge,
-  Button,
   Banner,
   Spinner,
   Text,
   InlineStack,
   BlockStack,
   Box,
-  Divider,
-  Thumbnail,
-  Select,
-  Modal,
-  IndexTable,
-  FormLayout,
-  TextField,
-  Checkbox,
 } from "@shopify/polaris";
-import { ExternalIcon, DeleteIcon, RefreshIcon, ViewIcon } from "@shopify/polaris-icons";
+import { ExternalIcon, DeleteIcon, RefreshIcon } from "@shopify/polaris-icons";
 import {
   adminApi,
   AdminProduct,
   AdminStyle,
   AdminFormat,
   AdminProductVariants,
-  AdminProductUnlinkedVariant,
   AdminProductVariantLink,
-  PodConfig,
-  PodCatalog,
-  PodCatalogMaterial,
-  PodCatalogType,
-  PodCatalogOptionGroup,
 } from "@/entities/admin/api";
 import { shopifyFetch } from "@/lib/shopify/client";
 import { GET_PRODUCT } from "@/lib/shopify/queries/products";
 import { ContextualImagesCard } from "./ContextualImagesCard";
+import { ProductDetailsSidebar } from "./ProductDetailsSidebar";
+import { LinkedVariantsCard } from "./LinkedVariantsCard";
+import { DeleteProductModal } from "./DeleteProductModal";
+import { FormatsModal } from "./FormatsModal";
+import { PodConfigModal } from "./PodConfigModal";
+
+// Reduce a Shopify variant id to its numeric tail. The Storefront API returns
+// GIDs (gid://shopify/ProductVariant/123) while the admin getVariants endpoint
+// returns the bare numeric id; normalizing lets the two line up.
+const variantNumericId = (id: string) => id.split("/").pop() ?? id;
 
 export default function AdminProductDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -51,11 +45,9 @@ export default function AdminProductDetailPage() {
   const [styles, setStyles] = useState<AdminStyle[]>([]);
   const [formats, setFormats] = useState<AdminFormat[]>([]);
   const [allFormats, setAllFormats] = useState<AdminFormat[]>([]);
-  const [selectedFormat, setSelectedFormat] = useState<Record<string, string>>(
-    {},
-  );
-  const [linkingVariantId, setLinkingVariantId] = useState<string | null>(null);
-  const [shopifyImages, setShopifyImages] = useState<string[]>([]);
+  const [shopifyVariantImages, setShopifyVariantImages] = useState<
+    Record<string, { url: string; alt: string | null }>
+  >({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
@@ -70,55 +62,40 @@ export default function AdminProductDetailPage() {
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [styleId, setStyleId] = useState("");
-  const [fulfillmentMethod, setFulfillmentMethod] = useState<"in_house" | "pod">("in_house");
-  const [editingVariantId, setEditingVariantId] = useState<string | null>(null);
-  const [editFormatId, setEditFormatId] = useState<Record<string, string>>({});
-  const [savingVariantId, setSavingVariantId] = useState<string | null>(null);
-  const [togglingVariantId, setTogglingVariantId] = useState<string | null>(
-    null,
-  );
+  const [fulfillmentMethod, setFulfillmentMethod] = useState<
+    "in_house" | "pod"
+  >("in_house");
   const [formatsModalOpen, setFormatsModalOpen] = useState(false);
-  const [editingFormat, setEditingFormat] = useState<AdminFormat | null>(null);
-  const [editFormatForm, setEditFormatForm] = useState({ displayName: "", aspectRatio: "", shopifyVariantOption: "" });
-  const [savingFormatEdit, setSavingFormatEdit] = useState(false);
-  const [formatEditError, setFormatEditError] = useState<string | null>(null);
-  const [togglingFormat, setTogglingFormat] = useState<string | null>(null);
-  const [newFormatForm, setNewFormatForm] = useState({
-    name: "",
-    displayName: "",
-    aspectRatio: "",
-    width: "",
-    height: "",
-    shopifyVariantOption: "",
-  });
-  const [creatingFormat, setCreatingFormat] = useState(false);
-  const [createFormatError, setCreateFormatError] = useState<string | null>(
-    null,
-  );
-  const [deletingFormat, setDeletingFormat] = useState<string | null>(null);
-
-  // POD config editor state
-  const [podConfigVariant, setPodConfigVariant] = useState<AdminProductVariantLink | null>(null);
-  const [podConfigForm, setPodConfigForm] = useState<{
-    material: string; type: string; orientation: string;
-    sizeKey: string; additionalOpts: Record<string, string>;
-  }>({ material: '', type: '', orientation: 'horizontal', sizeKey: '', additionalOpts: {} });
-  const [podProviderSelected, setPodProviderSelected] = useState<string>('pictorem');
-  const [availableProviders, setAvailableProviders] = useState<string[]>(['pictorem']);
-  const [podCatalog, setPodCatalog] = useState<PodCatalog | null>(null);
-  const [podCatalogLoading, setPodCatalogLoading] = useState(false);
-  const [savingPodConfig, setSavingPodConfig] = useState(false);
-  const [podConfigError, setPodConfigError] = useState<string | null>(null);
+  const [podConfigVariant, setPodConfigVariant] =
+    useState<AdminProductVariantLink | null>(null);
 
   const loadShopifyImages = async (handle: string) => {
     try {
       const { data } = await shopifyFetch<{
         product: {
-          images: { edges: Array<{ node: { url: string; altText: string } }> };
+          variants: {
+            edges: Array<{
+              node: {
+                id: string;
+                image: { url: string; altText: string | null } | null;
+              };
+            }>;
+          };
         } | null;
       }>({ query: GET_PRODUCT, variables: { handle } });
-      const urls = data.product?.images.edges.map((e) => e.node.url) ?? [];
-      setShopifyImages(urls);
+      const byVariant: Record<string, { url: string; alt: string | null }> = {};
+      for (const { node } of data.product?.variants.edges ?? []) {
+        if (node.image) {
+          // Storefront ids are GIDs (gid://shopify/ProductVariant/123) but the
+          // admin getVariants endpoint returns the bare numeric id — key by the
+          // numeric tail so both sides match.
+          byVariant[variantNumericId(node.id)] = {
+            url: node.image.url,
+            alt: node.image.altText,
+          };
+        }
+      }
+      setShopifyVariantImages(byVariant);
     } catch {
       // best-effort
     }
@@ -158,7 +135,9 @@ export default function AdminProductDetailPage() {
         setFormats(f.filter((x) => x.isActive));
         setAllFormats(f);
         setStyleId(p.styleId ?? "");
-        setFulfillmentMethod((p.fulfillmentMethod as "in_house" | "pod") ?? "in_house");
+        setFulfillmentMethod(
+          (p.fulfillmentMethod as "in_house" | "pod") ?? "in_house",
+        );
         if (p.shopifyHandle) loadShopifyImages(p.shopifyHandle);
         loadVariants(p.id);
       })
@@ -183,25 +162,6 @@ export default function AdminProductDetailPage() {
     }
   };
 
-  const handleLinkVariant = async (u: AdminProductUnlinkedVariant) => {
-    const formatId = selectedFormat[u.shopifyVariantId];
-    if (!formatId || !product) return;
-    setLinkingVariantId(u.shopifyVariantId);
-    try {
-      await adminApi.products.linkVariant(product.id, {
-        shopifyVariantId: u.shopifyVariantId,
-        shopifyVariantTitle: u.shopifyVariantTitle,
-        formatId,
-        shopifyVariantOption: u.shopifyVariantOption ?? undefined,
-      });
-      await loadVariants(product.id);
-    } catch (e: unknown) {
-      setError((e as Error).message);
-    } finally {
-      setLinkingVariantId(null);
-    }
-  };
-
   const handleSyncVariants = async () => {
     if (!product) return;
     setSyncingVariants(true);
@@ -214,109 +174,6 @@ export default function AdminProductDetailPage() {
       setError((e as Error).message);
     } finally {
       setSyncingVariants(false);
-    }
-  };
-
-  const handleFormatEditOpen = (f: AdminFormat) => {
-    setEditFormatForm({
-      displayName: f.displayName,
-      aspectRatio: f.aspectRatio,
-      shopifyVariantOption: f.shopifyVariantOption ?? "",
-    });
-    setEditingFormat(f);
-    setFormatEditError(null);
-  };
-
-  const handleFormatEditSave = async () => {
-    if (!editingFormat) return;
-    setSavingFormatEdit(true);
-    setFormatEditError(null);
-    try {
-      await adminApi.formats.update(editingFormat.id, {
-        displayName: editFormatForm.displayName,
-        aspectRatio: editFormatForm.aspectRatio,
-        shopifyVariantOption: editFormatForm.shopifyVariantOption.trim() || null,
-      });
-      setEditingFormat(null);
-      await loadFormats();
-    } catch (e: unknown) {
-      setFormatEditError((e as Error).message);
-    } finally {
-      setSavingFormatEdit(false);
-    }
-  };
-
-  const handleFormatCreate = async () => {
-    const { name, displayName, aspectRatio, width, height, shopifyVariantOption } =
-      newFormatForm;
-    if (!name.trim() || !displayName.trim() || !aspectRatio.trim()) {
-      setCreateFormatError("Nombre, nombre visible y proporción son obligatorios.");
-      return;
-    }
-    const w = Number(width);
-    const h = Number(height);
-    if (!Number.isInteger(w) || w < 1 || !Number.isInteger(h) || h < 1) {
-      setCreateFormatError("Ancho y alto deben ser enteros mayores que 0.");
-      return;
-    }
-    setCreatingFormat(true);
-    setCreateFormatError(null);
-    try {
-      await adminApi.formats.create({
-        name: name.trim(),
-        displayName: displayName.trim(),
-        aspectRatio: aspectRatio.trim(),
-        width: w,
-        height: h,
-        shopifyVariantOption: shopifyVariantOption.trim() || undefined,
-      });
-      setNewFormatForm({
-        name: "",
-        displayName: "",
-        aspectRatio: "",
-        width: "",
-        height: "",
-        shopifyVariantOption: "",
-      });
-      await loadFormats();
-    } catch (e: unknown) {
-      setCreateFormatError((e as Error).message);
-    } finally {
-      setCreatingFormat(false);
-    }
-  };
-
-  const handleFormatDelete = async (f: AdminFormat) => {
-    if (
-      !confirm(
-        `¿Eliminar el formato "${f.displayName}"? Quedará inactivo y no se podrá vincular a nuevas variantes.`,
-      )
-    )
-      return;
-    setDeletingFormat(f.id);
-    try {
-      await adminApi.formats.deactivate(f.id);
-      await loadFormats();
-    } catch (e: unknown) {
-      alert((e as Error).message);
-    } finally {
-      setDeletingFormat(null);
-    }
-  };
-
-  const handleFormatToggle = async (f: AdminFormat) => {
-    setTogglingFormat(f.id);
-    try {
-      if (f.isActive) {
-        await adminApi.formats.deactivate(f.id);
-      } else {
-        await adminApi.formats.update(f.id, { isActive: true });
-      }
-      await loadFormats();
-    } catch (e: unknown) {
-      alert((e as Error).message);
-    } finally {
-      setTogglingFormat(null);
     }
   };
 
@@ -353,140 +210,6 @@ export default function AdminProductDetailPage() {
     }
   };
 
-  const handleStartEdit = (v: {
-    shopifyVariantId: string;
-    format: { id: string };
-  }) => {
-    setEditingVariantId(v.shopifyVariantId);
-    setEditFormatId((prev) => ({ ...prev, [v.shopifyVariantId]: v.format.id }));
-  };
-
-  const handleCancelEdit = () => setEditingVariantId(null);
-
-  const handleOpenPodConfig = async (v: AdminProductVariantLink) => {
-    const cfg = v.podConfig;
-    const material = (cfg?.material as string) ?? '';
-    const type = (cfg?.type as string) ?? '';
-    const width = cfg?.width != null ? Number(cfg.width) : 0;
-    const height = cfg?.height != null ? Number(cfg.height) : 0;
-    const sizeKey = width && height ? `${width}x${height}` : '';
-    const rawAdditional = Array.isArray(cfg?.additional) ? (cfg.additional as string[]) : [];
-    setPodConfigForm({ material, type, orientation: (cfg?.orientation as string) ?? 'horizontal', sizeKey, additionalOpts: {} });
-    setPodProviderSelected(v.podProvider ?? 'pictorem');
-    setPodConfigVariant(v);
-    setPodConfigError(null);
-    setPodCatalogLoading(true);
-    try {
-      const [catalog, { providers }] = await Promise.all([
-        adminApi.orders.podCatalog(),
-        adminApi.orders.podProviders(),
-      ]);
-      setPodCatalog(catalog);
-      setAvailableProviders(providers);
-      // Reconstruct additionalOpts from saved additional codes
-      const mat = catalog.materials.find((m) => m.code === material);
-      const typ = mat?.types.find((t) => t.code === type);
-      if (typ) {
-        const opts: Record<string, string> = {};
-        for (const group of typ.optionGroups) {
-          const match = group.choices.find(
-            (c) => c.codes.length > 0 && c.codes.every((code) => rawAdditional.includes(code)),
-          );
-          opts[group.key] = match?.value ?? group.default;
-        }
-        setPodConfigForm((p) => ({ ...p, additionalOpts: opts }));
-      }
-    } catch {
-      // best-effort — keep defaults if request fails
-    } finally {
-      setPodCatalogLoading(false);
-    }
-  };
-
-  const handleSavePodConfig = async () => {
-    if (!product || !podConfigVariant) return;
-    const { material, type, orientation, sizeKey, additionalOpts } = podConfigForm;
-    if (!material || !type || !sizeKey) {
-      setPodConfigError('Material, tipo y tamaño son obligatorios.');
-      return;
-    }
-    const [w, h] = sizeKey.split('x').map(Number);
-    // Build additional from optionGroups in order (canonical Pictorem order)
-    const selMat = podCatalog?.materials.find((m) => m.code === material);
-    const selTyp = selMat?.types.find((t) => t.code === type);
-    const additional: string[] = [];
-    if (selTyp) {
-      for (const group of selTyp.optionGroups) {
-        const chosen = group.choices.find((c) => c.value === (additionalOpts[group.key] ?? group.default));
-        if (chosen) additional.push(...chosen.codes);
-      }
-    }
-    const config: PodConfig = {
-      material,
-      type,
-      orientation: orientation || 'horizontal',
-      width: w,
-      height: h,
-      additional: additional.length > 0 ? additional : undefined,
-    };
-    setSavingPodConfig(true);
-    setPodConfigError(null);
-    try {
-      await adminApi.products.updateVariant(product.id, podConfigVariant.shopifyVariantId, {
-        podProvider: podProviderSelected,
-        podConfig: config,
-      });
-      await loadVariants(product.id);
-      setPodConfigVariant(null);
-    } catch (e: unknown) {
-      setPodConfigError((e as Error).message);
-    } finally {
-      setSavingPodConfig(false);
-    }
-  };
-
-  const handleSaveVariant = async (v: {
-    shopifyVariantId: string;
-    format: { id: string };
-  }) => {
-    if (!product) return;
-    const chosenFormatId = editFormatId[v.shopifyVariantId];
-    if (chosenFormatId === v.format.id) {
-      setEditingVariantId(null);
-      return;
-    }
-    setSavingVariantId(v.shopifyVariantId);
-    try {
-      await adminApi.products.updateVariant(product.id, v.shopifyVariantId, {
-        formatId: chosenFormatId,
-      });
-      await loadVariants(product.id);
-      setEditingVariantId(null);
-    } catch (e: unknown) {
-      setError((e as Error).message);
-    } finally {
-      setSavingVariantId(null);
-    }
-  };
-
-  const handleToggleVariantActive = async (v: {
-    shopifyVariantId: string;
-    isActive: boolean;
-  }) => {
-    if (!product) return;
-    setTogglingVariantId(v.shopifyVariantId);
-    try {
-      await adminApi.products.updateVariant(product.id, v.shopifyVariantId, {
-        isActive: !v.isActive,
-      });
-      await loadVariants(product.id);
-    } catch (e: unknown) {
-      setError((e as Error).message);
-    } finally {
-      setTogglingVariantId(null);
-    }
-  };
-
   if (loading) {
     return (
       <Page
@@ -516,14 +239,16 @@ export default function AdminProductDetailPage() {
     );
   }
 
-  const assignedStyle = styles.find((s) => s.id === styleId);
-
   // Linked Shopify variants (with their format) — the buckets for contextual images.
   const productVariants = (variants?.linkedVariants ?? []).map((v) => ({
     id: v.id,
     title: v.shopifyVariantTitle,
     formatId: v.format.id,
     formatName: v.format.displayName,
+    shopifyImageUrl:
+      shopifyVariantImages[variantNumericId(v.shopifyVariantId)]?.url ?? null,
+    shopifyImageAlt:
+      shopifyVariantImages[variantNumericId(v.shopifyVariantId)]?.alt ?? null,
   }));
 
   return (
@@ -569,95 +294,16 @@ export default function AdminProductDetailPage() {
       <Layout>
         {/* Sidebar */}
         <Layout.Section variant="oneThird">
-          <Card>
-            <BlockStack gap="300">
-              <Text variant="headingSm" as="h2">
-                Detalles
-              </Text>
-              <Select
-                label="Estilo asignado"
-                options={[
-                  { label: "Sin asignar", value: "" },
-                  ...styles.map((s) => ({
-                    label: s.displayName,
-                    value: s.id,
-                  })),
-                ]}
-                value={styleId}
-                onChange={setStyleId}
-              />
-              <Select
-                label="Método de fulfillment"
-                options={[
-                  { label: "Taller (in-house)", value: "in_house" },
-                  { label: "POD (proveedor externo)", value: "pod" },
-                ]}
-                value={fulfillmentMethod}
-                onChange={(v) => setFulfillmentMethod(v as "in_house" | "pod")}
-                helpText="Define cómo se cumplirán los pedidos de este producto por defecto."
-              />
-              {assignedStyle?.previewUrl && (
-                <InlineStack gap="200" blockAlign="center">
-                  <Thumbnail
-                    source={assignedStyle.previewUrl}
-                    alt={assignedStyle.displayName}
-                    size="medium"
-                  />
-                  <Text variant="bodySm" tone="subdued" as="span">
-                    Vista previa del estilo
-                  </Text>
-                </InlineStack>
-              )}
-              <InlineStack align="end">
-                <Button variant="primary" loading={saving} onClick={handleSave}>
-                  Guardar cambios
-                </Button>
-              </InlineStack>
-              <Divider />
-              <BlockStack gap="150">
-                <Text variant="bodySm" as="span" fontWeight="bold">
-                  Nombre
-                </Text>
-                <Text as="p" fontWeight="regular">
-                  {product.displayName}
-                </Text>
-              </BlockStack>
-              {product.description && (
-                <BlockStack gap="150">
-                  <Text variant="bodySm" as="span" fontWeight="bold">
-                    Descripción
-                  </Text>
-                  <Text as="p">{product.description}</Text>
-                </BlockStack>
-              )}
-              <BlockStack gap="150">
-                <Text variant="bodySm" as="span" fontWeight="bold">
-                  Tipo de producto
-                </Text>
-                <Text as="p">{product.productType ?? "—"}</Text>
-              </BlockStack>
-              <BlockStack gap="150">
-                <Text variant="bodySm" as="span" fontWeight="bold">
-                  Handle Shopify
-                </Text>
-                <Text as="p">{product.shopifyHandle ?? "—"}</Text>
-              </BlockStack>
-              <BlockStack gap="150">
-                <Text variant="bodySm" as="span" fontWeight="bold">
-                  Shopify Product ID
-                </Text>
-                <Text as="p">{product.shopifyProductId ?? "—"}</Text>
-              </BlockStack>
-              <BlockStack gap="150">
-                <Text variant="bodySm" as="span" fontWeight="bold">
-                  Estado
-                </Text>
-                <Badge tone={product.isActive ? "success" : "enabled"}>
-                  {product.isActive ? "Activo" : "Inactivo"}
-                </Badge>
-              </BlockStack>
-            </BlockStack>
-          </Card>
+          <ProductDetailsSidebar
+            product={product}
+            styles={styles}
+            styleId={styleId}
+            onStyleChange={setStyleId}
+            fulfillmentMethod={fulfillmentMethod}
+            onFulfillmentChange={setFulfillmentMethod}
+            saving={saving}
+            onSave={handleSave}
+          />
         </Layout.Section>
 
         {/* Main */}
@@ -676,750 +322,50 @@ export default function AdminProductDetailPage() {
               </Banner>
             )}
 
-            {/* Card — Imágenes Shopify */}
-            <Card>
-              <BlockStack gap="300">
-                <Text variant="headingSm" as="h2">
-                  Imágenes (Shopify)
-                </Text>
-                {shopifyImages.length === 0 ? (
-                  <Text as="p" tone="subdued">
-                    {product.shopifyHandle
-                      ? "Sin imágenes en Shopify."
-                      : "Sin handle de Shopify — no se pueden cargar imágenes."}
-                  </Text>
-                ) : (
-                  <InlineStack gap="300" wrap>
-                    {shopifyImages.map((url, i) => (
-                      <Thumbnail
-                        key={i}
-                        source={url}
-                        alt={`Imagen ${i + 1}`}
-                        size="large"
-                      />
-                    ))}
-                  </InlineStack>
-                )}
-              </BlockStack>
-            </Card>
-
-            {/* Card — Imágenes contextuales (propias de la app) */}
             <ContextualImagesCard
               productId={product.id}
               variants={productVariants}
             />
 
-            {/* Card — Variantes vinculadas */}
-            <Card padding="0">
-              <Box padding="400">
-                <InlineStack align="space-between" blockAlign="center">
-                  <InlineStack gap="200" blockAlign="center">
-                    <Text variant="headingSm" as="h2">
-                      Variantes / Formatos
-                    </Text>
-                    {variants && (
-                      <Badge tone="info">
-                        {String(variants.linkedVariants.length)}
-                      </Badge>
-                    )}
-                  </InlineStack>
-                  <InlineStack gap="200" blockAlign="center">
-                    {loadingVariants && <Spinner size="small" />}
-                    <Button
-                      variant="plain"
-                      size="slim"
-                      icon={ViewIcon}
-                      onClick={() => setFormatsModalOpen(true)}
-                    >
-                      Ver formatos
-                    </Button>
-                  </InlineStack>
-                </InlineStack>
-              </Box>
-
-              {variants && (
-                <>
-                  <IndexTable
-                    resourceName={{
-                      singular: "variante",
-                      plural: "variantes",
-                    }}
-                    itemCount={variants.linkedVariants.length}
-                    headings={[
-                      { title: "Formato" },
-                      { title: "Variante Shopify" },
-                      { title: "Estado" },
-                      ...(fulfillmentMethod === "pod" ? [{ title: "POD Config" }] : []),
-                      { title: "Acciones" },
-                    ]}
-                    selectable={false}
-                    emptyState={
-                      <Box padding="400">
-                        <Text as="p" tone="subdued">
-                          Sin variantes vinculadas.
-                        </Text>
-                      </Box>
-                    }
-                  >
-                    {variants.linkedVariants.map((v, idx) => {
-                      const isEditing = editingVariantId === v.shopifyVariantId;
-                      const isSaving = savingVariantId === v.shopifyVariantId;
-                      const isToggling =
-                        togglingVariantId === v.shopifyVariantId;
-
-                      const formatOptions = formats.map((f) => ({
-                        label: `${f.displayName} (${f.aspectRatio})`,
-                        value: f.id,
-                      }));
-                      const currentFormatInList = formats.some(
-                        (f) => f.id === v.format.id,
-                      );
-                      if (!currentFormatInList) {
-                        formatOptions.unshift({
-                          label: `${v.format.displayName} (inactivo)`,
-                          value: v.format.id,
-                        });
-                      }
-
-                      return (
-                        <IndexTable.Row
-                          id={v.shopifyVariantId}
-                          key={v.shopifyVariantId}
-                          position={idx}
-                        >
-                          <IndexTable.Cell>
-                            {isEditing ? (
-                              <div style={{ minWidth: 220 }}>
-                                <Select
-                                  label="Formato"
-                                  labelHidden
-                                  options={formatOptions}
-                                  value={
-                                    editFormatId[v.shopifyVariantId] ??
-                                    v.format.id
-                                  }
-                                  onChange={(value) =>
-                                    setEditFormatId((prev) => ({
-                                      ...prev,
-                                      [v.shopifyVariantId]: value,
-                                    }))
-                                  }
-                                />
-                              </div>
-                            ) : (
-                              <Badge tone="success">
-                                {v.format.displayName}
-                              </Badge>
-                            )}
-                          </IndexTable.Cell>
-                          <IndexTable.Cell>
-                            <Text as="p" fontWeight="bold">
-                              {v.shopifyVariantTitle}
-                            </Text>
-                            <Text variant="bodySm" tone="subdued" as="span">
-                              #{v.shopifyVariantId.replace(/\D/g, "")}
-                            </Text>
-                          </IndexTable.Cell>
-                          <IndexTable.Cell>
-                            <InlineStack gap="200" blockAlign="center">
-                              <button
-                                type="button"
-                                onClick={() => handleToggleVariantActive(v)}
-                                disabled={isToggling}
-                                aria-label={
-                                  v.isActive
-                                    ? "Desactivar variante"
-                                    : "Activar variante"
-                                }
-                                title={
-                                  v.isActive
-                                    ? "Click para desactivar"
-                                    : "Click para activar"
-                                }
-                                style={{
-                                  background: "transparent",
-                                  border: "none",
-                                  padding: 0,
-                                  cursor: isToggling ? "wait" : "pointer",
-                                  opacity: isToggling ? 0.6 : 1,
-                                }}
-                              >
-                                <Badge
-                                  tone={v.isActive ? "success" : "enabled"}
-                                >
-                                  {v.isActive ? "Activa" : "Inactiva"}
-                                </Badge>
-                              </button>
-                              {isToggling && <Spinner size="small" />}
-                            </InlineStack>
-                          </IndexTable.Cell>
-                          {fulfillmentMethod === "pod" && (
-                            <IndexTable.Cell>
-                              {v.podConfig ? (
-                                <BlockStack gap="050">
-                                  <InlineStack gap="100" blockAlign="center">
-                                    <Badge tone="success">Configurado</Badge>
-                                    {v.podProvider && (
-                                      <Badge>{v.podProvider}</Badge>
-                                    )}
-                                  </InlineStack>
-                                  <Text variant="bodySm" tone="subdued" as="span">
-                                    {String(v.podConfig.material)} / {String(v.podConfig.type)}
-                                  </Text>
-                                  <Text variant="bodySm" tone="subdued" as="span">
-                                    {String(v.podConfig.width)}&quot; × {String(v.podConfig.height)}&quot;
-                                  </Text>
-                                </BlockStack>
-                              ) : (
-                                <Badge tone="warning">Sin config</Badge>
-                              )}
-                            </IndexTable.Cell>
-                          )}
-                          <IndexTable.Cell>
-                            <InlineStack gap="200">
-                              {isEditing ? (
-                                <>
-                                  <Button
-                                    variant="primary"
-                                    size="slim"
-                                    loading={isSaving}
-                                    disabled={!editFormatId[v.shopifyVariantId]}
-                                    onClick={() => handleSaveVariant(v)}
-                                  >
-                                    Guardar
-                                  </Button>
-                                  <Button
-                                    size="slim"
-                                    disabled={isSaving}
-                                    onClick={handleCancelEdit}
-                                  >
-                                    Cancelar
-                                  </Button>
-                                </>
-                              ) : (
-                                <Button
-                                  size="slim"
-                                  onClick={() => handleStartEdit(v)}
-                                >
-                                  Editar
-                                </Button>
-                              )}
-                              {fulfillmentMethod === "pod" && !isEditing && (
-                                <Button
-                                  size="slim"
-                                  variant={v.podConfig ? "secondary" : "primary"}
-                                  onClick={() => handleOpenPodConfig(v)}
-                                >
-                                  POD Config
-                                </Button>
-                              )}
-                            </InlineStack>
-                          </IndexTable.Cell>
-                        </IndexTable.Row>
-                      );
-                    })}
-                  </IndexTable>
-
-                  {variants.unlinkedVariants.length > 0 && (
-                    <Box
-                      padding="400"
-                      borderColor="border"
-                      borderBlockStartWidth="025"
-                    >
-                      <BlockStack gap="300">
-                        <Banner tone="warning">
-                          {variants.unlinkedVariants.length} variante
-                          {variants.unlinkedVariants.length !== 1
-                            ? "s"
-                            : ""}{" "}
-                          sin vincular a ningún formato
-                        </Banner>
-                        {variants.unlinkedVariants.map((u) => (
-                          <Box
-                            key={u.shopifyVariantId}
-                            padding="300"
-                            borderColor="border"
-                            borderWidth="025"
-                            borderRadius="200"
-                          >
-                            <BlockStack gap="200">
-                              <BlockStack gap="050">
-                                <Text as="p" fontWeight="semibold">
-                                  {u.shopifyVariantTitle}
-                                </Text>
-                                <Text variant="bodySm" tone="subdued" as="p">
-                                  {u.reason}
-                                </Text>
-                              </BlockStack>
-                              {formats.length === 0 ? (
-                                <Text as="p" variant="bodySm" tone="subdued">
-                                  No hay formatos activos.{" "}
-                                  <Button
-                                    variant="plain"
-                                    onClick={() => setFormatsModalOpen(true)}
-                                  >
-                                    Gestionar formatos
-                                  </Button>
-                                </Text>
-                              ) : (
-                                <InlineStack gap="200" blockAlign="end">
-                                  <div style={{ minWidth: 220 }}>
-                                    <Select
-                                      label="Formato"
-                                      labelHidden
-                                      placeholder="Seleccionar formato…"
-                                      options={formats.map((f) => ({
-                                        label: `${f.displayName} (${f.aspectRatio})`,
-                                        value: f.id,
-                                      }))}
-                                      value={
-                                        selectedFormat[u.shopifyVariantId] ?? ""
-                                      }
-                                      onChange={(value) =>
-                                        setSelectedFormat((prev) => ({
-                                          ...prev,
-                                          [u.shopifyVariantId]: value,
-                                        }))
-                                      }
-                                    />
-                                  </div>
-                                  <Button
-                                    variant="primary"
-                                    size="slim"
-                                    loading={
-                                      linkingVariantId === u.shopifyVariantId
-                                    }
-                                    disabled={
-                                      !selectedFormat[u.shopifyVariantId]
-                                    }
-                                    onClick={() => handleLinkVariant(u)}
-                                  >
-                                    Vincular
-                                  </Button>
-                                </InlineStack>
-                              )}
-                            </BlockStack>
-                          </Box>
-                        ))}
-                      </BlockStack>
-                    </Box>
-                  )}
-                </>
-              )}
-            </Card>
+            <LinkedVariantsCard
+              product={product}
+              variants={variants}
+              formats={formats}
+              fulfillmentMethod={fulfillmentMethod}
+              loadingVariants={loadingVariants}
+              onChanged={() => loadVariants(product.id)}
+              onOpenPodConfig={setPodConfigVariant}
+              onManageFormats={() => setFormatsModalOpen(true)}
+              onError={setError}
+            />
           </BlockStack>
         </Layout.Section>
       </Layout>
 
-      {/* Modal de eliminación */}
-      <Modal
+      <DeleteProductModal
         open={deleteOpen}
-        onClose={() => {
-          if (!deleting) setDeleteOpen(false);
-        }}
-        title="¿Eliminar producto permanentemente?"
-        primaryAction={{
-          content: "Eliminar",
-          destructive: true,
-          loading: deleting,
-          onAction: handleDelete,
-        }}
-        secondaryActions={[
-          {
-            content: "Cancelar",
-            disabled: deleting,
-            onAction: () => setDeleteOpen(false),
-          },
-        ]}
-      >
-        <Modal.Section>
-          <BlockStack gap="200">
-            <Text as="p">
-              Se eliminará{" "}
-              <Text as="span" fontWeight="semibold">
-                {product.displayName}
-              </Text>{" "}
-              y todas sus variantes vinculadas.
-            </Text>
-            <Text as="p" tone="subdued">
-              Las generaciones y pedidos existentes se conservan sin referencia
-              al producto. Esta acción no se puede deshacer.
-            </Text>
-          </BlockStack>
-        </Modal.Section>
-      </Modal>
+        deleting={deleting}
+        productName={product.displayName}
+        onClose={() => setDeleteOpen(false)}
+        onConfirm={handleDelete}
+      />
 
-      <Modal
+      <FormatsModal
         open={formatsModalOpen}
+        allFormats={allFormats}
         onClose={() => setFormatsModalOpen(false)}
-        title="Formatos"
-        secondaryActions={[
-          { content: "Cerrar", onAction: () => setFormatsModalOpen(false) },
-        ]}
-        size="large"
-      >
-        <Modal.Section>
-          <BlockStack gap="300">
-            <Text variant="headingSm" as="h3">
-              Añadir formato
-            </Text>
-            {createFormatError && (
-              <Banner
-                tone="critical"
-                onDismiss={() => setCreateFormatError(null)}
-              >
-                {createFormatError}
-              </Banner>
-            )}
-            <FormLayout>
-              <FormLayout.Group>
-                <TextField
-                  label="Nombre (interno)"
-                  value={newFormatForm.name}
-                  onChange={(v) =>
-                    setNewFormatForm((p) => ({ ...p, name: v }))
-                  }
-                  autoComplete="off"
-                  placeholder="square_1x1"
-                />
-                <TextField
-                  label="Nombre visible"
-                  value={newFormatForm.displayName}
-                  onChange={(v) =>
-                    setNewFormatForm((p) => ({ ...p, displayName: v }))
-                  }
-                  autoComplete="off"
-                  placeholder="Cuadrado 1:1"
-                />
-              </FormLayout.Group>
-              <FormLayout.Group>
-                <TextField
-                  label="Proporción"
-                  value={newFormatForm.aspectRatio}
-                  onChange={(v) =>
-                    setNewFormatForm((p) => ({ ...p, aspectRatio: v }))
-                  }
-                  autoComplete="off"
-                  placeholder="1:1"
-                />
-                <TextField
-                  label="Ancho (px)"
-                  type="number"
-                  value={newFormatForm.width}
-                  onChange={(v) =>
-                    setNewFormatForm((p) => ({ ...p, width: v }))
-                  }
-                  autoComplete="off"
-                  placeholder="1024"
-                />
-                <TextField
-                  label="Alto (px)"
-                  type="number"
-                  value={newFormatForm.height}
-                  onChange={(v) =>
-                    setNewFormatForm((p) => ({ ...p, height: v }))
-                  }
-                  autoComplete="off"
-                  placeholder="1024"
-                />
-              </FormLayout.Group>
-              <TextField
-                label="Opción Shopify (opcional)"
-                value={newFormatForm.shopifyVariantOption}
-                onChange={(v) =>
-                  setNewFormatForm((p) => ({ ...p, shopifyVariantOption: v }))
-                }
-                autoComplete="off"
-                helpText='Valor del option1 de la variante en Shopify. Ej: "8x10".'
-              />
-              <InlineStack align="end">
-                <Button
-                  variant="primary"
-                  loading={creatingFormat}
-                  onClick={handleFormatCreate}
-                >
-                  Añadir formato
-                </Button>
-              </InlineStack>
-            </FormLayout>
-          </BlockStack>
-        </Modal.Section>
-        <Modal.Section flush>
-          <IndexTable
-            resourceName={{ singular: "formato", plural: "formatos" }}
-            itemCount={allFormats.length}
-            headings={[
-              { title: "Nombre" },
-              { title: "Proporción" },
-              { title: "Dimensiones" },
-              { title: "Opción Shopify" },
-              { title: "Estado" },
-              { title: "Acciones" },
-            ]}
-            selectable={false}
-          >
-            {allFormats.map((f, index) => (
-              <IndexTable.Row
-                id={f.id}
-                key={f.id}
-                position={index}
-                tone={f.isActive ? undefined : "subdued"}
-              >
-                <IndexTable.Cell>
-                  <Text variant="bodyMd" fontWeight="semibold" as="span">
-                    {f.displayName}
-                  </Text>
-                  <br />
-                  <Text variant="bodySm" tone="subdued" as="span">
-                    {f.name}
-                  </Text>
-                </IndexTable.Cell>
-                <IndexTable.Cell>
-                  <Text as="span" tone="subdued">
-                    {f.aspectRatio}
-                  </Text>
-                </IndexTable.Cell>
-                <IndexTable.Cell>
-                  <Text as="span" tone="subdued">
-                    {f.width} × {f.height}
-                  </Text>
-                </IndexTable.Cell>
-                <IndexTable.Cell>
-                  <Text as="span" tone="subdued">
-                    {f.shopifyVariantOption ?? "—"}
-                  </Text>
-                </IndexTable.Cell>
-                <IndexTable.Cell>
-                  {togglingFormat === f.id ? (
-                    <Spinner size="small" />
-                  ) : (
-                    <button
-                      type="button"
-                      onClick={() => handleFormatToggle(f)}
-                      style={{ background: "none", border: 0, padding: 0, cursor: "pointer" }}
-                      aria-label={f.isActive ? "Desactivar formato" : "Activar formato"}
-                    >
-                      <Badge tone={f.isActive ? "success" : "enabled"}>
-                        {f.isActive ? "Activo" : "Inactivo"}
-                      </Badge>
-                    </button>
-                  )}
-                </IndexTable.Cell>
-                <IndexTable.Cell>
-                  <InlineStack gap="200">
-                    <Button
-                      variant="plain"
-                      size="slim"
-                      onClick={() => handleFormatEditOpen(f)}
-                    >
-                      Editar
-                    </Button>
-                    {f.isActive && (
-                      <Button
-                        variant="plain"
-                        tone="critical"
-                        size="slim"
-                        icon={DeleteIcon}
-                        loading={deletingFormat === f.id}
-                        onClick={() => handleFormatDelete(f)}
-                      >
-                        Eliminar
-                      </Button>
-                    )}
-                  </InlineStack>
-                </IndexTable.Cell>
-              </IndexTable.Row>
-            ))}
-          </IndexTable>
-        </Modal.Section>
-      </Modal>
+        onChanged={loadFormats}
+      />
 
-      {/* Modal — POD Config por variante */}
-      <Modal
-        open={!!podConfigVariant}
-        onClose={() => { if (!savingPodConfig) setPodConfigVariant(null); }}
-        title={`POD Config — ${podConfigVariant?.shopifyVariantTitle ?? ""}`}
-        primaryAction={{
-          content: "Guardar",
-          loading: savingPodConfig,
-          onAction: handleSavePodConfig,
+      <PodConfigModal
+        variant={podConfigVariant}
+        productId={product.id}
+        onClose={() => setPodConfigVariant(null)}
+        onSaved={() => {
+          loadVariants(product.id);
+          setPodConfigVariant(null);
         }}
-        secondaryActions={[
-          {
-            content: "Cancelar",
-            disabled: savingPodConfig,
-            onAction: () => setPodConfigVariant(null),
-          },
-        ]}
-      >
-        <Modal.Section>
-          {podConfigError && (
-            <Banner tone="critical" onDismiss={() => setPodConfigError(null)}>
-              {podConfigError}
-            </Banner>
-          )}
-          {podCatalogLoading ? (
-            <InlineStack align="center" gap="300">
-              <Spinner size="small" />
-              <Text as="span" tone="subdued">Cargando catálogo…</Text>
-            </InlineStack>
-          ) : (
-            <FormLayout>
-              <Select
-                label="Proveedor POD"
-                options={availableProviders.map((p) => ({ label: p, value: p }))}
-                value={podProviderSelected}
-                onChange={(v) => setPodProviderSelected(v)}
-                helpText="Distribuidor que recibirá este ítem al pagarse el pedido"
-              />
-              {(() => {
-                const catalog = podCatalog;
-                const selMat: PodCatalogMaterial | undefined = catalog?.materials.find(
-                  (m) => m.code === podConfigForm.material,
-                );
-                const selType: PodCatalogType | undefined = selMat?.types.find(
-                  (t) => t.code === podConfigForm.type,
-                );
-                return (
-                  <>
-                    <FormLayout.Group>
-                      <Select
-                        label="Material *"
-                        placeholder="Seleccionar material"
-                        options={
-                          catalog
-                            ? catalog.materials.map((m) => ({ label: m.label, value: m.code }))
-                            : [{ label: podConfigForm.material || '—', value: podConfigForm.material }]
-                        }
-                        value={podConfigForm.material}
-                        onChange={(v) =>
-                          setPodConfigForm((p) => ({ ...p, material: v, type: '', sizeKey: '', additionalOpts: {} }))
-                        }
-                      />
-                      <Select
-                        label="Tipo *"
-                        placeholder="Seleccionar tipo"
-                        disabled={!podConfigForm.material}
-                        options={
-                          selMat
-                            ? selMat.types.map((t) => ({ label: t.label, value: t.code }))
-                            : [{ label: podConfigForm.type || '—', value: podConfigForm.type }]
-                        }
-                        value={podConfigForm.type}
-                        onChange={(v) =>
-                          setPodConfigForm((p) => ({ ...p, type: v, sizeKey: '', additionalOpts: {} }))
-                        }
-                      />
-                    </FormLayout.Group>
-                    <Select
-                      label="Tamaño *"
-                      placeholder="Seleccionar tamaño"
-                      disabled={!podConfigForm.type}
-                      options={
-                        selMat
-                          ? selMat.sizes.map((s) => ({
-                              label: s.label,
-                              value: `${s.width}x${s.height}`,
-                            }))
-                          : []
-                      }
-                      value={podConfigForm.sizeKey}
-                      onChange={(v) => setPodConfigForm((p) => ({ ...p, sizeKey: v }))}
-                    />
-                    <Select
-                      label="Orientación"
-                      options={[
-                        { label: "Horizontal (landscape)", value: "horizontal" },
-                        { label: "Vertical (portrait)", value: "vertical" },
-                        { label: "Cuadrado", value: "square" },
-                      ]}
-                      value={podConfigForm.orientation}
-                      onChange={(v) => setPodConfigForm((p) => ({ ...p, orientation: v }))}
-                      helpText="Se deriva automáticamente del formato si se deja en horizontal."
-                    />
-                    {selType && selType.optionGroups.length > 0 && selType.optionGroups.map((group: PodCatalogOptionGroup) => {
-                      const selectedValue = podConfigForm.additionalOpts[group.key] ?? group.default;
-                      if (group.control === 'select') {
-                        return (
-                          <Select
-                            key={group.key}
-                            label={group.label}
-                            options={group.choices.map((c) => ({ label: c.label, value: c.value }))}
-                            value={selectedValue}
-                            onChange={(v) =>
-                              setPodConfigForm((p) => ({ ...p, additionalOpts: { ...p.additionalOpts, [group.key]: v } }))
-                            }
-                          />
-                        );
-                      }
-                      const onChoice = group.choices.find((c) => c.value !== group.default);
-                      return (
-                        <Checkbox
-                          key={group.key}
-                          label={onChoice?.label ?? group.label}
-                          checked={selectedValue !== group.default}
-                          onChange={(checked) => {
-                            const newVal = checked ? (onChoice?.value ?? '') : group.default;
-                            setPodConfigForm((p) => ({ ...p, additionalOpts: { ...p.additionalOpts, [group.key]: newVal } }));
-                          }}
-                        />
-                      );
-                    })}
-                  </>
-                );
-              })()}
-            </FormLayout>
-          )}
-        </Modal.Section>
-      </Modal>
-
-      <Modal
-        open={!!editingFormat}
-        onClose={() => { if (!savingFormatEdit) setEditingFormat(null); }}
-        title={`Editar formato — ${editingFormat?.displayName ?? ""}`}
-        primaryAction={{
-          content: "Guardar",
-          loading: savingFormatEdit,
-          onAction: handleFormatEditSave,
-        }}
-        secondaryActions={[
-          {
-            content: "Cancelar",
-            disabled: savingFormatEdit,
-            onAction: () => setEditingFormat(null),
-          },
-        ]}
-      >
-        <Modal.Section>
-          {formatEditError && (
-            <Banner tone="critical" onDismiss={() => setFormatEditError(null)}>
-              {formatEditError}
-            </Banner>
-          )}
-          <FormLayout>
-            <TextField
-              label="Nombre visible"
-              value={editFormatForm.displayName}
-              onChange={(v) => setEditFormatForm((p) => ({ ...p, displayName: v }))}
-              autoComplete="off"
-            />
-            <TextField
-              label="Proporción (aspectRatio)"
-              value={editFormatForm.aspectRatio}
-              onChange={(v) => setEditFormatForm((p) => ({ ...p, aspectRatio: v }))}
-              autoComplete="off"
-              helpText='Ej: "4:3", "1:1", "16:9"'
-            />
-            <TextField
-              label="Opción Shopify (shopifyVariantOption)"
-              value={editFormatForm.shopifyVariantOption}
-              onChange={(v) => setEditFormatForm((p) => ({ ...p, shopifyVariantOption: v }))}
-              autoComplete="off"
-              helpText='Valor exacto del option1 de la variante en Shopify. Ej: "8x10". Dejar vacío para desvincularlo.'
-            />
-          </FormLayout>
-        </Modal.Section>
-      </Modal>
+      />
     </Page>
   );
 }

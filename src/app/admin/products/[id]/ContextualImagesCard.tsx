@@ -59,6 +59,8 @@ type ProductVariant = {
   title: string;
   formatId: string;
   formatName: string;
+  shopifyImageUrl?: string | null;
+  shopifyImageAlt?: string | null;
 };
 
 export function ContextualImagesCard({
@@ -251,12 +253,18 @@ export function ContextualImagesCard({
     variantId: string | null,
     title: string,
     tone?: "info",
-  ) => (
+  ) => {
+    const variant = variantId ? variantById.get(variantId) : null;
+    const shopifyImage = variant?.shopifyImageUrl
+      ? { url: variant.shopifyImageUrl, alt: variant.shopifyImageAlt ?? null }
+      : null;
+    return (
     <BucketSection
       key={bucketKey(variantId)}
       title={title}
       tone={tone}
       variantId={variantId}
+      shopifyImage={shopifyImage}
       images={imagesFor(variantId)}
       uploading={uploadingKey === bucketKey(variantId)}
       reordering={reorderingKey === bucketKey(variantId)}
@@ -266,7 +274,8 @@ export function ContextualImagesCard({
       onView={setViewing}
       onDelete={setDeleting}
     />
-  );
+    );
+  };
 
   return (
     <Card>
@@ -274,12 +283,6 @@ export function ContextualImagesCard({
         <BlockStack gap="100">
           <Text variant="headingSm" as="h2">
             Imágenes contextuales
-          </Text>
-          <Text as="p" tone="subdued">
-            Escenas, producto en uso e imágenes explicativas por variante de
-            Shopify (tamaño + color/material). Viven en esta app (no en Shopify).
-            Las de “General” se usan como respaldo cuando una variante no tiene
-            las suyas. Arrastra para reordenar — la primera es la principal.
           </Text>
         </BlockStack>
 
@@ -312,9 +315,7 @@ export function ContextualImagesCard({
                   </Text>
                 </Box>
                 <BlockStack gap="400">
-                  {group.variants.map((v) =>
-                    renderSection(v.id, v.title),
-                  )}
+                  {group.variants.map((v) => renderSection(v.id, v.title))}
                 </BlockStack>
               </BlockStack>
             ))}
@@ -332,7 +333,11 @@ export function ContextualImagesCard({
                 </Box>
                 <BlockStack gap="400">
                   {orphanVariantIds.map((id, i) =>
-                    renderSection(id, `Variante sin vincular #${i + 1}`, "info"),
+                    renderSection(
+                      id,
+                      `Variante sin vincular #${i + 1}`,
+                      "info",
+                    ),
                   )}
                 </BlockStack>
               </BlockStack>
@@ -381,6 +386,7 @@ function BucketSection({
   title,
   tone,
   variantId,
+  shopifyImage,
   images,
   uploading,
   reordering,
@@ -393,6 +399,7 @@ function BucketSection({
   title: string;
   tone?: "info";
   variantId: string | null;
+  shopifyImage?: { url: string; alt: string | null } | null;
   images: AdminProductImage[];
   uploading: boolean;
   reordering: boolean;
@@ -458,6 +465,12 @@ function BucketSection({
               opacity: reordering ? 0.7 : 1,
             }}
           >
+            {shopifyImage && (
+              <ProductImageTile
+                url={shopifyImage.url}
+                alt={shopifyImage.alt}
+              />
+            )}
             {images.map((img) => (
               <SortableImageTile
                 key={img.id}
@@ -694,6 +707,45 @@ function SortableImageTile({
   );
 }
 
+function ProductImageTile({
+  url,
+  alt,
+}: {
+  url: string;
+  alt: string | null;
+}) {
+  return (
+    <div
+      style={{
+        position: "relative",
+        borderRadius: 8,
+        overflow: "hidden",
+        border: "1px solid var(--p-color-border)",
+        aspectRatio: "1 / 1",
+        background: "var(--p-color-bg-surface)",
+      }}
+    >
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img
+        src={url}
+        alt={alt ?? ""}
+        draggable={false}
+        style={{
+          display: "block",
+          width: "100%",
+          height: "100%",
+          objectFit: "cover",
+        }}
+      />
+      <div style={{ position: "absolute", top: 6, left: 6 }}>
+        <Badge tone="info" size="small">
+          Producto
+        </Badge>
+      </div>
+    </div>
+  );
+}
+
 function UploadTile({
   uploading,
   onClick,
@@ -720,7 +772,11 @@ function UploadTile({
         gap: 4,
       }}
     >
-      {uploading ? <Spinner size="small" /> : <PlusIcon width={24} height={24} />}
+      {uploading ? (
+        <Spinner size="small" />
+      ) : (
+        <PlusIcon width={24} height={24} />
+      )}
     </button>
   );
 }
