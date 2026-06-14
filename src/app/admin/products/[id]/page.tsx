@@ -40,6 +40,7 @@ import {
 } from "@/entities/admin/api";
 import { shopifyFetch } from "@/lib/shopify/client";
 import { GET_PRODUCT } from "@/lib/shopify/queries/products";
+import { ContextualImagesCard } from "./ContextualImagesCard";
 
 export default function AdminProductDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -82,6 +83,19 @@ export default function AdminProductDetailPage() {
   const [savingFormatEdit, setSavingFormatEdit] = useState(false);
   const [formatEditError, setFormatEditError] = useState<string | null>(null);
   const [togglingFormat, setTogglingFormat] = useState<string | null>(null);
+  const [newFormatForm, setNewFormatForm] = useState({
+    name: "",
+    displayName: "",
+    aspectRatio: "",
+    width: "",
+    height: "",
+    shopifyVariantOption: "",
+  });
+  const [creatingFormat, setCreatingFormat] = useState(false);
+  const [createFormatError, setCreateFormatError] = useState<string | null>(
+    null,
+  );
+  const [deletingFormat, setDeletingFormat] = useState<string | null>(null);
 
   // POD config editor state
   const [podConfigVariant, setPodConfigVariant] = useState<AdminProductVariantLink | null>(null);
@@ -229,6 +243,64 @@ export default function AdminProductDetailPage() {
       setFormatEditError((e as Error).message);
     } finally {
       setSavingFormatEdit(false);
+    }
+  };
+
+  const handleFormatCreate = async () => {
+    const { name, displayName, aspectRatio, width, height, shopifyVariantOption } =
+      newFormatForm;
+    if (!name.trim() || !displayName.trim() || !aspectRatio.trim()) {
+      setCreateFormatError("Nombre, nombre visible y proporción son obligatorios.");
+      return;
+    }
+    const w = Number(width);
+    const h = Number(height);
+    if (!Number.isInteger(w) || w < 1 || !Number.isInteger(h) || h < 1) {
+      setCreateFormatError("Ancho y alto deben ser enteros mayores que 0.");
+      return;
+    }
+    setCreatingFormat(true);
+    setCreateFormatError(null);
+    try {
+      await adminApi.formats.create({
+        name: name.trim(),
+        displayName: displayName.trim(),
+        aspectRatio: aspectRatio.trim(),
+        width: w,
+        height: h,
+        shopifyVariantOption: shopifyVariantOption.trim() || undefined,
+      });
+      setNewFormatForm({
+        name: "",
+        displayName: "",
+        aspectRatio: "",
+        width: "",
+        height: "",
+        shopifyVariantOption: "",
+      });
+      await loadFormats();
+    } catch (e: unknown) {
+      setCreateFormatError((e as Error).message);
+    } finally {
+      setCreatingFormat(false);
+    }
+  };
+
+  const handleFormatDelete = async (f: AdminFormat) => {
+    if (
+      !confirm(
+        `¿Eliminar el formato "${f.displayName}"? Quedará inactivo y no se podrá vincular a nuevas variantes.`,
+      )
+    )
+      return;
+    setDeletingFormat(f.id);
+    try {
+      await adminApi.formats.deactivate(f.id);
+      await loadFormats();
+    } catch (e: unknown) {
+      alert((e as Error).message);
+    } finally {
+      setDeletingFormat(null);
     }
   };
 
@@ -446,6 +518,14 @@ export default function AdminProductDetailPage() {
 
   const assignedStyle = styles.find((s) => s.id === styleId);
 
+  // Linked Shopify variants (with their format) — the buckets for contextual images.
+  const productVariants = (variants?.linkedVariants ?? []).map((v) => ({
+    id: v.id,
+    title: v.shopifyVariantTitle,
+    formatId: v.format.id,
+    formatName: v.format.displayName,
+  }));
+
   return (
     <Page
       backAction={{ url: "/admin/products", content: "Productos" }}
@@ -622,6 +702,12 @@ export default function AdminProductDetailPage() {
                 )}
               </BlockStack>
             </Card>
+
+            {/* Card — Imágenes contextuales (propias de la app) */}
+            <ContextualImagesCard
+              productId={product.id}
+              variants={productVariants}
+            />
 
             {/* Card — Variantes vinculadas */}
             <Card padding="0">
@@ -972,6 +1058,92 @@ export default function AdminProductDetailPage() {
         ]}
         size="large"
       >
+        <Modal.Section>
+          <BlockStack gap="300">
+            <Text variant="headingSm" as="h3">
+              Añadir formato
+            </Text>
+            {createFormatError && (
+              <Banner
+                tone="critical"
+                onDismiss={() => setCreateFormatError(null)}
+              >
+                {createFormatError}
+              </Banner>
+            )}
+            <FormLayout>
+              <FormLayout.Group>
+                <TextField
+                  label="Nombre (interno)"
+                  value={newFormatForm.name}
+                  onChange={(v) =>
+                    setNewFormatForm((p) => ({ ...p, name: v }))
+                  }
+                  autoComplete="off"
+                  placeholder="square_1x1"
+                />
+                <TextField
+                  label="Nombre visible"
+                  value={newFormatForm.displayName}
+                  onChange={(v) =>
+                    setNewFormatForm((p) => ({ ...p, displayName: v }))
+                  }
+                  autoComplete="off"
+                  placeholder="Cuadrado 1:1"
+                />
+              </FormLayout.Group>
+              <FormLayout.Group>
+                <TextField
+                  label="Proporción"
+                  value={newFormatForm.aspectRatio}
+                  onChange={(v) =>
+                    setNewFormatForm((p) => ({ ...p, aspectRatio: v }))
+                  }
+                  autoComplete="off"
+                  placeholder="1:1"
+                />
+                <TextField
+                  label="Ancho (px)"
+                  type="number"
+                  value={newFormatForm.width}
+                  onChange={(v) =>
+                    setNewFormatForm((p) => ({ ...p, width: v }))
+                  }
+                  autoComplete="off"
+                  placeholder="1024"
+                />
+                <TextField
+                  label="Alto (px)"
+                  type="number"
+                  value={newFormatForm.height}
+                  onChange={(v) =>
+                    setNewFormatForm((p) => ({ ...p, height: v }))
+                  }
+                  autoComplete="off"
+                  placeholder="1024"
+                />
+              </FormLayout.Group>
+              <TextField
+                label="Opción Shopify (opcional)"
+                value={newFormatForm.shopifyVariantOption}
+                onChange={(v) =>
+                  setNewFormatForm((p) => ({ ...p, shopifyVariantOption: v }))
+                }
+                autoComplete="off"
+                helpText='Valor del option1 de la variante en Shopify. Ej: "8x10".'
+              />
+              <InlineStack align="end">
+                <Button
+                  variant="primary"
+                  loading={creatingFormat}
+                  onClick={handleFormatCreate}
+                >
+                  Añadir formato
+                </Button>
+              </InlineStack>
+            </FormLayout>
+          </BlockStack>
+        </Modal.Section>
         <Modal.Section flush>
           <IndexTable
             resourceName={{ singular: "formato", plural: "formatos" }}
@@ -1034,13 +1206,27 @@ export default function AdminProductDetailPage() {
                   )}
                 </IndexTable.Cell>
                 <IndexTable.Cell>
-                  <Button
-                    variant="plain"
-                    size="slim"
-                    onClick={() => handleFormatEditOpen(f)}
-                  >
-                    Editar
-                  </Button>
+                  <InlineStack gap="200">
+                    <Button
+                      variant="plain"
+                      size="slim"
+                      onClick={() => handleFormatEditOpen(f)}
+                    >
+                      Editar
+                    </Button>
+                    {f.isActive && (
+                      <Button
+                        variant="plain"
+                        tone="critical"
+                        size="slim"
+                        icon={DeleteIcon}
+                        loading={deletingFormat === f.id}
+                        onClick={() => handleFormatDelete(f)}
+                      >
+                        Eliminar
+                      </Button>
+                    )}
+                  </InlineStack>
                 </IndexTable.Cell>
               </IndexTable.Row>
             ))}

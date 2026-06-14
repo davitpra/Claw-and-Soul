@@ -2,8 +2,9 @@
 
 import Image from "next/image";
 import { ShopifyProduct } from "@/lib/shopify";
-import { getOtherSetImage } from "@/entities/product/lib/getOtherSetImage";
 import { Container } from "@/shared/ui/Container";
+import { useFormatOptions } from "@/hooks/useFormatOptions";
+import { getSceneImage } from "@/entities/product/lib/getSceneImage";
 
 interface RoomViewProps {
   product: ShopifyProduct;
@@ -17,16 +18,24 @@ export default function RoomView({
   const selectedVariant = product.variants.edges.find(
     (v) => v.node.id === selectedVariantId,
   )?.node;
-  const otherSetImage = getOtherSetImage(product, selectedVariant);
 
-  if (!otherSetImage) return null;
+  const { contextualImages } = useFormatOptions(product.handle);
+
+  // Scene image from app-owned contextual images, with fallback:
+  // variant scene → General scene → Shopify variant image.
+  const sceneImage =
+    getSceneImage(contextualImages, selectedVariantId) ??
+    selectedVariant?.image?.url ??
+    null;
+
+  if (!sceneImage) return null;
 
   return (
     <section className="bg-cream">
       <Container className="flex flex-col items-center gap-8 md:flex-row md:gap-16">
         <div className="w-full overflow-hidden md:w-2/5">
           <Image
-            src={otherSetImage}
+            src={sceneImage}
             alt={`${product.title} — en tu espacio`}
             width={0}
             height={0}

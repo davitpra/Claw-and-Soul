@@ -10,7 +10,7 @@ import { useEffect, useState } from "react";
 import { useFormatOptions } from "@/hooks/useFormatOptions";
 import { useStyle } from "@/hooks/useStyle";
 import { StyleOptionsForm } from "@/entities/art-style/ui/StyleOptionsForm";
-import { getOtherSetImage } from "@/entities/product/lib/getOtherSetImage";
+import { getSceneImage } from "@/entities/product/lib/getSceneImage";
 import { getSizeScale } from "@/entities/product/lib/getSizeScale";
 
 interface ProductDetailsProps {
@@ -42,9 +42,17 @@ export default function ProductDetails({
     productRefId,
     styleId,
     formats,
+    contextualImages,
     isLoading: isLoadingFormats,
     error: formatsError,
   } = useFormatOptions(product.handle);
+
+  // Scene image comes from app-owned contextual images (per variant), with
+  // fallback: variant scene → General scene → Shopify variant image.
+  const sceneImage =
+    getSceneImage(contextualImages, selectedVariantId) ??
+    selectedVariant?.image?.url ??
+    null;
 
   const selectedFormatOption = formats.find(
     (f) => f.shopifyVariantId === selectedVariantId,
@@ -73,8 +81,6 @@ export default function ProductDetails({
 
   const userSelections = selectionsState.values;
 
-  const otherSetImage = getOtherSetImage(product, selectedVariant);
-
   const firstImageScale = getSizeScale(product, selectedVariant);
 
   const hasOptions =
@@ -86,7 +92,7 @@ export default function ProductDetails({
       <ProductGallery
         product={product}
         mainImage={mainImage}
-        otherSetImage={otherSetImage}
+        otherSetImage={sceneImage}
         variantImage={selectedVariant?.image?.url}
         firstImageScale={firstImageScale}
       />
