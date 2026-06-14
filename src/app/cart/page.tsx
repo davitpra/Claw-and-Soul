@@ -9,7 +9,7 @@ import { useCart } from "@/context/CartContext";
 import { useAuthFetch } from "@/hooks/useAuthFetch";
 
 export default function CartPage() {
-  const { items, updateQuantity, removeItem, subtotal, updateItemImage } = useCart();
+  const { items, updateQuantity, removeItem, subtotal, updateItemImage, clearCart } = useCart();
   const { authFetchJSON } = useAuthFetch();
   const [isCheckingOut, setIsCheckingOut] = useState(false);
 
@@ -85,6 +85,8 @@ export default function CartPage() {
         console.error("Shopify checkout errors:", userErrors);
         alert(`Checkout error: ${userErrors[0].message}`);
       } else if (cart?.checkoutUrl) {
+        // Shopify cart created — empty our cart before handing off to checkout
+        await clearCart();
         window.location.href = cart.checkoutUrl;
       }
     } catch (error) {

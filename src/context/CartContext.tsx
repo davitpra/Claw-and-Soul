@@ -1,6 +1,14 @@
 "use client";
 
-import React, { createContext, useContext, useState, useEffect } from "react";
+import React, {
+  createContext,
+  useContext,
+  useState,
+  useEffect,
+  useRef,
+} from "react";
+import { useAuth } from "./AuthContext";
+import { useAuthFetch } from "@/hooks/useAuthFetch";
 
 export interface CartItem {
   id: string | number;
@@ -29,13 +37,44 @@ interface CartContextType {
 
 const CartContext = createContext<CartContextType | undefined>(undefined);
 
+const GUEST_CART_KEY = "claw_soul_cart";
+
+// Backend wraps responses in { data }
+type CartResponse = { data: { items: CartItem[] } };
+
+// Strip the frontend-only `id` field before sending to the backend
+// (the API rejects unknown properties).
+const toPayload = (item: CartItem) => {
+  const payload = { ...item } as Partial<CartItem>;
+  delete payload.id;
+  return payload;
+};
+
 export function CartProvider({ children }: { children: React.ReactNode }) {
+  const { isAuthenticated, isLoading } = useAuth();
+  const { authFetchJSON } = useAuthFetch();
+
   const [items, setItems] = useState<CartItem[]>([]);
   const [isLoaded, setIsLoaded] = useState(false);
+  const prevAuthRef = useRef<boolean | null>(null);
 
-  // Load cart from localStorage
+  // Helper: call a cart endpoint and return the resulting items
+  const cartRequest = async (
+    endpoint: string,
+    method: string,
+    body?: unknown
+  ): Promise<CartItem[]> => {
+    const res = await authFetchJSON<CartResponse>(endpoint, {
+      method,
+      headers: body ? { "Content-Type": "application/json" } : undefined,
+      body: body ? JSON.stringify(body) : undefined,
+    });
+    return res.data.items;
+  };
+
+  // Load guest cart from localStorage once on mount
   useEffect(() => {
-    const savedCart = localStorage.getItem("claw_soul_cart");
+    const savedCart = localStorage.getItem(GUEST_CART_KEY);
     if (savedCart) {
       try {
         setItems(JSON.parse(savedCart));
@@ -46,14 +85,67 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     setIsLoaded(true);
   }, []);
 
-  // Save cart to localStorage
+  // Persist to localStorage ONLY in guest mode (authenticated cart lives in backend)
   useEffect(() => {
-    if (isLoaded) {
-      localStorage.setItem("claw_soul_cart", JSON.stringify(items));
+    if (isLoaded && !isAuthenticated) {
+      localStorage.setItem(GUEST_CART_KEY, JSON.stringify(items));
     }
-  }, [items, isLoaded]);
+  }, [items, isLoaded, isAuthenticated]);
 
-  const addToCart = (newItem: CartItem) => {
+  // React to auth transitions: merge on login, empty on logout
+  useEffect(() => {
+    if (isLoading) return;
+
+    const wasAuthenticated = prevAuthRef.current;
+
+    if (isAuthenticated) {
+      // Login or initial load while authenticated: merge guest cart + load backend cart
+      void syncOnLogin();
+    } else if (wasAuthenticated === true) {
+      // Logout: start with an empty guest cart (the user cart stays in backend)
+      setItems([]);
+    }
+
+    prevAuthRef.current = isAuthenticated;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isAuthenticated, isLoading]);
+
+  const syncOnLogin = async () => {
+    try {
+      let guestItems: CartItem[] = [];
+      const saved = localStorage.getItem(GUEST_CART_KEY);
+      if (saved) {
+        try {
+          guestItems = JSON.parse(saved);
+        } catch {
+          guestItems = [];
+        }
+      }
+
+      const serverItems =
+        guestItems.length > 0
+          ? await cartRequest("/cart/merge", "POST", {
+              items: guestItems.map(toPayload),
+            })
+          : await cartRequest("/cart", "GET");
+
+      setItems(serverItems);
+      localStorage.removeItem(GUEST_CART_KEY);
+    } catch (e) {
+      console.error("Cart sync on login failed:", e);
+    }
+  };
+
+  const addToCart = async (newItem: CartItem) => {
+    if (isAuthenticated) {
+      try {
+        setItems(await cartRequest("/cart/items", "POST", toPayload(newItem)));
+      } catch (e) {
+        console.error("addToCart failed:", e);
+      }
+      return;
+    }
+
     setItems((prev) => {
       const existingItemIndex = prev.findIndex(
         (item) =>
@@ -71,7 +163,22 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     });
   };
 
-  const updateQuantity = (variantId: string, delta: number) => {
+  const updateQuantity = async (variantId: string, delta: number) => {
+    if (isAuthenticated) {
+      try {
+        setItems(
+          await cartRequest(
+            `/cart/items?variantId=${encodeURIComponent(variantId)}`,
+            "PATCH",
+            { delta }
+          )
+        );
+      } catch (e) {
+        console.error("updateQuantity failed:", e);
+      }
+      return;
+    }
+
     setItems((prev) =>
       prev.map((item) =>
         item.variantId === variantId
@@ -81,15 +188,49 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     );
   };
 
-  const removeItem = (variantId: string) => {
+  const removeItem = async (variantId: string) => {
+    if (isAuthenticated) {
+      try {
+        setItems(
+          await cartRequest(
+            `/cart/items?variantId=${encodeURIComponent(variantId)}`,
+            "DELETE"
+          )
+        );
+      } catch (e) {
+        console.error("removeItem failed:", e);
+      }
+      return;
+    }
+
     setItems((prev) => prev.filter((item) => item.variantId !== variantId));
   };
 
-  const clearCart = () => {
+  const clearCart = async () => {
+    if (isAuthenticated) {
+      try {
+        setItems(await cartRequest("/cart", "DELETE"));
+      } catch (e) {
+        console.error("clearCart failed:", e);
+      }
+      return;
+    }
+
     setItems([]);
   };
 
-  const updateItemImage = (generationId: string, imageUrl: string) => {
+  const updateItemImage = async (generationId: string, imageUrl: string) => {
+    if (isAuthenticated) {
+      try {
+        setItems(
+          await cartRequest("/cart/image", "PATCH", { generationId, imageUrl })
+        );
+      } catch (e) {
+        console.error("updateItemImage failed:", e);
+      }
+      return;
+    }
+
     setItems((prev) =>
       prev.map((item) =>
         item.generationId === generationId && !item.imageUrl
