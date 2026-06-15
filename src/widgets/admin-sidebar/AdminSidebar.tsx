@@ -18,7 +18,7 @@ const navItems = [
   { label: "Usuarios", href: "/admin/users", icon: TeamIcon },
   { label: "Pedidos", href: "/admin/orders", icon: OrderIcon },
   { label: "Estilos", href: "/admin/styles", icon: PaintBrushFlatIcon },
-  { label: "Productos & Sync", href: "/admin/products", icon: InventoryIcon },
+  { label: "Productos", href: "/admin/products", icon: InventoryIcon },
   { label: "Gastos", href: "/admin/expenses", icon: ReceiptIcon },
 ];
 

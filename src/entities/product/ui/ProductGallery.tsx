@@ -59,16 +59,18 @@ export default function ProductGallery({
             ))}
           </Carousel>
         ) : (
-          <Image
-            src={primaryImage}
-            alt={product.title}
-            width={0}
-            height={0}
-            sizes={sizes}
-            className={`${imageClassName} ${hoverClassName}`}
-            style={firstImageStyle}
-            priority
-          />
+          <div className="flex-[0_0_100%] min-w-0 flex items-center justify-center px-6 md:px-10 pt-6 pb-12">
+            <Image
+              src={primaryImage}
+              alt={product.title}
+              width={0}
+              height={0}
+              sizes={sizes}
+              className={`${imageClassName} ${hoverClassName}`}
+              style={firstImageStyle}
+              priority
+            />
+          </div>
         )}
       </div>
     </div>
