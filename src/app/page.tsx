@@ -5,6 +5,7 @@ import { FeaturedProducts } from "@/widgets/featured-products";
 import { CustomerGallery } from "@/widgets/customer-gallery";
 import { Reviews } from "@/widgets/reviews";
 import { NewCollection } from "@/widgets/collection";
+import { AIProcess } from "@/widgets/ai-process";
 
 export default async function Home() {
   return (
@@ -15,6 +16,7 @@ export default async function Home() {
         <Hero />
         <NewCollection />
         <FeaturedProducts />
+        <AIProcess />
         <CustomerGallery />
         <Reviews />
       </main>

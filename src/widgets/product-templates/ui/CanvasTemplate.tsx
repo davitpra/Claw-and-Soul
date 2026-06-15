@@ -2,10 +2,10 @@
 
 import ProductDetails from "@/widgets/product-details/ui/ProductDetails";
 import { StyleCollection } from "@/widgets/collection";
-import { AIProcess } from "@/widgets/ai-process";
-import ProductEssence from "@/widgets/product-essence/ui/ProductEssence";
 import ProductFAQ from "@/widgets/product-faq/ui/ProductFAQ";
 import { ProductTemplateProps } from "./ProductPageTemplate";
+import { RoomView } from "@/widgets/room-view";
+import { Reviews } from "@/widgets/reviews";
 
 export default function CanvasTemplate({
   product,
@@ -32,14 +32,9 @@ export default function CanvasTemplate({
 
       <StyleCollection handle={handle} />
 
-      <AIProcess />
-
-      <div className="flex justify-center py-6 md:py-10 px-4 md:px-10 lg:px-40">
-        <div className="layout-content-container flex flex-col max-w-300 w-full gap-8">
-          <ProductEssence />
-          <ProductFAQ faqs={faqs} />
-        </div>
-      </div>
+      <RoomView product={product} selectedVariantId={selectedVariantId} />
+      <Reviews />
+      <ProductFAQ faqs={faqs} />
     </>
   );
 }
