@@ -85,14 +85,15 @@ function IAGeneratorContent() {
   const [styleSkipResolved, setStyleSkipResolved] = useState(false);
 
   useEffect(() => {
-    if (!styleIdFromUrl) {
-      setStyleSkipResolved(true);
-      return;
-    }
+    if (!styleIdFromUrl) return;
     if (needsProductSelection || isLoadingStyles || isAuthLoading) return;
     if (styleSkipResolved) return;
 
+    // Inicialización única desde deep-link: sincroniza la URL (style_id) y los
+    // estilos cargados de forma asíncrona hacia el estado de navegación. No es
+    // un render derivado, por eso el setState dentro del efecto es intencional.
     if (preselectedStyle) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setSelectedStyle(preselectedStyle);
       setStep((prev) => (prev === 1 ? (isAuthenticated ? 3 : 2) : prev));
     }

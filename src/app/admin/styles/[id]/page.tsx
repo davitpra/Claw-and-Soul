@@ -181,8 +181,6 @@ export default function AdminStyleDetailPage() {
   const [nameError, setNameError] = useState<string | null>(null);
   const [displayName, setDisplayName] = useState("");
   const [category, setCategory] = useState("");
-  const [thanksUrl, setThanksUrl] = useState("");
-  const [thanksUrlImgError, setThanksUrlImgError] = useState(false);
 
   // Pipeline form state
   const [strategyKey, setStrategyKey] = useState("");
@@ -268,7 +266,6 @@ export default function AdminStyleDetailPage() {
     setNameError(null);
     setDisplayName(s.displayName);
     setCategory(s.category);
-    setThanksUrl(s.thanksUrl ?? "");
     setStrategyKey(s.strategyKey ?? "");
     setVisionConfigId(s.visionConfigId ?? UNASSIGNED);
     setImageGenConfigId(s.imageGenConfigId ?? UNASSIGNED);
@@ -462,7 +459,6 @@ export default function AdminStyleDetailPage() {
         name: trimmedName !== style.name ? trimmedName : undefined,
         displayName,
         category,
-        thanksUrl: thanksUrl.trim() ? thanksUrl.trim() : null,
       });
       setStyle((prev) => (prev ? { ...prev, ...updated } : updated));
     } catch (e: unknown) {
@@ -589,7 +585,6 @@ export default function AdminStyleDetailPage() {
         name: candidate,
         displayName: `${style.displayName} (copia)`,
         category: style.category,
-        thanksUrl: style.thanksUrl ?? undefined,
         strategyKey: style.strategyKey ?? undefined,
         promptTemplate: style.promptTemplate ?? undefined,
         templateVars: style.templateVars ?? undefined,
@@ -1652,67 +1647,6 @@ export default function AdminStyleDetailPage() {
                     Guardar cambios
                   </Button>
                 </InlineStack>
-              </BlockStack>
-            </Card>
-            <Card>
-              <BlockStack gap="400">
-                <Text variant="headingSm" as="h2">
-                  Thanks you page URL
-                </Text>
-                <TextField
-                  label="Thanks URL"
-                  type="url"
-                  value={thanksUrl}
-                  onChange={(val) => {
-                    setThanksUrl(val);
-                    setThanksUrlImgError(false);
-                  }}
-                  autoComplete="off"
-                  placeholder="https://…"
-                  helpText="URL a la que se redirige tras una compra exitosa de un producto con este estilo."
-                />
-                {thanksUrl.trim() && (
-                  <BlockStack gap="100">
-                    <Text variant="bodySm" as="span" fontWeight="bold">
-                      Previsualización
-                    </Text>
-                    {thanksUrlImgError ? (
-                      <Box
-                        borderWidth="025"
-                        borderColor="border"
-                        borderRadius="200"
-                        padding="300"
-                      >
-                        <Text as="p" tone="subdued" variant="bodySm">
-                          No se puede previsualizar como imagen. Verifica que la
-                          URL apunte a un recurso de imagen accesible.
-                        </Text>
-                      </Box>
-                    ) : (
-                      <Box
-                        borderWidth="025"
-                        borderColor="border"
-                        borderRadius="200"
-                        padding="200"
-                      >
-                        {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img
-                          src={thanksUrl}
-                          alt="Vista previa de Thanks URL"
-                          onError={() => setThanksUrlImgError(true)}
-                          style={{
-                            display: "block",
-                            width: "100%",
-                            height: "auto",
-                            maxHeight: 240,
-                            objectFit: "contain",
-                            borderRadius: 6,
-                          }}
-                        />
-                      </Box>
-                    )}
-                  </BlockStack>
-                )}
               </BlockStack>
             </Card>
           </BlockStack>

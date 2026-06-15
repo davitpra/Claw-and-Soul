@@ -43,6 +43,7 @@ const TYPE_OPTIONS: { label: string; value: ProductImageType }[] = [
   { label: "En uso", value: "in_use" },
   { label: "Explicativa", value: "explainer" },
   { label: "Galería", value: "gallery" },
+  { label: "Gracias", value: "thanks" },
 ];
 
 const TYPE_LABEL: Record<ProductImageType, string> = {
@@ -50,6 +51,7 @@ const TYPE_LABEL: Record<ProductImageType, string> = {
   in_use: "En uso",
   explainer: "Explicativa",
   gallery: "Galería",
+  thanks: "Gracias",
 };
 
 const GENERAL_VALUE = "__general__";

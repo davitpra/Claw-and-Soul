@@ -297,7 +297,6 @@ export interface AdminStyle {
   name: string;
   displayName: string;
   category: string;
-  thanksUrl: string | null;
   isActive: boolean;
   createdAt: string;
   updatedAt: string;
@@ -341,7 +340,12 @@ export interface AdminProduct {
   fulfillmentMethod: string;
 }
 
-export type ProductImageType = 'scene' | 'in_use' | 'explainer' | 'gallery';
+export type ProductImageType =
+  | 'scene'
+  | 'in_use'
+  | 'explainer'
+  | 'gallery'
+  | 'thanks';
 
 export interface AdminProductImage {
   id: string;

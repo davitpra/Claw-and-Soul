@@ -10,7 +10,6 @@ interface BackendStyle {
   name: string;
   displayName: string;
   previewUrl: string | null;
-  thanksUrl: string | null;
   templateVarOptions: Record<string, TemplateVarOption> | null;
   images: { imageUrl: string }[];
 }
@@ -53,7 +52,7 @@ export function useStyle(styleId: string | null): UseStyleResult {
           img:
             data.previewUrl ??
             "https://placehold.co/400x500?text=Style",
-          thanksUrl: data.thanksUrl ?? null,
+          thanksUrl: null,
           templateVarOptions: data.templateVarOptions ?? null,
         });
       })
