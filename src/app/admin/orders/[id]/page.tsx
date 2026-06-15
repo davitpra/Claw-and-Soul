@@ -38,7 +38,7 @@ import {
   AdminOrderItem,
   OrderExpenses,
 } from "@/entities/admin/api";
-import ImagePreviewModal from "./ImagePreviewModal";
+import ImagePreviewModal from "@/app/admin/_components/ImagePreviewModal";
 import PrintStudioModal from "./PrintStudioModal";
 
 const PRODUCTION_STATUS_LABELS: Record<string, string> = {

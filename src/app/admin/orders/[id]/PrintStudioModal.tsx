@@ -19,7 +19,7 @@ import {
 } from "@shopify/polaris";
 import { adminApi, AdminOrderItem, EnhanceInfo, EnhanceOptions } from "@/entities/admin/api";
 import { hexToHsb, hsbToHex, HsbColor } from "@/lib/colorUtils";
-import ImagePreviewModal from "./ImagePreviewModal";
+import ImagePreviewModal from "@/app/admin/_components/ImagePreviewModal";
 
 const GOOD_DPI = 300;
 const LOW_DPI = 200;

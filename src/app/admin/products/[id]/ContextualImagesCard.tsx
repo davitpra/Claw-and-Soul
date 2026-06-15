@@ -36,6 +36,7 @@ import {
   AdminProductImage,
   ProductImageType,
 } from "@/entities/admin/api";
+import ImagePreviewModal from "@/app/admin/_components/ImagePreviewModal";
 
 const TYPE_OPTIONS: { label: string; value: ProductImageType }[] = [
   { label: "Escena", value: "scene" },
@@ -80,6 +81,10 @@ export function ContextualImagesCard({
 
   const [viewing, setViewing] = useState<AdminProductImage | null>(null);
   const [deleting, setDeleting] = useState<AdminProductImage | null>(null);
+  const [productPreview, setProductPreview] = useState<{
+    src: string;
+    title: string;
+  } | null>(null);
 
   const load = async () => {
     try {
@@ -273,6 +278,7 @@ export function ContextualImagesCard({
       onDragEnd={(event) => handleDragEnd(variantId, event)}
       onView={setViewing}
       onDelete={setDeleting}
+      onPreviewProduct={(src) => setProductPreview({ src, title })}
     />
     );
   };
@@ -358,6 +364,14 @@ export function ContextualImagesCard({
         />
       )}
 
+      {productPreview && (
+        <ImagePreviewModal
+          src={productPreview.src}
+          title={productPreview.title}
+          onClose={() => setProductPreview(null)}
+        />
+      )}
+
       <Modal
         open={!!deleting}
         onClose={() => setDeleting(null)}
@@ -395,6 +409,7 @@ function BucketSection({
   onDragEnd,
   onView,
   onDelete,
+  onPreviewProduct,
 }: {
   title: string;
   tone?: "info";
@@ -408,6 +423,7 @@ function BucketSection({
   onDragEnd: (event: DragEndEvent) => void;
   onView: (img: AdminProductImage) => void;
   onDelete: (img: AdminProductImage) => void;
+  onPreviewProduct: (src: string) => void;
 }) {
   const [uploadType, setUploadType] = useState<ProductImageType>("scene");
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -469,6 +485,7 @@ function BucketSection({
               <ProductImageTile
                 url={shopifyImage.url}
                 alt={shopifyImage.alt}
+                onClick={() => onPreviewProduct(shopifyImage.url)}
               />
             )}
             {images.map((img) => (
@@ -522,6 +539,7 @@ function ImageViewerModal({
   const [variantValue, setVariantValue] = useState(
     img.productFormatVariantId ?? GENERAL_VALUE,
   );
+  const [preview, setPreview] = useState(false);
 
   const currentVariantValue = img.productFormatVariantId ?? GENERAL_VALUE;
   const dirty =
@@ -530,6 +548,7 @@ function ImageViewerModal({
     variantValue !== currentVariantValue;
 
   return (
+    <>
     <Modal
       open
       onClose={onClose}
@@ -551,18 +570,31 @@ function ImageViewerModal({
     >
       <Modal.Section>
         <InlineStack gap="400" align="start" blockAlign="start" wrap={false}>
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src={img.imageUrl}
-            alt={img.altImage ?? ""}
+          <button
+            type="button"
+            onClick={() => setPreview(true)}
+            aria-label="Ampliar imagen"
             style={{
-              maxWidth: 360,
-              maxHeight: 360,
-              objectFit: "contain",
-              borderRadius: 8,
-              border: "1px solid var(--p-color-border)",
+              padding: 0,
+              border: 0,
+              background: "none",
+              cursor: "zoom-in",
+              lineHeight: 0,
             }}
-          />
+          >
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={img.imageUrl}
+              alt={img.altImage ?? ""}
+              style={{
+                maxWidth: 360,
+                maxHeight: 360,
+                objectFit: "contain",
+                borderRadius: 8,
+                border: "1px solid var(--p-color-border)",
+              }}
+            />
+          </button>
           <div style={{ flex: 1, minWidth: 240 }}>
             <BlockStack gap="300">
               <Select
@@ -589,6 +621,14 @@ function ImageViewerModal({
         </InlineStack>
       </Modal.Section>
     </Modal>
+    {preview && (
+      <ImagePreviewModal
+        src={img.imageUrl}
+        title={img.altImage || "Imagen contextual"}
+        onClose={() => setPreview(false)}
+      />
+    )}
+    </>
   );
 }
 
@@ -710,9 +750,11 @@ function SortableImageTile({
 function ProductImageTile({
   url,
   alt,
+  onClick,
 }: {
   url: string;
   alt: string | null;
+  onClick: () => void;
 }) {
   return (
     <div
@@ -725,18 +767,33 @@ function ProductImageTile({
         background: "var(--p-color-bg-surface)",
       }}
     >
-      {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img
-        src={url}
-        alt={alt ?? ""}
-        draggable={false}
+      <button
+        type="button"
+        onClick={onClick}
+        aria-label="Ampliar imagen de producto"
         style={{
           display: "block",
           width: "100%",
           height: "100%",
-          objectFit: "cover",
+          border: 0,
+          padding: 0,
+          background: "none",
+          cursor: "zoom-in",
         }}
-      />
+      >
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src={url}
+          alt={alt ?? ""}
+          draggable={false}
+          style={{
+            display: "block",
+            width: "100%",
+            height: "100%",
+            objectFit: "cover",
+          }}
+        />
+      </button>
       <div style={{ position: "absolute", top: 6, left: 6 }}>
         <Badge tone="info" size="small">
           Producto
