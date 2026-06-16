@@ -530,8 +530,10 @@ export const adminApi = {
       }),
     deactivate: (id: string) =>
       adminFetch(`/admin/styles/${id}`, { method: 'DELETE' }),
-    delete: (id: string) =>
-      adminFetch(`/admin/styles/${id}/permanent`, { method: 'DELETE' }),
+    delete: (id: string, force = false) =>
+      adminFetch(`/admin/styles/${id}/permanent${force ? '?force=true' : ''}`, {
+        method: 'DELETE',
+      }),
     uploadReferenceImage: (styleId: string, file: File) => {
       const form = new FormData();
       form.append('file', file);

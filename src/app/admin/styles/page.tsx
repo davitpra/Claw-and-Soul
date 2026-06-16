@@ -15,6 +15,7 @@ import {
   Thumbnail,
   Button,
   Modal,
+  Checkbox,
 } from "@shopify/polaris";
 import { DeleteIcon } from "@shopify/polaris-icons";
 import { adminApi, AdminStyle } from "@/entities/admin/api";
@@ -26,6 +27,15 @@ export default function AdminStylesPage() {
   const [toggling, setToggling] = useState<string | null>(null);
   const [deletingTarget, setDeletingTarget] = useState<AdminStyle | null>(null);
   const [deleting, setDeleting] = useState(false);
+  const [forceConfirm, setForceConfirm] = useState(false);
+
+  const genCount = deletingTarget?._count?.generations ?? 0;
+
+  const closeDeleteModal = () => {
+    if (deleting) return;
+    setDeletingTarget(null);
+    setForceConfirm(false);
+  };
 
   const load = () => {
     setLoading(true);
@@ -60,8 +70,9 @@ export default function AdminStylesPage() {
     if (!deletingTarget) return;
     setDeleting(true);
     try {
-      await adminApi.styles.delete(deletingTarget.id);
+      await adminApi.styles.delete(deletingTarget.id, genCount > 0);
       setDeletingTarget(null);
+      setForceConfirm(false);
       load();
     } catch (e: unknown) {
       setError((e as Error).message);
@@ -196,21 +207,20 @@ export default function AdminStylesPage() {
       </div>
       <Modal
         open={deletingTarget !== null}
-        onClose={() => {
-          if (!deleting) setDeletingTarget(null);
-        }}
+        onClose={closeDeleteModal}
         title="¿Eliminar estilo permanentemente?"
         primaryAction={{
           content: "Eliminar",
           destructive: true,
           loading: deleting,
+          disabled: genCount > 0 && !forceConfirm,
           onAction: handleDelete,
         }}
         secondaryActions={[
           {
             content: "Cancelar",
             disabled: deleting,
-            onAction: () => setDeletingTarget(null),
+            onAction: closeDeleteModal,
           },
         ]}
       >
@@ -228,10 +238,24 @@ export default function AdminStylesPage() {
               Las referencias de producto perderán el vínculo con este estilo.
               Esta acción no se puede deshacer.
             </Text>
-            {(deletingTarget?._count?.generations ?? 0) > 0 && (
-              <Text as="p" tone="critical">
-                Este estilo tiene {deletingTarget!._count!.generations} generación(es) asociada(s) y no podrá eliminarse. Desactívalo en su lugar.
-              </Text>
+            {genCount > 0 && (
+              <Banner tone="warning">
+                <BlockStack gap="200">
+                  <Text as="p">
+                    Este estilo tiene{" "}
+                    <Text as="span" fontWeight="semibold">
+                      {genCount} generación(es)
+                    </Text>{" "}
+                    asociada(s). Si continúas, también se borrarán de forma
+                    permanente (incluyendo sus archivos en el almacenamiento).
+                  </Text>
+                  <Checkbox
+                    label={`Sí, borrar también las ${genCount} generación(es) asociada(s)`}
+                    checked={forceConfirm}
+                    onChange={setForceConfirm}
+                  />
+                </BlockStack>
+              </Banner>
             )}
           </BlockStack>
         </Modal.Section>
