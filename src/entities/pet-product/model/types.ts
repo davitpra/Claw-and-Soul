@@ -8,4 +8,5 @@ export interface Product {
   hasPlay?: boolean;
   shopifyHandle?: string;
   productRefId?: string;
+  label?: string;
 }

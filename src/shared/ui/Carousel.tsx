@@ -77,7 +77,7 @@ export function Carousel({
         </button>
       )}
 
-      <div className="overflow-hidden" ref={emblaRef}>
+      <div className="overflow-hidden py-4" ref={emblaRef}>
         <div className={`flex ${gap}`}>{children}</div>
       </div>
 

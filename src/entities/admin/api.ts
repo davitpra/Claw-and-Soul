@@ -338,6 +338,7 @@ export interface AdminProduct {
   style: { id: string; name: string; displayName: string; previewUrl: string | null } | null;
   productType: string | null;
   fulfillmentMethod: string;
+  showcaseCollectionHandle: string | null;
 }
 
 export type ProductImageType =

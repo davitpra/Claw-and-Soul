@@ -56,7 +56,9 @@ export default function AdminProductsPage() {
   const [deleting, setDeleting] = useState(false);
   const [styles, setStyles] = useState<AdminStyle[]>([]);
   const [savingStyle, setSavingStyle] = useState<string | null>(null);
-  const [savingFulfillment, setSavingFulfillment] = useState<string | null>(null);
+  const [savingFulfillment, setSavingFulfillment] = useState<string | null>(
+    null,
+  );
   const [imageMap, setImageMap] = useState<Record<string, string>>({});
 
   const loadProducts = () => {
@@ -218,7 +220,7 @@ export default function AdminProductsPage() {
 
   return (
     <Page
-      title="Productos & Sync"
+      title="Productos"
       subtitle="Productos sincronizados desde Shopify"
       primaryAction={{
         content: "Sincronizar Shopify",
@@ -313,7 +315,6 @@ export default function AdminProductsPage() {
               itemCount={products.length}
               headings={[
                 { title: "Producto" },
-                { title: "Handle Shopify" },
                 { title: "Estilo asignado" },
                 { title: "Fulfillment" },
                 { title: "Tipo" },
@@ -350,11 +351,6 @@ export default function AdminProductsPage() {
                     </InlineStack>
                   </IndexTable.Cell>
                   <IndexTable.Cell>
-                    <Text variant="bodySm" tone="subdued" as="span">
-                      {p.shopifyHandle ?? "—"}
-                    </Text>
-                  </IndexTable.Cell>
-                  <IndexTable.Cell>
                     <InlineStack gap="200" blockAlign="center">
                       <div style={{ minWidth: 180 }}>
                         <Select
@@ -383,7 +379,9 @@ export default function AdminProductsPage() {
                           labelHidden
                           disabled={savingFulfillment === p.id}
                           value={p.fulfillmentMethod ?? "in_house"}
-                          onChange={(value) => handleFulfillmentChange(p.id, value)}
+                          onChange={(value) =>
+                            handleFulfillmentChange(p.id, value)
+                          }
                           options={[
                             { label: "Taller (in-house)", value: "in_house" },
                             { label: "POD (externo)", value: "pod" },
@@ -418,8 +416,7 @@ export default function AdminProductsPage() {
                           background: "transparent",
                           border: "none",
                           padding: 0,
-                          cursor:
-                            toggling === p.id ? "wait" : "pointer",
+                          cursor: toggling === p.id ? "wait" : "pointer",
                           opacity: toggling === p.id ? 0.6 : 1,
                         }}
                       >

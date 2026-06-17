@@ -9,19 +9,19 @@ import { Card } from "@/shared/ui/Card";
 const cardSizeClasses =
   "flex-[0_0_72%] sm:flex-[0_0_45%] md:flex-[0_0_33%] lg:flex-[0_0_22%] min-w-0";
 
-// Aspecto de "poster flotando": esquinas redondeadas, sombra teñida en teal
-// oscuro y una ligera elevación al pasar el cursor.
+// Aspecto de "poster flotando": ligera elevación y sombra teñida en teal al hover.
 const posterClasses =
-  "shadow-[0_18px_40px_-12px_rgba(16,54,66,0.45)] transition-all duration-300 ease-out hover:-translate-y-2 hover:shadow-[0_30px_55px_-12px_rgba(16,54,66,0.55)]";
+  "transition-all duration-300 ease-out hover:-translate-y-1.5 hover:shadow-[0_22px_40px_-14px_rgba(16,54,66,0.50)]";
 
 interface StyleCardProps {
   image: StyleImage;
   badgeLabel?: string;
+  altText?: boolean;
 }
 
-function StyleCard({ image, badgeLabel }: StyleCardProps) {
+function StyleCard({ image, badgeLabel, altText }: StyleCardProps) {
   return (
-    <div className={cardSizeClasses}>
+    <div className={`group ${cardSizeClasses} flex flex-col gap-4`}>
       <Card
         imageUrl={image.imageUrl}
         imageAlt={image.altImage ?? undefined}
@@ -29,15 +29,17 @@ function StyleCard({ image, badgeLabel }: StyleCardProps) {
         className={posterClasses}
       >
         {badgeLabel && (
-          <span className="absolute top-3 left-3 bg-primary text-white text-[10px] font-bold uppercase px-2 py-1 tracking-wider">
+          <span className="absolute top-3 left-3 bg-primary text-white text-[10px] font-bold uppercase px-2 py-1 rounded-full tracking-wider">
             {badgeLabel}
           </span>
         )}
       </Card>
-      {image.altImage && (
-        <h3 className="mt-1 text-center text-lg font-bold text-[#103642]">
-          {image.altImage}
-        </h3>
+      {image.altImage && altText && (
+        <div className="flex items-center justify-center">
+          <h3 className="font-black text-slate-dark md:text-lg font-display">
+            {image.altImage}
+          </h3>
+        </div>
       )}
     </div>
   );
@@ -64,6 +66,7 @@ interface CollectionSectionProps {
   ctaLabel?: string;
   badgeLabel?: string;
   background?: string;
+  altText?: boolean;
 }
 
 export default function CollectionSection({
@@ -75,6 +78,7 @@ export default function CollectionSection({
   ctaLabel,
   badgeLabel,
   background,
+  altText = true,
 }: CollectionSectionProps) {
   if (!isLoading && (error || images.length === 0)) return null;
 
@@ -98,6 +102,7 @@ export default function CollectionSection({
                   key={image.id}
                   image={image}
                   badgeLabel={badgeLabel}
+                  altText={altText}
                 />
               ))}
         </Carousel>

@@ -16,6 +16,7 @@ export default function NewCollection() {
       ctaLabel="Ver colección completa"
       badgeLabel="Nuevo"
       background="bg-white"
+      altText={false}
     />
   );
 }

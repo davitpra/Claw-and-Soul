@@ -25,6 +25,7 @@ import {
 import { shopifyFetch } from "@/lib/shopify/client";
 import { GET_PRODUCT } from "@/lib/shopify/queries/products";
 import { ContextualImagesCard } from "./ContextualImagesCard";
+import { ShowcaseCollectionCard } from "./ShowcaseCollectionCard";
 import { ProductDetailsSidebar } from "./ProductDetailsSidebar";
 import { LinkedVariantsCard } from "./LinkedVariantsCard";
 import { DeleteProductModal } from "./DeleteProductModal";
@@ -292,20 +293,6 @@ export default function AdminProductDetailPage() {
       ]}
     >
       <Layout>
-        {/* Sidebar */}
-        <Layout.Section variant="oneThird">
-          <ProductDetailsSidebar
-            product={product}
-            styles={styles}
-            styleId={styleId}
-            onStyleChange={setStyleId}
-            fulfillmentMethod={fulfillmentMethod}
-            onFulfillmentChange={setFulfillmentMethod}
-            saving={saving}
-            onSave={handleSave}
-          />
-        </Layout.Section>
-
         {/* Main */}
         <Layout.Section>
           <BlockStack gap="400">
@@ -327,6 +314,11 @@ export default function AdminProductDetailPage() {
               variants={productVariants}
             />
 
+            <ShowcaseCollectionCard
+              productId={product.id}
+              initialHandle={product.showcaseCollectionHandle}
+            />
+
             <LinkedVariantsCard
               product={product}
               variants={variants}
@@ -339,6 +331,19 @@ export default function AdminProductDetailPage() {
               onError={setError}
             />
           </BlockStack>
+        </Layout.Section>
+        {/* Sidebar */}
+        <Layout.Section variant="oneThird">
+          <ProductDetailsSidebar
+            product={product}
+            styles={styles}
+            styleId={styleId}
+            onStyleChange={setStyleId}
+            fulfillmentMethod={fulfillmentMethod}
+            onFulfillmentChange={setFulfillmentMethod}
+            saving={saving}
+            onSave={handleSave}
+          />
         </Layout.Section>
       </Layout>
 

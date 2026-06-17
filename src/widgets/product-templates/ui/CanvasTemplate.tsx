@@ -6,6 +6,8 @@ import ProductFAQ from "@/widgets/product-faq/ui/ProductFAQ";
 import { ProductTemplateProps } from "./ProductPageTemplate";
 import { RoomView } from "@/widgets/room-view";
 import { Reviews } from "@/widgets/reviews";
+import { CollectionShowcase } from "@/widgets/collection-showcase";
+import { useProductShowcase } from "@/hooks/useProductShowcase";
 
 export default function CanvasTemplate({
   product,
@@ -16,6 +18,8 @@ export default function CanvasTemplate({
   handle,
   faqs,
 }: ProductTemplateProps) {
+  const { collectionHandle } = useProductShowcase(handle);
+
   return (
     <>
       <div className="flex justify-center py-6 md:py-10 px-4 md:px-10 lg:px-40">
@@ -33,6 +37,7 @@ export default function CanvasTemplate({
       <StyleCollection handle={handle} />
 
       <RoomView product={product} selectedVariantId={selectedVariantId} />
+      {collectionHandle && <CollectionShowcase handle={collectionHandle} />}
       <Reviews />
       <ProductFAQ faqs={faqs} />
     </>
