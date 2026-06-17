@@ -3,24 +3,16 @@
 import { Navbar } from "@/widgets/navbar";
 import { Footer } from "@/widgets/footer";
 import { useState, useEffect } from "react";
-import Link from "next/link";
-import { getProducts, ShopifyProduct } from "@/lib/shopify";
+import { getProducts } from "@/lib/shopify";
+import { Product } from "@/entities/pet-product/model/types";
+import { ProductCard } from "@/entities/pet-product/ui/ProductCard";
 
-interface Product {
-  id: string | number;
-  name: string;
-  handle: string;
-  style: string;
-  price: string;
-  image: string;
-  bestseller?: boolean;
-  new?: boolean;
-  category: string;
-}
+// Producto de entidad + la categoría usada por el filtro del shop.
+type ShopProduct = Product & { category: string };
 
 export default function ShopPage() {
   const [activeCategory, setActiveCategory] = useState("All Products");
-  const [products, setProducts] = useState<Product[]>([]);
+  const [products, setProducts] = useState<ShopProduct[]>([]);
   const [loading, setLoading] = useState(true);
   const [categories, setCategories] = useState<string[]>(["All Products"]);
 
@@ -38,19 +30,36 @@ export default function ShopPage() {
             amount: "0.00",
             currencyCode: "USD",
           };
-          const currencySymbol =
-            price.currencyCode === "USD" ? "$" : price.currencyCode;
+          const category = node.collections?.edges?.[0]?.node.title || "Other";
+
+          // Formatea un monto como moneda (p. ej. "$42.00").
+          const formatMoney = (amount: string, currencyCode: string) =>
+            new Intl.NumberFormat("en-US", {
+              style: "currency",
+              currency: currencyCode,
+              currencyDisplay: "narrowSymbol",
+            }).format(parseFloat(amount));
+
+          // Precio comparativo (de lista): solo es oferta si supera al precio actual.
+          const compareAt = node.compareAtPriceRange?.minVariantPrice;
+          const priceAmount = parseFloat(price.amount);
+          const compareAmount = compareAt ? parseFloat(compareAt.amount) : 0;
+          const onSale = compareAmount > priceAmount;
 
           return {
-            id: node.id,
             name: node.title,
-            handle: node.handle,
-            style: node.description || "AI Personalized Pet Art",
-            price: `${currencySymbol}${parseFloat(price.amount).toFixed(2)}`,
-            image: node.images.edges[0]?.node.url || "/placeholder-image.jpg",
-            category: node.collections?.edges?.[0]?.node.title || "Other",
-            bestseller: false,
-            new: false,
+            desc: node.description || "AI Personalized Pet Art",
+            price: `${formatMoney(price.amount, price.currencyCode)} ${price.currencyCode}`,
+            compareAtPrice: onSale
+              ? formatMoney(compareAt!.amount, compareAt!.currencyCode)
+              : undefined,
+            discountPercent: onSale
+              ? Math.round((1 - priceAmount / compareAmount) * 100)
+              : undefined,
+            img: node.images.edges[0]?.node.url || "/placeholder-image.jpg",
+            shopifyHandle: node.handle,
+            label: category,
+            category,
           };
         });
 
@@ -73,7 +82,7 @@ export default function ShopPage() {
   }, []);
 
   return (
-    <div className="relative flex min-h-screen w-full flex-col overflow-x-hidden bg-background-cream">
+    <div className="relative flex min-h-screen w-full flex-col overflow-x-hidden bg-white">
       <Navbar />
 
       <main className="flex-grow w-full px-4 md:px-10 py-10 md:py-16">
@@ -131,7 +140,7 @@ export default function ShopPage() {
                   </p>
                 </div>
               ) : (
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 w-full">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 w-full">
                   {products
                     .filter(
                       (p) =>
@@ -139,53 +148,12 @@ export default function ShopPage() {
                         p.category === activeCategory,
                     )
                     .map((product) => (
-                      <Link
-                        key={product.id}
-                        href={`/product/${product.handle}`}
-                        className="group flex flex-col bg-white rounded-xl overflow-hidden shadow-md hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1"
-                      >
-                        <div className="relative w-full aspect-[4/3] overflow-hidden">
-                          <div
-                            className="absolute inset-0 bg-cover bg-center transition-transform duration-700 group-hover:scale-110"
-                            style={{
-                              backgroundImage: `url('${product.image}')`,
-                            }}
-                          ></div>
-                          <button className="absolute top-3 right-3 p-2 bg-white/90 rounded-full text-secondary hover:text-red-500 transition-colors shadow-sm z-10">
-                            <span className="material-symbols-outlined text-[20px] fill-current">
-                              favorite
-                            </span>
-                          </button>
-                          {product.bestseller && (
-                            <div className="absolute bottom-3 left-3 bg-white/90 backdrop-blur-sm px-3 py-1 rounded-full text-xs font-bold text-secondary uppercase tracking-wider shadow-sm z-10">
-                              Bestseller
-                            </div>
-                          )}
-                          {product.new && (
-                            <div className="absolute bottom-3 left-3 bg-white/90 backdrop-blur-sm px-3 py-1 rounded-full text-xs font-bold text-secondary uppercase tracking-wider shadow-sm z-10">
-                              New
-                            </div>
-                          )}
-                        </div>
-                        <div className="p-6 flex flex-col flex-grow">
-                          <div className="mb-4">
-                            <h3 className="font-display text-xl font-bold text-secondary mb-1">
-                              {product.name}
-                            </h3>
-                            <p className="text-secondary/70 text-sm line-clamp-2">
-                              {product.style}
-                            </p>
-                          </div>
-                          <div className="mt-auto flex items-center justify-between pt-4 border-t border-secondary/5">
-                            <span className="font-bold text-lg text-secondary">
-                              {product.price}
-                            </span>
-                            <div className="px-4 py-2 bg-primary text-white text-xs font-bold rounded-lg hover:bg-primary-dark transition-colors shadow-md">
-                              Personalize with AI
-                            </div>
-                          </div>
-                        </div>
-                      </Link>
+                      <ProductCard
+                        key={product.shopifyHandle}
+                        product={product}
+                        showPrice={true}
+                        showBadge={false}
+                      />
                     ))}
                 </div>
               )}

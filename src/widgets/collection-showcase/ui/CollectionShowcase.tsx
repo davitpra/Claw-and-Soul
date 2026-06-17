@@ -1,40 +1,9 @@
 "use client";
 
-import Link from "next/link";
 import { Container } from "@/shared/ui/Container";
 import { Carousel } from "@/shared/ui/Carousel";
-import { Card } from "@/shared/ui/Card";
+import { ProductCard } from "@/entities/pet-product/ui/ProductCard";
 import { useCollectionProducts } from "@/hooks/useCollectionProducts";
-import { Product } from "@/entities/pet-product/model/types";
-
-// Aspecto de "poster flotando": ligera elevación y sombra teñida en teal al hover.
-const posterClasses =
-  "transition-all duration-300 ease-out hover:-translate-y-1.5 hover:shadow-[0_22px_40px_-14px_rgba(16,54,66,0.50)]";
-
-// Tarjeta de producto reutilizable (usada tanto en el carrusel como en la grilla centrada).
-function ProductCard({ product, label }: { product: Product; label?: string }) {
-  return (
-    <div className="group flex-[0_0_72%] sm:flex-[0_0_45%] md:flex-[0_0_33%] lg:flex-[0_0_22%] min-w-0 flex flex-col gap-4">
-      <Link href={`/product/${product.shopifyHandle}`} className="block">
-        <Card
-          imageUrl={product.img}
-          imageAlt={product.name}
-          naturalAspect
-          className={posterClasses}
-        >
-          <span className="absolute top-3 left-3 bg-primary text-white text-[10px] font-bold uppercase px-2 py-1 rounded-full tracking-wider">
-            {label || product.label || "New"}
-          </span>
-        </Card>
-      </Link>
-      <div className="flex items-center justify-center">
-        <h3 className="font-black text-slate-dark md:text-lg font-display">
-          {product.name}
-        </h3>
-      </div>
-    </div>
-  );
-}
 
 interface CollectionShowcaseProps {
   /** Handle de la colección de Shopify a mostrar. */
@@ -58,12 +27,14 @@ export default function CollectionShowcase({
   const heading = title ? `${title}` : fallbackTitle;
 
   // Lista de tarjetas reutilizada por el carrusel y la grilla centrada.
+  // El ancho del item lo define este wrapper (la tarjeta es agnóstica al ancho).
   const cards = products.map((product) => (
-    <ProductCard
+    <div
       key={product.productRefId ?? product.shopifyHandle}
-      product={product}
-      label={label ?? title ?? undefined}
-    />
+      className="flex-[0_0_72%] sm:flex-[0_0_45%] md:flex-[0_0_33%] lg:flex-[0_0_22%] min-w-0"
+    >
+      <ProductCard product={product} label={label ?? title ?? "New"} />
+    </div>
   ));
 
   return (

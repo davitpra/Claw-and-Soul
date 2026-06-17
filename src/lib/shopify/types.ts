@@ -29,6 +29,9 @@ export interface ShopifyProduct {
   priceRange?: {
     minVariantPrice: ShopifyPrice;
   };
+  compareAtPriceRange?: {
+    minVariantPrice: ShopifyPrice;
+  };
   images: {
     edges: { node: ShopifyImage }[];
   };
