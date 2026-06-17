@@ -8,7 +8,7 @@ import { AIProcess } from "@/widgets/ai-process";
 
 export default async function Home() {
   return (
-    <div className="relative flex min-h-screen w-full flex-col overflow-x-hidden bg-background-light">
+    <div className="relative flex min-h-screen w-full flex-col overflow-x-clip bg-background-light">
       <Navbar />
 
       <main className="flex-1">

@@ -19,7 +19,7 @@ export default function UserLayout({
   ];
 
   return (
-    <div className="relative flex min-h-screen w-full flex-col bg-cream overflow-x-hidden font-body">
+    <div className="relative flex min-h-screen w-full flex-col bg-cream overflow-x-clip font-body">
       <Navbar />
       <div className="layout-container flex h-full grow flex-col">
         <div className="px-4 md:px-10 lg:px-40 flex flex-1 justify-center py-8">

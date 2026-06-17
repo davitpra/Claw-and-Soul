@@ -96,7 +96,7 @@ export default function ProductDetail({
   ];
 
   return (
-    <div className="relative flex min-h-screen w-full flex-col overflow-x-hidden bg-white">
+    <div className="relative flex min-h-screen w-full flex-col overflow-x-clip bg-white">
       <Navbar />
 
       <main className="flex-1 flex flex-col">

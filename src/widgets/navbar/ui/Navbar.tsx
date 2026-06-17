@@ -3,7 +3,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 
 import { useCart } from "@/context/CartContext";
 import { useAuth } from "@/context/AuthContext";
@@ -15,26 +15,40 @@ export default function Navbar() {
   const { isAuthenticated, isLoading } = useAuth();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
+  const [hidden, setHidden] = useState(false);
+  const lastScrollY = useRef(0);
+
+  // Cierra el menú móvil al cambiar de ruta sin un effect (patrón "setState during render").
+  const [prevPathname, setPrevPathname] = useState(pathname);
+  if (prevPathname !== pathname) {
+    setPrevPathname(pathname);
+    setMobileMenuOpen(false);
+  }
 
   const navLinks = [
     { name: "Shop", href: "/shop" },
-    { name: "Gallery", href: "/gallery" },
     { name: "Contact", href: "/contact" },
   ];
 
-  // Handle scroll effect
+  // Handle scroll effect: estilo al hacer scroll + ocultar/mostrar según dirección
   useEffect(() => {
     const handleScroll = () => {
-      setScrolled(window.scrollY > 10);
+      const currentScrollY = window.scrollY;
+
+      setScrolled(currentScrollY > 10);
+
+      // Ocultar al bajar (después de pasar el navbar), mostrar al subir
+      if (currentScrollY > lastScrollY.current && currentScrollY > 80) {
+        setHidden(true);
+      } else if (currentScrollY < lastScrollY.current) {
+        setHidden(false);
+      }
+
+      lastScrollY.current = currentScrollY;
     };
-    window.addEventListener("scroll", handleScroll);
+    window.addEventListener("scroll", handleScroll, { passive: true });
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
-
-  // Close mobile menu when route changes
-  useEffect(() => {
-    setMobileMenuOpen(false);
-  }, [pathname]);
 
   // Prevent body scroll when mobile menu is open
   useEffect(() => {
@@ -53,7 +67,7 @@ export default function Navbar() {
       <header
         className={`sticky top-0 z-50 bg-white/95 backdrop-blur-md border-b transition-all duration-300 ${
           scrolled ? "border-[#E0DED9] shadow-md" : "border-transparent"
-        }`}
+        } ${hidden ? "-translate-y-full" : "translate-y-0"}`}
       >
         <nav className="container-site px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16 lg:h-20">
@@ -62,16 +76,14 @@ export default function Navbar() {
               href="/"
               className="flex items-center gap-3 text-text-main hover:opacity-80 transition-opacity group z-50"
             >
-              <div className="size-10 relative overflow-hidden rounded-full ring-2 ring-transparent group-hover:ring-primary/20 transition-all">
-                <Image
-                  src="/Logo.jpg"
-                  alt="Claw & Soul Logo"
-                  fill
-                  className="object-contain"
-                  priority
-                />
-              </div>
-              <h2 className="text-text-main text-lg lg:text-xl font-black leading-tight tracking-[-0.015em] hidden sm:block">
+              <Image
+                src="/Logo.svg"
+                alt="Claw & Soul Logo"
+                width={50}
+                height={50}
+                className=""
+              />
+              <h2 className="text-text-main text-lg lg:text-2xl font-black leading-tight tracking-[-0.015em] hidden sm:block">
                 Claw & Soul
               </h2>
             </Link>

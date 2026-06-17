@@ -82,7 +82,7 @@ export default function ShopPage() {
   }, []);
 
   return (
-    <div className="relative flex min-h-screen w-full flex-col overflow-x-hidden bg-white">
+    <div className="relative flex min-h-screen w-full flex-col overflow-x-clip bg-white">
       <Navbar />
 
       <main className="flex-grow w-full px-4 md:px-10 py-10 md:py-16">

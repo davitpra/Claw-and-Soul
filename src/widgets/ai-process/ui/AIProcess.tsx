@@ -9,9 +9,6 @@ export default function AIProcess() {
         {/* ── Header ── */}
         <div className="mb-14 text-center">
           <span className="inline-flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-[0.18em] text-[#448da6] mb-5">
-            <span className="material-symbols-outlined text-[14px] leading-none">
-              auto_awesome
-            </span>
             AI Art Preview
           </span>
           <h2 className="text-4xl font-black text-[#103642] md:text-5xl leading-[1.1] tracking-tight">
@@ -26,10 +23,34 @@ export default function AIProcess() {
 
         {/* ── 3-Step Flow ── */}
         <div className="flex flex-col lg:flex-row items-stretch gap-0">
-          {/* Step 1 — Upload */}
+          {/* Step 1 — Choose Style */}
           <div className="relative flex-1">
-            <StepBadge number="01" />
-            <div className="flex flex-col items-center gap-5 rounded-3xl border-2 border-dashed border-slate-200 bg-white p-8 h-full min-h-[320px]">
+            <StepBadge number="01" variant="light" />
+            <div className="flex flex-col items-center gap-5 rounded-3xl border border-slate-100 bg-white p-8 h-full min-h-[320px] shadow-sm">
+              <div className="flex-1 flex items-center justify-center">
+                <Image
+                  src="/process/2 approve.png"
+                  alt="Choose Style Illustration"
+                  width={150}
+                  height={110}
+                />
+              </div>
+              <div className="text-center">
+                <p className="text-lg font-black text-[#103642] tracking-tight">
+                  Choose Your Style
+                </p>
+                <p className="mt-2 text-sm text-[#103642]/50 leading-relaxed max-w-[200px] mx-auto">
+                  Pick an art style for your pet and let our AI work its magic.
+                </p>
+              </div>
+            </div>
+          </div>
+          {/* Arrow Connector 1 */}
+          <DottedArrow />
+          {/* Step 2 — Upload */}
+          <div className="relative flex-1">
+            <StepBadge number="02" variant="light" />
+            <div className="flex flex-col items-center gap-5 rounded-3xl border-2 border-slate-200 bg-white p-8 h-full min-h-80">
               {/* Dog illustration */}
               <div className="flex-1 flex items-center justify-center">
                 <Image
@@ -59,40 +80,13 @@ export default function AIProcess() {
               </div>
             </div>
           </div>
-
-          {/* Arrow Connector 1 */}
-          <DottedArrow />
-
-          {/* Step 2 — Choose Style */}
-          <div className="relative flex-1">
-            <StepBadge number="02" variant="light" />
-            <div className="flex flex-col items-center gap-5 rounded-3xl border border-slate-100 bg-white p-8 h-full min-h-[320px] shadow-sm">
-              <div className="flex-1 flex items-center justify-center">
-                <Image
-                  src="/process/2 approve.png"
-                  alt="Choose Style Illustration"
-                  width={150}
-                  height={110}
-                />
-              </div>
-              <div className="text-center">
-                <p className="text-lg font-black text-[#103642] tracking-tight">
-                  Choose Your Style
-                </p>
-                <p className="mt-2 text-sm text-[#103642]/50 leading-relaxed max-w-[200px] mx-auto">
-                  Pick an art style for your pet and let our AI work its magic.
-                </p>
-              </div>
-            </div>
-          </div>
-
           {/* Arrow Connector 2 */}
           <DottedArrow />
 
           {/* Step 3 — Result */}
           <div className="relative flex-1">
-            <StepBadge number="03" side="right" />
-            <div className="flex flex-col items-center gap-5 rounded-3xl border border-slate-100 bg-white p-8 h-full min-h-[320px] shadow-sm overflow-hidden">
+            <StepBadge number="03" variant="light" />
+            <div className="flex flex-col items-center gap-5 rounded-3xl border border-slate-100 bg-white p-8 h-full min-h-80 shadow-sm overflow-hidden">
               <div className="flex-1 flex items-center justify-center">
                 <Image
                   src="/process/3. Final Art.png"
@@ -106,46 +100,10 @@ export default function AIProcess() {
                   Get Your Masterpiece
                 </p>
                 <p className="mt-2 text-sm text-[#103642]/50 leading-relaxed max-w-[200px] mx-auto">
-                  Preview your artwork in seconds and download your masterpiece.
+                  Preview your masterpiece in seconds.
                 </p>
               </div>
             </div>
-          </div>
-        </div>
-
-        {/* ── CTA ── */}
-        <div className="mt-14 text-center">
-          <Link
-            href="/ia-generator"
-            className="inline-flex items-center justify-center gap-2.5 rounded-xl bg-[#103642] px-10 py-4 text-base font-bold text-white shadow-lg shadow-[#103642]/20 transition-all duration-200 hover:bg-[#0d2c37] hover:scale-[1.02] hover:shadow-xl hover:shadow-[#103642]/25 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#448da6] focus-visible:ring-offset-2"
-          >
-            Try the AI Generator — It&apos;s Free
-            <span className="material-symbols-outlined text-[18px]">
-              auto_awesome
-            </span>
-          </Link>
-
-          <div className="mt-5 flex flex-wrap items-center justify-center gap-5 text-sm text-[#103642]/40">
-            <span className="flex items-center gap-1.5">
-              <span className="material-symbols-outlined text-[16px]">
-                credit_card_off
-              </span>
-              No credit card required
-            </span>
-            <span className="text-[#103642]/20">·</span>
-            <span className="flex items-center gap-1.5">
-              <span className="material-symbols-outlined text-[16px]">
-                bolt
-              </span>
-              Instant results
-            </span>
-            <span className="text-[#103642]/20">·</span>
-            <span className="flex items-center gap-1.5">
-              <span className="material-symbols-outlined text-[16px]">
-                all_inclusive
-              </span>
-              Unlimited previews
-            </span>
           </div>
         </div>
       </Container>
