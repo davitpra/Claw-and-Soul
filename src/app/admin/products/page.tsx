@@ -59,6 +59,7 @@ export default function AdminProductsPage() {
   const [savingFulfillment, setSavingFulfillment] = useState<string | null>(
     null,
   );
+  const [savingTemplate, setSavingTemplate] = useState<string | null>(null);
   const [imageMap, setImageMap] = useState<Record<string, string>>({});
 
   const loadProducts = () => {
@@ -172,6 +173,22 @@ export default function AdminProductsPage() {
       loadProducts();
     } finally {
       setSavingFulfillment(null);
+    }
+  };
+
+  const handleTemplateChange = async (productId: string, value: string) => {
+    const template = value || null;
+    setSavingTemplate(productId);
+    setProducts((prev) =>
+      prev.map((p) => (p.id === productId ? { ...p, template } : p)),
+    );
+    try {
+      await adminApi.products.update(productId, { template });
+    } catch (e: unknown) {
+      setError((e as Error).message);
+      loadProducts();
+    } finally {
+      setSavingTemplate(null);
     }
   };
 
@@ -317,7 +334,7 @@ export default function AdminProductsPage() {
                 { title: "Producto" },
                 { title: "Estilo asignado" },
                 { title: "Fulfillment" },
-                { title: "Tipo" },
+                { title: "Template" },
                 { title: "Estado" },
                 { title: "Acciones" },
               ]}
@@ -392,9 +409,25 @@ export default function AdminProductsPage() {
                     </InlineStack>
                   </IndexTable.Cell>
                   <IndexTable.Cell>
-                    <Text as="span" tone="subdued">
-                      {p.productType ?? "—"}
-                    </Text>
+                    <InlineStack gap="200" blockAlign="center">
+                      <div style={{ minWidth: 150 }}>
+                        <Select
+                          label=""
+                          labelHidden
+                          disabled={savingTemplate === p.id}
+                          value={p.template ?? ""}
+                          onChange={(value) =>
+                            handleTemplateChange(p.id, value)
+                          }
+                          options={[
+                            { label: "Por defecto", value: "" },
+                            { label: "Canvas", value: "Canvas" },
+                            { label: "Poster", value: "Poster" },
+                          ]}
+                        />
+                      </div>
+                      {savingTemplate === p.id && <Spinner size="small" />}
+                    </InlineStack>
                   </IndexTable.Cell>
                   <IndexTable.Cell>
                     <InlineStack gap="200" blockAlign="center">

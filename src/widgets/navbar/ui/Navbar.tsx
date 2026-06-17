@@ -71,7 +71,7 @@ export default function Navbar() {
                   priority
                 />
               </div>
-              <h2 className="text-text-main text-lg lg:text-xl font-bold leading-tight tracking-[-0.015em] hidden sm:block">
+              <h2 className="text-text-main text-lg lg:text-xl font-black leading-tight tracking-[-0.015em] hidden sm:block">
                 Claw & Soul
               </h2>
             </Link>
@@ -85,7 +85,7 @@ export default function Navbar() {
                   className={`text-sm font-medium leading-normal transition-all relative group ${
                     pathname === link.href
                       ? "text-primary"
-                      : "text-text-main hover:text-primary"
+                      : "text-slate-dark hover:text-primary"
                   }`}
                 >
                   {link.name}

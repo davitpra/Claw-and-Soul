@@ -336,7 +336,7 @@ export interface AdminProduct {
   isActive: boolean;
   styleId: string | null;
   style: { id: string; name: string; displayName: string; previewUrl: string | null } | null;
-  productType: string | null;
+  template: string | null;
   fulfillmentMethod: string;
   showcaseCollectionHandle: string | null;
 }

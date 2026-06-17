@@ -42,7 +42,6 @@ export const GET_PRODUCT = `
     title
     handle
     description
-    productType
     images(first: 10) {
       edges {
         node {

@@ -20,6 +20,7 @@ export interface BackendProductWithVariants {
   name: string;
   displayName: string;
   description: string | null;
+  template?: string | null;
   variants: BackendProductVariant[];
 }
 

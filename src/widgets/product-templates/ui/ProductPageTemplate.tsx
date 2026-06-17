@@ -20,7 +20,10 @@ const TEMPLATE_MAP: Record<string, ComponentType<ProductTemplateProps>> = {
   Poster: PosterTemplate,
 };
 
-export default function ProductPageTemplate(props: ProductTemplateProps) {
-  const Template = TEMPLATE_MAP[props.product.productType] ?? CanvasTemplate;
+export default function ProductPageTemplate({
+  templateOverride,
+  ...props
+}: ProductTemplateProps & { templateOverride?: string | null }) {
+  const Template = TEMPLATE_MAP[templateOverride ?? ""] ?? CanvasTemplate;
   return <Template {...props} />;
 }

@@ -7,6 +7,7 @@ import { getProduct, ShopifyProduct } from "@/lib/shopify";
 import Link from "next/link";
 import Breadcrumbs from "@/shared/ui/Breadcrumbs";
 import { ProductPageTemplate } from "@/widgets/product-templates";
+import { useBackendProductVariants } from "@/hooks/useBackendProductVariants";
 
 export default function ProductDetail({
   params,
@@ -18,6 +19,7 @@ export default function ProductDetail({
   const [selectedVariantId, setSelectedVariantId] = useState("");
   const [mainImage, setMainImage] = useState("");
   const [loading, setLoading] = useState(true);
+  const { product: backendProduct } = useBackendProductVariants(handle);
 
   useEffect(() => {
     async function fetchProduct() {
@@ -106,6 +108,7 @@ export default function ProductDetail({
 
         <ProductPageTemplate
           product={product}
+          templateOverride={backendProduct?.template ?? undefined}
           selectedVariantId={selectedVariantId}
           setSelectedVariantId={setSelectedVariantId}
           mainImage={mainImage}

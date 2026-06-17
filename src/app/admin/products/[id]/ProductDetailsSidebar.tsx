@@ -100,12 +100,6 @@ export function ProductDetailsSidebar({
         )}
         <BlockStack gap="150">
           <Text variant="bodySm" as="span" fontWeight="bold">
-            Tipo de producto
-          </Text>
-          <Text as="p">{product.productType ?? "—"}</Text>
-        </BlockStack>
-        <BlockStack gap="150">
-          <Text variant="bodySm" as="span" fontWeight="bold">
             Handle Shopify
           </Text>
           <Text as="p">{product.shopifyHandle ?? "—"}</Text>
