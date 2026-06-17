@@ -1,5 +1,9 @@
-import { redirect } from "next/navigation";
+import { UserDashboard } from "@/widgets/user-dashboard";
 
-export default function UserPage() {
-  redirect("/user/profile");
+export const metadata = {
+  title: "My Account — Claw & Soul",
+};
+
+export default function UserDashboardPage() {
+  return <UserDashboard />;
 }

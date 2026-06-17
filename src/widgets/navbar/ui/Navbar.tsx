@@ -174,7 +174,7 @@ export default function Navbar() {
                   shopping_cart
                 </span>
                 {cartCount > 0 && (
-                  <span className="absolute -top-1 -right-1 bg-primary text-white text-[10px] font-bold min-w-[18px] h-[18px] px-1 flex items-center justify-center rounded-full shadow-md animate-in fade-in zoom-in">
+                  <span className="absolute -top-1 -right-1 bg-primary text-white text-[10px] font-bold min-w-4.5 h-4.5 px-1 flex items-center justify-center rounded-full shadow-md animate-in fade-in zoom-in">
                     {cartCount > 99 ? "99+" : cartCount}
                   </span>
                 )}
