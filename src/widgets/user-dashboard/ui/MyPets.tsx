@@ -65,9 +65,10 @@ export function MyPets({ pets, isLoading, error }: Props) {
               const photoUrl = primaryPhotoUrl(pet);
 
               return (
-                <div
+                <Link
                   key={pet.id}
-                  className="overflow-hidden rounded-xl shadow-sm transition-all hover:shadow-md"
+                  href={`/user/pets/${pet.id}`}
+                  className="block overflow-hidden rounded-xl shadow-sm transition-all hover:shadow-md"
                 >
                   {photoUrl ? (
                     <Card imageUrl={cloudinaryThumb(photoUrl, 400)} imageAlt={pet.name}>
@@ -87,7 +88,7 @@ export function MyPets({ pets, isLoading, error }: Props) {
                       </p>
                     </div>
                   )}
-                </div>
+                </Link>
               );
             })}
           </div>

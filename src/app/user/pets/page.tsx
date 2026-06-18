@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 import { Container } from "@/shared/ui/Container";
-import { DashboardSidebar } from "@/widgets/user-dashboard/ui/DashboardSidebar";
+import { DashboardTabs } from "@/widgets/user-dashboard/ui/DashboardTabs";
 import { AllPets } from "@/widgets/user-dashboard/ui/AllPets";
 import { getPetsServer } from "@/lib/auth/server-fetch";
 
@@ -17,8 +17,8 @@ export default async function UserPetsPage() {
 
   return (
     <Container className="py-10">
-      <div className="grid grid-cols-1 gap-8 lg:grid-cols-[260px_1fr]">
-        <DashboardSidebar />
+      <DashboardTabs />
+      <div className="mt-8">
         <AllPets initialPets={result.data} />
       </div>
     </Container>

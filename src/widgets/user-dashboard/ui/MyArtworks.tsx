@@ -1,7 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { Card } from "@/shared/ui/Card";
+import { ProductCard } from "@/entities/pet-product/ui/ProductCard";
+import type { Product } from "@/entities/pet-product/model/types";
 import type { UserGeneration } from "@/entities/order/types";
 
 interface Props {
@@ -56,31 +57,24 @@ export function MyArtworks({ artworks, isLoading, error }: Props) {
         )}
 
         {!isLoading && !error && artworks.length > 0 && (
-          <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
-            {artworks.map((art) => (
-              <div
-                key={art.id}
-                className="overflow-hidden rounded-xl shadow-sm transition-all hover:shadow-md"
-              >
-                <Card
-                  imageUrl={art.thumbnailUrl || art.resultUrl || ""}
-                  imageAlt={
-                    art.pet?.name ? `Artwork of ${art.pet.name}` : "Artwork"
-                  }
-                >
-                  <div className="absolute inset-x-0 bottom-0 bg-linear-to-t from-black/70 to-transparent p-3">
-                    <p className="truncate font-display text-sm font-bold text-white">
-                      {art.pet?.name || "Untitled"}
-                    </p>
-                    {art.style?.displayName && (
-                      <p className="truncate text-xs text-white/80">
-                        {art.style.displayName}
-                      </p>
-                    )}
-                  </div>
-                </Card>
-              </div>
-            ))}
+          <div className="grid grid-cols-2 gap-4 md:grid-cols-4 items-center">
+            {artworks.map((art) => {
+              const product: Product = {
+                name: art.pet?.name || "Untitled",
+                desc: art.style?.displayName || "",
+                price: "",
+                img: art.thumbnailUrl || art.resultUrl || "",
+                label: art.style?.displayName,
+              };
+              return (
+                <ProductCard
+                  key={art.id}
+                  product={product}
+                  href={`/user/generations/${art.id}`}
+                  showPrice={false}
+                />
+              );
+            })}
           </div>
         )}
       </div>

@@ -16,6 +16,8 @@ interface ProductCardProps {
   /** CTA opcional renderizado bajo el precio (p. ej. "Personalize with AI"). */
   cta?: ReactNode;
   showBadge?: boolean;
+  /** Sobreescribe el href del link de la imagen. Por defecto: /product/{shopifyHandle}. */
+  href?: string;
 }
 
 /**
@@ -29,12 +31,14 @@ export function ProductCard({
   showPrice,
   cta,
   showBadge = true,
+  href,
 }: ProductCardProps) {
   const badge = label ?? product.label;
+  const linkHref = href ?? `/product/${product.shopifyHandle}`;
 
   return (
     <div className="group flex w-full min-w-0 flex-col gap-4">
-      <Link href={`/product/${product.shopifyHandle}`} className="block">
+      <Link href={linkHref} className="block">
         <Card
           imageUrl={product.img}
           imageAlt={product.name}

@@ -15,7 +15,7 @@ import type {
   UserPet,
   UserProfile,
 } from "@/entities/order/types";
-import { DashboardSidebar } from "./DashboardSidebar";
+import { DashboardTabs } from "./DashboardTabs";
 import { WelcomeHeader } from "./WelcomeHeader";
 import { RecentOrders } from "./RecentOrders";
 import { MyArtworks } from "./MyArtworks";
@@ -123,27 +123,27 @@ export function UserDashboard() {
       <Container className="py-10">
         <WelcomeHeader user={profile} />
 
-        <div className="mt-10 grid grid-cols-1 gap-8 lg:grid-cols-[260px_1fr]">
-          <DashboardSidebar />
+        <div className="mt-8">
+          <DashboardTabs />
+        </div>
 
-          <div className="space-y-8">
-            <RecentOrders
-              orders={orders}
-              isLoading={ordersLoading}
-              error={ordersError}
-            />
-            <MyArtworks
-              artworks={artworks}
-              isLoading={artworksLoading}
-              error={artworksError}
-            />
-            <MyPets pets={pets} isLoading={petsLoading} error={petsError} />
-            <AccountDetails
-              user={profile}
-              address={address}
-              isLoading={addressLoading}
-            />
-          </div>
+        <div className="mt-8 space-y-8">
+          <RecentOrders
+            orders={orders}
+            isLoading={ordersLoading}
+            error={ordersError}
+          />
+          <MyArtworks
+            artworks={artworks}
+            isLoading={artworksLoading}
+            error={artworksError}
+          />
+          <MyPets pets={pets} isLoading={petsLoading} error={petsError} />
+          <AccountDetails
+            user={profile}
+            address={address}
+            isLoading={addressLoading}
+          />
         </div>
       </Container>
 
