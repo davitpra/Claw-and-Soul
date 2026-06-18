@@ -73,12 +73,14 @@ export function Carousel({
           aria-label="Anterior"
           className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-4 z-10 w-9 h-9 rounded-full bg-white shadow-md flex items-center justify-center text-slate-dark transition-opacity disabled:opacity-30"
         >
-          <span className="material-symbols-outlined text-[20px]">chevron_left</span>
+          <span className="material-symbols-outlined text-[20px]">
+            chevron_left
+          </span>
         </button>
       )}
 
       <div className="overflow-hidden py-4" ref={emblaRef}>
-        <div className={`flex ${gap}`}>{children}</div>
+        <div className={`flex ${gap} align-center`}>{children}</div>
       </div>
 
       {showArrows && (
@@ -88,7 +90,9 @@ export function Carousel({
           aria-label="Siguiente"
           className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-4 z-10 w-9 h-9 rounded-full bg-white shadow-md flex items-center justify-center text-slate-dark transition-opacity disabled:opacity-30"
         >
-          <span className="material-symbols-outlined text-[20px]">chevron_right</span>
+          <span className="material-symbols-outlined text-[20px]">
+            chevron_right
+          </span>
         </button>
       )}
 

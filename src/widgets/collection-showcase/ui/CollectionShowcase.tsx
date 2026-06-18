@@ -31,7 +31,7 @@ export default function CollectionShowcase({
   const cards = products.map((product) => (
     <div
       key={product.productRefId ?? product.shopifyHandle}
-      className="flex-[0_0_72%] sm:flex-[0_0_45%] md:flex-[0_0_33%] lg:flex-[0_0_22%] min-w-0"
+      className="flex-[0_0_72%] sm:flex-[0_0_45%] md:flex-[0_0_33%] lg:flex-[0_0_22%] min-w-0 align-center"
     >
       <ProductCard product={product} label={label ?? title ?? "New"} />
     </div>

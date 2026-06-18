@@ -1,11 +1,13 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { Card } from "@/shared/ui/Card";
 import { cloudinaryThumb } from "@/shared/lib/cloudinary";
 import { useAuthFetch } from "@/hooks/useAuthFetch";
 import type { ApiEnvelope, UserPet, UserPetPhoto } from "@/entities/order/types";
+
+const MAX_PHOTOS = 4;
 
 interface Props {
   petId: string;
@@ -18,7 +20,8 @@ function orderedPhotos(pet: UserPet) {
 }
 
 export function PetDetail({ petId }: Props) {
-  const { get, delete: del } = useAuthFetch();
+  const { get, delete: del, authFetchJSON } = useAuthFetch();
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [pet, setPet] = useState<UserPet | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -27,6 +30,8 @@ export function PetDetail({ petId }: Props) {
   const [pendingDelete, setPendingDelete] = useState<UserPetPhoto | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [deleteError, setDeleteError] = useState<string | null>(null);
+  const [uploading, setUploading] = useState(false);
+  const [uploadError, setUploadError] = useState<string | null>(null);
 
   useEffect(() => {
     let active = true;
@@ -52,6 +57,33 @@ export function PetDetail({ petId }: Props) {
       active = false;
     };
   }, [get, petId]);
+
+  async function handleUploadPhoto(file: File) {
+    setUploading(true);
+    setUploadError(null);
+    try {
+      const formData = new FormData();
+      formData.append("photo", file);
+      const isPrimary = (pet?.photos ?? []).length === 0;
+      const raw = await authFetchJSON<ApiEnvelope<UserPetPhoto>>(
+        `/pets/${petId}/photos?isPrimary=${isPrimary}`,
+        { method: "POST", body: formData },
+      );
+      const newPhoto = raw.data;
+      setPet((prev) => {
+        if (!prev) return prev;
+        return { ...prev, photos: [...(prev.photos ?? []), newPhoto] };
+      });
+      setActivePhoto((current) => current ?? newPhoto.photoUrl);
+    } catch (err) {
+      console.error("Photo upload error:", err);
+      setUploadError(
+        err instanceof Error ? err.message : "Couldn't upload photo. Please try again.",
+      );
+    } finally {
+      setUploading(false);
+    }
+  }
 
   async function handleDeletePhoto(photoId: string) {
     setDeletingId(photoId);
@@ -186,42 +218,73 @@ export function PetDetail({ petId }: Props) {
             </div>
           )}
 
-          {photos.length > 0 && (
-            <div className="mt-4 grid grid-cols-4 gap-3">
-              {photos.map((photo) => {
-                const isActive = photo.photoUrl === activePhoto;
-                return (
-                  <div key={photo.id} className="group relative">
-                    <button
-                      type="button"
-                      onClick={() => setActivePhoto(photo.photoUrl)}
-                      className={`block aspect-square w-full overflow-hidden rounded-xl bg-cover bg-center transition-all ${
-                        isActive
-                          ? "ring-2 ring-primary"
-                          : "opacity-80 hover:opacity-100"
-                      }`}
-                      style={{
-                        backgroundImage: `url('${cloudinaryThumb(photo.photoUrl, 200)}')`,
-                      }}
-                      aria-label={`View photo of ${pet.name}`}
-                    />
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setDeleteError(null);
-                        setPendingDelete(photo);
-                      }}
-                      className="absolute right-1.5 top-1.5 flex h-7 w-7 items-center justify-center rounded-full bg-black/60 text-white opacity-0 transition-all hover:bg-red-600 focus-visible:opacity-100 group-hover:opacity-100"
-                      aria-label={`Delete photo of ${pet.name}`}
-                    >
-                      <span className="material-symbols-outlined text-[16px]">
-                        delete
-                      </span>
-                    </button>
-                  </div>
-                );
-              })}
-            </div>
+          <div className="mt-4 grid grid-cols-4 gap-3">
+            {photos.map((photo) => {
+              const isActive = photo.photoUrl === activePhoto;
+              return (
+                <div key={photo.id} className="group relative">
+                  <button
+                    type="button"
+                    onClick={() => setActivePhoto(photo.photoUrl)}
+                    className={`block aspect-square w-full overflow-hidden rounded-xl bg-cover bg-center transition-all ${
+                      isActive
+                        ? "ring-2 ring-primary"
+                        : "opacity-80 hover:opacity-100"
+                    }`}
+                    style={{
+                      backgroundImage: `url('${cloudinaryThumb(photo.photoUrl, 200)}')`,
+                    }}
+                    aria-label={`View photo of ${pet.name}`}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setDeleteError(null);
+                      setPendingDelete(photo);
+                    }}
+                    className="absolute right-1.5 top-1.5 flex h-7 w-7 items-center justify-center rounded-full bg-black/60 text-white opacity-0 transition-all hover:bg-red-600 focus-visible:opacity-100 group-hover:opacity-100"
+                    aria-label={`Delete photo of ${pet.name}`}
+                  >
+                    <span className="material-symbols-outlined text-[16px]">
+                      delete
+                    </span>
+                  </button>
+                </div>
+              );
+            })}
+
+            {Array.from({ length: MAX_PHOTOS - photos.length }).map((_, i) => (
+              <button
+                key={`placeholder-${i}`}
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                disabled={uploading}
+                className="flex aspect-square w-full items-center justify-center rounded-xl border-2 border-dashed border-[#E0DED9] text-text-muted transition-all hover:border-primary hover:text-primary disabled:opacity-60"
+                aria-label="Upload photo"
+              >
+                <span className="material-symbols-outlined text-[24px]">
+                  {uploading && i === 0 ? "progress_activity" : "add_a_photo"}
+                </span>
+              </button>
+            ))}
+          </div>
+
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/*"
+            className="hidden"
+            onChange={(e) => {
+              const file = e.target.files?.[0];
+              if (file) handleUploadPhoto(file);
+              e.target.value = "";
+            }}
+          />
+
+          {uploadError && (
+            <p className="mt-3 rounded-xl bg-red-50 px-4 py-3 text-sm text-red-600">
+              {uploadError}
+            </p>
           )}
         </div>
       </div>
