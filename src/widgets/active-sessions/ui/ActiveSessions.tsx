@@ -84,7 +84,7 @@ export function ActiveSessions() {
     <div className="flex flex-col gap-6">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-bold text-[#103642] dark:text-[#f0eee9]">
+          <h2 className="font-display text-2xl font-black text-[#103642] dark:text-[#f0eee9]">
             Active Sessions
           </h2>
           <p className="text-sm text-[#6c7a7f] mt-1">
@@ -124,7 +124,7 @@ export function ActiveSessions() {
                 </span>
                 <div>
                   <div className="flex items-center gap-2">
-                    <h3 className="font-semibold text-[#103642] dark:text-[#f0eee9]">
+                    <h3 className="font-display font-black text-[#103642] dark:text-[#f0eee9]">
                       {index === 0 ? "This device" : `Device ${index + 1}`}
                     </h3>
                     {index === 0 && (

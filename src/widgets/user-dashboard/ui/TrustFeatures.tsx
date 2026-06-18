@@ -34,7 +34,7 @@ export function TrustFeatures() {
     <section className="bg-cream py-14">
       <Container>
         <div className="mx-auto max-w-2xl text-center">
-          <h2 className="font-display text-2xl font-bold text-text-main sm:text-3xl">
+          <h2 className="font-display text-2xl font-black text-text-main sm:text-3xl">
             We&apos;re here for you and your pet.
           </h2>
         </div>
@@ -46,7 +46,7 @@ export function TrustFeatures() {
                   {feature.icon}
                 </span>
               </span>
-              <h3 className="mt-4 font-display text-lg font-bold text-text-main">
+              <h3 className="font-display mt-4 text-lg font-black text-text-main">
                 {feature.title}
               </h3>
               <p className="mt-2 text-sm text-text-muted">{feature.text}</p>

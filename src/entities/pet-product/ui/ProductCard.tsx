@@ -50,7 +50,7 @@ export function ProductCard({
       </Link>
 
       <div className="flex flex-col items-center gap-3">
-        <h3 className="font-black text-slate-dark md:text-lg font-display text-center">
+        <h3 className="font-display font-black text-slate-dark md:text-lg text-center">
           {product.name}
         </h3>
 

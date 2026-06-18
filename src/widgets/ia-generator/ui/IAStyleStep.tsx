@@ -36,7 +36,7 @@ export function IAStyleStep({
     >
       <div className="flex flex-col justify-center md:flex-row md:justify-between gap-4 md:gap-0">
         <div className="text-center md:text-left">
-          <h1 className="text-3xl md:text-4xl font-black text-slate-dark mb-2 tracking-tight font-display">
+          <h1 className="font-display text-3xl md:text-4xl font-black text-slate-dark mb-2 tracking-tight">
             Choose Your Art Style
           </h1>
           <p className="text-slate-dark/70 text-lg">

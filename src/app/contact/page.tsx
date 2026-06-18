@@ -15,7 +15,7 @@ export default function Contact() {
                 <span className="text-primary font-bold tracking-wider text-sm uppercase">
                   Support
                 </span>
-                <h1 className="text-text-main text-4xl md:text-5xl font-black leading-tight tracking-[-0.033em]">
+                <h1 className="font-display text-text-main text-4xl md:text-5xl font-black leading-tight tracking-[-0.033em]">
                   Get in Touch
                 </h1>
                 <p className="text-text-muted text-lg font-normal leading-relaxed">
@@ -104,7 +104,7 @@ export default function Contact() {
               {/* Sidebar Info */}
               <div className="lg:col-span-5 flex flex-col gap-6">
                 <div className="bg-[#E6E2DC] rounded-xl p-8 flex flex-col gap-8">
-                  <h3 className="text-xl font-bold text-text-main">
+                  <h3 className="font-display text-xl font-black text-text-main">
                     Other ways to connect
                   </h3>
                   <div className="flex flex-col gap-6">
@@ -229,7 +229,7 @@ export default function Contact() {
         <div className="w-full bg-faq-bg py-16 px-4 md:px-10">
           <div className="max-w-[800px] mx-auto flex flex-col gap-10">
             <div className="text-center">
-              <h2 className="text-text-main text-3xl font-black leading-tight tracking-[-0.015em] font-display">
+              <h2 className="font-display text-text-main text-3xl font-black leading-tight tracking-[-0.015em]">
                 Frequently Asked Questions
               </h2>
               <p className="text-text-muted mt-3 text-lg font-body">
@@ -256,7 +256,7 @@ export default function Contact() {
                   className="group bg-white rounded-xl open:shadow-md transition-all duration-300"
                 >
                   <summary className="flex cursor-pointer items-center justify-between p-6 list-none [&::-webkit-details-marker]:hidden">
-                    <h3 className="text-text-main font-body font-bold text-lg">
+                    <h3 className="font-display text-text-main font-black text-lg">
                       {faq.q}
                     </h3>
                     <span className="material-symbols-outlined text-primary transition-transform duration-300 group-open:rotate-180">

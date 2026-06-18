@@ -283,7 +283,7 @@ export function IAUploadStep({
         <div className="grid grid-cols-1 md:grid-cols-[1.1fr_0.9fr] gap-8 md:gap-12 items-stretch">
           {/* ── LEFT: Photo Upload ── */}
           <div className="flex flex-col">
-            <h2 className="text-xl font-bold text-slate-dark mb-4">
+            <h2 className="font-display text-xl font-black text-slate-dark mb-4">
               Upload Pet Photos
             </h2>
 
@@ -454,7 +454,7 @@ export function IAUploadStep({
 
           {/* ── RIGHT: Pet Details ── */}
           <div>
-            <h2 className="text-xl font-bold text-slate-dark mb-4">
+            <h2 className="font-display text-xl font-black text-slate-dark mb-4">
               Pet Details
             </h2>
 

@@ -49,7 +49,7 @@ export default function RoomView({
           />
         </div>
         <div className="flex w-full flex-col gap-4 md:w-1/2">
-          <h2 className="text-4xl font-black text-[#103642] leading-[1.1] tracking-tight mb-2 lg:mb-8">
+          <h2 className="font-display text-4xl font-black text-[#103642] leading-[1.1] tracking-tight mb-2 lg:mb-8">
             More than a poster. It&apos;s a tribute.
           </h2>
           <p className="font-body text-text-main">

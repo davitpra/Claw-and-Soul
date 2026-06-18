@@ -132,7 +132,7 @@ export function PetDetail({ petId }: Props) {
       <div className="mt-6 grid grid-cols-1 gap-8 max-w-3xl mx-auto">
         {/* Detalles */}
         <div>
-          <h1 className="font-display text-3xl font-bold text-text-main">
+          <h1 className="font-display text-3xl font-black text-text-main">
             {pet.name}
           </h1>
           {details && (
@@ -166,7 +166,7 @@ export function PetDetail({ petId }: Props) {
 
           {pet.description && (
             <div className="mt-6">
-              <h2 className="font-display text-lg font-bold text-text-main">
+              <h2 className="font-display text-lg font-black text-text-main">
                 About {pet.name}
               </h2>
               <p className="mt-2 text-text-muted">{pet.description}</p>

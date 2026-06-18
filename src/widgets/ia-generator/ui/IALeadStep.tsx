@@ -64,7 +64,7 @@ export function IALeadStep({ onComplete }: IALeadStepProps) {
         <div className="bg-white rounded-3xl shadow-2xl border border-[#E5E0D8] overflow-hidden">
           {/* Header */}
           <div className="px-8 pt-8 pb-4 text-center">
-            <h2 className="text-2xl font-black text-slate-dark font-display mb-1">
+            <h2 className="font-display text-2xl font-black text-slate-dark mb-1">
               {authTab === "register"
                 ? "Create Your Account"
                 : "Sign In to Continue"}

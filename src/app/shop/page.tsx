@@ -92,7 +92,7 @@ export default function ShopPage() {
             <span className="text-primary font-bold tracking-widest text-xs uppercase mb-3 block">
               Handcrafted for Happiness
             </span>
-            <h1 className="font-display text-4xl md:text-5xl font-bold text-secondary mb-4 leading-tight">
+            <h1 className="font-display text-4xl md:text-5xl font-black text-secondary mb-4 leading-tight">
               Our Soulful Collection
             </h1>
             <p className="text-secondary/70 text-lg leading-relaxed">

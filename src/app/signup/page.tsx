@@ -76,7 +76,7 @@ export default function SignUpPage() {
         />
         <div className="absolute inset-0 bg-[#448da6]/20 mix-blend-multiply" />
         <div className="absolute bottom-12 left-12 right-12 text-white z-10">
-          <h2 className="text-4xl font-bold mb-4 drop-shadow-md">
+          <h2 className="font-display text-4xl font-black mb-4 drop-shadow-md">
             Gifts that speak to their soul.
           </h2>
           <p className="text-lg opacity-90 drop-shadow-sm max-w-md">
@@ -99,7 +99,7 @@ export default function SignUpPage() {
                 Claw and Soul
               </span>
             </Link>
-            <h1 className="text-[#103642] dark:text-[#f0eee9] text-3xl font-black leading-tight tracking-tight sm:text-4xl font-display">
+            <h1 className="font-display text-[#103642] dark:text-[#f0eee9] text-3xl font-black leading-tight tracking-tight sm:text-4xl">
               Create your account
             </h1>
             <p className="text-[#103642]/70 dark:text-[#f0eee9]/70 text-base">

@@ -45,7 +45,7 @@ export function IAThanksStep({ thanksUrl }: IAThanksStepProps) {
                   favorite
                 </span>
 
-                <h1 className="text-5xl md:text-6xl font-black text-slate-dark font-display tracking-tight leading-none">
+                <h1 className="font-display text-5xl md:text-6xl font-black text-slate-dark tracking-tight leading-none">
                   Thank you!
                 </h1>
 

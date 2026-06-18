@@ -24,7 +24,7 @@ export function MyPets({ pets, isLoading, error }: Props) {
   return (
     <section className="rounded-xl bg-white p-6">
       <div className="flex items-center justify-between">
-        <h2 className="font-display text-xl font-bold text-text-main">
+        <h2 className="font-display text-xl font-black text-text-main">
           My Pets
         </h2>
         <Link

@@ -54,7 +54,7 @@ export default function ProductDetail({
         <Navbar />
         <div className="grow flex items-center justify-center">
           <div className="text-center">
-            <h1 className="text-4xl font-bold text-text-main mb-4">
+            <h1 className="font-display text-4xl font-black text-text-main mb-4">
               Product Not Found
             </h1>
             <Link

@@ -43,7 +43,7 @@ export default function CollectionShowcase({
         <div
           className={`flex flex-col items-center ${useCarousel ? "md:items-start" : "md:items-center"} gap-4 mb-8`}
         >
-          <h2 className="font-black text-slate-dark md:text-4xl font-display">
+          <h2 className="font-display font-black text-slate-dark md:text-4xl">
             {heading}
           </h2>
           {description && (

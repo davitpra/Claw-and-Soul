@@ -19,14 +19,16 @@ El `<body>` aplica `font-body` como base (`src/app/layout.tsx:38`). Los headings
 
 ### Headings
 
+> **Regla obligatoria:** Todo heading (`<h1>`–`<h6>`) lleva **siempre** `font-display font-black` (Epilogue 900). No uses `font-bold`/`font-semibold` en headings — la jerarquía se construye con el tamaño (`text-*`), nunca bajando el peso.
+
 | Elemento | Clases observadas | Componente |
 |---|---|---|
-| H1 hero | `text-4xl md:text-5xl lg:text-6xl font-black leading-[1.1] tracking-tight font-display text-slate-dark` | `Hero.tsx:13` |
-| H2 sección | `text-3xl md:text-4xl font-black text-slate-dark` | `FeaturedProducts.tsx:17` |
-| H2 footer | `text-2xl font-bold` | `Footer.tsx:9` |
-| H3 card | `text-lg font-bold text-slate-dark` | `FeaturedProducts.tsx:54` |
-| H4 footer nav | `font-bold text-lg` | `Footer.tsx:50` |
-| Navbar brand | `text-lg lg:text-xl font-bold tracking-[-0.015em] text-text-main` | `Navbar.tsx:74` |
+| H1 hero | `font-display text-4xl md:text-5xl lg:text-6xl font-black leading-[1.1] tracking-tight text-slate-dark` | `Hero.tsx:14` |
+| H2 sección | `font-display text-3xl md:text-4xl font-black text-slate-dark` | `Reviews.tsx:28` |
+| H2 footer | `font-display text-2xl font-black` | `Footer.tsx:10` |
+| H3 card | `font-display text-lg font-black text-slate-dark` | `MyArtworks.tsx:17` |
+| H4 footer nav | `font-display font-black text-lg` | `Footer.tsx:50` |
+| Navbar brand | `font-display text-lg lg:text-2xl font-black tracking-[-0.015em] text-text-main` | `Navbar.tsx:86` |
 
 ### Body / párrafos
 
@@ -54,8 +56,8 @@ El `<body>` aplica `font-body` como base (`src/app/layout.tsx:38`). Los headings
 
 | Peso | Uso |
 |---|---|
-| `font-black` (900) | H1 hero, H2 sección → impacto máximo |
-| `font-bold` (700) | H3, botones, labels fuertes |
+| `font-black` (900) | **Todos los headings** (`<h1>`–`<h6>`) sin excepción → impacto máximo |
+| `font-bold` (700) | Botones, labels fuertes, eyebrows (NO headings) |
 | `font-semibold` (600) | Nav links activos, botones secundarios fuertes |
 | `font-medium` (500) | Nav links, labels regulares |
 | `font-normal` (400) | Párrafos, descripciones |

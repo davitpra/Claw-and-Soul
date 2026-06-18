@@ -39,11 +39,13 @@ Se usan los modificadores de opacidad de Tailwind (`/`) para variantes:
 
 ### Jerarquía
 
+> **Regla de headings:** Todo elemento `<h1>`–`<h6>` usa **siempre** `font-display font-black` (Epilogue 900). No usar `font-bold`/`font-semibold` en headings; el peso se mantiene en 900 y la jerarquía se construye con el tamaño (`text-*`), no con el peso.
+
 | Elemento     | Tamaño                             | Peso                            | Fuente        |
 | ------------ | ---------------------------------- | ------------------------------- | ------------- |
 | H1 hero      | `text-4xl` → `text-6xl`            | `font-black` (900)              | Epilogue      |
 | H2 sección   | `text-3xl` → `text-4xl`            | `font-black` (900)              | Epilogue      |
-| H3 card      | `text-lg`                          | `font-bold` (700)               | Epilogue/Lato |
+| H3 card      | `text-lg` → `text-xl`             | `font-black` (900)              | Epilogue      |
 | Párrafo lead | `text-lg leading-relaxed`          | `font-normal` (400)             | Lato          |
 | Body regular | `text-base`                        | `font-normal` (400)             | Lato          |
 | Label / UI   | `text-sm`                          | `font-medium` o `font-semibold` | Lato          |

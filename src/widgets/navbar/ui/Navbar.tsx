@@ -83,7 +83,7 @@ export default function Navbar() {
                 height={50}
                 className=""
               />
-              <h2 className="text-text-main text-lg lg:text-2xl font-black leading-tight tracking-[-0.015em] hidden sm:block">
+              <h2 className="font-display text-text-main text-lg lg:text-2xl font-black leading-tight tracking-[-0.015em] hidden sm:block">
                 Claw & Soul
               </h2>
             </Link>

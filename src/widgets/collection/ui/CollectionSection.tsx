@@ -36,7 +36,7 @@ function StyleCard({ image, badgeLabel, altText }: StyleCardProps) {
       </Card>
       {image.altImage && altText && (
         <div className="flex items-center justify-center">
-          <h3 className="font-black text-slate-dark md:text-lg font-display">
+          <h3 className="font-display font-black text-slate-dark md:text-lg">
             {image.altImage}
           </h3>
         </div>
@@ -89,7 +89,7 @@ export default function CollectionSection({
           <span className="text-center text-primary font-bold tracking-wider uppercase text-md">
             Choose Your Style
           </span>
-          <h2 className="text-4xl font-black text-[#103642] leading-[1.1] tracking-tight text-center mb-10">
+          <h2 className="font-display text-4xl font-black text-[#103642] leading-[1.1] tracking-tight text-center mb-10">
             {title}
           </h2>
         </div>

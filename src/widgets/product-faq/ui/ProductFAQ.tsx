@@ -14,7 +14,7 @@ interface ProductFAQProps {
 export default function ProductFAQ({ faqs }: ProductFAQProps) {
   return (
     <div className="bg-[#FAF9F6] p-6 md:p-12">
-      <h2 className="text-3xl font-black text-slate-dark md:text-4xl text-center mb-16">
+      <h2 className="font-display text-3xl font-black text-slate-dark md:text-4xl text-center mb-16">
         Frequently Asked Questions
       </h2>
       <div className="flex flex-col gap-4 max-w-3xl mx-auto">

@@ -91,7 +91,7 @@ Lee solo lo que necesites para la tarea:
 - [ ] ¿Los hover en buttons tienen `hover:bg-primary-dark` (o `hover:bg-gray-50` en secundarios)?
 - [ ] ¿Las sombras escalan de `shadow-sm` a `shadow-md` en hover?
 - [ ] ¿Los iconos son Material Symbols con `text-[N]px` para tamaño?
-- [ ] ¿La tipografía de headings usa `font-display` (Epilogue) y body usa `font-body` (Lato)?
+- [ ] ¿Todo heading (`<h1>`–`<h6>`) usa `font-display font-black` (Epilogue 900) y el body usa `font-body` (Lato)? Los headings nunca van con `font-bold`/`font-semibold`.
 
 **Para archivos en `src/app/admin/**`:**
 - [ ] ¿La página usa `<Page title>` como root (no un `<div>` o `<section>` custom)?

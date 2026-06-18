@@ -16,7 +16,7 @@ const roleLabels: Record<string, string> = {
 };
 
 export function WelcomeHeader({ user }: { user: AccountUser | null }) {
-  const firstName = user?.fullName?.trim().split(/\s+/)[0] || "friend";
+  const firstName = user?.fullName?.trim().split(/\s+/)[0] || "Buddy";
   const role = user?.role ?? "user";
 
   return (
@@ -25,7 +25,7 @@ export function WelcomeHeader({ user }: { user: AccountUser | null }) {
         <p className="text-sm font-bold uppercase tracking-wider text-primary">
           Account
         </p>
-        <h1 className="mt-1 font-display text-3xl font-bold text-text-main sm:text-4xl">
+        <h1 className="font-display font-black mt-1 text-3xl text-text-main sm:text-4xl">
           Welcome back, {firstName}!
         </h1>
         <p className="mt-2 text-text-muted">

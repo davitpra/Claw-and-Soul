@@ -118,7 +118,7 @@ export default function CartPage() {
             </Link>
           </div>
 
-          <h1 className="text-3xl md:text-4xl font-black text-slate-dark mb-10 font-display tracking-tight">
+          <h1 className="font-display text-3xl md:text-4xl font-black text-slate-dark mb-10 tracking-tight">
             Your Shopping Cart
           </h1>
 
@@ -171,7 +171,7 @@ export default function CartPage() {
                             )}
                           </div>
                           <div className="flex flex-col justify-center gap-1">
-                            <h3 className="font-black text-lg text-slate-dark leading-tight">
+                            <h3 className="font-display font-black text-lg text-slate-dark leading-tight">
                               {item.name}
                             </h3>
                             {item.size && (
@@ -249,7 +249,7 @@ export default function CartPage() {
             {/* Order Summary */}
             <div className="lg:col-span-4 flex flex-col gap-6">
               <div className="bg-white rounded-3xl p-8 shadow-xl shadow-slate-dark/5 border border-slate-dark/5 sticky top-28">
-                <h3 className="text-xl font-black text-slate-dark mb-8 font-display uppercase tracking-tight">
+                <h3 className="font-display text-xl font-black text-slate-dark mb-8 uppercase tracking-tight">
                   Order Summary
                 </h3>
                 <div className="flex flex-col gap-5 mb-8">
@@ -327,7 +327,7 @@ export default function CartPage() {
           {/* Cross-sells */}
           <div className="mt-24 pt-16 border-t border-slate-dark/5">
             <div className="flex items-center justify-between mb-10">
-              <h3 className="text-2xl font-black text-slate-dark tracking-tight font-display">
+              <h3 className="font-display text-2xl font-black text-slate-dark tracking-tight">
                 You Might Also Like
               </h3>
               <Link
@@ -377,7 +377,7 @@ export default function CartPage() {
                     </button>
                   </div>
                   <div className="flex flex-col px-1">
-                    <h4 className="font-black text-slate-dark text-base leading-tight group-hover:text-primary transition-colors">
+                    <h4 className="font-display font-black text-slate-dark text-base leading-tight group-hover:text-primary transition-colors">
                       {rec.name}
                     </h4>
                     <span className="text-sm text-slate-dark/50 font-bold mt-1 uppercase tracking-widest text-[11px]">

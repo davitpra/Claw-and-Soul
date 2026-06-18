@@ -11,7 +11,7 @@ export default function AIProcess() {
           <span className="inline-flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-[0.18em] text-[#448da6] mb-5">
             AI Art Preview
           </span>
-          <h2 className="text-4xl font-black text-[#103642] md:text-5xl leading-[1.1] tracking-tight">
+          <h2 className="font-display text-4xl font-black text-[#103642] md:text-5xl leading-[1.1] tracking-tight">
             See the Transformation
           </h2>
           <p className="mt-4 max-w-lg mx-auto text-base text-[#103642]/55 leading-relaxed">

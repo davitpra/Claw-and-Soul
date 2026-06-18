@@ -33,7 +33,7 @@ export function AccountDetails({ user, address, isLoading }: Props) {
       {/* Account details */}
       <div className="rounded-xl bg-white p-6">
         <div className="flex items-center justify-between">
-          <h2 className="font-display text-xl font-bold text-text-main">
+          <h2 className="font-display text-xl font-black text-text-main">
             Account Details
           </h2>
           <Link
@@ -73,7 +73,7 @@ export function AccountDetails({ user, address, isLoading }: Props) {
       {/* Default address */}
       <div className="rounded-xl bg-white p-6">
         <div className="flex items-center justify-between">
-          <h2 className="font-display text-xl font-bold text-text-main">
+          <h2 className="font-display text-xl font-black text-text-main">
             Default Address
           </h2>
           <Link

@@ -97,7 +97,7 @@ export function IAProductStep({ onSelect }: IAProductStepProps) {
     >
       <div className="flex flex-col justify-center md:flex-row md:justify-between gap-4 md:gap-0 mb-8">
         <div className="text-center md:text-left">
-          <h1 className="text-3xl md:text-4xl font-black text-slate-dark mb-2 tracking-tight font-display">
+          <h1 className="font-display text-3xl md:text-4xl font-black text-slate-dark mb-2 tracking-tight">
             Choose your product
           </h1>
           <p className="text-slate-dark/70 text-lg">
@@ -134,7 +134,7 @@ export function IAProductStep({ onSelect }: IAProductStepProps) {
                   className="group flex flex-col gap-4 text-left"
                 >
                   <div className="flex flex-col gap-1">
-                    <h3 className="text-xl font-bold text-slate-dark text-center line-clamp-1 font-display">
+                    <h3 className="font-display text-xl font-black text-slate-dark text-center line-clamp-1">
                       {catalogProduct.title}
                     </h3>
                   </div>

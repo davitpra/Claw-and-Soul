@@ -11,7 +11,7 @@ export default function Hero() {
               <span className="text-primary font-bold tracking-wider uppercase text-sm">
                 Personalized Pet Art
               </span>
-              <h1 className="text-slate-dark text-4xl font-black leading-[1.1] tracking-tight md:text-5xl lg:text-6xl">
+              <h1 className="font-display text-slate-dark text-4xl font-black leading-[1.1] tracking-tight md:text-5xl lg:text-6xl">
                 Capture Their Soul in Art
               </h1>
               <p className="text-slate-dark/80 text-lg font-normal leading-relaxed max-w-md">

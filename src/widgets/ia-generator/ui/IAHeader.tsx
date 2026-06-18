@@ -36,7 +36,7 @@ export function IAHeader({ step, generationStatus }: IAHeaderProps) {
               priority
             />
           </div>
-          <h2 className="text-slate-dark text-xl font-bold tracking-tight font-display">
+          <h2 className="font-display text-slate-dark text-xl font-black tracking-tight">
             Claw and Soul
           </h2>
         </Link>

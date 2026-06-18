@@ -7,7 +7,7 @@ export default function Footer() {
       <Container>
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-24">
           <div>
-            <h3 className="text-2xl font-bold mb-6">Stay Connected</h3>
+            <h3 className="font-display text-2xl font-black mb-6">Stay Connected</h3>
             <p className="text-white/70 mb-8">
               Join our newsletter for exclusive offers and pet art inspiration.
             </p>
@@ -25,7 +25,7 @@ export default function Footer() {
               </button>
             </form>
             <div className="mt-12">
-              <h4 className="font-bold mb-4">Contact Us</h4>
+              <h4 className="font-display font-black mb-4">Contact Us</h4>
               <div className="flex flex-col gap-2 text-white/70">
                 <a
                   className="hover:text-primary transition-colors flex items-center gap-2"
@@ -47,7 +47,7 @@ export default function Footer() {
           </div>
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-8">
             <div className="flex flex-col gap-4">
-              <h4 className="font-bold text-lg">Shop</h4>
+              <h4 className="font-display font-black text-lg">Shop</h4>
               <Link
                 className="text-white/70 hover:text-white transition-colors"
                 href="/shop"
@@ -74,7 +74,7 @@ export default function Footer() {
               </Link>
             </div>
             <div className="flex flex-col gap-4">
-              <h4 className="font-bold text-lg">Company</h4>
+              <h4 className="font-display font-black text-lg">Company</h4>
               <Link
                 className="text-white/70 hover:text-white transition-colors"
                 href="/about"
@@ -101,7 +101,7 @@ export default function Footer() {
               </Link>
             </div>
             <div className="flex flex-col gap-4">
-              <h4 className="font-bold text-lg">Follow Us</h4>
+              <h4 className="font-display font-black text-lg">Follow Us</h4>
               <div className="flex gap-4">
                 <a
                   className="bg-white/10 p-2 rounded-full hover:bg-primary transition-colors"

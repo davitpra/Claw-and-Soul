@@ -11,7 +11,7 @@ export default function UserProfilePage() {
       <div className="grid grid-cols-1 gap-8 lg:grid-cols-[260px_1fr]">
         <DashboardSidebar />
         <div className="rounded-xl bg-white p-8">
-          <h1 className="font-display text-2xl font-bold text-text-main">
+          <h1 className="font-display text-2xl font-black text-text-main">
             Profile &amp; Settings
           </h1>
           <p className="mt-2 text-text-muted">
