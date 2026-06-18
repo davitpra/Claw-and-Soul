@@ -12,7 +12,7 @@ interface Props {
 
 export function MyArtworks({ artworks, isLoading, error }: Props) {
   return (
-    <section className="rounded-xl border border-[#E0DED9] bg-white p-6 shadow-sm">
+    <section className="rounded-xl bg-white p-6">
       <div className="flex items-center justify-between">
         <h2 className="font-display text-xl font-bold text-text-main">
           My Artworks
@@ -48,7 +48,7 @@ export function MyArtworks({ artworks, isLoading, error }: Props) {
             <p className="text-text-muted">No artworks yet.</p>
             <Link
               href="/ia-generator"
-              className="mt-3 inline-block rounded-xl bg-primary px-6 py-3 text-sm font-bold text-white shadow-sm transition-all hover:bg-primary-dark hover:shadow-md"
+              className="mt-3 inline-block rounded-xl bg-primary px-6 py-3 text-sm font-bold text-white transition-all hover:bg-primary-dark hover:shadow-md"
             >
               Create your first artwork
             </Link>
@@ -68,7 +68,7 @@ export function MyArtworks({ artworks, isLoading, error }: Props) {
                     art.pet?.name ? `Artwork of ${art.pet.name}` : "Artwork"
                   }
                 >
-                  <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/70 to-transparent p-3">
+                  <div className="absolute inset-x-0 bottom-0 bg-linear-to-t from-black/70 to-transparent p-3">
                     <p className="truncate font-display text-sm font-bold text-white">
                       {art.pet?.name || "Untitled"}
                     </p>

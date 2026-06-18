@@ -75,6 +75,22 @@ export interface UserGeneration {
   style: { id: string; displayName?: string } | null;
 }
 
+export interface UserPetPhoto {
+  id: string;
+  photoUrl: string;
+  isPrimary: boolean;
+}
+
+export interface UserPet {
+  id: string;
+  name: string;
+  species: string;
+  breed?: string | null;
+  age?: number | null;
+  description?: string | null;
+  photos?: UserPetPhoto[];
+}
+
 export interface UserProfile {
   id: string;
   email: string;

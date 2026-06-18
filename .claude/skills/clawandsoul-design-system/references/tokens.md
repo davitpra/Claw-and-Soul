@@ -38,7 +38,7 @@ bg-white/50          → input en barra de búsqueda
 ```
 
 ### Color hardcodeado documentado
-`border-[#E0DED9]` — gris muy claro para bordes sutiles de inputs, navbar scrolled, botones secundarios. Es intencional; no sustituir con gray-200 porque el tono es warm (ligeramente beige).
+`border-[#E0DED9]` — gris muy claro para bordes sutiles de inputs, navbar scrolled, botones secundarios, divisores y popovers flotantes. Es intencional; no sustituir con gray-200 porque el tono es warm (ligeramente beige). **No usar como borde de cards/paneles** — esos contenedores van planos: definidos solo con `bg-white`/`bg-cream` + `rounded-xl` sobre el fondo cream de la página, sin borde ni `shadow-sm`.
 
 ### Colores utilitarios (Tailwind estándar en uso)
 - `bg-white`, `hover:bg-gray-50`, `bg-gray-200` — fondos neutros en componentes

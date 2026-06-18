@@ -27,7 +27,7 @@ Guía de referencia rápida para construir UI consistente en este repo. La fuent
 | `bg-primary`, `text-text-main`, `bg-cream` | Colores hex hardcodeados fuera de `globals.css` |
 | `rounded-xl` en botones, inputs, modales, chips e imágenes sueltas | `rounded-2xl`, `rounded-lg` o `rounded-md` para elementos interactivos |
 | `<Card>` plana (sin `rounded`) para cards de imagen | `rounded-xl` en el componente `<Card>` |
-| `border border-[#E0DED9]` en bordes sutiles | Otros grises inventados para bordes |
+| `border border-[#E0DED9]` solo en inputs, navbar scrolled, botones secundarios, divisores y popovers | Borde en cards/paneles (van planas: `bg-white`/`bg-cream` + `rounded-xl`, sin borde ni sombra) u otros grises inventados |
 | Epilogue para headings (`font-display`) | Fuentes distintas a Epilogue/Lato |
 | `shadow-sm` → `hover:shadow-md` | Sombras muy dramáticas en elementos secundarios |
 | `transition-all` | `transition-none` o transiciones solo en una propiedad salvo necesidad |
@@ -87,7 +87,7 @@ Lee solo lo que necesites para la tarea:
 **Para archivos de storefront (fuera de `/admin`):**
 - [ ] ¿Todos los colores usan clases Tailwind de los tokens (`bg-primary`, `text-text-muted`, etc.) y no hex hardcodeados?
 - [ ] ¿Los radios son `rounded-xl` en botones, inputs, modales y chips? No debe haber `rounded-2xl` ni `rounded-md`. Las cards de imagen usan `<Card>` plano (sin `rounded`).
-- [ ] ¿Los bordes sutiles usan `border-[#E0DED9]`?
+- [ ] ¿Los bordes sutiles (inputs, navbar scrolled, botones secundarios, divisores, popovers) usan `border-[#E0DED9]`? Las cards/paneles van **planas** (`bg-white`/`bg-cream` + `rounded-xl`, sin borde ni `shadow-sm`).
 - [ ] ¿Los hover en buttons tienen `hover:bg-primary-dark` (o `hover:bg-gray-50` en secundarios)?
 - [ ] ¿Las sombras escalan de `shadow-sm` a `shadow-md` en hover?
 - [ ] ¿Los iconos son Material Symbols con `text-[N]px` para tamaño?

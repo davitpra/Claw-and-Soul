@@ -31,7 +31,7 @@ export function AccountDetails({ user, address, isLoading }: Props) {
   return (
     <section className="grid grid-cols-1 gap-6 lg:grid-cols-2">
       {/* Account details */}
-      <div className="rounded-xl border border-[#E0DED9] bg-white p-6 shadow-sm">
+      <div className="rounded-xl bg-white p-6">
         <div className="flex items-center justify-between">
           <h2 className="font-display text-xl font-bold text-text-main">
             Account Details
@@ -71,7 +71,7 @@ export function AccountDetails({ user, address, isLoading }: Props) {
       </div>
 
       {/* Default address */}
-      <div className="rounded-xl border border-[#E0DED9] bg-white p-6 shadow-sm">
+      <div className="rounded-xl bg-white p-6">
         <div className="flex items-center justify-between">
           <h2 className="font-display text-xl font-bold text-text-main">
             Default Address

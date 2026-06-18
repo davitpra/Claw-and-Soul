@@ -10,7 +10,7 @@ export default function UserGenerationsPage() {
     <Container className="py-10">
       <div className="grid grid-cols-1 gap-8 lg:grid-cols-[260px_1fr]">
         <DashboardSidebar />
-        <div className="rounded-xl border border-[#E0DED9] bg-white p-8 shadow-sm">
+        <div className="rounded-xl bg-white p-8">
           <h1 className="font-display text-2xl font-bold text-text-main">
             My Artworks
           </h1>

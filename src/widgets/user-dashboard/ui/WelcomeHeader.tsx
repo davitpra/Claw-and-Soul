@@ -33,7 +33,7 @@ export function WelcomeHeader({ user }: { user: AccountUser | null }) {
         </p>
       </div>
 
-      <div className="flex items-center gap-4 rounded-xl border border-[#E0DED9] bg-white p-4 shadow-sm">
+      <div className="flex items-center gap-4 rounded-xl bg-white p-4">
         <span className="flex size-14 items-center justify-center rounded-full bg-primary/10 text-lg font-bold text-primary">
           {initials(user?.fullName, user?.email)}
         </span>

@@ -12,12 +12,14 @@ import type {
   PaginatedResult,
   UserGeneration,
   UserOrderListItem,
+  UserPet,
   UserProfile,
 } from "@/entities/order/types";
 import { DashboardSidebar } from "./DashboardSidebar";
 import { WelcomeHeader } from "./WelcomeHeader";
 import { RecentOrders } from "./RecentOrders";
 import { MyArtworks } from "./MyArtworks";
+import { MyPets } from "./MyPets";
 import { AccountDetails } from "./AccountDetails";
 import { TrustFeatures } from "./TrustFeatures";
 
@@ -40,6 +42,10 @@ export function UserDashboard() {
   const [artworks, setArtworks] = useState<UserGeneration[]>([]);
   const [artworksLoading, setArtworksLoading] = useState(true);
   const [artworksError, setArtworksError] = useState<string | null>(null);
+
+  const [pets, setPets] = useState<UserPet[]>([]);
+  const [petsLoading, setPetsLoading] = useState(true);
+  const [petsError, setPetsError] = useState<string | null>(null);
 
   const [address, setAddress] = useState<Address | null>(null);
   const [addressLoading, setAddressLoading] = useState(true);
@@ -85,6 +91,17 @@ export function UserDashboard() {
         if (active) setArtworksLoading(false);
       });
 
+    get<ApiEnvelope<UserPet[]>>("/pets")
+      .then((res) => {
+        if (active) setPets(res.data ?? []);
+      })
+      .catch(() => {
+        if (active) setPetsError("Couldn't load your pets.");
+      })
+      .finally(() => {
+        if (active) setPetsLoading(false);
+      });
+
     get<ApiEnvelope<DefaultAddressResponse>>("/orders/default-address")
       .then((res) => {
         if (active) setAddress(res.data?.address ?? null);
@@ -120,6 +137,7 @@ export function UserDashboard() {
               isLoading={artworksLoading}
               error={artworksError}
             />
+            <MyPets pets={pets} isLoading={petsLoading} error={petsError} />
             <AccountDetails
               user={profile}
               address={address}

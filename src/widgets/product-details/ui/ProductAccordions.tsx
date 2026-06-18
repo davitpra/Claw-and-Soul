@@ -5,7 +5,7 @@ interface ProductAccordionsProps {
 }
 
 const panelClassName =
-  "rounded-xl border border-[#E0DED9] shadow-sm open:shadow-md transition-all duration-300";
+  "rounded-xl open:shadow-md transition-all duration-300";
 const titleClassName = "font-bold text-text- tracking-widest";
 const iconClassName = "text-[20px] text-primary";
 

@@ -14,24 +14,19 @@ export default function UserLayout({
   const { isAuthenticated, isLoading } = useAuth();
   const router = useRouter();
 
+  // Red de seguridad: redirige a /login si tras cargar la sesión no es válida.
+  // Las páginas con datos server-side (p. ej. /user/pets) ya validan en el
+  // servidor y redirigen ahí; esto cubre al resto.
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {
       router.replace("/login");
     }
   }, [isAuthenticated, isLoading, router]);
 
-  if (isLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-background-light">
-        <div className="w-8 h-8 rounded-full border-[3px] border-[#e3e3e3] border-t-primary animate-spin" />
-      </div>
-    );
-  }
-
-  if (!isAuthenticated) return null;
-
+  // No bloqueamos el render detrás de isLoading: así el HTML SSR (o el shell)
+  // pinta de inmediato sin esperar el /auth/me del cliente.
   return (
-    <div className="flex min-h-screen flex-col bg-background-light font-body text-text-main">
+    <div className="flex min-h-screen flex-col bg-white font-body text-text-main">
       <Navbar />
       <main className="flex-1">{children}</main>
       <Footer />

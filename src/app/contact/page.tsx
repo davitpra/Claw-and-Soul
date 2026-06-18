@@ -253,7 +253,7 @@ export default function Contact() {
               ].map((faq, i) => (
                 <details
                   key={i}
-                  className="group bg-white rounded-xl border border-[#E0DED9] shadow-sm open:shadow-md transition-all duration-300"
+                  className="group bg-white rounded-xl open:shadow-md transition-all duration-300"
                 >
                   <summary className="flex cursor-pointer items-center justify-between p-6 list-none [&::-webkit-details-marker]:hidden">
                     <h3 className="text-text-main font-body font-bold text-lg">

@@ -46,7 +46,7 @@ function thumbFor(order: UserOrderListItem) {
 
 export function RecentOrders({ orders, isLoading, error }: Props) {
   return (
-    <section className="rounded-xl border border-[#E0DED9] bg-white p-6 shadow-sm">
+    <section className="rounded-xl bg-white p-6">
       <div className="flex items-center justify-between">
         <h2 className="font-display text-xl font-bold text-text-main">
           Recent Orders
@@ -63,10 +63,7 @@ export function RecentOrders({ orders, isLoading, error }: Props) {
         {isLoading && (
           <div className="space-y-3">
             {[0, 1, 2].map((i) => (
-              <div
-                key={i}
-                className="h-20 animate-pulse rounded-xl bg-cream"
-              />
+              <div key={i} className="h-20 animate-pulse rounded-xl bg-cream" />
             ))}
           </div>
         )}
@@ -82,7 +79,7 @@ export function RecentOrders({ orders, isLoading, error }: Props) {
             <p className="text-text-muted">You have no orders yet.</p>
             <Link
               href="/shop"
-              className="mt-3 inline-block rounded-xl bg-primary px-6 py-3 text-sm font-bold text-white shadow-sm transition-all hover:bg-primary-dark hover:shadow-md"
+              className="mt-3 inline-block rounded-xl bg-primary px-6 py-3 text-sm font-bold text-white transition-all hover:bg-primary-dark hover:shadow-md"
             >
               Start shopping
             </Link>
@@ -97,7 +94,7 @@ export function RecentOrders({ orders, isLoading, error }: Props) {
               return (
                 <li
                   key={order.id}
-                  className="flex items-center gap-4 rounded-xl border border-[#E0DED9] p-3"
+                  className="flex items-center gap-4 rounded-xl bg-cream p-3"
                 >
                   <span className="size-14 shrink-0 overflow-hidden rounded-xl bg-cream">
                     {thumb ? (

@@ -43,7 +43,7 @@ export function StyleCard({
       </Card>
 
       {hasOptions && (
-        <div className="animate-in slide-in-from-top-2 fade-in duration-300 bg-cream rounded-xl border border-[#E0DED9] mt-2 shadow-sm">
+        <div className="animate-in slide-in-from-top-2 fade-in duration-300 bg-cream rounded-xl mt-2">
           <StyleOptionsForm
             options={style.templateVarOptions!}
             value={selections}

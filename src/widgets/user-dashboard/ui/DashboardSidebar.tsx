@@ -14,6 +14,7 @@ const navItems: NavItem[] = [
   { label: "Dashboard", icon: "grid_view", href: "/user" },
   { label: "Orders", icon: "receipt_long", href: "/user/orders" },
   { label: "My Artwork", icon: "palette", href: "/user/generations" },
+  { label: "My Pets", icon: "pets", href: "/user/pets" },
   { label: "Addresses", icon: "location_on" },
   { label: "Payment Methods", icon: "credit_card" },
   { label: "Account Settings", icon: "settings", href: "/user/profile" },
@@ -24,7 +25,7 @@ export function DashboardSidebar() {
   const { logout } = useAuth();
 
   return (
-    <aside className="rounded-xl border border-[#E0DED9] bg-white p-3 shadow-sm">
+    <aside className="rounded-xl bg-white p-3">
       <nav className="flex flex-col gap-1">
         {navItems.map((item) => {
           const isActive = item.href === pathname;
