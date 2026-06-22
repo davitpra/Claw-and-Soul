@@ -57,13 +57,23 @@ export default function UserMenu() {
       {/* User Avatar Button */}
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="flex cursor-pointer items-center justify-center overflow-hidden rounded-xl h-10 w-10 bg-primary hover:bg-primary-dark text-white transition-colors shadow-sm"
+        className="flex cursor-pointer items-center justify-center overflow-hidden rounded-full h-10 w-10 bg-primary hover:bg-primary-dark text-white transition-colors shadow-sm"
         aria-label="User menu"
         aria-expanded={isOpen}
       >
-        <span className="material-symbols-outlined text-[20px]">
-          account_circle
-        </span>
+        {user?.avatarUrl ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={user.avatarUrl}
+            alt={user.fullName ?? "User avatar"}
+            className="h-full w-full object-cover"
+            referrerPolicy="no-referrer"
+          />
+        ) : (
+          <span className="material-symbols-outlined text-[20px]">
+            account_circle
+          </span>
+        )}
       </button>
 
       {/* Dropdown Menu */}
@@ -72,27 +82,10 @@ export default function UserMenu() {
           className="absolute right-0 mt-2 w-56 bg-white rounded-xl shadow-lg border border-[#E0DED9] overflow-hidden z-50 transition-all duration-200"
           role="menu"
         >
-          {/* User Info Header */}
-          <div className="px-4 py-3 border-b border-[#E0DED9] bg-cream">
-            <div className="flex items-center gap-2">
-              <span className="material-symbols-outlined text-primary text-xl">
-                account_circle
-              </span>
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-semibold text-text-main truncate">
-                  {user?.fullName || "User"}
-                </p>
-                <p className="text-xs text-text-muted truncate">
-                  {user?.email || ""}
-                </p>
-              </div>
-            </div>
-          </div>
-
           {/* Menu Items */}
           <div className="py-1">
             <Link
-              href="/user/profile"
+              href="/user"
               onClick={closeMenu}
               className="flex items-center gap-3 px-4 py-2.5 text-sm text-text-main hover:bg-cream transition-colors"
               role="menuitem"
