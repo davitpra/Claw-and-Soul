@@ -4,6 +4,7 @@ import React, { createContext, useContext, useState, useEffect, useRef } from "r
 import { useRouter } from "next/navigation";
 import {
   login as apiLogin,
+  loginWithGoogle as apiLoginWithGoogle,
   register as apiRegister,
   logout as apiLogout,
   RegisterDto,
@@ -24,6 +25,7 @@ interface AuthContextType {
   user: User | null;
   isLoading: boolean;
   login: (email: string, password: string) => Promise<void>;
+  loginWithGoogle: (idToken: string) => Promise<void>;
   register: (data: RegisterDto) => Promise<void>;
   logout: () => Promise<void>;
   checkAuth: () => void;
@@ -133,6 +135,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
+  const loginWithGoogle = async (idToken: string) => {
+    try {
+      const response = await apiLoginWithGoogle(idToken);
+
+      // Tokens are now in httpOnly cookies (set by backend)
+      // Set user from response
+      setUser(response.user);
+
+      return Promise.resolve();
+    } catch (error) {
+      console.error("Google login error in context:", error);
+      throw error;
+    }
+  };
+
   const register = async (data: RegisterDto) => {
     try {
       const response = await apiRegister(data);
@@ -184,6 +201,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         user,
         isLoading,
         login,
+        loginWithGoogle,
         register,
         logout,
         checkAuth,

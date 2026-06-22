@@ -102,6 +102,41 @@ export async function login(data: LoginDto): Promise<AuthResponse> {
   }
 }
 
+export async function loginWithGoogle(idToken: string): Promise<AuthResponse> {
+  try {
+    const response = await fetch(`${API_URL}/auth/google`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      credentials: 'include', // Include cookies in request
+      body: JSON.stringify({ idToken }),
+    });
+
+    const json = await response.json();
+
+    if (!response.ok) {
+      throw new AuthError(
+        response.status,
+        json.message || 'Error al iniciar sesión con Google'
+      );
+    }
+
+    // Backend returns user only, tokens are in httpOnly cookies
+    return {
+      user: json.data?.user,
+      accessToken: '', // Not used anymore
+      refreshToken: '', // Not used anymore
+    };
+  } catch (error) {
+    if (error instanceof AuthError) {
+      throw error;
+    }
+    console.error('Error en login con Google:', error);
+    throw new AuthError(500, 'Error de conexión al servidor');
+  }
+}
+
 export async function refreshToken(): Promise<{ accessToken: string; refreshToken: string }> {
   try {
     const response = await fetch(`${API_URL}/auth/refresh`, {

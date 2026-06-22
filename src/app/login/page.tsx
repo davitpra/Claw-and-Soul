@@ -3,12 +3,13 @@
 import Link from "next/link";
 import { useState, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import { GoogleLogin, type CredentialResponse } from "@react-oauth/google";
 import { useAuth } from "@/context/AuthContext";
 
 function LoginContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { login } = useAuth();
+  const { login, loginWithGoogle } = useAuth();
   const [formData, setFormData] = useState({
     email: "",
     password: "",
@@ -21,9 +22,9 @@ function LoginContent() {
     e.preventDefault();
     setError("");
 
-    // Validación básica
+    // Basic validation
     if (!formData.email || !formData.password) {
-      setError("Por favor completa todos los campos");
+      setError("Please fill in all fields");
       return;
     }
 
@@ -32,16 +33,50 @@ function LoginContent() {
     try {
       await login(formData.email, formData.password);
 
-      // Redirigir a la página original o al home
-      const redirectTo = searchParams.get('redirect') || '/';
+      // Redirect to the original page or home
+      const redirectTo = searchParams.get("redirect") || "/";
       router.push(redirectTo);
     } catch (err) {
-      console.error("Error en login:", err);
-      const errorMessage = err instanceof Error ? err.message : "Error al iniciar sesión. Verifica tus credenciales.";
+      console.error("Login error:", err);
+      const errorMessage =
+        err instanceof Error
+          ? err.message
+          : "Failed to log in. Please check your credentials.";
       setError(errorMessage);
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const handleGoogleSuccess = async (
+    credentialResponse: CredentialResponse,
+  ) => {
+    setError("");
+
+    if (!credentialResponse.credential) {
+      setError("No token received from Google. Please try again.");
+      return;
+    }
+
+    setIsLoading(true);
+
+    try {
+      await loginWithGoogle(credentialResponse.credential);
+
+      const redirectTo = searchParams.get("redirect") || "/";
+      router.push(redirectTo);
+    } catch (err) {
+      console.error("Google login error:", err);
+      const errorMessage =
+        err instanceof Error ? err.message : "Failed to sign in with Google.";
+      setError(errorMessage);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleGoogleError = () => {
+    setError("Failed to sign in with Google. Please try again.");
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -52,71 +87,119 @@ function LoginContent() {
   };
 
   return (
-    <div className="flex min-h-screen w-full">
-      {/* Left Side: Heartwarming Image */}
-      <div className="hidden lg:flex lg:w-1/2 relative overflow-hidden">
+    <div className="flex min-h-screen w-full bg-background-light">
+      {/* Left panel: heartwarming image */}
+      <div className="relative hidden overflow-hidden lg:flex lg:w-1/2">
         <div
-          className="absolute inset-0 bg-cover bg-center"
+          className="absolute inset-0 bg-cover bg-center transition-transform duration-700 hover:scale-105"
           style={{
             backgroundImage: `url("https://lh3.googleusercontent.com/aida-public/AB6AXuBnLbQiMdExM2MPf5-ytmXYmp3L_VRTpWfVfcrwMX2LVUpfH_nVYZZztbz1udhWTqZV0WBWE9M1uwdfVmXfVxXPso8ll7j7nsOWnBHLgMXvsVdU__MS5jjA9XAuw6bvQOrgEDf4oHbKvm2c9j7ahU_8FB_4pBNDdSlOyrKxkCfVJAB2Xyl8x0BNAPMH3sDIydmdAt1eWykNv0-g7FVFcigNkfIhc0kxXOBfJe3ulIp5PO4YMnKU02ioE0AerlRcdV3js9BwYR-j-gae")`,
           }}
           role="img"
           aria-label="Happy golden retriever dog smiling with owner outdoors"
         />
-        <div className="absolute inset-0 bg-[#448da6]/20 mix-blend-multiply" />
-        <div className="absolute bottom-12 left-12 right-12 text-white z-10">
-          <h2 className="font-display text-4xl font-black mb-4 drop-shadow-md">
-            Welcome back to Claw & Soul
+        {/* Brand tint + gradient for legibility */}
+        <div className="absolute inset-0 bg-primary/15 mix-blend-multiply" />
+        <div className="absolute inset-0 bg-linear-to-t from-slate-dark/80 via-slate-dark/20 to-transparent" />
+
+        {/* Logo */}
+        <Link
+          href="/"
+          className="absolute left-10 top-10 z-10 flex items-center gap-2 text-white"
+        >
+          <h2 className="font-display text-white text-lg lg:text-2xl font-black leading-tight tracking-[-0.015em] hidden sm:block">
+            Claw & Soul
           </h2>
-          <p className="text-lg opacity-90 drop-shadow-sm max-w-md">
-            Continue creating personalized memories that last a lifetime.
+        </Link>
+
+        {/* Welcome message */}
+        <div className="absolute inset-x-10 bottom-12 z-10 text-white">
+          <h2 className="max-w-md font-display text-4xl font-black leading-tight drop-shadow-md">
+            Your pet&apos;s soul, turned into art
+          </h2>
+          <p className="mt-3 max-w-md text-lg text-white/90 drop-shadow-sm">
+            Log in to keep creating personalized memories that last a lifetime.
           </p>
+
+          {/* Floating trust card */}
+          <div className="mt-8 inline-flex items-center gap-3 rounded-xl bg-white/95 px-4 py-3 shadow-xl backdrop-blur">
+            <span className="text-base tracking-tight text-yellow-500">
+              ★★★★★
+            </span>
+            <p className="text-sm font-bold text-slate-dark">
+              Loved by thousands of families
+            </p>
+          </div>
         </div>
       </div>
 
-      {/* Right Side: Login Form */}
-      <div className="w-full lg:w-1/2 flex items-center justify-center p-8">
-        <div className="max-w-[480px] w-full flex flex-col gap-8">
+      {/* Right panel: form */}
+      <div className="flex w-full items-center justify-center px-6 py-12 lg:w-1/2 lg:px-8">
+        <div className="flex w-full max-w-105 flex-col gap-8">
+          {/* Logo on mobile */}
+          <Link
+            href="/"
+            className="flex items-center gap-2 text-text-main lg:hidden"
+          >
+            <h2 className="font-display text-text-main text-lg lg:text-2xl font-black leading-tight tracking-[-0.015em] hidden sm:block">
+              Claw & Soul
+            </h2>
+          </Link>
+
           {/* Header */}
           <div className="flex flex-col gap-2">
-            <Link href="/" className="flex items-center gap-2 mb-4">
-              <span className="material-symbols-outlined text-[#448da6] text-3xl">
-                pets
-              </span>
-              <span className="text-xl font-bold tracking-tight font-display">
-                Claw and Soul
-              </span>
-            </Link>
-            <h1 className="font-display text-[#103642] dark:text-[#f0eee9] text-3xl font-black leading-tight tracking-tight sm:text-4xl">
+            <h1 className="font-display text-3xl font-black leading-tight tracking-tight text-text-main sm:text-4xl">
               Welcome back
             </h1>
-            <p className="text-[#103642]/70 dark:text-[#f0eee9]/70 text-base">
+            <p className="text-base text-text-muted">
               Log in to your account to continue.
             </p>
           </div>
 
-          {/* Error Message */}
+          {/* Error message */}
           {error && (
-            <div className="flex items-center gap-2 p-4 bg-red-50 border border-red-200 rounded-lg">
-              <span className="material-symbols-outlined text-red-600 text-xl">
+            <div className="flex items-center gap-2.5 rounded-xl border border-red-200 bg-red-50 p-4">
+              <span className="material-symbols-outlined text-xl text-red-600">
                 error
               </span>
-              <p className="text-sm text-red-600">{error}</p>
+              <p className="text-sm font-medium text-red-600">{error}</p>
             </div>
           )}
+          {/* Google login */}
+          <div className="flex w-full justify-center scheme:light">
+            <GoogleLogin
+              onSuccess={handleGoogleSuccess}
+              onError={handleGoogleError}
+              theme="outline"
+              size="large"
+              shape="pill"
+              text="continue_with"
+              logo_alignment="left"
+              width="400"
+            />
+          </div>
+
+          {/* Divider */}
+          <div className="flex items-center gap-4">
+            <div className="h-px flex-1 bg-[#E0DED9]" />
+            <span className="text-xs font-medium uppercase tracking-wider text-text-muted">
+              or continue with
+            </span>
+            <div className="h-px flex-1 bg-[#E0DED9]" />
+          </div>
 
           {/* Form */}
-          <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+          <form onSubmit={handleSubmit} className="flex flex-col gap-5">
             {/* Email */}
             <div className="flex flex-col gap-1.5">
               <label
                 htmlFor="email"
-                className="text-sm font-semibold text-[#103642] dark:text-[#f0eee9]"
+                className="text-sm font-semibold text-text-main"
               >
                 Email Address
               </label>
-              <div className="relative">
-                <span className="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-[#6c7a7f] text-xl">
+              <div className="group relative">
+                <span className="material-symbols-outlined pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-xl text-text-muted transition-colors group-focus-within:text-primary">
                   mail
                 </span>
                 <input
@@ -125,7 +208,7 @@ function LoginContent() {
                   type="email"
                   value={formData.email}
                   onChange={handleChange}
-                  className="flex w-full rounded-lg text-[#103642] focus:ring-2 focus:ring-[#448da6]/20 border border-[#dee2e3] bg-white focus:border-[#448da6] h-12 pl-12 pr-4 placeholder:text-[#6c7a7f] text-base font-normal outline-none transition-colors"
+                  className="h-12 w-full rounded-xl border border-[#E0DED9] bg-white pl-12 pr-4 text-base text-text-main outline-none transition-all placeholder:text-text-muted focus:border-primary focus:ring-2 focus:ring-primary/30"
                   placeholder="name@example.com"
                   required
                 />
@@ -137,19 +220,19 @@ function LoginContent() {
               <div className="flex items-center justify-between">
                 <label
                   htmlFor="password"
-                  className="text-sm font-semibold text-[#103642] dark:text-[#f0eee9]"
+                  className="text-sm font-semibold text-text-main"
                 >
                   Password
                 </label>
                 <Link
                   href="/forgot-password"
-                  className="text-sm text-[#448da6] hover:underline font-medium"
+                  className="text-sm font-medium text-primary transition-colors hover:text-primary-dark"
                 >
                   Forgot password?
                 </Link>
               </div>
-              <div className="relative">
-                <span className="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-[#6c7a7f] text-xl">
+              <div className="group relative">
+                <span className="material-symbols-outlined pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-xl text-text-muted transition-colors group-focus-within:text-primary">
                   lock
                 </span>
                 <input
@@ -158,14 +241,15 @@ function LoginContent() {
                   type={showPassword ? "text" : "password"}
                   value={formData.password}
                   onChange={handleChange}
-                  className="flex w-full rounded-lg text-[#103642] focus:ring-2 focus:ring-[#448da6]/20 border border-[#dee2e3] bg-white focus:border-[#448da6] h-12 pl-12 pr-12 placeholder:text-[#6c7a7f] text-base font-normal outline-none transition-colors"
+                  className="h-12 w-full rounded-xl border border-[#E0DED9] bg-white pl-12 pr-12 text-base text-text-main outline-none transition-all placeholder:text-text-muted focus:border-primary focus:ring-2 focus:ring-primary/30"
                   placeholder="Enter your password"
                   required
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-4 top-1/2 -translate-y-1/2 text-[#6c7a7f] hover:text-[#448da6] transition-colors"
+                  aria-label={showPassword ? "Hide password" : "Show password"}
+                  className="absolute right-4 top-1/2 -translate-y-1/2 text-text-muted transition-colors hover:text-primary"
                 >
                   <span className="material-symbols-outlined text-xl">
                     {showPassword ? "visibility_off" : "visibility"}
@@ -174,77 +258,40 @@ function LoginContent() {
               </div>
             </div>
 
-            {/* Remember Me */}
-            <div className="flex items-center gap-2">
+            {/* Remember me */}
+            <label
+              htmlFor="remember"
+              className="flex cursor-pointer items-center gap-2 text-sm text-text-main"
+            >
               <input
                 id="remember"
                 name="remember"
                 type="checkbox"
-                className="w-4 h-4 rounded border-[#dee2e3] text-[#448da6] focus:ring-[#448da6]/20 focus:ring-2"
+                className="h-4 w-4 rounded border-[#E0DED9] accent-primary"
               />
-              <label
-                htmlFor="remember"
-                className="text-sm text-[#103642] dark:text-[#f0eee9]"
-              >
-                Remember me for 30 days
-              </label>
-            </div>
+              Remember me for 30 days
+            </label>
 
-            {/* Login Button */}
+            {/* Log in button */}
             <button
               type="submit"
               disabled={isLoading}
-              className="mt-2 flex w-full cursor-pointer items-center justify-center rounded-lg h-12 px-5 bg-[#448da6] hover:bg-[#3b7d93] text-white text-base font-bold transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              className="mt-1 flex h-12 w-full items-center justify-center rounded-xl bg-primary px-5 text-base font-bold text-white shadow-lg shadow-primary/20 transition-all hover:bg-primary-dark hover:shadow-md disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-primary"
             >
-              {isLoading ? "Iniciando sesión..." : "Log In"}
+              {isLoading ? "Logging in..." : "Log In"}
             </button>
           </form>
 
-          {/* Divider */}
-          <div className="flex items-center gap-4 py-2">
-            <div className="h-[1px] flex-1 bg-[#dee2e3] dark:bg-white/10" />
-            <span className="text-sm text-[#6c7a7f] font-medium">OR</span>
-            <div className="h-[1px] flex-1 bg-[#dee2e3] dark:bg-white/10" />
-          </div>
-
-          {/* Social Login */}
-          <button
-            type="button"
-            className="flex w-full cursor-pointer items-center justify-center gap-3 rounded-lg h-12 px-5 border border-[#dee2e3] bg-white hover:bg-gray-50 text-[#103642] text-base font-semibold transition-colors"
-          >
-            <svg className="w-5 h-5" viewBox="0 0 24 24">
-              <path
-                d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
-                fill="#4285F4"
-              />
-              <path
-                d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
-                fill="#34A853"
-              />
-              <path
-                d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z"
-                fill="#FBBC05"
-              />
-              <path
-                d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
-                fill="#EA4335"
-              />
-            </svg>
-            <span>Continue with Google</span>
-          </button>
-
           {/* Footer */}
-          <div className="text-center">
-            <p className="text-sm text-[#103642]/70 dark:text-[#f0eee9]/70">
-              Don't have an account?{" "}
-              <Link
-                href="/signup"
-                className="text-[#448da6] font-bold hover:underline"
-              >
-                Sign Up
-              </Link>
-            </p>
-          </div>
+          <p className="text-center text-sm text-text-muted">
+            Don&apos;t have an account?{" "}
+            <Link
+              href="/signup"
+              className="font-bold text-primary transition-colors hover:text-primary-dark"
+            >
+              Sign Up
+            </Link>
+          </p>
         </div>
       </div>
     </div>
@@ -253,7 +300,11 @@ function LoginContent() {
 
 export default function LoginPage() {
   return (
-    <Suspense fallback={<div className="min-h-screen flex items-center justify-center" />}>
+    <Suspense
+      fallback={
+        <div className="flex min-h-screen items-center justify-center bg-background-light" />
+      }
+    >
       <LoginContent />
     </Suspense>
   );

@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Epilogue, Lato } from "next/font/google";
 import "./globals.css";
+import { GoogleOAuthProvider } from "@react-oauth/google";
 import { CartProvider } from "@/context/CartContext";
 import { AuthProvider } from "@/context/AuthContext";
 
@@ -43,9 +44,13 @@ export default function RootLayout({
       <body
         className={`${epilogue.variable} ${lato.variable} antialiased bg-background-light dark:bg-background-dark text-text-main font-body`}
       >
-        <AuthProvider>
-          <CartProvider>{children}</CartProvider>
-        </AuthProvider>
+        <GoogleOAuthProvider
+          clientId={process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID ?? ""}
+        >
+          <AuthProvider>
+            <CartProvider>{children}</CartProvider>
+          </AuthProvider>
+        </GoogleOAuthProvider>
       </body>
     </html>
   );
