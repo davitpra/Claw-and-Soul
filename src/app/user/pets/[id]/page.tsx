@@ -14,11 +14,8 @@ export default async function UserPetDetailPage({
   const { id } = await params;
 
   return (
-    <Container className="py-10">
-      <DashboardTabs />
-      <div className="mt-8">
-        <PetDetail petId={id} />
-      </div>
+    <Container>
+      <PetDetail petId={id} />
     </Container>
   );
 }

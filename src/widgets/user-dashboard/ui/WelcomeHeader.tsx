@@ -15,8 +15,15 @@ const roleLabels: Record<string, string> = {
   admin: "Admin",
 };
 
-export function WelcomeHeader({ user }: { user: AccountUser | null }) {
-  const firstName = user?.fullName?.trim().split(/\s+/)[0] || "Buddy";
+export function WelcomeHeader({
+  user,
+  title,
+  subtitle,
+}: {
+  user: AccountUser | null;
+  title: string;
+  subtitle: string;
+}) {
   const role = user?.role ?? "user";
 
   return (
@@ -26,11 +33,9 @@ export function WelcomeHeader({ user }: { user: AccountUser | null }) {
           Account
         </p>
         <h1 className="font-display font-black mt-1 text-3xl text-text-main sm:text-4xl">
-          Welcome back, {firstName}!
+          {title}
         </h1>
-        <p className="mt-2 text-text-muted">
-          Manage your orders, artworks, and account details all in one place.
-        </p>
+        <p className="mt-2 text-text-muted">{subtitle}</p>
       </div>
 
       <div className="flex items-center gap-4 rounded-xl bg-white p-4">

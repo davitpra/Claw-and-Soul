@@ -1,5 +1,4 @@
 import { Container } from "@/shared/ui/Container";
-import { DashboardTabs } from "@/widgets/user-dashboard/ui/DashboardTabs";
 
 export const metadata = {
   title: "My Artworks — Claw & Soul",
@@ -7,9 +6,8 @@ export const metadata = {
 
 export default function UserGenerationsPage() {
   return (
-    <Container className="py-10">
-      <DashboardTabs />
-      <div className="mt-8 rounded-xl bg-white p-8">
+    <Container className="pb-10">
+      <div className="rounded-xl bg-white p-8">
         <h1 className="font-display text-2xl font-black text-text-main">
           My Artworks
         </h1>

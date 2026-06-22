@@ -15,8 +15,6 @@ import type {
   UserPet,
   UserProfile,
 } from "@/entities/order/types";
-import { DashboardTabs } from "./DashboardTabs";
-import { WelcomeHeader } from "./WelcomeHeader";
 import { RecentOrders } from "./RecentOrders";
 import { MyArtworks } from "./MyArtworks";
 import { MyPets } from "./MyPets";
@@ -120,14 +118,8 @@ export function UserDashboard() {
 
   return (
     <>
-      <Container className="py-10">
-        <WelcomeHeader user={profile} />
-
-        <div className="mt-8">
-          <DashboardTabs />
-        </div>
-
-        <div className="mt-8 space-y-8">
+      <Container className="pb-10">
+        <div className="space-y-8">
           <RecentOrders
             orders={orders}
             isLoading={ordersLoading}

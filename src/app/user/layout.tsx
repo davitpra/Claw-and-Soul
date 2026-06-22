@@ -4,6 +4,7 @@ import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Navbar } from "@/widgets/navbar";
 import { Footer } from "@/widgets/footer";
+import { DashboardHeader } from "@/widgets/user-dashboard";
 import { useAuth } from "@/context/AuthContext";
 
 export default function UserLayout({
@@ -28,7 +29,10 @@ export default function UserLayout({
   return (
     <div className="flex min-h-screen flex-col bg-white font-body text-text-main">
       <Navbar />
-      <main className="flex-1">{children}</main>
+      <main className="flex-1">
+        <DashboardHeader />
+        {children}
+      </main>
       <Footer />
     </div>
   );

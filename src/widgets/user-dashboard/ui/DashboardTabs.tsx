@@ -29,8 +29,7 @@ export function DashboardTabs() {
           const isActive =
             tab.href === "/user"
               ? pathname === "/user"
-              : pathname === tab.href ||
-                pathname.startsWith(`${tab.href}/`);
+              : pathname === tab.href || pathname.startsWith(`${tab.href}/`);
 
           return (
             <Link
@@ -42,9 +41,9 @@ export function DashboardTabs() {
                   : "text-text-muted hover:bg-cream"
               }`}
             >
-              <span className="material-symbols-outlined text-[20px]">
+              {/* <span className="material-symbols-outlined text-[20px]">
                 {tab.icon}
-              </span>
+              </span> */}
               {tab.label}
             </Link>
           );

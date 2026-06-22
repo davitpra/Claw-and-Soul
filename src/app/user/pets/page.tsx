@@ -1,6 +1,5 @@
 import { redirect } from "next/navigation";
 import { Container } from "@/shared/ui/Container";
-import { DashboardTabs } from "@/widgets/user-dashboard/ui/DashboardTabs";
 import { AllPets } from "@/widgets/user-dashboard/ui/AllPets";
 import { getPetsServer } from "@/lib/auth/server-fetch";
 
@@ -16,11 +15,8 @@ export default async function UserPetsPage() {
   }
 
   return (
-    <Container className="py-10">
-      <DashboardTabs />
-      <div className="mt-8">
-        <AllPets initialPets={result.data} />
-      </div>
+    <Container className="pb-10">
+      <AllPets initialPets={result.data} />
     </Container>
   );
 }

@@ -71,7 +71,10 @@ export function MyPets({ pets, isLoading, error }: Props) {
                   className="block overflow-hidden shadow-sm transition-all hover:shadow-md"
                 >
                   {photoUrl ? (
-                    <Card imageUrl={cloudinaryThumb(photoUrl, 400)} imageAlt={pet.name}>
+                    <Card
+                      imageUrl={cloudinaryThumb(photoUrl, 400)}
+                      imageAlt={pet.name}
+                    >
                       <div className="absolute inset-x-0 bottom-0 bg-linear-to-t from-black/70 to-transparent p-3">
                         <p className="truncate font-display text-sm font-bold text-white">
                           {pet.name}

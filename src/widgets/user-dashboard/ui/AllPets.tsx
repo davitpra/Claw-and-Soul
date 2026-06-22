@@ -54,11 +54,6 @@ export function AllPets({ initialPets }: Props) {
 
   return (
     <section className="rounded-xl bg-white p-8">
-      <h1 className="font-display text-2xl font-black text-text-main">My Pets</h1>
-      <p className="mt-2 text-text-muted">
-        All the pets you&apos;ve added to your account.
-      </p>
-
       <div className="mt-6">
         {isLoading && (
           <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4">
@@ -96,7 +91,10 @@ export function AllPets({ initialPets }: Props) {
                   className="block overflow-hidden shadow-sm transition-all hover:shadow-md"
                 >
                   {photoUrl ? (
-                    <Card imageUrl={cloudinaryThumb(photoUrl, 400)} imageAlt={pet.name}>
+                    <Card
+                      imageUrl={cloudinaryThumb(photoUrl, 400)}
+                      imageAlt={pet.name}
+                    >
                       <div className="absolute inset-x-0 bottom-0 bg-linear-to-t from-black/70 to-transparent p-3">
                         <p className="truncate font-display text-sm font-bold text-white">
                           {pet.name}
