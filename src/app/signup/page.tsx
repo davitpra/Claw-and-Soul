@@ -178,7 +178,7 @@ export default function SignUpPage() {
           )}
 
           {/* Google sign up */}
-          <div className="flex w-full justify-center [color-scheme:light]">
+          <div className="flex w-full justify-center scheme:light">
             <GoogleLogin
               onSuccess={handleGoogleSuccess}
               onError={handleGoogleError}

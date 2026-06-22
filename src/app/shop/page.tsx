@@ -2,7 +2,8 @@
 
 import { Navbar } from "@/widgets/navbar";
 import { Footer } from "@/widgets/footer";
-import { useState, useEffect } from "react";
+import { Suspense, useState, useEffect } from "react";
+import { useSearchParams } from "next/navigation";
 import { getProducts } from "@/lib/shopify";
 import { Product } from "@/entities/pet-product/model/types";
 import { ProductCard } from "@/entities/pet-product/ui/ProductCard";
@@ -10,17 +11,23 @@ import { ProductCard } from "@/entities/pet-product/ui/ProductCard";
 // Producto de entidad + la categoría usada por el filtro del shop.
 type ShopProduct = Product & { category: string };
 
-export default function ShopPage() {
+function ShopContent() {
+  const searchParams = useSearchParams();
+  const searchQuery = searchParams.get("q")?.trim() ?? "";
+
   const [activeCategory, setActiveCategory] = useState("All Products");
   const [products, setProducts] = useState<ShopProduct[]>([]);
   const [loading, setLoading] = useState(true);
   const [categories, setCategories] = useState<string[]>(["All Products"]);
 
-  // Fetch products from Shopify
+  // Fetch products from Shopify (filtrados por la búsqueda si la hay)
   useEffect(() => {
+    setLoading(true);
+    setActiveCategory("All Products");
+
     async function fetchProducts() {
       try {
-        const fetchedData = await getProducts(20);
+        const fetchedData = await getProducts(20, searchQuery || undefined);
 
         console.log("Fetched products from Shopify:", fetchedData);
         console.log("Total products fetched:", fetchedData.length);
@@ -79,7 +86,7 @@ export default function ShopPage() {
     }
 
     fetchProducts();
-  }, []);
+  }, [searchQuery]);
 
   return (
     <div className="relative flex min-h-screen w-full flex-col overflow-x-clip bg-white">
@@ -89,16 +96,34 @@ export default function ShopPage() {
         <div className="container-site flex flex-col items-center">
           {/* Hero Section */}
           <div className="text-center mb-10 md:mb-14 max-w-2xl">
-            <span className="text-primary font-bold tracking-widest text-xs uppercase mb-3 block">
-              Handcrafted for Happiness
-            </span>
-            <h1 className="font-display text-4xl md:text-5xl font-black text-secondary mb-4 leading-tight">
-              Our Soulful Collection
-            </h1>
-            <p className="text-secondary/70 text-lg leading-relaxed">
-              Discover personalized treasures designed to celebrate the
-              unconditional love of your furry companions.
-            </p>
+            {searchQuery ? (
+              <>
+                <span className="text-primary font-bold tracking-widest text-xs uppercase mb-3 block">
+                  Search Results
+                </span>
+                <h1 className="font-display text-4xl md:text-5xl font-black text-secondary mb-4 leading-tight">
+                  &ldquo;{searchQuery}&rdquo;
+                </h1>
+                <p className="text-secondary/70 text-lg leading-relaxed">
+                  {loading
+                    ? "Searching our collection..."
+                    : `${products.length} ${products.length === 1 ? "result" : "results"} found.`}
+                </p>
+              </>
+            ) : (
+              <>
+                <span className="text-primary font-bold tracking-widest text-xs uppercase mb-3 block">
+                  Handcrafted for Happiness
+                </span>
+                <h1 className="font-display text-4xl md:text-5xl font-black text-secondary mb-4 leading-tight">
+                  Our Soulful Collection
+                </h1>
+                <p className="text-secondary/70 text-lg leading-relaxed">
+                  Discover personalized treasures designed to celebrate the
+                  unconditional love of your furry companions.
+                </p>
+              </>
+            )}
           </div>
 
           {/* Categories */}
@@ -132,12 +157,25 @@ export default function ShopPage() {
               {/* Product Grid */}
               {products.length === 0 ? (
                 <div className="text-center py-20">
-                  <p className="text-secondary/60 text-xl">
-                    No products found in your Shopify store.
-                  </p>
-                  <p className="text-secondary/40 mt-2">
-                    Add some products in your Shopify Admin to see them here.
-                  </p>
+                  {searchQuery ? (
+                    <>
+                      <p className="text-secondary/60 text-xl">
+                        No products match &ldquo;{searchQuery}&rdquo;.
+                      </p>
+                      <p className="text-secondary/40 mt-2">
+                        Try a different search term.
+                      </p>
+                    </>
+                  ) : (
+                    <>
+                      <p className="text-secondary/60 text-xl">
+                        No products found in your Shopify store.
+                      </p>
+                      <p className="text-secondary/40 mt-2">
+                        Add some products in your Shopify Admin to see them here.
+                      </p>
+                    </>
+                  )}
                 </div>
               ) : (
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 w-full items-center">
@@ -173,5 +211,23 @@ export default function ShopPage() {
 
       <Footer />
     </div>
+  );
+}
+
+export default function ShopPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="relative flex min-h-screen w-full flex-col overflow-x-clip bg-white">
+          <Navbar />
+          <main className="grow w-full flex justify-center items-center py-32">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+          </main>
+          <Footer />
+        </div>
+      }
+    >
+      <ShopContent />
+    </Suspense>
   );
 }

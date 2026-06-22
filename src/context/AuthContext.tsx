@@ -94,14 +94,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const checkAuth = async () => {
     try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api'}/auth/me`, {
+      // Usamos /users/me (no /auth/me) porque /auth/me devuelve un usuario
+      // mínimo (id, email, role) sin fullName ni avatarUrl. Al refrescar,
+      // checkAuth repuebla `user`, así que si usáramos /auth/me se perdería
+      // el avatar. /users/me devuelve el perfil completo directamente en data.
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api'}/users/me`, {
         method: 'GET',
         credentials: 'include',
       });
 
       if (response.ok) {
         const data = await response.json();
-        setUser(data.data?.user || null);
+        setUser(data.data || null);
       } else {
         setUser(null);
       }

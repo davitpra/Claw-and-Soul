@@ -2,8 +2,9 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useState, useEffect, useRef } from "react";
+import type { FormEvent } from "react";
 
 import { useCart } from "@/context/CartContext";
 import { useAuth } from "@/context/AuthContext";
@@ -11,12 +12,23 @@ import UserMenu from "./UserMenu";
 
 export default function Navbar() {
   const pathname = usePathname();
+  const router = useRouter();
   const { cartCount } = useCart();
   const { isAuthenticated, isLoading } = useAuth();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [searchTerm, setSearchTerm] = useState("");
   const [scrolled, setScrolled] = useState(false);
   const [hidden, setHidden] = useState(false);
   const lastScrollY = useRef(0);
+
+  // Navega a la página de tienda con el término de búsqueda como query param.
+  const handleSearch = (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    const term = searchTerm.trim();
+    if (!term) return;
+    router.push(`/shop?q=${encodeURIComponent(term)}`);
+    setMobileMenuOpen(false);
+  };
 
   // Cierra el menú móvil al cambiar de ruta sin un effect (patrón "setState during render").
   const [prevPathname, setPrevPathname] = useState(pathname);
@@ -115,7 +127,10 @@ export default function Navbar() {
             {/* Right Side Actions */}
             <div className="flex items-center gap-3 lg:gap-4">
               {/* Search Bar - Desktop */}
-              <div className="hidden xl:flex items-center">
+              <form
+                onSubmit={handleSearch}
+                className="hidden lg:flex items-center"
+              >
                 <div className="relative group">
                   <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                     <span className="material-symbols-outlined text-[18px] text-text-muted group-focus-within:text-primary transition-colors">
@@ -124,15 +139,18 @@ export default function Navbar() {
                   </div>
                   <input
                     type="search"
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
                     className="w-48 xl:w-64 h-10 pl-10 pr-4 rounded-xl border border-[#E0DED9] bg-white/50 focus:bg-white text-sm text-text-main placeholder:text-text-muted focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all"
                     placeholder="Search gifts..."
                   />
                 </div>
-              </div>
+              </form>
 
-              {/* Search Icon - Mobile */}
+              {/* Search Icon - Mobile (abre el menú con el buscador) */}
               <button
-                className="xl:hidden flex items-center justify-center size-10 rounded-xl bg-white/50 hover:bg-white border border-transparent hover:border-[#E0DED9] text-text-main transition-all shadow-sm"
+                onClick={() => setMobileMenuOpen(true)}
+                className="lg:hidden flex items-center justify-center size-10 rounded-xl bg-white/50 hover:bg-white border border-transparent hover:border-[#E0DED9] text-text-main transition-all shadow-sm"
                 aria-label="Search"
               >
                 <span className="material-symbols-outlined text-[20px]">
@@ -167,7 +185,7 @@ export default function Navbar() {
               {/* Cart */}
               <Link
                 href="/cart"
-                className="flex items-center justify-center size-10 rounded-xl bg-white hover:bg-gray-50 border border-transparent hover:border-[#E0DED9] text-text-main transition-all shadow-sm hover:shadow-md relative group"
+                className="flex items-center justify-center size-10 rounded-full bg-white hover:bg-gray-50 border border-transparent hover:border-[#E0DED9] text-text-main transition-all shadow-sm hover:shadow-md relative group"
                 aria-label="Shopping cart"
               >
                 <span className="material-symbols-outlined text-[22px] group-hover:scale-110 transition-transform">
@@ -212,7 +230,10 @@ export default function Navbar() {
       >
         <div className="flex flex-col h-full overflow-y-auto">
           {/* Search Bar - Mobile */}
-          <div className="p-4 border-b border-[#E0DED9]">
+          <form
+            onSubmit={handleSearch}
+            className="p-4 border-b border-[#E0DED9]"
+          >
             <div className="relative">
               <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                 <span className="material-symbols-outlined text-[18px] text-text-muted">
@@ -221,11 +242,13 @@ export default function Navbar() {
               </div>
               <input
                 type="search"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
                 className="w-full h-11 pl-10 pr-4 rounded-xl border border-[#E0DED9] bg-white text-sm text-text-main placeholder:text-text-muted focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all"
                 placeholder="Search gifts..."
               />
             </div>
-          </div>
+          </form>
 
           {/* Navigation Links */}
           <nav className="flex-1 p-4 space-y-1">

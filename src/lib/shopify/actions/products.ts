@@ -7,12 +7,13 @@ import { ShopifyProduct } from "../types";
  */
 export async function getProducts(
   first: number = 20,
+  query?: string,
 ): Promise<ShopifyProduct[]> {
   const response = await shopifyFetch<{
     products: { edges: { node: ShopifyProduct }[] };
   }>({
     query: GET_PRODUCTS,
-    variables: { first },
+    variables: { first, query },
   });
 
   return response.data.products.edges.map((edge) => edge.node);
