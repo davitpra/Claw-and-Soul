@@ -13,6 +13,7 @@ export interface AccountUser {
   fullName?: string | null;
   email?: string;
   role?: string;
+  avatarUrl?: string | null;
 }
 
 export interface PaginatedResult<T> {
@@ -95,6 +96,7 @@ export interface UserProfile {
   id: string;
   email: string;
   fullName: string | null;
+  avatarUrl: string | null;
   role: string;
   emailVerified: boolean;
   isActive: boolean;

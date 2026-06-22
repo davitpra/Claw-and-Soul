@@ -61,6 +61,7 @@ export function DashboardHeader() {
     fullName: user?.fullName,
     email: user?.email,
     role: user?.role,
+    avatarUrl: user?.avatarUrl,
   });
 
   useEffect(() => {
@@ -73,6 +74,7 @@ export function DashboardHeader() {
             fullName: res.data.fullName,
             email: res.data.email,
             role: res.data.role,
+            avatarUrl: res.data.avatarUrl,
           });
         }
       })
@@ -89,9 +91,8 @@ export function DashboardHeader() {
   const { title, subtitle } = headerCopy(pathname, firstName);
 
   return (
-    <Container className="pb-8 pt-12">
+    <Container className="py-12">
       <WelcomeHeader user={profile} title={title} subtitle={subtitle} />
-
       <div className="mt-8">
         <DashboardTabs />
       </div>

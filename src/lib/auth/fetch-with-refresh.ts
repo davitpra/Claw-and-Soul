@@ -18,6 +18,32 @@ let isRefreshing = false;
 let refreshPromise: Promise<void> | null = null;
 
 /**
+ * Refresh the token at most once concurrently within this tab.
+ *
+ * Both the 401-retry path below and the proactive timer in AuthContext go
+ * through this single mutex so two refresh requests never race with the same
+ * refresh-token cookie (a race that would mint duplicate active sessions on the
+ * backend and make one device show up as several).
+ */
+export async function ensureFreshToken(): Promise<void> {
+  if (isRefreshing && refreshPromise) {
+    return refreshPromise;
+  }
+
+  isRefreshing = true;
+  refreshPromise = (async () => {
+    try {
+      await refreshToken();
+    } finally {
+      isRefreshing = false;
+      refreshPromise = null;
+    }
+  })();
+
+  return refreshPromise;
+}
+
+/**
  * Fetch wrapper that automatically refreshes tokens on 401 errors
  */
 export async function fetchWithRefresh(
@@ -40,24 +66,9 @@ export async function fetchWithRefresh(
     return response;
   }
 
-  // Token is expired or invalid, try to refresh
+  // Token is expired or invalid, try to refresh (deduped via the shared mutex)
   try {
-    // If already refreshing, wait for that refresh to complete
-    if (isRefreshing && refreshPromise) {
-      await refreshPromise;
-    } else {
-      // Start a new refresh
-      isRefreshing = true;
-      refreshPromise = (async () => {
-        try {
-          await refreshToken();
-        } finally {
-          isRefreshing = false;
-          refreshPromise = null;
-        }
-      })();
-      await refreshPromise;
-    }
+    await ensureFreshToken();
 
     // Retry the original request with the new token
     response = await fetch(url, enhancedOptions);

@@ -2,11 +2,17 @@
 
 import { useAuthFetch } from "@/hooks/useAuthFetch";
 import { useEffect, useState } from "react";
+import type { ApiEnvelope } from "@/entities/order/types";
+import { parseUserAgent } from "../lib/parse-user-agent";
 
 interface Session {
   id: string;
   createdAt: string;
   expiresAt: string;
+  lastUsedAt?: string;
+  userAgent?: string | null;
+  ipAddress?: string | null;
+  isCurrent?: boolean;
 }
 
 export function ActiveSessions() {
@@ -22,10 +28,10 @@ export function ActiveSessions() {
   const loadSessions = async () => {
     try {
       setLoading(true);
-      const data = await get<{ sessions: Session[]; total: number }>(
+      const res = await get<ApiEnvelope<{ sessions: Session[]; total: number }>>(
         "/auth/sessions"
       );
-      setSessions(data.sessions);
+      setSessions(res.data?.sessions ?? []);
       setError("");
     } catch (err) {
       console.error("Error loading sessions:", err);
@@ -56,10 +62,12 @@ export function ActiveSessions() {
     }
 
     try {
-      const result = await post<{ message: string; count: number }>(
+      const res = await post<ApiEnvelope<{ message: string; count: number }>>(
         "/auth/sessions/revoke-all"
       );
-      alert(`Successfully logged out from ${result.count} other device(s)`);
+      alert(
+        `Successfully logged out from ${res.data?.count ?? 0} other device(s)`
+      );
       await loadSessions();
     } catch (err) {
       console.error("Error revoking sessions:", err);
@@ -75,7 +83,7 @@ export function ActiveSessions() {
   if (loading) {
     return (
       <div className="flex items-center justify-center p-8">
-        <div className="text-[#6c7a7f]">Loading sessions...</div>
+        <div className="text-text-muted">Loading sessions...</div>
       </div>
     );
   }
@@ -84,10 +92,10 @@ export function ActiveSessions() {
     <div className="flex flex-col gap-6">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="font-display text-2xl font-black text-[#103642] dark:text-[#f0eee9]">
+          <h2 className="font-display text-xl font-black text-text-main">
             Active Sessions
           </h2>
-          <p className="text-sm text-[#6c7a7f] mt-1">
+          <p className="text-sm text-text-muted mt-1">
             Manage your active login sessions across all devices
           </p>
         </div>
@@ -109,38 +117,42 @@ export function ActiveSessions() {
 
       <div className="flex flex-col gap-3">
         {sessions.length === 0 ? (
-          <div className="p-8 text-center text-[#6c7a7f]">
+          <div className="p-8 text-center text-text-muted">
             No active sessions found
           </div>
         ) : (
-          sessions.map((session, index) => (
+          sessions.map((session) => (
             <div
               key={session.id}
-              className="flex items-center justify-between p-4 bg-white dark:bg-[#1a2327] border border-[#dee2e3] dark:border-[#2a3337] rounded-lg"
+              className="flex items-center justify-between p-4 bg-cream/40 border border-[#dee2e3] rounded-lg"
             >
               <div className="flex items-center gap-4">
-                <span className="material-symbols-outlined text-[#448da6] text-3xl">
-                  {index === 0 ? "laptop" : "devices"}
+                <span className="material-symbols-outlined text-primary text-3xl">
+                  {session.isCurrent ? "laptop" : "devices"}
                 </span>
                 <div>
                   <div className="flex items-center gap-2">
-                    <h3 className="font-display font-black text-[#103642] dark:text-[#f0eee9]">
-                      {index === 0 ? "This device" : `Device ${index + 1}`}
+                    <h3 className="font-display font-black text-text-main">
+                      {parseUserAgent(session.userAgent)}
                     </h3>
-                    {index === 0 && (
+                    {session.isCurrent && (
                       <span className="px-2 py-0.5 bg-green-100 text-green-700 text-xs font-semibold rounded">
                         Current
                       </span>
                     )}
                   </div>
-                  <div className="text-sm text-[#6c7a7f] mt-1">
+                  <div className="text-sm text-text-muted mt-1">
+                    {session.ipAddress && <div>IP: {session.ipAddress}</div>}
                     <div>Logged in: {formatDate(session.createdAt)}</div>
+                    {session.lastUsedAt && (
+                      <div>Last active: {formatDate(session.lastUsedAt)}</div>
+                    )}
                     <div>Expires: {formatDate(session.expiresAt)}</div>
                   </div>
                 </div>
               </div>
 
-              {index !== 0 && (
+              {!session.isCurrent && (
                 <button
                   onClick={() => revokeSession(session.id)}
                   className="px-3 py-1.5 text-sm font-semibold text-red-600 hover:bg-red-50 rounded-lg transition-colors"
@@ -153,14 +165,14 @@ export function ActiveSessions() {
         )}
       </div>
 
-      <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
+      <div className="p-4 bg-primary/5 border border-primary/20 rounded-lg">
         <div className="flex gap-2">
-          <span className="material-symbols-outlined text-blue-600 text-xl">
+          <span className="material-symbols-outlined text-primary text-xl">
             info
           </span>
-          <div className="text-sm text-blue-800">
+          <div className="text-sm text-text-main">
             <p className="font-semibold mb-1">Security Tip</p>
-            <p>
+            <p className="text-text-muted">
               Sessions are automatically rotated for security. If you see
               unfamiliar devices, revoke them immediately and change your
               password.

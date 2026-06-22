@@ -1,6 +1,9 @@
 "use client";
 
+import { useState } from "react";
 import type { AccountUser } from "@/entities/order/types";
+import { cloudinaryThumb } from "@/shared/lib/cloudinary";
+import { useAvatarUpload } from "@/features/avatar";
 
 function initials(name?: string | null, email?: string) {
   const source = (name || email || "U").trim();
@@ -26,6 +29,17 @@ export function WelcomeHeader({
 }) {
   const role = user?.role ?? "user";
 
+  // Permite cambiar la foto haciendo clic en el avatar; mostramos el resultado
+  // al instante con un override local (undefined = sin override; null = quitada).
+  const [avatarOverride, setAvatarOverride] = useState<
+    string | null | undefined
+  >(undefined);
+  const avatarUrl =
+    avatarOverride !== undefined ? avatarOverride : (user?.avatarUrl ?? null);
+  const avatar = useAvatarUpload(avatarUrl, (profile) =>
+    setAvatarOverride(profile.avatarUrl),
+  );
+
   return (
     <div className="flex flex-col gap-6 sm:flex-row sm:items-center sm:justify-between">
       <div>
@@ -39,9 +53,30 @@ export function WelcomeHeader({
       </div>
 
       <div className="flex items-center gap-4 rounded-xl bg-white p-4">
-        <span className="flex size-14 items-center justify-center rounded-full bg-primary/10 text-lg font-bold text-primary">
-          {initials(user?.fullName, user?.email)}
-        </span>
+        <button
+          type="button"
+          onClick={avatar.openMenu}
+          className="group relative size-25 shrink-0 overflow-hidden rounded-full"
+          aria-label="Open profile photo options"
+        >
+          {avatarUrl ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={cloudinaryThumb(avatarUrl, 160)}
+              alt={user?.fullName || "Profile photo"}
+              className="size-full object-cover"
+            />
+          ) : (
+            <span className="flex size-full items-center justify-center bg-primary/10 text-lg font-bold text-primary">
+              {initials(user?.fullName, user?.email)}
+            </span>
+          )}
+          <span className="absolute inset-0 flex items-center justify-center bg-black/40 opacity-0 transition-opacity group-hover:opacity-100">
+            <span className="material-symbols-outlined text-[20px] text-white">
+              photo_camera
+            </span>
+          </span>
+        </button>
         <div className="min-w-0">
           <p className="truncate font-display text-base font-bold text-text-main">
             {user?.fullName || "Your account"}
@@ -52,6 +87,8 @@ export function WelcomeHeader({
           </span>
         </div>
       </div>
+
+      {avatar.elements}
     </div>
   );
 }

@@ -6,14 +6,15 @@ import {
   login as apiLogin,
   register as apiRegister,
   logout as apiLogout,
-  refreshToken as apiRefreshToken,
   RegisterDto,
 } from "@/lib/auth/client";
+import { ensureFreshToken } from "@/lib/auth/fetch-with-refresh";
 
 export interface User {
   id: string;
   email: string;
   fullName?: string;
+  avatarUrl?: string | null;
   role?: 'user' | 'premium' | 'admin';
 }
 
@@ -66,7 +67,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       refreshTimerRef.current = setTimeout(async () => {
         try {
           console.log('[Auth] Proactively refreshing token...');
-          await apiRefreshToken();
+          await ensureFreshToken();
           console.log('[Auth] Token refreshed successfully');
 
           // Schedule the next refresh
