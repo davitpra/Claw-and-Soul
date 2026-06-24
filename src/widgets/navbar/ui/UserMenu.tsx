@@ -61,7 +61,7 @@ export default function UserMenu() {
         aria-label="User menu"
         aria-expanded={isOpen}
       >
-        {user?.avatarUrl ? (
+        {/* {user?.avatarUrl ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img
             src={user.avatarUrl}
@@ -73,7 +73,10 @@ export default function UserMenu() {
           <span className="material-symbols-outlined text-[20px]">
             account_circle
           </span>
-        )}
+        )} */}
+        <span className="material-symbols-outlined text-[20px]">
+          account_circle
+        </span>
       </button>
 
       {/* Dropdown Menu */}

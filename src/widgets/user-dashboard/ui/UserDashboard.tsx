@@ -120,11 +120,6 @@ export function UserDashboard() {
     <>
       <Container className="pb-10">
         <div className="space-y-8">
-          <RecentOrders
-            orders={orders}
-            isLoading={ordersLoading}
-            error={ordersError}
-          />
           <MyArtworks
             artworks={artworks}
             isLoading={artworksLoading}
@@ -135,6 +130,11 @@ export function UserDashboard() {
             user={profile}
             address={address}
             isLoading={addressLoading}
+          />
+          <RecentOrders
+            orders={orders}
+            isLoading={ordersLoading}
+            error={ordersError}
           />
         </div>
       </Container>
