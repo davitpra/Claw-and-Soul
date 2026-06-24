@@ -40,29 +40,10 @@ import {
 } from "@/entities/admin/api";
 import ImagePreviewModal from "@/app/admin/_components/ImagePreviewModal";
 import PrintStudioModal from "./PrintStudioModal";
-
-const PRODUCTION_STATUS_LABELS: Record<string, string> = {
-  pending: "Pago pendiente",
-  paid: "Pagado",
-  in_production: "En producción",
-  shipped: "Enviado",
-  delivered: "Entregado",
-  cancelled: "Cancelado",
-  refunded: "Reembolsado",
-};
-
-const STATUS_TONES: Record<
-  string,
-  "info" | "warning" | "attention" | "success" | "enabled" | "critical"
-> = {
-  pending: "attention",
-  paid: "info",
-  in_production: "warning",
-  shipped: "attention",
-  delivered: "success",
-  cancelled: "enabled",
-  refunded: "critical",
-};
+import {
+  PRODUCTION_STATUS_LABELS,
+  PRODUCTION_STATUS_TONES as STATUS_TONES,
+} from "@/entities/admin/lib/production-status";
 
 const VALID_TRANSITIONS: Record<string, string[]> = {
   pending: ["in_production", "cancelled", "refunded"],

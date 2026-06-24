@@ -82,6 +82,32 @@ export interface AdminOrderListItem {
   items: AdminOrderItemSummary[];
 }
 
+export interface ProductionQueueItem {
+  id: string;
+  title: string;
+  productionStatus: string;
+  fulfillmentMethod: string;
+  imageUrl: string | null;
+  generation: { resultUrl: string | null; thumbnailUrl: string | null } | null;
+  podProvider: string | null;
+  podOrderId: string | null;
+}
+
+export interface ProductionQueueOrder {
+  id: string;
+  orderNumber: string;
+  customerName: string | null;
+  customerEmail: string | null;
+  userId: string | null;
+  shopifyCreatedAt: string;
+  financialStatus: string | null;
+  fulfillmentStatus: string | null;
+  fulfillmentDisplayStatus: string | null;
+  currency: string;
+  totalAmount: number;
+  items: ProductionQueueItem[];
+}
+
 export interface AdminOrderItem {
   id: string;
   shopifyLineItemId: string;
@@ -818,6 +844,17 @@ export const adminApi = {
       return adminFetch<Paginated<AdminOrderListItem>>(`/admin/orders?${p}`);
     },
     detail: (id: string) => adminFetch<AdminOrderDetail>(`/admin/orders/${id}`),
+    productionQueue: (
+      params: { method?: string; q?: string } = {},
+    ): Promise<ProductionQueueOrder[]> => {
+      const p = new URLSearchParams();
+      if (params.method) p.set('method', params.method);
+      if (params.q) p.set('q', params.q);
+      const qs = p.toString();
+      return adminFetch<ProductionQueueOrder[]>(
+        `/admin/orders/production/queue${qs ? `?${qs}` : ''}`,
+      );
+    },
     stats: (period?: '7d' | '30d' | '90d') =>
       adminFetch<OrderStats>(`/admin/orders/stats/summary?period=${period ?? '30d'}`),
     syncStatus: () => adminFetch(`/admin/orders/sync/status`),

@@ -23,29 +23,10 @@ import {
 } from "@shopify/polaris";
 import { RefreshIcon } from "@shopify/polaris-icons";
 import { adminApi, AdminOrderListItem, Paginated } from "@/entities/admin/api";
-
-const PRODUCTION_STATUS_LABELS: Record<string, string> = {
-  paid: "Pagado",
-  in_production: "En producción",
-  shipped: "Enviado",
-  delivered: "Entregado",
-  cancelled: "Cancelado",
-  refunded: "Reembolsado",
-  mixed: "Mixto",
-};
-
-const STATUS_TONES: Record<
-  string,
-  "info" | "warning" | "attention" | "success" | "enabled" | "critical"
-> = {
-  paid: "info",
-  in_production: "warning",
-  shipped: "attention",
-  delivered: "success",
-  cancelled: "enabled",
-  refunded: "critical",
-  mixed: "enabled",
-};
+import {
+  PRODUCTION_STATUS_LABELS,
+  PRODUCTION_STATUS_TONES as STATUS_TONES,
+} from "@/entities/admin/lib/production-status";
 
 function fmtDate(iso: string) {
   return new Date(iso).toLocaleDateString("es-ES", {
