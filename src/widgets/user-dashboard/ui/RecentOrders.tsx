@@ -1,6 +1,11 @@
 "use client";
 
 import Link from "next/link";
+import {
+  formatOrderDate,
+  itemThumb,
+  statusBadge,
+} from "@/entities/order/lib/presentation";
 import type { UserOrderListItem } from "@/entities/order/types";
 
 interface Props {
@@ -9,39 +14,9 @@ interface Props {
   error: string | null;
 }
 
-function formatDate(iso: string) {
-  return new Date(iso).toLocaleDateString("en-US", {
-    year: "numeric",
-    month: "short",
-    day: "numeric",
-  });
-}
-
-function statusBadge(order: UserOrderListItem) {
-  const fulfillment = order.fulfillmentStatus?.toLowerCase();
-  const financial = order.financialStatus?.toLowerCase();
-
-  if (fulfillment === "fulfilled")
-    return { label: "Delivered", classes: "bg-primary/10 text-primary" };
-  if (fulfillment === "partial")
-    return { label: "Shipping", classes: "bg-blue-100 text-blue-700" };
-  if (financial === "paid")
-    return { label: "Processing", classes: "bg-green-100 text-green-700" };
-  if (financial === "pending")
-    return { label: "Pending", classes: "bg-amber-100 text-amber-700" };
-  if (financial === "refunded" || financial === "voided")
-    return { label: "Refunded", classes: "bg-gray-100 text-gray-600" };
-  return { label: "Received", classes: "bg-gray-100 text-gray-600" };
-}
-
 function thumbFor(order: UserOrderListItem) {
   const item = order.items?.[0];
-  return (
-    item?.generation?.thumbnailUrl ||
-    item?.generation?.resultUrl ||
-    item?.imageUrl ||
-    null
-  );
+  return item ? itemThumb(item) : null;
 }
 
 export function RecentOrders({ orders, isLoading, error }: Props) {
@@ -118,7 +93,7 @@ export function RecentOrders({ orders, isLoading, error }: Props) {
                       Order #{order.orderNumber}
                     </p>
                     <p className="text-sm text-text-muted">
-                      {formatDate(order.shopifyCreatedAt)}
+                      {formatOrderDate(order.shopifyCreatedAt)}
                     </p>
                   </div>
 

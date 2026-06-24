@@ -1,0 +1,30 @@
+import { cloudinaryThumb } from "@/shared/lib/cloudinary";
+import { ProductCard } from "@/entities/pet-product/ui/ProductCard";
+import type { Product } from "@/entities/pet-product/model/types";
+import { itemThumb } from "../lib/presentation";
+import type { OrderItemThumb } from "../types";
+
+interface OrderItemRowProps {
+  item: OrderItemThumb;
+}
+
+/**
+ * Item de una orden renderizado como poster con `ProductCard`.
+ * El item solo trae título e imagen, así que se mapea a un `Product` mínimo sin
+ * precio ni badge; al no tener handle de Shopify, la card no enlaza a producto.
+ * Pensado para componerse dentro de una `<ul>` con layout de grilla.
+ */
+export function OrderItemRow({ item }: OrderItemRowProps) {
+  const product: Product = {
+    name: item.title,
+    desc: "",
+    price: "",
+    img: cloudinaryThumb(itemThumb(item), 480),
+  };
+
+  return (
+    <li className="min-w-0">
+      <ProductCard product={product} showPrice={false} showBadge={true} />
+    </li>
+  );
+}

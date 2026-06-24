@@ -29,7 +29,8 @@ export interface PaginatedResult<T> {
 export interface OrderItemThumb {
   id: string;
   title: string;
-  productionStatus: string | null;
+  // El cliente ve el estado de fulfillment de Shopify a nivel ORDEN (ver
+  // fulfillmentDisplayStatus), no estado por item. Aquí solo van datos de display.
   imageUrl: string | null;
   generation: { resultUrl: string | null; thumbnailUrl: string | null } | null;
 }
@@ -40,9 +41,31 @@ export interface UserOrderListItem {
   totalAmount: number;
   currency: string;
   financialStatus: string | null;
+  // Estado simple de fulfillment de Shopify (unfulfilled|partial|fulfilled|restocked).
   fulfillmentStatus: string | null;
+  // Estado de fulfillment "display" derivado de los FulfillmentOrders de Shopify,
+  // fiel a lo que ve el admin (in_progress|on_hold|scheduled|...). Es lo que muestra
+  // el badge del cliente; puede ser null en órdenes viejas sin resync (→ fallback).
+  fulfillmentDisplayStatus: string | null;
+  // Página de estado del pedido en Shopify (envío + tracking nativos del cliente).
+  // Puede ser null en pedidos de prueba/borrador.
+  orderStatusUrl: string | null;
   shopifyCreatedAt: string;
   items: OrderItemThumb[];
+}
+
+// Respuesta de GET /orders/:id (user-scoped). Igual que la fila de lista pero con
+// desglose de totales, dirección de envío y nota del cliente. Los items tienen un
+// shape ligero (OrderItemThumb): solo título e imagen — el estado lo da Shopify a
+// nivel orden (fulfillmentDisplayStatus / orderStatusUrl), no por item.
+// Forma verificada contra la respuesta real del backend.
+export interface UserOrderDetail extends UserOrderListItem {
+  userId?: string;
+  subtotalAmount: number;
+  shippingAmount: number | null;
+  taxAmount: number | null;
+  shippingAddress: Address | null;
+  customerNote: string | null;
 }
 
 // shippingAddress se guarda como JSON libre en la orden; campos típicos abajo.

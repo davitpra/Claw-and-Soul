@@ -34,24 +34,36 @@ export function ProductCard({
   href,
 }: ProductCardProps) {
   const badge = label ?? product.label;
-  const linkHref = href ?? `/product/${product.shopifyHandle}`;
+  // Sin href explícito ni handle de Shopify (p. ej. items de una orden) la card no
+  // enlaza a ningún sitio: se renderiza sin `<Link>` en vez de a `/product/undefined`.
+  const linkHref =
+    href ??
+    (product.shopifyHandle ? `/product/${product.shopifyHandle}` : undefined);
+
+  const poster = (
+    <Card
+      imageUrl={product.img}
+      imageAlt={product.name}
+      naturalAspect
+      className={posterClasses}
+    >
+      {showBadge && badge && (
+        <span className="absolute top-3 left-3 bg-primary text-white text-[10px] font-bold uppercase px-2 py-1 rounded-full tracking-wider">
+          {badge}
+        </span>
+      )}
+    </Card>
+  );
 
   return (
     <div className="group flex w-full min-w-0 flex-col gap-4">
-      <Link href={linkHref} className="block">
-        <Card
-          imageUrl={product.img}
-          imageAlt={product.name}
-          naturalAspect
-          className={posterClasses}
-        >
-          {showBadge && badge && (
-            <span className="absolute top-3 left-3 bg-primary text-white text-[10px] font-bold uppercase px-2 py-1 rounded-full tracking-wider">
-              {badge}
-            </span>
-          )}
-        </Card>
-      </Link>
+      {linkHref ? (
+        <Link href={linkHref} className="block">
+          {poster}
+        </Link>
+      ) : (
+        poster
+      )}
 
       <div className="flex flex-col items-center gap-3">
         <h3 className="font-display font-black text-slate-dark md:text-lg text-center">
