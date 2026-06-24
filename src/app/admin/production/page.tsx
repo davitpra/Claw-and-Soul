@@ -70,11 +70,6 @@ function PrintChip({
             <Badge tone={isPod ? "info" : undefined} size="small">
               {methodLabel(item.fulfillmentMethod)}
             </Badge>
-            {isPod && (
-              <Text as="span" variant="bodySm" tone="subdued">
-                {item.podOrderId ? `#${item.podOrderId}` : "sin enviar"}
-              </Text>
-            )}
           </InlineStack>
         </BlockStack>
       </InlineStack>

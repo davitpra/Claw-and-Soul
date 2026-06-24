@@ -26,8 +26,6 @@ export function ProductionCostSection({
     order.productionCost?.toString() ?? "",
   );
   const [savingCost, setSavingCost] = useState(false);
-  const [estimating, setEstimating] = useState(false);
-  const [estimateWarning, setEstimateWarning] = useState<string | null>(null);
 
   // Re-sync the field whenever a freshly saved cost arrives from the server.
   useEffect(() => {
@@ -50,48 +48,11 @@ export function ProductionCostSection({
     }
   }
 
-  async function handleEstimateCost() {
-    setEstimating(true);
-    setEstimateWarning(null);
-    try {
-      const est = await adminApi.orders.productionCostEstimate(orderId);
-      setProductionCostInput(est.amount.toFixed(2));
-      if (est.fxUnavailable) {
-        setEstimateWarning(
-          `FX no disponible — valor en USD (la orden es ${order.currency}). Edita si es necesario.`,
-        );
-      } else if (est.partial) {
-        setEstimateWarning(
-          `Solo se cotizaron ${est.itemsPriced} de ${est.itemsTotal} items POD (algunos sin configuración).`,
-        );
-      }
-    } catch {
-      setEstimateWarning("No se pudo obtener el costo de Pictorem.");
-    } finally {
-      setEstimating(false);
-    }
-  }
-
   return (
     <BlockStack gap="200">
-      <InlineStack align="space-between" blockAlign="center">
-        <Text variant="bodySm" fontWeight="semibold" as="span">
-          Costo de producción
-        </Text>
-        <Button
-          variant="plain"
-          size="micro"
-          loading={estimating}
-          onClick={handleEstimateCost}
-        >
-          Traer de Pictorem
-        </Button>
-      </InlineStack>
-      {estimateWarning && (
-        <Text variant="bodySm" tone="subdued" as="p">
-          {estimateWarning}
-        </Text>
-      )}
+      <Text variant="bodySm" fontWeight="semibold" as="span">
+        Costo de producción
+      </Text>
       <InlineStack gap="200" blockAlign="center">
         <div style={{ flex: 1 }}>
           <TextField
@@ -100,10 +61,7 @@ export function ProductionCostSection({
             type="number"
             prefix={order.currency}
             value={productionCostInput}
-            onChange={(v) => {
-              setProductionCostInput(v);
-              setEstimateWarning(null);
-            }}
+            onChange={setProductionCostInput}
             autoComplete="off"
           />
         </div>

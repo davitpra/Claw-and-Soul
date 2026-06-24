@@ -6,7 +6,6 @@ import {
   Page,
   Layout,
   Badge,
-  Banner,
   Spinner,
   Text,
   InlineStack,
@@ -23,7 +22,6 @@ import { CANCELLABLE_STATUSES } from "@/entities/admin/lib/order-transitions";
 import { fmtDate } from "@/entities/admin/lib/order-format";
 import { OrderItemCard } from "./OrderItemCard";
 import { CancelOrderModal } from "./CancelOrderModal";
-import { ProductionLeadTimeCard } from "./ProductionLeadTimeCard";
 import { CustomerCard } from "./CustomerCard";
 import { OrderTotalsCard } from "./OrderTotalsCard";
 import { OrderEventsCard } from "./OrderEventsCard";
@@ -35,7 +33,6 @@ export default function AdminOrderDetailPage() {
   const [loading, setLoading] = useState(true);
   const [resyncing, setResyncing] = useState(false);
   const [cancelItemIds, setCancelItemIds] = useState<string[] | null>(null);
-  const [cancelWarnings, setCancelWarnings] = useState<string[]>([]);
 
   async function load() {
     setLoading(true);
@@ -97,25 +94,6 @@ export default function AdminOrderDetailPage() {
     .filter((i) => CANCELLABLE_STATUSES.includes(i.productionStatus))
     .map((i) => i.id);
 
-  // Map itemId → { refunded } from app-driven "order_cancelled" events, so the
-  // POD banner can tell whether Shopify was already handled by the cancel flow.
-  // events come newest-first; keep the most recent entry per item.
-  const cancelInfoByItem = new Map<string, { refunded: boolean }>();
-  for (const ev of order.events) {
-    if (ev.eventType !== "order_cancelled") continue;
-    const p = ev.payload as {
-      itemIds?: string[];
-      refund?: boolean;
-      shopifyAction?: string;
-    } | null;
-    const refunded =
-      p?.shopifyAction === "partial_refund" || p?.refund === true;
-    for (const itemId of p?.itemIds ?? []) {
-      if (!cancelInfoByItem.has(itemId))
-        cancelInfoByItem.set(itemId, { refunded });
-    }
-  }
-
   return (
     <Page
       backAction={{ url: "/admin/orders", content: "Pedidos" }}
@@ -150,21 +128,6 @@ export default function AdminOrderDetailPage() {
       <Layout>
         <Layout.Section>
           <BlockStack gap="400">
-            {cancelWarnings.length > 0 && (
-              <Banner
-                tone="warning"
-                title="Acción manual requerida en Pictorem"
-                onDismiss={() => setCancelWarnings([])}
-              >
-                <BlockStack gap="100">
-                  {cancelWarnings.map((w, i) => (
-                    <Text as="p" key={i} variant="bodySm">
-                      {w}
-                    </Text>
-                  ))}
-                </BlockStack>
-              </Banner>
-            )}
             <Text variant="headingMd" as="h2">
               Items ({order.items.length})
             </Text>
@@ -176,7 +139,6 @@ export default function AdminOrderDetailPage() {
                 currency={order.currency}
                 onUpdate={load}
                 onRequestCancel={setCancelItemIds}
-                cancelInfo={cancelInfoByItem.get(item.id) ?? null}
               />
             ))}
 
@@ -190,7 +152,6 @@ export default function AdminOrderDetailPage() {
           <BlockStack gap="400">
             <CustomerCard order={order} />
             <OrderTotalsCard order={order} orderId={id} onUpdate={load} />
-            <ProductionLeadTimeCard order={order} orderId={id} />
           </BlockStack>
         </Layout.Section>
       </Layout>
@@ -200,9 +161,8 @@ export default function AdminOrderDetailPage() {
           order={order}
           itemIds={cancelItemIds}
           onClose={() => setCancelItemIds(null)}
-          onDone={(w) => {
+          onDone={() => {
             setCancelItemIds(null);
-            setCancelWarnings(w);
             load();
           }}
         />

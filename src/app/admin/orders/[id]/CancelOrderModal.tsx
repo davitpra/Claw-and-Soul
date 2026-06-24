@@ -30,9 +30,6 @@ export function CancelOrderModal({
   const [err, setErr] = useState<string | null>(null);
 
   const targets = order.items.filter((i) => itemIds.includes(i.id));
-  const podSubmitted = targets.filter(
-    (i) => i.fulfillmentMethod === "pod" && i.podOrderId,
-  );
   const remainingActive = order.items.filter(
     (i) =>
       !itemIds.includes(i.id) &&
@@ -93,14 +90,6 @@ export function CancelOrderModal({
             <Banner tone="info">
               Se hará un <strong>reembolso parcial</strong> en Shopify de los
               items seleccionados. El resto del pedido sigue activo.
-            </Banner>
-          )}
-          {podSubmitted.length > 0 && (
-            <Banner tone="warning">
-              {podSubmitted.length} item
-              {podSubmitted.length > 1 ? "s ya enviados" : " ya enviado"} a
-              Pictorem. La app no puede cancelarlo automáticamente — deberás
-              contactar a soporte de Pictorem manualmente.
             </Banner>
           )}
           <TextField

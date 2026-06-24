@@ -90,8 +90,6 @@ export interface ProductionQueueItem {
   fulfillmentMethod: string;
   imageUrl: string | null;
   generation: { resultUrl: string | null; thumbnailUrl: string | null } | null;
-  podProvider: string | null;
-  podOrderId: string | null;
 }
 
 export interface ProductionQueueOrder {
@@ -127,10 +125,6 @@ export interface AdminOrderItem {
   trackingNumber: string | null;
   trackingUrl: string | null;
   trackingCarrier: string | null;
-  podProvider: string | null;
-  podOrderId: string | null;
-  podLeadTimeDays: number | null;
-  podEstimatedReadyAt: string | null;
   notes: string | null;
   shippedAt: string | null;
   deliveredAt: string | null;
@@ -919,89 +913,14 @@ export const adminApi = {
         method: 'POST',
         body: JSON.stringify(body),
       }),
-    podSubmit: (orderId: string, itemId: string, force = false) =>
-      adminFetch<{ ok: boolean; queued: boolean; orderItemId: string }>(
-        `/admin/orders/${orderId}/items/${itemId}/pod/submit`,
-        { method: 'POST', body: JSON.stringify({ force }) },
-      ),
-    podSync: (orderId: string, itemId: string) =>
-      adminFetch<{ ok: boolean; orderItemId: string }>(
-        `/admin/orders/${orderId}/items/${itemId}/pod/sync`,
-        { method: 'POST' },
-      ),
-    productionCostEstimate: (orderId: string) =>
-      adminFetch<{
-        amount: number;
-        currency: string;
-        itemsPriced: number;
-        itemsTotal: number;
-        partial: boolean;
-        fxUnavailable: boolean;
-      }>(`/admin/orders/${orderId}/production-cost/estimate`),
     updateProductionCost: (orderId: string, productionCost: number | null) =>
       adminFetch<{ productionCost: number | null }>(
         `/admin/orders/${orderId}/production-cost`,
         { method: 'PATCH', body: JSON.stringify({ productionCost }) },
       ),
-    podPrice: (orderId: string, itemId: string) =>
-      adminFetch<{
-        list: number;
-        discount: number;
-        subtotal: number;
-        taxPercentage: number;
-        taxAmount: number;
-        total: number;
-        currency: string;
-        preorderCode: string;
-        components: Array<{
-          code: string;
-          label: string;
-          list: number;
-          discount: number;
-          net: number;
-        }>;
-        billing: {
-          currency: string;
-          subtotal: number;
-          total: number;
-          rate: number;
-          rateDate: string;
-        } | null;
-      }>(`/admin/orders/${orderId}/items/${itemId}/pod/price`),
-    podLeadTime: (orderId: string, itemId: string) =>
-      adminFetch<{
-        leadTime: number | null;
-        unit: string;
-        label: string | null;
-        preorderCode: string;
-        estimatedReadyAt: string | null;
-      }>(`/admin/orders/${orderId}/items/${itemId}/pod/leadtime`),
-    podCatalog: () =>
-      adminFetch<PodCatalog>('/admin/orders/pod/catalog'),
-    podHealth: () =>
-      adminFetch<Array<{ provider: string; ok: boolean; apiUrl: string; message: string }>>(
-        '/admin/orders/pod/health',
-      ),
+    podCatalog: () => adminFetch<PodCatalog>('/admin/orders/pod/catalog'),
     podProviders: () =>
       adminFetch<{ providers: string[] }>('/admin/orders/pod/providers'),
-    podSettings: () =>
-      adminFetch<{ enabled: boolean; source: 'db' | 'env-default' }>(
-        '/admin/orders/pod/settings',
-      ),
-    podSetEnabled: (enabled: boolean) =>
-      adminFetch<{ enabled: boolean }>('/admin/orders/pod/settings', {
-        method: 'PATCH',
-        body: JSON.stringify({ enabled }),
-      }),
-    podFxRate: () =>
-      adminFetch<{ rate: number; source: 'db' | 'env' | 'default' }>(
-        '/admin/orders/pod/fx-rate',
-      ),
-    podSetFxRate: (rate: number) =>
-      adminFetch<{ rate: number }>('/admin/orders/pod/fx-rate', {
-        method: 'PATCH',
-        body: JSON.stringify({ rate }),
-      }),
     uploadPrintImage: (orderId: string, itemId: string, file: File) => {
       const form = new FormData();
       form.append('file', file);

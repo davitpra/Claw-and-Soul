@@ -12,7 +12,6 @@ import {
 import { AdminOrderDetail } from "@/entities/admin/api";
 import { fmtCurrency } from "@/entities/admin/lib/order-format";
 import { ProductionCostSection } from "./ProductionCostSection";
-import { PictoremInvoiceSection } from "./PictoremInvoiceSection";
 import { OrderExpensesSection } from "./OrderExpensesSection";
 
 type OrderTotalsCardProps = {
@@ -26,8 +25,6 @@ export function OrderTotalsCard({
   orderId,
   onUpdate,
 }: OrderTotalsCardProps) {
-  const hasPodItems = order.items.some((it) => it.fulfillmentMethod === "pod");
-
   return (
     <Card>
       <BlockStack gap="300">
@@ -76,12 +73,6 @@ export function OrderTotalsCard({
           orderId={orderId}
           onUpdate={onUpdate}
         />
-        {hasPodItems && (
-          <>
-            <Divider />
-            <PictoremInvoiceSection order={order} orderId={orderId} />
-          </>
-        )}
         <Divider />
         <OrderExpensesSection orderId={orderId} />
         <Divider />

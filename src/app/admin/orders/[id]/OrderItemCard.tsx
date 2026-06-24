@@ -14,12 +14,7 @@ import {
   TextField,
   Select,
 } from "@shopify/polaris";
-import {
-  SendIcon,
-  ResetIcon,
-  ImageIcon,
-  MagicIcon,
-} from "@shopify/polaris-icons";
+import { ImageIcon, MagicIcon } from "@shopify/polaris-icons";
 import { adminApi, AdminOrderItem } from "@/entities/admin/api";
 import {
   PRODUCTION_STATUS_LABELS,
@@ -36,7 +31,6 @@ type OrderItemCardProps = {
   currency: string;
   onUpdate: () => void;
   onRequestCancel: (itemIds: string[]) => void;
-  cancelInfo: { refunded: boolean } | null;
 };
 
 export function OrderItemCard({
@@ -45,7 +39,6 @@ export function OrderItemCard({
   currency,
   onUpdate,
   onRequestCancel,
-  cancelInfo,
 }: OrderItemCardProps) {
   const [updatingStatus, setUpdatingStatus] = useState(false);
   const [showTracking, setShowTracking] = useState(!!item.trackingNumber);
@@ -61,8 +54,6 @@ export function OrderItemCard({
     "in_house" | "pod"
   >(item.fulfillmentMethod as "in_house" | "pod");
   const [savingFulfillment, setSavingFulfillment] = useState(false);
-  const [submittingPod, setSubmittingPod] = useState(false);
-  const [syncingPod, setSyncingPod] = useState(false);
   const [uploadingImage, setUploadingImage] = useState(false);
   const [showStudio, setShowStudio] = useState(false);
   const [showImage, setShowImage] = useState(false);
@@ -78,32 +69,6 @@ export function OrderItemCard({
   const fullImage =
     item.printImageUrl ?? item.generation?.resultUrl ?? item.imageUrl ?? thumb;
   const allowed = VALID_TRANSITIONS[item.productionStatus] ?? [];
-
-  async function handlePodSubmit(force = false) {
-    setSubmittingPod(true);
-    setErr(null);
-    try {
-      await adminApi.orders.podSubmit(orderId, item.id, force);
-      onUpdate();
-    } catch (e) {
-      setErr((e as Error).message);
-    } finally {
-      setSubmittingPod(false);
-    }
-  }
-
-  async function handlePodSync() {
-    setSyncingPod(true);
-    setErr(null);
-    try {
-      await adminApi.orders.podSync(orderId, item.id);
-      onUpdate();
-    } catch (e) {
-      setErr((e as Error).message);
-    } finally {
-      setSyncingPod(false);
-    }
-  }
 
   async function handleUploadImage(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
@@ -341,64 +306,6 @@ export function OrderItemCard({
                   </Button>
                 ))}
               </InlineStack>
-            </>
-          )}
-
-          {/* POD section — visible only when fulfillmentMethod is pod */}
-          {fulfillmentMethod === "pod" && (
-            <>
-              <Divider />
-              <BlockStack gap="200">
-                {item.productionStatus === "cancelled" &&
-                  item.podOrderId &&
-                  (cancelInfo ? (
-                    <Banner tone="info">
-                      Cancelado{cancelInfo.refunded ? " y reembolsado" : ""} en
-                      Shopify por la app.
-                    </Banner>
-                  ) : (
-                    <Banner tone="warning">
-                      Orden #{item.podOrderId} eliminada en Pictorem (remove
-                      quote). Verifica si debes{" "}
-                      <strong>reembolsar al cliente en Shopify</strong>.
-                    </Banner>
-                  ))}
-                <InlineStack gap="200" blockAlign="center">
-                  <Text variant="bodySm" fontWeight="semibold" as="span">
-                    Pictorem POD
-                  </Text>
-                  {item.podOrderId ? (
-                    <Badge tone="info">{`#${item.podOrderId}`}</Badge>
-                  ) : (
-                    <Badge tone="enabled">Sin enviar</Badge>
-                  )}
-                  {item.podProvider && (
-                    <Text variant="bodySm" tone="subdued" as="span">
-                      · {item.podProvider}
-                    </Text>
-                  )}
-                </InlineStack>
-                <InlineStack gap="200">
-                  <Button
-                    size="slim"
-                    icon={SendIcon}
-                    loading={submittingPod}
-                    onClick={() => handlePodSubmit(!!item.podOrderId)}
-                  >
-                    {item.podOrderId ? "Re-enviar" : "Enviar a Pictorem"}
-                  </Button>
-                  {item.podOrderId && (
-                    <Button
-                      size="slim"
-                      icon={ResetIcon}
-                      loading={syncingPod}
-                      onClick={handlePodSync}
-                    >
-                      Actualizar estado
-                    </Button>
-                  )}
-                </InlineStack>
-              </BlockStack>
             </>
           )}
 

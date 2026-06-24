@@ -12,7 +12,6 @@ import {
   Banner,
   TextField,
   Button,
-  Box,
   Divider,
 } from "@shopify/polaris";
 import { adminApi, ExpensesSummary, ProviderRate } from "@/entities/admin/api";
@@ -101,43 +100,6 @@ export default function AdminExpensesPage() {
       setRateMsg((prev) => ({ ...prev, [rate.id]: { text: (e as Error).message, tone: "critical" } }));
     } finally {
       setRateSaving((prev) => ({ ...prev, [rate.id]: false }));
-    }
-  }
-
-  // --- Tasa Pictorem ---
-  const [fxRate, setFxRate] = useState<{ rate: number; source: string } | null>(null);
-  const [fxInput, setFxInput] = useState("");
-  const [fxSaving, setFxSaving] = useState(false);
-  const [fxMsg, setFxMsg] = useState<{ text: string; tone: "success" | "critical" } | null>(null);
-
-  useEffect(() => {
-    let alive = true;
-    adminApi.orders.podFxRate().then((res) => {
-      if (alive) {
-        setFxRate(res);
-        setFxInput(String(res.rate));
-      }
-    }).catch(() => {});
-    return () => { alive = false; };
-  }, []);
-
-  async function handleSaveFxRate() {
-    const rate = parseFloat(fxInput);
-    if (isNaN(rate) || rate <= 0) {
-      setFxMsg({ text: "Ingresa una tasa válida (> 0).", tone: "critical" });
-      return;
-    }
-    setFxSaving(true);
-    setFxMsg(null);
-    try {
-      const res = await adminApi.orders.podSetFxRate(rate);
-      setFxRate({ rate: res.rate, source: "db" });
-      setFxInput(String(res.rate));
-      setFxMsg({ text: "Tasa actualizada.", tone: "success" });
-    } catch (e) {
-      setFxMsg({ text: (e as Error).message, tone: "critical" });
-    } finally {
-      setFxSaving(false);
     }
   }
 
@@ -281,71 +243,6 @@ export default function AdminExpensesPage() {
                 ))}
               </BlockStack>
             )}
-          </BlockStack>
-        </Card>
-
-        {/* Tasa Pictorem */}
-        <Card>
-          <BlockStack gap="300">
-            <BlockStack gap="100">
-              <Text variant="headingSm" as="h2">
-                Tasa de cambio Pictorem (USD → CAD)
-              </Text>
-              <Text as="p" tone="subdued" variant="bodySm">
-                Pictorem factura en CAD a una tasa interna fija. Los precios de{" "}
-                <code>getprice</code> (USD) se convierten con esta tasa para coincidir con la
-                factura real. Recalíbrala desde cualquier factura:{" "}
-                <Text as="span" fontWeight="semibold">
-                  tasa = total&nbsp;CAD / total&nbsp;USD
-                </Text>
-                .
-              </Text>
-            </BlockStack>
-            {fxMsg && (
-              <Banner
-                tone={fxMsg.tone}
-                onDismiss={() => setFxMsg(null)}
-              >
-                {fxMsg.text}
-              </Banner>
-            )}
-            <InlineStack gap="200" blockAlign="end">
-              <div style={{ width: 160 }}>
-                <TextField
-                  label="Tasa USD → CAD"
-                  type="number"
-                  step={0.0001}
-                  value={fxInput}
-                  onChange={setFxInput}
-                  autoComplete="off"
-                  disabled={fxRate === null}
-                />
-              </div>
-              <Button
-                variant="primary"
-                loading={fxSaving}
-                disabled={
-                  fxRate === null ||
-                  fxInput === "" ||
-                  fxInput === String(fxRate?.rate)
-                }
-                onClick={handleSaveFxRate}
-              >
-                Guardar
-              </Button>
-              {fxRate && (
-                <Box paddingBlockEnd="100">
-                  <Text as="span" tone="subdued" variant="bodySm">
-                    Fuente:{" "}
-                    {fxRate.source === "db"
-                      ? "configurada"
-                      : fxRate.source === "env"
-                        ? "variable de entorno"
-                        : "por defecto"}
-                  </Text>
-                </Box>
-              )}
-            </InlineStack>
           </BlockStack>
         </Card>
       </BlockStack>
