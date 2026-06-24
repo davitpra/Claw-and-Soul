@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import Link from "next/link";
+import { useRouter } from "next/navigation";
 import {
   Page,
   Card,
@@ -17,7 +17,6 @@ import {
   Filters,
   Pagination,
   ChoiceList,
-  Thumbnail,
   EmptyState,
   Modal,
 } from "@shopify/polaris";
@@ -27,6 +26,11 @@ import {
   PRODUCTION_STATUS_LABELS,
   PRODUCTION_STATUS_TONES as STATUS_TONES,
 } from "@/entities/admin/lib/production-status";
+import {
+  resolveFulfillmentStatus,
+  fulfillmentLabel,
+  fulfillmentTone,
+} from "@/entities/admin/lib/fulfillment-status";
 
 function fmtDate(iso: string) {
   return new Date(iso).toLocaleDateString("es-ES", {
@@ -64,22 +68,44 @@ const METHOD_OPTIONS = [
   { label: "POD", value: "pod" },
 ];
 
+// Estado de fulfillment de Shopify (columna `fulfillment_status`). "unfulfilled"
+// representa el valor null que devuelve Shopify cuando aún no hay fulfillment.
+const FULFILLMENT_OPTIONS = [
+  { label: "Unfulfilled", value: "unfulfilled" },
+  { label: "Partially fulfilled", value: "partial" },
+  { label: "Fulfilled", value: "fulfilled" },
+  { label: "Restocked", value: "restocked" },
+];
+
 export default function AdminOrdersPage() {
-  const [orders, setOrders] = useState<Paginated<AdminOrderListItem> | null>(null);
+  const router = useRouter();
+  const [orders, setOrders] = useState<Paginated<AdminOrderListItem> | null>(
+    null,
+  );
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
   const [q, setQ] = useState("");
   const [status, setStatus] = useState<string[]>([]);
   const [method, setMethod] = useState<string[]>([]);
+  const [fulfillment, setFulfillment] = useState<string[]>([]);
   const [syncing, setSyncing] = useState(false);
-  const [syncMsg, setSyncMsg] = useState<{ text: string; tone: "info" | "success" | "critical" } | null>(null);
+  const [syncMsg, setSyncMsg] = useState<{
+    text: string;
+    tone: "info" | "success" | "critical";
+  } | null>(null);
   const [testingPod, setTestingPod] = useState(false);
-  const [podHealthMsg, setPodHealthMsg] = useState<{ text: string; tone: "success" | "critical" } | null>(null);
+  const [podHealthMsg, setPodHealthMsg] = useState<{
+    text: string;
+    tone: "success" | "critical";
+  } | null>(null);
 
   // POD switch state
   const [podEnabled, setPodEnabled] = useState<boolean | null>(null);
   const [podToggling, setPodToggling] = useState(false);
-  const [podSwitchMsg, setPodSwitchMsg] = useState<{ text: string; tone: "success" | "critical" } | null>(null);
+  const [podSwitchMsg, setPodSwitchMsg] = useState<{
+    text: string;
+    tone: "success" | "critical";
+  } | null>(null);
   const [confirmActivateOpen, setConfirmActivateOpen] = useState(false);
 
   const load = useCallback(async () => {
@@ -90,12 +116,13 @@ export default function AdminOrdersPage() {
         q: q || undefined,
         status: status[0] || undefined,
         method: method[0] || undefined,
+        fulfillmentStatus: fulfillment[0] || undefined,
       });
       setOrders(data);
     } finally {
       setLoading(false);
     }
-  }, [page, q, status, method]);
+  }, [page, q, status, method, fulfillment]);
 
   useEffect(() => {
     load();
@@ -103,7 +130,10 @@ export default function AdminOrdersPage() {
 
   // Load POD setting on mount
   useEffect(() => {
-    adminApi.orders.podSettings().then((res) => setPodEnabled(res.enabled)).catch(() => {});
+    adminApi.orders
+      .podSettings()
+      .then((res) => setPodEnabled(res.enabled))
+      .catch(() => {});
   }, []);
 
   async function handleTestPod() {
@@ -113,14 +143,19 @@ export default function AdminOrdersPage() {
       const results = await adminApi.orders.podHealth();
       const allOk = results.every((r) => r.ok);
       const lines = results.map((r) =>
-        r.ok ? `✓ ${r.provider} · ${r.apiUrl}` : `✗ ${r.provider}: ${r.message}`,
+        r.ok
+          ? `✓ ${r.provider} · ${r.apiUrl}`
+          : `✗ ${r.provider}: ${r.message}`,
       );
       setPodHealthMsg({
-        text: lines.join(' | '),
+        text: lines.join(" | "),
         tone: allOk ? "success" : "critical",
       });
     } catch (err) {
-      setPodHealthMsg({ text: `Error: ${(err as Error).message}`, tone: "critical" });
+      setPodHealthMsg({
+        text: `Error: ${(err as Error).message}`,
+        tone: "critical",
+      });
     } finally {
       setTestingPod(false);
     }
@@ -137,7 +172,10 @@ export default function AdminOrdersPage() {
       });
       setTimeout(() => load(), 3000);
     } catch (err) {
-      setSyncMsg({ text: `Error: ${(err as Error).message}`, tone: "critical" });
+      setSyncMsg({
+        text: `Error: ${(err as Error).message}`,
+        tone: "critical",
+      });
     } finally {
       setSyncing(false);
     }
@@ -166,7 +204,10 @@ export default function AdminOrdersPage() {
         tone: res.enabled ? "success" : "critical",
       });
     } catch (err) {
-      setPodSwitchMsg({ text: `Error al cambiar el estado: ${(err as Error).message}`, tone: "critical" });
+      setPodSwitchMsg({
+        text: `Error al cambiar el estado: ${(err as Error).message}`,
+        tone: "critical",
+      });
     } finally {
       setPodToggling(false);
     }
@@ -206,6 +247,22 @@ export default function AdminOrdersPage() {
         />
       ),
     },
+    {
+      key: "fulfillment",
+      label: "Shopify",
+      filter: (
+        <ChoiceList
+          title="Estado de Shopify"
+          titleHidden
+          choices={FULFILLMENT_OPTIONS}
+          selected={fulfillment}
+          onChange={(v) => {
+            setFulfillment(v);
+            setPage(1);
+          }}
+        />
+      ),
+    },
   ];
 
   const appliedFilters = [
@@ -233,6 +290,20 @@ export default function AdminOrdersPage() {
           },
         ]
       : []),
+    ...(fulfillment.length
+      ? [
+          {
+            key: "fulfillment",
+            label:
+              FULFILLMENT_OPTIONS.find((o) => o.value === fulfillment[0])
+                ?.label ?? fulfillment[0],
+            onRemove: () => {
+              setFulfillment([]);
+              setPage(1);
+            },
+          },
+        ]
+      : []),
   ];
 
   return (
@@ -255,7 +326,10 @@ export default function AdminOrdersPage() {
     >
       <BlockStack gap="400">
         {podHealthMsg && (
-          <Banner tone={podHealthMsg.tone} onDismiss={() => setPodHealthMsg(null)}>
+          <Banner
+            tone={podHealthMsg.tone}
+            onDismiss={() => setPodHealthMsg(null)}
+          >
             {podHealthMsg.text}
           </Banner>
         )}
@@ -265,13 +339,16 @@ export default function AdminOrdersPage() {
           </Banner>
         )}
         {podSwitchMsg && (
-          <Banner tone={podSwitchMsg.tone} onDismiss={() => setPodSwitchMsg(null)}>
+          <Banner
+            tone={podSwitchMsg.tone}
+            onDismiss={() => setPodSwitchMsg(null)}
+          >
             {podSwitchMsg.text}
           </Banner>
         )}
 
         {/* POD auto-fulfillment switch */}
-        <Card>
+        {/* <Card>
           <InlineStack align="space-between" blockAlign="center" gap="400">
             <BlockStack gap="100">
               <InlineStack gap="200" blockAlign="center">
@@ -301,7 +378,7 @@ export default function AdminOrdersPage() {
               {podEnabled ? "Desactivar" : "Activar"}
             </Button>
           </InlineStack>
-        </Card>
+        </Card> */}
 
         <Card padding="0">
           <Box
@@ -326,6 +403,7 @@ export default function AdminOrdersPage() {
                 setQ("");
                 setStatus([]);
                 setMethod([]);
+                setFulfillment([]);
                 setPage(1);
               }}
               queryPlaceholder="Buscar # pedido o email…"
@@ -354,18 +432,37 @@ export default function AdminOrdersPage() {
             <IndexTable
               resourceName={{ singular: "pedido", plural: "pedidos" }}
               itemCount={orders.data.length}
-              headings={[{ title: "# Pedido" }, { title: "Cliente" }, { title: "Items" }, { title: "Total" }, { title: "Estado" }, { title: "Fecha" }, { title: "" }]}
+              headings={[
+                { title: "# Pedido" },
+                { title: "Cliente" },
+                { title: "Items" },
+                { title: "Total" },
+                { title: "Estado" },
+                { title: "Shopify" },
+                { title: "Fecha" },
+              ]}
               selectable={false}
             >
               {orders.data.map((order, index) => {
                 const orderStatus = getOrderStatus(order.items);
-                const thumbs = order.items
+                // El endpoint de lista no trae `fulfillmentDisplayStatus`, así
+                // que el helper cae al `fulfillmentStatus` simple de Shopify.
+                const shopifyStatus = resolveFulfillmentStatus({
+                  fulfillmentDisplayStatus: null,
+                  fulfillmentStatus: order.fulfillmentStatus,
+                });
+                const titles = order.items
                   .slice(0, 3)
-                  .map((i) => i.generation?.resultUrl ?? i.imageUrl)
+                  .map((i) => i.title)
                   .filter(Boolean) as string[];
 
                 return (
-                  <IndexTable.Row id={order.id} key={order.id} position={index}>
+                  <IndexTable.Row
+                    id={order.id}
+                    key={order.id}
+                    position={index}
+                    onClick={() => router.push(`/admin/orders/${order.id}`)}
+                  >
                     <IndexTable.Cell>
                       <Text variant="bodyMd" fontWeight="semibold" as="span">
                         {order.orderNumber}
@@ -373,11 +470,9 @@ export default function AdminOrdersPage() {
                     </IndexTable.Cell>
                     <IndexTable.Cell>
                       {order.userId ? (
-                        <Link href={`/admin/users/${order.userId}`}>
-                          <Button variant="plain" size="slim">
-                            {order.customerName || order.customerEmail || "—"}
-                          </Button>
-                        </Link>
+                        <Text as="span" variant="bodySm">
+                          {order.customerName || order.customerEmail || "—"}
+                        </Text>
                       ) : (
                         <Text as="span" tone="subdued">
                           {order.customerEmail || "Invitado"}
@@ -385,22 +480,19 @@ export default function AdminOrdersPage() {
                       )}
                     </IndexTable.Cell>
                     <IndexTable.Cell>
-                      {thumbs.length > 0 ? (
-                        <InlineStack gap="100" blockAlign="center">
-                          {thumbs.map((url, idx) => (
-                            <Thumbnail
-                              key={idx}
-                              source={url}
-                              alt=""
-                              size="extraSmall"
-                            />
+                      {titles.length > 0 ? (
+                        <BlockStack gap="050">
+                          {titles.map((title, idx) => (
+                            <Text key={idx} as="span" variant="bodySm">
+                              {title}
+                            </Text>
                           ))}
                           {order.items.length > 3 && (
                             <Text as="span" tone="subdued" variant="bodySm">
                               +{order.items.length - 3}
                             </Text>
                           )}
-                        </InlineStack>
+                        </BlockStack>
                       ) : (
                         <Text as="span" tone="subdued" variant="bodySm">
                           {order.items.length} item(s)
@@ -418,16 +510,14 @@ export default function AdminOrdersPage() {
                       </Badge>
                     </IndexTable.Cell>
                     <IndexTable.Cell>
+                      <Badge tone={fulfillmentTone(shopifyStatus)}>
+                        {fulfillmentLabel(shopifyStatus)}
+                      </Badge>
+                    </IndexTable.Cell>
+                    <IndexTable.Cell>
                       <Text as="span" tone="subdued">
                         {fmtDate(order.shopifyCreatedAt)}
                       </Text>
-                    </IndexTable.Cell>
-                    <IndexTable.Cell>
-                      <Link href={`/admin/orders/${order.id}`}>
-                        <Button variant="plain" size="slim">
-                          Ver
-                        </Button>
-                      </Link>
                     </IndexTable.Cell>
                   </IndexTable.Row>
                 );
@@ -436,11 +526,7 @@ export default function AdminOrdersPage() {
           )}
 
           {orders && orders.meta.totalPages > 1 && (
-            <Box
-              padding="400"
-              borderBlockStartWidth="025"
-              borderColor="border"
-            >
+            <Box padding="400" borderBlockStartWidth="025" borderColor="border">
               <InlineStack align="space-between">
                 <Text as="span" tone="subdued" variant="bodySm">
                   {orders.meta.total} pedido(s) · Página {orders.meta.page} de{" "}
@@ -482,10 +568,16 @@ export default function AdminOrdersPage() {
         <Modal.Section>
           <BlockStack gap="200">
             <Text as="p">
-              Al activar esta opción, <Text as="span" fontWeight="semibold">todos los pedidos pagados se enviarán automáticamente a Pictorem</Text> para producción real.
+              Al activar esta opción,{" "}
+              <Text as="span" fontWeight="semibold">
+                todos los pedidos pagados se enviarán automáticamente a Pictorem
+              </Text>{" "}
+              para producción real.
             </Text>
             <Text as="p" tone="subdued">
-              Asegúrate de que no estás en modo de prueba. Los pedidos enviados a Pictorem generarán una orden de producción real y pueden tener coste.
+              Asegúrate de que no estás en modo de prueba. Los pedidos enviados
+              a Pictorem generarán una orden de producción real y pueden tener
+              coste.
             </Text>
           </BlockStack>
         </Modal.Section>

@@ -62,6 +62,7 @@ export interface AdminUserGeneration {
 
 export interface AdminOrderItemSummary {
   id: string;
+  title: string;
   productionStatus: string;
   fulfillmentMethod: string;
   imageUrl: string | null;
@@ -829,6 +830,7 @@ export const adminApi = {
       limit?: number;
       status?: string;
       method?: string;
+      fulfillmentStatus?: string;
       dateFrom?: string;
       dateTo?: string;
       q?: string;
@@ -838,6 +840,8 @@ export const adminApi = {
       if (params.limit) p.set('limit', String(params.limit));
       if (params.status) p.set('status', params.status);
       if (params.method) p.set('method', params.method);
+      if (params.fulfillmentStatus)
+        p.set('fulfillmentStatus', params.fulfillmentStatus);
       if (params.dateFrom) p.set('dateFrom', params.dateFrom);
       if (params.dateTo) p.set('dateTo', params.dateTo);
       if (params.q) p.set('q', params.q);
