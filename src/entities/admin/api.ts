@@ -79,6 +79,7 @@ export interface AdminOrderListItem {
   currency: string;
   financialStatus: string | null;
   fulfillmentStatus: string | null;
+  fulfillmentDisplayStatus: string | null;
   shopifyCreatedAt: string;
   items: AdminOrderItemSummary[];
 }

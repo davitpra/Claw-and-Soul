@@ -19,6 +19,15 @@ import {
   PRODUCTION_STATUS_TONES as STATUS_TONES,
 } from "@/entities/admin/lib/production-status";
 import { CANCELLABLE_STATUSES } from "@/entities/admin/lib/order-transitions";
+import {
+  resolveFulfillmentStatus,
+  fulfillmentLabel,
+  fulfillmentTone,
+} from "@/entities/admin/lib/fulfillment-status";
+import {
+  financialLabel,
+  financialTone,
+} from "@/entities/admin/lib/financial-status";
 import { fmtDate } from "@/entities/admin/lib/order-format";
 import { OrderItemCard } from "./OrderItemCard";
 import { CancelOrderModal } from "./CancelOrderModal";
@@ -90,6 +99,11 @@ export default function AdminOrderDetailPage() {
   const dominantStatus =
     [...new Set(overallTones)].length === 1 ? overallTones[0] : "mixed";
 
+  const fulfillment = resolveFulfillmentStatus({
+    fulfillmentDisplayStatus: null,
+    fulfillmentStatus: order.fulfillmentStatus,
+  });
+
   const cancellableIds = order.items
     .filter((i) => CANCELLABLE_STATUSES.includes(i.productionStatus))
     .map((i) => i.id);
@@ -100,9 +114,19 @@ export default function AdminOrderDetailPage() {
       title={order.orderNumber}
       subtitle={fmtDate(order.shopifyCreatedAt)}
       titleMetadata={
-        <Badge tone={STATUS_TONES[dominantStatus] ?? "enabled"}>
-          {PRODUCTION_STATUS_LABELS[dominantStatus] ?? dominantStatus}
-        </Badge>
+        <InlineStack gap="200" blockAlign="center">
+          <Badge tone={STATUS_TONES[dominantStatus] ?? "enabled"}>
+            {PRODUCTION_STATUS_LABELS[dominantStatus] ?? dominantStatus}
+          </Badge>
+          {order.financialStatus && (
+            <Badge tone={financialTone(order.financialStatus)}>
+              {financialLabel(order.financialStatus)}
+            </Badge>
+          )}
+          <Badge tone={fulfillmentTone(fulfillment)}>
+            {fulfillmentLabel(fulfillment)}
+          </Badge>
+        </InlineStack>
       }
       secondaryActions={[
         {

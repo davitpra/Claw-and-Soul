@@ -31,6 +31,10 @@ import {
   fulfillmentTone,
 } from "@/entities/admin/lib/fulfillment-status";
 import {
+  financialLabel,
+  financialTone,
+} from "@/entities/admin/lib/financial-status";
+import {
   STATUS_OPTIONS,
   METHOD_OPTIONS,
   FULFILLMENT_OPTIONS,
@@ -282,6 +286,7 @@ export default function AdminOrdersPage() {
                 { title: "Cliente" },
                 { title: "Items" },
                 { title: "Total" },
+                { title: "Pago" },
                 { title: "Producción" },
                 { title: "Shopify" },
                 { title: "Fecha" },
@@ -290,10 +295,10 @@ export default function AdminOrdersPage() {
             >
               {orders.data.map((order, index) => {
                 const orderStatus = getOrderStatus(order.items);
-                // El endpoint de lista no trae `fulfillmentDisplayStatus`, así
-                // que el helper cae al `fulfillmentStatus` simple de Shopify.
+                // El endpoint de lista trae `fulfillmentDisplayStatus` (derivado
+                // de los FulfillmentOrders) con fallback al simple de Shopify.
                 const shopifyStatus = resolveFulfillmentStatus({
-                  fulfillmentDisplayStatus: null,
+                  fulfillmentDisplayStatus: order.fulfillmentDisplayStatus,
                   fulfillmentStatus: order.fulfillmentStatus,
                 });
                 const titles = order.items
@@ -348,6 +353,11 @@ export default function AdminOrdersPage() {
                       <Text variant="bodyMd" fontWeight="semibold" as="span">
                         {fmtCurrency(order.totalAmount, order.currency)}
                       </Text>
+                    </IndexTable.Cell>
+                    <IndexTable.Cell>
+                      <Badge tone={financialTone(order.financialStatus)}>
+                        {financialLabel(order.financialStatus)}
+                      </Badge>
                     </IndexTable.Cell>
                     <IndexTable.Cell>
                       <Badge tone={STATUS_TONES[orderStatus] ?? "enabled"}>

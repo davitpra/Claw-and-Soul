@@ -11,6 +11,15 @@ import {
 } from "@shopify/polaris";
 import { AdminOrderDetail } from "@/entities/admin/api";
 import { fmtCurrency } from "@/entities/admin/lib/order-format";
+import {
+  resolveFulfillmentStatus,
+  fulfillmentLabel,
+  fulfillmentTone,
+} from "@/entities/admin/lib/fulfillment-status";
+import {
+  financialLabel,
+  financialTone,
+} from "@/entities/admin/lib/financial-status";
 import { ProductionCostSection } from "./ProductionCostSection";
 import { OrderExpensesSection } from "./OrderExpensesSection";
 
@@ -78,15 +87,21 @@ export function OrderTotalsCard({
         <Divider />
         <InlineStack gap="200">
           {order.financialStatus && (
-            <Badge
-              tone={order.financialStatus === "paid" ? "success" : "enabled"}
-            >
-              {order.financialStatus}
+            <Badge tone={financialTone(order.financialStatus)}>
+              {financialLabel(order.financialStatus)}
             </Badge>
           )}
-          {order.fulfillmentStatus && (
-            <Badge tone="info">{order.fulfillmentStatus}</Badge>
-          )}
+          {(() => {
+            const fulfillment = resolveFulfillmentStatus({
+              fulfillmentDisplayStatus: null,
+              fulfillmentStatus: order.fulfillmentStatus,
+            });
+            return (
+              <Badge tone={fulfillmentTone(fulfillment)}>
+                {fulfillmentLabel(fulfillment)}
+              </Badge>
+            );
+          })()}
         </InlineStack>
       </BlockStack>
     </Card>
