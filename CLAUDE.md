@@ -117,3 +117,7 @@ TypeScript path alias configured: `@/*` maps to `./src/*`
 - Material Symbols Outlined icon font loaded globally
 - Light/dark mode support via Tailwind CSS classes
 - For more details read `./docs/DESIGN.md`
+
+## Admin Panel
+
+The `/admin` route group follows its own conventions (Shopify Polaris instead of Tailwind, co-located components per route). Before creating or modifying anything under `src/app/admin/`, read `./src/app/admin/ARCHITECTURE.md`.

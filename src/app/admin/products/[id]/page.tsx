@@ -14,13 +14,13 @@ import {
   Box,
 } from "@shopify/polaris";
 import { ExternalIcon, DeleteIcon, RefreshIcon } from "@shopify/polaris-icons";
-import { ContextualImagesCard } from "./ContextualImagesCard";
-import { ShowcaseCollectionCard } from "./ShowcaseCollectionCard";
-import { ProductDetailsSidebar } from "./ProductDetailsSidebar";
-import { LinkedVariantsCard } from "./LinkedVariantsCard";
-import { DeleteProductModal } from "./DeleteProductModal";
-import { FormatsModal } from "./FormatsModal";
-import { PodConfigModal } from "./PodConfigModal";
+import { ContextualImagesCard } from "./_components/ContextualImagesCard";
+import { ShowcaseCollectionCard } from "./_components/ShowcaseCollectionCard";
+import { ProductDetailsSidebar } from "./_components/ProductDetailsSidebar";
+import { LinkedVariantsCard } from "./_components/LinkedVariantsCard";
+import { DeleteProductModal } from "./_components/DeleteProductModal";
+import { FormatsModal } from "./_components/FormatsModal";
+import { PodConfigModal } from "./_components/PodConfigModal";
 import {
   useProductDetail,
   type AdminProductVariantLink,

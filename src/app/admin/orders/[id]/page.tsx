@@ -31,12 +31,12 @@ import {
 import { fmtDate } from "@/entities/admin/lib/order-format";
 import { shopifyFetch } from "@/lib/shopify/client";
 import { GET_PRODUCT } from "@/lib/shopify/queries/products";
-import { OrderItemCard } from "./OrderItemCard";
-import { CancelOrderModal } from "./CancelOrderModal";
-import { CustomerCard } from "./CustomerCard";
-import { OrderTotalsCard } from "./OrderTotalsCard";
-import { OrderEventsCard } from "./OrderEventsCard";
-import { RawPayloadCard } from "./RawPayloadCard";
+import { OrderItemCard } from "./_components/OrderItemCard";
+import { CancelOrderModal } from "./_components/CancelOrderModal";
+import { CustomerCard } from "./_components/CustomerCard";
+import { OrderTotalsCard } from "./_components/OrderTotalsCard";
+import { OrderEventsCard } from "./_components/OrderEventsCard";
+import { RawPayloadCard } from "./_components/RawPayloadCard";
 
 // Storefront ids are GIDs (gid://shopify/ProductVariant/123) but the order's
 // productVariant stores the bare numeric id — key by the numeric tail to match.
