@@ -123,9 +123,6 @@ export interface AdminOrderItem {
   size: string | null;
   fulfillmentMethod: string;
   productionStatus: string;
-  trackingNumber: string | null;
-  trackingUrl: string | null;
-  trackingCarrier: string | null;
   notes: string | null;
   shippedAt: string | null;
   deliveredAt: string | null;
@@ -871,15 +868,6 @@ export const adminApi = {
       adminFetch(`/admin/orders/${orderId}/items/${itemId}/status`, {
         method: 'PATCH',
         body: JSON.stringify({ toStatus, notes }),
-      }),
-    updateTracking: (
-      orderId: string,
-      itemId: string,
-      data: { trackingNumber: string; trackingUrl?: string; trackingCarrier?: string },
-    ) =>
-      adminFetch(`/admin/orders/${orderId}/items/${itemId}/tracking`, {
-        method: 'PATCH',
-        body: JSON.stringify(data),
       }),
     updateItemFulfillment: (
       orderId: string,

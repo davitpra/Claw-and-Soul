@@ -11,7 +11,6 @@ import {
   BlockStack,
   Divider,
   Thumbnail,
-  TextField,
   Select,
 } from "@shopify/polaris";
 import { ImageIcon, MagicIcon } from "@shopify/polaris-icons";
@@ -41,15 +40,6 @@ export function OrderItemCard({
   onRequestCancel,
 }: OrderItemCardProps) {
   const [updatingStatus, setUpdatingStatus] = useState(false);
-  const [showTracking, setShowTracking] = useState(!!item.trackingNumber);
-  const [trackingNumber, setTrackingNumber] = useState(
-    item.trackingNumber ?? "",
-  );
-  const [trackingUrl, setTrackingUrl] = useState(item.trackingUrl ?? "");
-  const [trackingCarrier, setTrackingCarrier] = useState(
-    item.trackingCarrier ?? "",
-  );
-  const [savingTracking, setSavingTracking] = useState(false);
   const [fulfillmentMethod, setFulfillmentMethod] = useState<
     "in_house" | "pod"
   >(item.fulfillmentMethod as "in_house" | "pod");
@@ -119,25 +109,6 @@ export function OrderItemCard({
     }
   }
 
-  async function handleSaveTracking(e: React.FormEvent) {
-    e.preventDefault();
-    if (!trackingNumber.trim()) return;
-    setSavingTracking(true);
-    setErr(null);
-    try {
-      await adminApi.orders.updateTracking(orderId, item.id, {
-        trackingNumber: trackingNumber.trim(),
-        trackingUrl: trackingUrl.trim() || undefined,
-        trackingCarrier: trackingCarrier.trim() || undefined,
-      });
-      onUpdate();
-    } catch (e) {
-      setErr((e as Error).message);
-    } finally {
-      setSavingTracking(false);
-    }
-  }
-
   return (
     <>
       {showStudio && (
@@ -155,6 +126,52 @@ export function OrderItemCard({
           onClose={() => setShowImage(false)}
         />
       )}
+      <InlineStack gap="200" blockAlign="center">
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept="image/*"
+          hidden
+          onChange={handleUploadImage}
+        />
+        <Button
+          size="micro"
+          icon={ImageIcon}
+          loading={uploadingImage}
+          onClick={() => fileInputRef.current?.click()}
+        >
+          {item.printImageUrl ? "Reemplazar" : "Subir imagen"}
+        </Button>
+        <Button
+          size="micro"
+          icon={MagicIcon}
+          onClick={() => setShowStudio(true)}
+        >
+          Editar para impresión
+        </Button>
+        {item.printImageUrl && <Badge tone="info">Imagen personalizada</Badge>}
+      </InlineStack>
+      <Divider />
+      <InlineStack gap="200" blockAlign="center">
+        <div style={{ minWidth: 180 }}>
+          <Select
+            label=""
+            labelHidden
+            options={[
+              { label: "Taller (in-house)", value: "in_house" },
+              { label: "POD (proveedor externo)", value: "pod" },
+            ]}
+            value={fulfillmentMethod}
+            onChange={handleFulfillmentChange}
+            disabled={savingFulfillment}
+          />
+        </div>
+        <Badge tone={STATUS_TONES[item.productionStatus] ?? "enabled"}>
+          {PRODUCTION_STATUS_LABELS[item.productionStatus] ??
+            item.productionStatus}
+        </Badge>
+      </InlineStack>
+
       <Card>
         <BlockStack gap="300">
           <InlineStack gap="400" blockAlign="start">
@@ -192,31 +209,6 @@ export function OrderItemCard({
                     </Text>
                   </div>
                 )}
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  accept="image/*"
-                  hidden
-                  onChange={handleUploadImage}
-                />
-                <Button
-                  size="micro"
-                  icon={ImageIcon}
-                  loading={uploadingImage}
-                  onClick={() => fileInputRef.current?.click()}
-                >
-                  {item.printImageUrl ? "Reemplazar" : "Subir imagen"}
-                </Button>
-                <Button
-                  size="micro"
-                  icon={MagicIcon}
-                  onClick={() => setShowStudio(true)}
-                >
-                  Editar para impresión
-                </Button>
-                {item.printImageUrl && (
-                  <Badge tone="info">Imagen personalizada</Badge>
-                )}
               </BlockStack>
             </div>
 
@@ -253,26 +245,6 @@ export function OrderItemCard({
                   </Text>
                 </BlockStack>
               </InlineStack>
-
-              <InlineStack gap="200" blockAlign="center">
-                <div style={{ minWidth: 180 }}>
-                  <Select
-                    label=""
-                    labelHidden
-                    options={[
-                      { label: "Taller (in-house)", value: "in_house" },
-                      { label: "POD (proveedor externo)", value: "pod" },
-                    ]}
-                    value={fulfillmentMethod}
-                    onChange={handleFulfillmentChange}
-                    disabled={savingFulfillment}
-                  />
-                </div>
-                <Badge tone={STATUS_TONES[item.productionStatus] ?? "enabled"}>
-                  {PRODUCTION_STATUS_LABELS[item.productionStatus] ??
-                    item.productionStatus}
-                </Badge>
-              </InlineStack>
             </BlockStack>
           </InlineStack>
 
@@ -285,98 +257,29 @@ export function OrderItemCard({
           {allowed.length > 0 && (
             <>
               <Divider />
-              <InlineStack gap="200" blockAlign="center">
-                <Text variant="bodySm" tone="subdued" as="span">
-                  Cambiar estado:
-                </Text>
-                {allowed.map((s) => (
-                  <Button
-                    key={s}
-                    size="slim"
-                    variant="secondary"
-                    tone={s === "cancelled" ? "critical" : undefined}
-                    loading={updatingStatus}
-                    onClick={() =>
-                      s === "cancelled"
-                        ? onRequestCancel([item.id])
-                        : handleStatusChange(s)
+              <div style={{ maxWidth: 280 }}>
+                <Select
+                  label="Cambiar estado"
+                  disabled={updatingStatus}
+                  value=""
+                  options={[
+                    { label: "Selecciona un estado…", value: "" },
+                    ...allowed.map((s) => ({
+                      label: PRODUCTION_STATUS_LABELS[s] ?? s,
+                      value: s,
+                    })),
+                  ]}
+                  onChange={(value) => {
+                    if (!value) return;
+                    if (value === "cancelled") {
+                      onRequestCancel([item.id]);
+                    } else {
+                      handleStatusChange(value);
                     }
-                  >
-                    → {PRODUCTION_STATUS_LABELS[s]}
-                  </Button>
-                ))}
-              </InlineStack>
+                  }}
+                />
+              </div>
             </>
-          )}
-
-          <Divider />
-
-          {!showTracking ? (
-            <Button
-              variant="plain"
-              size="slim"
-              onClick={() => setShowTracking(true)}
-            >
-              + Agregar tracking
-            </Button>
-          ) : (
-            <form onSubmit={handleSaveTracking}>
-              <InlineStack gap="200" blockAlign="end" wrap>
-                <div style={{ flex: "1 1 180px" }}>
-                  <TextField
-                    label="Número de tracking"
-                    value={trackingNumber}
-                    onChange={setTrackingNumber}
-                    placeholder="Ej: 1Z999AA10123456784"
-                    autoComplete="off"
-                  />
-                </div>
-                <div style={{ flex: "1 1 200px" }}>
-                  <TextField
-                    label="URL (opcional)"
-                    value={trackingUrl}
-                    onChange={setTrackingUrl}
-                    placeholder="https://track.carrier.com/…"
-                    autoComplete="off"
-                  />
-                </div>
-                <div style={{ flex: "1 1 140px" }}>
-                  <TextField
-                    label="Transportista"
-                    value={trackingCarrier}
-                    onChange={setTrackingCarrier}
-                    placeholder="UPS, FedEx…"
-                    autoComplete="off"
-                  />
-                </div>
-                <Button
-                  submit
-                  variant="primary"
-                  size="slim"
-                  loading={savingTracking}
-                >
-                  Guardar
-                </Button>
-              </InlineStack>
-            </form>
-          )}
-
-          {item.trackingNumber && !showTracking && (
-            <InlineStack gap="200" blockAlign="center">
-              <Text variant="bodySm" tone="subdued" as="span">
-                Tracking: {item.trackingNumber}
-              </Text>
-              {item.trackingUrl && (
-                <a
-                  href={item.trackingUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  style={{ color: "#448da6", fontSize: 13 }}
-                >
-                  Ver →
-                </a>
-              )}
-            </InlineStack>
           )}
         </BlockStack>
       </Card>
