@@ -93,7 +93,7 @@ export function OrderTotalsCard({
           )}
           {(() => {
             const fulfillment = resolveFulfillmentStatus({
-              fulfillmentDisplayStatus: null,
+              fulfillmentDisplayStatus: order.fulfillmentDisplayStatus,
               fulfillmentStatus: order.fulfillmentStatus,
             });
             return (

@@ -4,30 +4,27 @@ import { useRef, useState } from "react";
 import {
   Card,
   Badge,
-  Button,
   Banner,
   Text,
   InlineStack,
   BlockStack,
   Divider,
-  Thumbnail,
-  Select,
 } from "@shopify/polaris";
-import { ImageIcon, MagicIcon } from "@shopify/polaris-icons";
 import { adminApi, AdminOrderItem } from "@/entities/admin/api";
-import {
-  PRODUCTION_STATUS_LABELS,
-  PRODUCTION_STATUS_TONES as STATUS_TONES,
-} from "@/entities/admin/lib/production-status";
 import { VALID_TRANSITIONS } from "@/entities/admin/lib/order-transitions";
 import { fmtCurrency } from "@/entities/admin/lib/order-format";
 import ImagePreviewModal from "@/app/admin/_components/ImagePreviewModal";
 import PrintStudioModal from "./PrintStudioModal";
+import { ItemActionsBar } from "./ItemActionsBar";
+import { ItemFulfillmentControl } from "./ItemFulfillmentControl";
+import { ItemMediaRow } from "./ItemMediaRow";
+import { ItemStatusSelect } from "./ItemStatusSelect";
 
 type OrderItemCardProps = {
   item: AdminOrderItem;
   orderId: string;
   currency: string;
+  shopifyImageUrl?: string | null;
   onUpdate: () => void;
   onRequestCancel: (itemIds: string[]) => void;
 };
@@ -36,6 +33,7 @@ export function OrderItemCard({
   item,
   orderId,
   currency,
+  shopifyImageUrl,
   onUpdate,
   onRequestCancel,
 }: OrderItemCardProps) {
@@ -46,18 +44,25 @@ export function OrderItemCard({
   const [savingFulfillment, setSavingFulfillment] = useState(false);
   const [uploadingImage, setUploadingImage] = useState(false);
   const [showStudio, setShowStudio] = useState(false);
-  const [showImage, setShowImage] = useState(false);
+  const [previewSrc, setPreviewSrc] = useState<string | null>(null);
   const [err, setErr] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const thumb =
-    item.printImageUrl ??
-    item.generation?.thumbnailUrl ??
-    item.generation?.resultUrl ??
-    item.imageUrl;
-  // Full-resolution image for the large preview (skip the small thumbnail).
-  const fullImage =
-    item.printImageUrl ?? item.generation?.resultUrl ?? item.imageUrl ?? thumb;
+  // Imagen del producto de Shopify relacionado: imagen de la variante comprada
+  // (live desde Shopify) → imagen del catálogo (primaria/galería) → preview del
+  // estilo. No cae al arte del cliente.
+  const productImage =
+    shopifyImageUrl ??
+    item.productRef?.images?.[0]?.imageUrl ??
+    item.productRef?.style?.images?.[0]?.imageUrl ??
+    null;
+  // Imagen generada por el usuario (IA): thumbnail para la card, full para la vista ampliada.
+  const generatedThumb =
+    item.generation?.thumbnailUrl ?? item.generation?.resultUrl ?? null;
+  const generatedFull =
+    item.generation?.resultUrl ?? item.generation?.thumbnailUrl ?? null;
+  // Imagen final para impresión.
+  const printImage = item.printImageUrl ?? null;
   const allowed = VALID_TRANSITIONS[item.productionStatus] ?? [];
 
   async function handleUploadImage(e: React.ChangeEvent<HTMLInputElement>) {
@@ -109,6 +114,14 @@ export function OrderItemCard({
     }
   }
 
+  function handleStatusSelect(value: string) {
+    if (value === "cancelled") {
+      onRequestCancel([item.id]);
+    } else {
+      handleStatusChange(value);
+    }
+  }
+
   return (
     <>
       {showStudio && (
@@ -119,134 +132,114 @@ export function OrderItemCard({
           onApplied={onUpdate}
         />
       )}
-      {showImage && fullImage && (
+      {previewSrc && (
         <ImagePreviewModal
-          src={fullImage}
+          src={previewSrc}
           title={item.title}
-          onClose={() => setShowImage(false)}
+          onClose={() => setPreviewSrc(null)}
         />
       )}
-      <InlineStack gap="200" blockAlign="center">
-        <input
-          ref={fileInputRef}
-          type="file"
-          accept="image/*"
-          hidden
-          onChange={handleUploadImage}
-        />
-        <Button
-          size="micro"
-          icon={ImageIcon}
-          loading={uploadingImage}
-          onClick={() => fileInputRef.current?.click()}
-        >
-          {item.printImageUrl ? "Reemplazar" : "Subir imagen"}
-        </Button>
-        <Button
-          size="micro"
-          icon={MagicIcon}
-          onClick={() => setShowStudio(true)}
-        >
-          Editar para impresión
-        </Button>
-        {item.printImageUrl && <Badge tone="info">Imagen personalizada</Badge>}
-      </InlineStack>
+
+      <ItemActionsBar
+        hasPrintImage={!!item.printImageUrl}
+        uploading={uploadingImage}
+        fileInputRef={fileInputRef}
+        onUploadClick={() => fileInputRef.current?.click()}
+        onUploadChange={handleUploadImage}
+        onOpenStudio={() => setShowStudio(true)}
+      />
       <Divider />
-      <InlineStack gap="200" blockAlign="center">
-        <div style={{ minWidth: 180 }}>
-          <Select
-            label=""
-            labelHidden
-            options={[
-              { label: "Taller (in-house)", value: "in_house" },
-              { label: "POD (proveedor externo)", value: "pod" },
-            ]}
-            value={fulfillmentMethod}
-            onChange={handleFulfillmentChange}
-            disabled={savingFulfillment}
-          />
-        </div>
-        <Badge tone={STATUS_TONES[item.productionStatus] ?? "enabled"}>
-          {PRODUCTION_STATUS_LABELS[item.productionStatus] ??
-            item.productionStatus}
-        </Badge>
-      </InlineStack>
+      <ItemFulfillmentControl
+        value={fulfillmentMethod}
+        disabled={savingFulfillment}
+        onChange={handleFulfillmentChange}
+        productionStatus={item.productionStatus}
+      />
 
       <Card>
         <BlockStack gap="300">
-          <InlineStack gap="400" blockAlign="start">
-            <div style={{ flexShrink: 0 }}>
-              <BlockStack gap="100" inlineAlign="center">
-                {thumb ? (
-                  <button
-                    type="button"
-                    onClick={() => setShowImage(true)}
-                    title="Ver imagen en grande"
-                    style={{
-                      border: "none",
-                      background: "none",
-                      padding: 0,
-                      cursor: "zoom-in",
-                    }}
-                  >
-                    <Thumbnail source={thumb} alt={item.title} size="medium" />
-                  </button>
-                ) : (
-                  <div
-                    style={{
-                      width: 60,
-                      height: 60,
-                      background: "#f6f6f7",
-                      border: "1px solid #e3e3e3",
-                      borderRadius: 8,
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                    }}
-                  >
-                    <Text as="span" tone="subdued" variant="bodySm">
-                      —
-                    </Text>
-                  </div>
+          <ItemMediaRow
+            image={productImage}
+            alt={item.productRef?.displayName ?? item.title}
+          >
+            <InlineStack
+              align="space-between"
+              blockAlign="center"
+              gap="400"
+              wrap={false}
+            >
+              <BlockStack gap="050">
+                <Text variant="bodySm" tone="subdued" as="span">
+                  Producto de Shopify
+                </Text>
+                <Text variant="bodyMd" fontWeight="semibold" as="span">
+                  {item.productRef?.displayName ??
+                    item.productRef?.name ??
+                    item.title}
+                </Text>
+                {item.productVariant?.shopifyVariantTitle && (
+                  <Text variant="bodySm" tone="subdued" as="span">
+                    {item.productVariant.shopifyVariantTitle}
+                  </Text>
+                )}
+                {item.sku && (
+                  <Text variant="bodySm" tone="subdued" as="span">
+                    SKU: {item.sku}
+                  </Text>
                 )}
               </BlockStack>
-            </div>
-
-            <BlockStack gap="100" align="start">
-              <InlineStack align="space-between" gap="200">
-                <BlockStack gap="0">
-                  <Text variant="bodyMd" fontWeight="semibold" as="span">
-                    {item.title}
+              <InlineStack gap="400" blockAlign="center" wrap={false}>
+                <InlineStack gap="150" blockAlign="center" wrap={false}>
+                  <Text variant="bodyMd" tone="subdued" as="span">
+                    {fmtCurrency(item.unitPrice, currency)} ×
                   </Text>
-                  {item.variantTitle && (
-                    <Text variant="bodySm" tone="subdued" as="span">
-                      {item.variantTitle}
-                    </Text>
-                  )}
-                  <InlineStack gap="200">
-                    {item.style && (
-                      <Text variant="bodySm" tone="subdued" as="span">
-                        Estilo: {item.style}
-                      </Text>
-                    )}
-                    {item.size && (
-                      <Text variant="bodySm" tone="subdued" as="span">
-                        Tamaño: {item.size}
-                      </Text>
-                    )}
-                  </InlineStack>
-                </BlockStack>
-                <BlockStack gap="0" inlineAlign="end">
-                  <Text variant="bodyMd" fontWeight="semibold" as="span">
-                    {fmtCurrency(item.totalPrice, currency)}
-                  </Text>
-                  <Text variant="bodySm" tone="subdued" as="span">
-                    {item.quantity} × {fmtCurrency(item.unitPrice, currency)}
-                  </Text>
-                </BlockStack>
+                  <Badge>{String(item.quantity)}</Badge>
+                </InlineStack>
+                <Text variant="bodyMd" fontWeight="semibold" as="span">
+                  {fmtCurrency(item.totalPrice, currency)}
+                </Text>
               </InlineStack>
+            </InlineStack>
+          </ItemMediaRow>
+
+          <Divider />
+
+          <ItemMediaRow
+            image={generatedThumb}
+            alt={item.title}
+            onZoom={
+              generatedFull ? () => setPreviewSrc(generatedFull) : undefined
+            }
+          >
+            <BlockStack gap="050">
+              <Text variant="bodySm" tone="subdued" as="span">
+                Imagen generada
+              </Text>
+              <Text variant="bodyMd" fontWeight="semibold" as="span">
+                {item.title}
+              </Text>
+              {item.variantTitle && (
+                <Text variant="bodySm" tone="subdued" as="span">
+                  {item.variantTitle}
+                </Text>
+              )}
+              <Text variant="bodySm" tone="subdued" as="span">
+                {item.id}
+              </Text>
             </BlockStack>
-          </InlineStack>
+          </ItemMediaRow>
+
+          <Divider />
+
+          <ItemMediaRow
+            image={printImage}
+            alt={item.title}
+            onZoom={printImage ? () => setPreviewSrc(printImage) : undefined}
+          >
+            <Text variant="bodySm" tone="subdued" as="span">
+              Imagen para impresión
+            </Text>
+          </ItemMediaRow>
 
           {err && (
             <Banner tone="critical" onDismiss={() => setErr(null)}>
@@ -257,28 +250,11 @@ export function OrderItemCard({
           {allowed.length > 0 && (
             <>
               <Divider />
-              <div style={{ maxWidth: 280 }}>
-                <Select
-                  label="Cambiar estado"
-                  disabled={updatingStatus}
-                  value=""
-                  options={[
-                    { label: "Selecciona un estado…", value: "" },
-                    ...allowed.map((s) => ({
-                      label: PRODUCTION_STATUS_LABELS[s] ?? s,
-                      value: s,
-                    })),
-                  ]}
-                  onChange={(value) => {
-                    if (!value) return;
-                    if (value === "cancelled") {
-                      onRequestCancel([item.id]);
-                    } else {
-                      handleStatusChange(value);
-                    }
-                  }}
-                />
-              </div>
+              <ItemStatusSelect
+                allowed={allowed}
+                disabled={updatingStatus}
+                onSelect={handleStatusSelect}
+              />
             </>
           )}
         </BlockStack>

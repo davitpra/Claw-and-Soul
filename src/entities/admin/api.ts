@@ -126,8 +126,20 @@ export interface AdminOrderItem {
   notes: string | null;
   shippedAt: string | null;
   deliveredAt: string | null;
-  productRef: { id: string; name: string; displayName: string; fulfillmentMethod: string } | null;
-  productVariant: { id: string; shopifyVariantTitle: string } | null;
+  productRef: {
+    id: string;
+    name: string;
+    displayName: string;
+    fulfillmentMethod: string;
+    shopifyHandle: string | null;
+    images: { imageUrl: string }[];
+    style: { images: { imageUrl: string }[] } | null;
+  } | null;
+  productVariant: {
+    id: string;
+    shopifyVariantId: string;
+    shopifyVariantTitle: string;
+  } | null;
   generation: {
     id: string;
     resultUrl: string | null;
@@ -158,6 +170,7 @@ export interface AdminOrderDetail {
   userId: string | null;
   financialStatus: string | null;
   fulfillmentStatus: string | null;
+  fulfillmentDisplayStatus: string | null;
   currency: string;
   subtotalAmount: number;
   shippingAmount: number | null;
