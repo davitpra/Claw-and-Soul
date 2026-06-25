@@ -15,14 +15,18 @@ import { VALID_TRANSITIONS } from "@/entities/admin/lib/order-transitions";
 import { fmtCurrency } from "@/entities/admin/lib/order-format";
 import ImagePreviewModal from "@/app/admin/_components/ImagePreviewModal";
 import PrintStudioModal from "./PrintStudioModal";
+import { Modal } from "@shopify/polaris";
 import { ItemActionsBar } from "./ItemActionsBar";
 import { ItemFulfillmentControl } from "./ItemFulfillmentControl";
 import { ItemMediaRow } from "./ItemMediaRow";
 import { ItemStatusSelect } from "./ItemStatusSelect";
+import { GenerationActionsBar } from "./GenerationActionsBar";
+import { GenerationPickerModal } from "./GenerationPickerModal";
 
 type OrderItemCardProps = {
   item: AdminOrderItem;
   orderId: string;
+  userId: string | null;
   currency: string;
   shopifyImageUrl?: string | null;
   onUpdate: () => void;
@@ -32,6 +36,7 @@ type OrderItemCardProps = {
 export function OrderItemCard({
   item,
   orderId,
+  userId,
   currency,
   shopifyImageUrl,
   onUpdate,
@@ -47,6 +52,12 @@ export function OrderItemCard({
   const [previewSrc, setPreviewSrc] = useState<string | null>(null);
   const [err, setErr] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  // Estado de la fila "Imagen generada".
+  const [replacingGeneration, setReplacingGeneration] = useState(false);
+  const [unlinkingGeneration, setUnlinkingGeneration] = useState(false);
+  const [showPicker, setShowPicker] = useState(false);
+  const [pendingGenFile, setPendingGenFile] = useState<File | null>(null);
+  const genFileInputRef = useRef<HTMLInputElement>(null);
 
   // Imagen del producto de Shopify relacionado: imagen de la variante comprada
   // (live desde Shopify) → imagen del catálogo (primaria/galería) → preview del
@@ -82,6 +93,51 @@ export function OrderItemCard({
       setErr((e as Error).message);
     } finally {
       setUploadingImage(false);
+    }
+  }
+
+  // La subida sobrescribe la generación del cliente, así que pedimos confirmación
+  // antes de hacerlo: guardamos el archivo elegido y mostramos el diálogo.
+  function handleGenerationFileChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    e.target.value = "";
+    if (!file.type.startsWith("image/")) {
+      setErr("El archivo debe ser una imagen");
+      return;
+    }
+    setPendingGenFile(file);
+  }
+
+  async function handleConfirmReplaceGeneration() {
+    if (!pendingGenFile) return;
+    setReplacingGeneration(true);
+    setErr(null);
+    try {
+      await adminApi.orders.uploadGenerationImage(
+        orderId,
+        item.id,
+        pendingGenFile,
+      );
+      setPendingGenFile(null);
+      onUpdate();
+    } catch (e) {
+      setErr((e as Error).message);
+    } finally {
+      setReplacingGeneration(false);
+    }
+  }
+
+  async function handleUnlinkGeneration() {
+    setUnlinkingGeneration(true);
+    setErr(null);
+    try {
+      await adminApi.orders.unlinkGeneration(orderId, item.id);
+      onUpdate();
+    } catch (e) {
+      setErr((e as Error).message);
+    } finally {
+      setUnlinkingGeneration(false);
     }
   }
 
@@ -138,6 +194,43 @@ export function OrderItemCard({
           title={item.title}
           onClose={() => setPreviewSrc(null)}
         />
+      )}
+      {showPicker && userId && (
+        <GenerationPickerModal
+          userId={userId}
+          orderId={orderId}
+          itemId={item.id}
+          currentGenerationId={item.generation?.id ?? null}
+          onClose={() => setShowPicker(false)}
+          onLinked={onUpdate}
+        />
+      )}
+      {pendingGenFile && (
+        <Modal
+          open
+          onClose={() => setPendingGenFile(null)}
+          title="Reemplazar imagen generada"
+          primaryAction={{
+            content: "Reemplazar",
+            destructive: true,
+            loading: replacingGeneration,
+            onAction: handleConfirmReplaceGeneration,
+          }}
+          secondaryActions={[
+            {
+              content: "Cancelar",
+              onAction: () => setPendingGenFile(null),
+              disabled: replacingGeneration,
+            },
+          ]}
+        >
+          <Modal.Section>
+            <Text as="p">
+              Esto sobrescribe la imagen de la generación del cliente. La nueva
+              imagen también aparecerá en su galería. ¿Continuar?
+            </Text>
+          </Modal.Section>
+        </Modal>
       )}
 
       <ItemActionsBar
@@ -203,6 +296,18 @@ export function OrderItemCard({
           </ItemMediaRow>
 
           <Divider />
+
+          <GenerationActionsBar
+            hasGeneration={!!item.generation}
+            canPickGeneration={!!userId}
+            replacing={replacingGeneration}
+            unlinking={unlinkingGeneration}
+            fileInputRef={genFileInputRef}
+            onReplaceClick={() => genFileInputRef.current?.click()}
+            onReplaceChange={handleGenerationFileChange}
+            onPickClick={() => setShowPicker(true)}
+            onUnlinkClick={handleUnlinkGeneration}
+          />
 
           <ItemMediaRow
             image={generatedThumb}

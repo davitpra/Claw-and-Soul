@@ -28,6 +28,7 @@ import {
   financialLabel,
   financialTone,
 } from "@/entities/admin/lib/financial-status";
+import { shopifyOrderUrl } from "@/entities/admin/lib/shopify-admin-url";
 import { fmtDate } from "@/entities/admin/lib/order-format";
 import { shopifyFetch } from "@/lib/shopify/client";
 import { GET_PRODUCT } from "@/lib/shopify/queries/products";
@@ -144,7 +145,7 @@ export default function AdminOrderDetailPage() {
     );
   }
 
-  const shopifyAdminUrl = `https://clawandsoul.myshopify.com/admin/orders/${order.shopifyOrderId}`;
+  const shopifyAdminUrl = shopifyOrderUrl(order.shopifyOrderId);
 
   const overallTones = order.items.map((i) => i.productionStatus);
   const dominantStatus =
@@ -211,6 +212,7 @@ export default function AdminOrderDetailPage() {
                 key={item.id}
                 item={item}
                 orderId={id}
+                userId={order.userId}
                 currency={order.currency}
                 shopifyImageUrl={
                   item.productVariant?.shopifyVariantId

@@ -931,6 +931,24 @@ export const adminApi = {
         { method: 'POST', body: form },
       );
     },
+    // Imagen generada del item: sobrescribe la Generation del cliente.
+    uploadGenerationImage: (orderId: string, itemId: string, file: File) => {
+      const form = new FormData();
+      form.append('file', file);
+      return adminFetch<{ resultUrl: string; thumbnailUrl: string }>(
+        `/admin/orders/${orderId}/items/${itemId}/generation-image`,
+        { method: 'POST', body: form },
+      );
+    },
+    linkGeneration: (orderId: string, itemId: string, generationId: string) =>
+      adminFetch(`/admin/orders/${orderId}/items/${itemId}/link-generation`, {
+        method: 'POST',
+        body: JSON.stringify({ generationId }),
+      }),
+    unlinkGeneration: (orderId: string, itemId: string) =>
+      adminFetch(`/admin/orders/${orderId}/items/${itemId}/unlink-generation`, {
+        method: 'POST',
+      }),
     enhanceInfo: (orderId: string, itemId: string) =>
       adminFetch<EnhanceInfo>(
         `/admin/orders/${orderId}/items/${itemId}/enhance-info`,
