@@ -54,7 +54,7 @@ function fmtCurrency(amount: number, currency: string) {
 }
 
 function getOrderStatus(items: AdminOrderListItem["items"]): string {
-  if (!items.length) return "paid";
+  if (!items.length) return "draft";
   const statuses = [...new Set(items.map((i) => i.productionStatus))];
   return statuses.length === 1 ? statuses[0] : "mixed";
 }
@@ -119,7 +119,7 @@ export default function AdminOrdersPage() {
   const filters = [
     {
       key: "status",
-      label: "Estado",
+      label: "Producción",
       filter: (
         <ChoiceList
           title="Estado de producción"
@@ -282,7 +282,7 @@ export default function AdminOrdersPage() {
                 { title: "Cliente" },
                 { title: "Items" },
                 { title: "Total" },
-                { title: "Estado" },
+                { title: "Producción" },
                 { title: "Shopify" },
                 { title: "Fecha" },
               ]}

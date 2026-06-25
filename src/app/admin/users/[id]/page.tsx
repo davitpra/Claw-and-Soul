@@ -31,6 +31,7 @@ import {
   CustomerExpenses,
   Paginated,
 } from "@/entities/admin/api";
+import { PRODUCTION_STATUS_LABELS } from "@/entities/admin/lib/production-status";
 
 const EXPENSE_CATEGORY_LABELS: Record<string, string> = {
   pod_production: "Producción (Pictorem)",
@@ -92,15 +93,6 @@ const GEN_STATUS_TONES: Record<
   failed: "critical",
   processing: "warning",
   pending: "enabled",
-};
-
-const PRODUCTION_STATUS_LABELS: Record<string, string> = {
-  paid: "Pagado",
-  in_production: "En producción",
-  shipped: "Enviado",
-  delivered: "Entregado",
-  cancelled: "Cancelado",
-  refunded: "Reembolsado",
 };
 
 export default function AdminUserDetailPage() {

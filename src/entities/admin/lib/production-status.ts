@@ -8,23 +8,35 @@ import type { BadgeProps } from "@shopify/polaris";
  */
 export const PRODUCTION_STATUS_LABELS: Record<string, string> = {
   pending: "Pago pendiente",
-  paid: "Pagado",
+  generating: "Generando arte",
+  art_failed: "Error de arte",
+  draft: "Borrador",
+  pre_production: "Pre-producción",
   in_production: "En producción",
+  printed: "Impreso",
   shipped: "Enviado",
   delivered: "Entregado",
+  on_hold: "En espera",
   cancelled: "Cancelado",
   refunded: "Reembolsado",
+  restocked: "Reabastecido",
   mixed: "Mixto",
 };
 
 export const PRODUCTION_STATUS_TONES: Record<string, BadgeProps["tone"]> = {
   pending: "attention",
-  paid: "info",
+  generating: "info",
+  art_failed: "critical",
+  draft: "info",
+  pre_production: "info",
   in_production: "warning",
+  printed: "warning",
   shipped: "attention",
   delivered: "success",
+  on_hold: "warning",
   cancelled: "enabled",
   refunded: "critical",
+  restocked: "enabled",
   mixed: "enabled",
 };
 

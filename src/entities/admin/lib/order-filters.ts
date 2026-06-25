@@ -8,16 +8,23 @@ import { PRODUCTION_STATUS_LABELS } from "./production-status";
  */
 export type FilterOption = { label: string; value: string };
 
-/** Estados de producción que el usuario puede filtrar (subconjunto accionable
- * de `PRODUCTION_STATUS_LABELS`: sin `pending` ni `mixed`). Las etiquetas se
- * derivan del catálogo para no duplicar la traducción. */
+/** Estados de producción filtrables (todos los valores almacenados, en orden de
+ * pipeline; se excluye `mixed`, que es solo una agregación de frontend). Las
+ * etiquetas se derivan del catálogo para no duplicar la traducción. */
 export const STATUS_OPTIONS: FilterOption[] = [
-  "paid",
+  "pending",
+  "generating",
+  "art_failed",
+  "draft",
+  "pre_production",
   "in_production",
+  "printed",
   "shipped",
   "delivered",
+  "on_hold",
   "cancelled",
   "refunded",
+  "restocked",
 ].map((value) => ({ value, label: PRODUCTION_STATUS_LABELS[value] }));
 
 export const METHOD_OPTIONS: FilterOption[] = [
