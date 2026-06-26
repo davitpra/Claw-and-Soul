@@ -1,5 +1,4 @@
 import { Container } from "@/shared/ui/Container";
-import { DashboardTabs } from "@/widgets/user-dashboard/ui/DashboardTabs";
 import { PetDetail } from "@/widgets/user-dashboard/ui/PetDetail";
 
 export const metadata = {

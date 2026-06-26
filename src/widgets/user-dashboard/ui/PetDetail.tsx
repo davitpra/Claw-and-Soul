@@ -5,7 +5,11 @@ import Link from "next/link";
 import { Card } from "@/shared/ui/Card";
 import { cloudinaryThumb } from "@/shared/lib/cloudinary";
 import { useAuthFetch } from "@/hooks/useAuthFetch";
-import type { ApiEnvelope, UserPet, UserPetPhoto } from "@/entities/order/types";
+import type {
+  ApiEnvelope,
+  UserPet,
+  UserPetPhoto,
+} from "@/entities/order/types";
 
 const MAX_PHOTOS = 4;
 
@@ -78,7 +82,9 @@ export function PetDetail({ petId }: Props) {
     } catch (err) {
       console.error("Photo upload error:", err);
       setUploadError(
-        err instanceof Error ? err.message : "Couldn't upload photo. Please try again.",
+        err instanceof Error
+          ? err.message
+          : "Couldn't upload photo. Please try again.",
       );
     } finally {
       setUploading(false);
@@ -100,7 +106,7 @@ export function PetDetail({ petId }: Props) {
         setActivePhoto((current) =>
           current && remaining.some((p) => p.photoUrl === current)
             ? current
-            : ordered[0]?.photoUrl ?? null,
+            : (ordered[0]?.photoUrl ?? null),
         );
         return next;
       });
@@ -164,51 +170,17 @@ export function PetDetail({ petId }: Props) {
       <div className="mt-6 grid grid-cols-1 gap-8 max-w-3xl mx-auto">
         {/* Detalles */}
         <div>
-          <h1 className="font-display text-3xl font-black text-text-main">
+          <h1 className="font-display text-6xl font-black text-text-main text-center">
             {pet.name}
           </h1>
-          {details && (
-            <p className="mt-1 capitalize text-text-muted">{details}</p>
-          )}
-
-          <dl className="mt-6 space-y-4 max-w-md">
-            <div className="flex justify-between border-b border-[#E0DED9] pb-3">
-              <dt className="text-text-muted">Species</dt>
-              <dd className="font-bold capitalize text-text-main">
-                {pet.species}
-              </dd>
-            </div>
-            {pet.breed && (
-              <div className="flex justify-between border-b border-[#E0DED9] pb-3">
-                <dt className="text-text-muted">Breed</dt>
-                <dd className="font-bold capitalize text-text-main">
-                  {pet.breed}
-                </dd>
-              </div>
-            )}
-            {pet.age != null && (
-              <div className="flex justify-between border-b border-[#E0DED9] pb-3">
-                <dt className="text-text-muted">Age</dt>
-                <dd className="font-bold text-text-main">
-                  {pet.age} {pet.age === 1 ? "year" : "years"}
-                </dd>
-              </div>
-            )}
-          </dl>
-
-          {pet.description && (
-            <div className="mt-6">
-              <h2 className="font-display text-lg font-black text-text-main">
-                About {pet.name}
-              </h2>
-              <p className="mt-2 text-text-muted">{pet.description}</p>
-            </div>
-          )}
         </div>
         {/* Galería */}
         <div>
           {activePhoto ? (
-            <Card imageUrl={cloudinaryThumb(activePhoto, 800)} imageAlt={pet.name} />
+            <Card
+              imageUrl={cloudinaryThumb(activePhoto, 800)}
+              imageAlt={pet.name}
+            />
           ) : (
             <div className="flex aspect-4/5 flex-col items-center justify-center gap-2 rounded-xl bg-cream">
               <span className="material-symbols-outlined text-[48px] text-text-muted">
