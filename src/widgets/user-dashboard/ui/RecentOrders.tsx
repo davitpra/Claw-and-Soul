@@ -3,6 +3,7 @@
 import Link from "next/link";
 import {
   formatOrderDate,
+  formatPrice,
   itemThumb,
   statusBadge,
 } from "@/entities/order/lib/presentation";
@@ -17,6 +18,13 @@ interface Props {
 function thumbFor(order: UserOrderListItem) {
   const item = order.items?.[0];
   return item ? itemThumb(item) : null;
+}
+
+function itemSummary(order: UserOrderListItem): string {
+  const count = order.items?.length ?? 0;
+  if (count === 0) return "No items";
+  const first = order.items[0]?.title ?? "Item";
+  return count === 1 ? first : `${first} +${count - 1} more`;
 }
 
 export function RecentOrders({ orders, isLoading, error }: Props) {
@@ -67,46 +75,55 @@ export function RecentOrders({ orders, isLoading, error }: Props) {
               const badge = statusBadge(order);
               const thumb = thumbFor(order);
               return (
-                <li
-                  key={order.id}
-                  className="flex items-center gap-4 rounded-xl bg-cream p-3"
-                >
-                  <span className="size-14 shrink-0 overflow-hidden rounded-xl bg-cream">
-                    {thumb ? (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img
-                        src={thumb}
-                        alt=""
-                        className="h-full w-full object-cover"
-                      />
-                    ) : (
-                      <span className="flex h-full w-full items-center justify-center">
-                        <span className="material-symbols-outlined text-[24px] text-text-muted">
-                          image
-                        </span>
-                      </span>
-                    )}
-                  </span>
-
-                  <div className="min-w-0 flex-1">
-                    <p className="truncate font-bold text-text-main">
-                      Order #{order.orderNumber}
-                    </p>
-                    <p className="text-sm text-text-muted">
-                      {formatOrderDate(order.shopifyCreatedAt)}
-                    </p>
-                  </div>
-
-                  <span
-                    className={`rounded-full px-3 py-1 text-xs font-semibold ${badge.classes}`}
+                <li key={order.id}>
+                  <Link
+                    href={`/user/orders/${order.id}`}
+                    className="group flex items-center gap-4 rounded-xl bg-cream p-3 transition-all hover:bg-cream/60 hover:shadow-md"
                   >
-                    {badge.label}
-                  </span>
+                    <span className="size-16 shrink-0 overflow-hidden rounded-xl bg-white sm:size-20">
+                      {thumb ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img
+                          src={thumb}
+                          alt=""
+                          className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
+                        />
+                      ) : (
+                        <span className="flex h-full w-full items-center justify-center">
+                          <span className="material-symbols-outlined text-[24px] text-text-muted">
+                            image
+                          </span>
+                        </span>
+                      )}
+                    </span>
 
-                  <span className="w-20 text-right font-bold text-text-main">
-                    {order.currency === "USD" ? "$" : ""}
-                    {order.totalAmount.toFixed(2)}
-                  </span>
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate font-bold text-text-main">
+                        Order #{order.orderNumber}
+                      </p>
+                      <p className="truncate text-sm text-text-muted">
+                        {itemSummary(order)}
+                      </p>
+                      <p className="mt-0.5 text-xs text-text-muted">
+                        {formatOrderDate(order.shopifyCreatedAt)}
+                      </p>
+                    </div>
+
+                    <div className="flex shrink-0 flex-col items-end gap-1.5">
+                      <span className="font-bold text-text-main">
+                        {formatPrice(order.totalAmount, order.currency)}
+                      </span>
+                      <span
+                        className={`rounded-full px-3 py-1 text-xs font-semibold ${badge.classes}`}
+                      >
+                        {badge.label}
+                      </span>
+                    </div>
+
+                    <span className="material-symbols-outlined hidden text-[20px] text-text-muted transition-transform group-hover:translate-x-0.5 group-hover:text-primary sm:block">
+                      chevron_right
+                    </span>
+                  </Link>
                 </li>
               );
             })}

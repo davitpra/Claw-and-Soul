@@ -3,12 +3,33 @@
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { useAuthFetch } from "@/hooks/useAuthFetch";
-import { OrderCard } from "@/entities/order/ui/OrderCard";
+import { ProductCard } from "@/entities/pet-product/ui/ProductCard";
+import type { Product } from "@/entities/pet-product/model/types";
+import {
+  formatOrderDate,
+  formatPrice,
+  itemThumb,
+  statusBadge,
+} from "@/entities/order/lib/presentation";
 import type {
   ApiEnvelope,
   PaginatedResult,
   UserOrderListItem,
 } from "@/entities/order/types";
+
+// Adapta una orden al shape `Product` que consume ProductCard: la imagen del
+// item principal hace de "poster", el número de orden de nombre y el total de
+// precio. El badge superpuesto reutiliza el estado de fulfillment de la orden.
+function orderToProduct(order: UserOrderListItem): Product {
+  const primary = order.items?.[0];
+  return {
+    name: `Order ${order.orderNumber}`,
+    desc: "",
+    price: formatPrice(order.totalAmount, order.currency),
+    img: (primary ? itemThumb(primary) : null) ?? "/placeholder-image.jpg",
+    label: statusBadge(order).label,
+  };
+}
 
 const PAGE_SIZE = 10;
 
@@ -65,11 +86,14 @@ export function AllOrders() {
     <div className="space-y-6">
       <section className="rounded-xl bg-white p-6 md:p-8">
         {isLoading && (
-          <ul className="grid grid-cols-1 items-start gap-5 xl:grid-cols-2">
+          <div className="grid grid-cols-2 gap-8 lg:grid-cols-3 xl:grid-cols-4">
             {[0, 1, 2, 3].map((i) => (
-              <li key={i} className="h-52 animate-pulse rounded-xl bg-cream" />
+              <div
+                key={i}
+                className="aspect-[3/4] animate-pulse rounded-xl bg-cream"
+              />
             ))}
-          </ul>
+          </div>
         )}
 
         {!isLoading && error && (
@@ -120,11 +144,17 @@ export function AllOrders() {
 
         {!isLoading && !error && orders.length > 0 && (
           <>
-            <ul className="grid grid-cols-2 items-start gap-5 xl:grid-cols-3">
-              {orders.map((order) => (
-                <OrderCard key={order.id} order={order} />
-              ))}
-            </ul>
+            <div className="grid grid-cols-2 items-center gap-8 lg:grid-cols-3 xl:grid-cols-4">
+              {orders.map((order) => {
+                return (
+                  <ProductCard
+                    key={order.id}
+                    product={orderToProduct(order)}
+                    href={`/user/orders/${order.id}`}
+                  />
+                );
+              })}
+            </div>
 
             {hasMore && (
               <div className="mt-6 text-center">
