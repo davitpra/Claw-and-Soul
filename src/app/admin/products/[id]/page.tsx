@@ -25,6 +25,7 @@ import {
   useProductDetail,
   type AdminProductVariantLink,
 } from "./useProductDetail";
+import { shopifyProductUrl } from "@/entities/admin/lib/shopify-admin-url";
 
 const BACK_ACTION = { url: "/admin/products", content: "Productos" };
 
@@ -112,7 +113,7 @@ export default function AdminProductDetailPage() {
               {
                 content: "Ver en Shopify",
                 icon: ExternalIcon,
-                url: `https://admin.shopify.com/store/clawandsoul/products/${product.shopifyProductId}`,
+                url: shopifyProductUrl(product.shopifyProductId),
                 external: true,
               },
             ]

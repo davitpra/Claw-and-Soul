@@ -19,6 +19,7 @@ import { Modal } from "@shopify/polaris";
 import { ItemActionsBar } from "./ItemActionsBar";
 import { ItemFulfillmentControl } from "./ItemFulfillmentControl";
 import { ItemMediaRow } from "./ItemMediaRow";
+import { ItemProductPreview } from "./ItemProductPreview";
 import { ItemStatusSelect } from "./ItemStatusSelect";
 import { GenerationActionsBar } from "./GenerationActionsBar";
 import { GenerationPickerModal } from "./GenerationPickerModal";
@@ -72,8 +73,16 @@ export function OrderItemCard({
     item.generation?.thumbnailUrl ?? item.generation?.resultUrl ?? null;
   const generatedFull =
     item.generation?.resultUrl ?? item.generation?.thumbnailUrl ?? null;
-  // Imagen final para impresión.
-  const printImage = item.printImageUrl ?? null;
+  // Imagen final para impresión. El estudio arranca desde el diseño generado por
+  // el cliente, así que mientras no exista la imagen procesada mostramos esa
+  // generación como vista previa (marcada "Sin procesar"). Mismo orden de fallback
+  // que PrintStudioModal.
+  const printThumb =
+    item.printImageUrl ?? generatedThumb ?? item.imageUrl ?? null;
+  const printFull =
+    item.printImageUrl ?? generatedFull ?? item.imageUrl ?? null;
+  const printIsPreliminary =
+    !item.printImageUrl && Boolean(generatedThumb ?? item.imageUrl);
   const allowed = VALID_TRANSITIONS[item.productionStatus] ?? [];
 
   async function handleUploadImage(e: React.ChangeEvent<HTMLInputElement>) {
@@ -233,15 +242,6 @@ export function OrderItemCard({
         </Modal>
       )}
 
-      <ItemActionsBar
-        hasPrintImage={!!item.printImageUrl}
-        uploading={uploadingImage}
-        fileInputRef={fileInputRef}
-        onUploadClick={() => fileInputRef.current?.click()}
-        onUploadChange={handleUploadImage}
-        onOpenStudio={() => setShowStudio(true)}
-      />
-      <Divider />
       <ItemFulfillmentControl
         value={fulfillmentMethod}
         disabled={savingFulfillment}
@@ -335,16 +335,23 @@ export function OrderItemCard({
           </ItemMediaRow>
 
           <Divider />
+          <ItemActionsBar
+            hasPrintImage={!!item.printImageUrl}
+            uploading={uploadingImage}
+            fileInputRef={fileInputRef}
+            onUploadClick={() => fileInputRef.current?.click()}
+            onUploadChange={handleUploadImage}
+            onOpenStudio={() => setShowStudio(true)}
+          />
 
-          <ItemMediaRow
-            image={printImage}
+          <ItemProductPreview
+            image={printThumb}
             alt={item.title}
-            onZoom={printImage ? () => setPreviewSrc(printImage) : undefined}
-          >
-            <Text variant="bodySm" tone="subdued" as="span">
-              Imagen para impresión
-            </Text>
-          </ItemMediaRow>
+            label="Imagen para impresión"
+            size={item.size}
+            preliminary={printIsPreliminary}
+            onZoom={printFull ? () => setPreviewSrc(printFull) : undefined}
+          />
 
           {err && (
             <Banner tone="critical" onDismiss={() => setErr(null)}>

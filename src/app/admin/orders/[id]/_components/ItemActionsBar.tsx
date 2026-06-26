@@ -43,7 +43,6 @@ export function ItemActionsBar({
       <Button size="micro" icon={MagicIcon} onClick={onOpenStudio}>
         Editar para impresión
       </Button>
-      {hasPrintImage && <Badge tone="info">Imagen personalizada</Badge>}
     </InlineStack>
   );
 }
