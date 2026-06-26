@@ -1,10 +1,4 @@
-import {
-  BlockStack,
-  InlineStack,
-  Text,
-  Button,
-  Badge,
-} from "@shopify/polaris";
+import { BlockStack, InlineStack, Text, Button, Badge } from "@shopify/polaris";
 import type { EnhanceInfo } from "@/entities/admin/api";
 import { dpiTone } from "./printStudio";
 
@@ -69,47 +63,66 @@ export function PrintStudioStage({
       )}
 
       {/* ── LEFT: image stage ───────────────────────────────────── */}
-      <div style={{ flexShrink: 0, width: 380 }}>
+      <div style={{ flexShrink: 0, width: 500 }}>
         <BlockStack gap="200" inlineAlign="center">
-          {/* Stage container — always sized to format + 3mm bleed */}
           <div
             style={{
               position: "relative",
               width: "100%",
-              aspectRatio: stageAspect,
-              background: bleedEnabled ? bleedColor : "#ebebeb",
-              borderRadius: 6,
-              border: "1px solid #c9cccf",
-              overflow: "hidden",
+              // El contenedor de formato (caja con fondo, borde y recorte por
+              // bleed) solo se muestra cuando las guías están activas. Sin
+              // guías, la imagen se ve sola en su proporción natural.
+              ...(showGuides && printInches
+                ? {
+                    aspectRatio: stageAspect,
+                    background: bleedEnabled ? bleedColor : "#ebebeb",
+                    borderRadius: 6,
+                    border: "1px solid #c9cccf",
+                    overflow: "hidden",
+                  }
+                : {}),
             }}
           >
-            {/* Image fills the format area (inset by cut-line %) */}
+            {/* Con guías la imagen llena el área de formato (inset por el % de
+                corte); sin guías se muestra completa en su proporción natural. */}
             {displayUrl && (
               // eslint-disable-next-line @next/next/no-img-element
               <img
                 src={displayUrl}
                 alt="Vista de impresión"
-                style={{
-                  position: "absolute",
-                  top: `${cutInsetH}%`,
-                  left: `${cutInsetW}%`,
-                  width: `${100 - 2 * cutInsetW}%`,
-                  height: `${100 - 2 * cutInsetH}%`,
-                  objectFit: "cover",
-                  objectPosition: "center",
-                  display: "block",
-                  filter: cssFilter,
-                }}
+                style={
+                  showGuides && printInches
+                    ? {
+                        position: "absolute",
+                        top: `${cutInsetH}%`,
+                        left: `${cutInsetW}%`,
+                        width: `${100 - 2 * cutInsetW}%`,
+                        height: `${100 - 2 * cutInsetH}%`,
+                        objectFit: "cover",
+                        objectPosition: "center",
+                        display: "block",
+                        filter: cssFilter,
+                      }
+                    : {
+                        display: "block",
+                        width: "100%",
+                        height: "auto",
+                        borderRadius: 6,
+                        filter: cssFilter,
+                      }
+                }
               />
             )}
             {!displayUrl && (
               <div
                 style={{
-                  position: "absolute",
-                  inset: 0,
+                  width: "100%",
+                  aspectRatio: stageAspect,
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
+                  background: "#ebebeb",
+                  borderRadius: 6,
                 }}
               >
                 <Text as="span" tone="subdued" variant="bodySm">
@@ -206,7 +219,9 @@ export function PrintStudioStage({
                   {measuredPx.w} × {measuredPx.h} px
                 </Text>
                 {currentDpi !== null && (
-                  <Badge tone={dpiTone(currentDpi)}>{`${currentDpi} DPI`}</Badge>
+                  <Badge
+                    tone={dpiTone(currentDpi)}
+                  >{`${currentDpi} DPI`}</Badge>
                 )}
               </>
             ) : (
