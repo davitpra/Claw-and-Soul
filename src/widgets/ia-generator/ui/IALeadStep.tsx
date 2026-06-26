@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { GoogleLogin, type CredentialResponse } from "@react-oauth/google";
 import { useAuth } from "@/context/AuthContext";
 
 interface IALeadStepProps {
@@ -8,7 +9,7 @@ interface IALeadStepProps {
 }
 
 export function IALeadStep({ onComplete }: IALeadStepProps) {
-  const { login, register } = useAuth();
+  const { login, register, loginWithGoogle } = useAuth();
 
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
@@ -40,6 +41,33 @@ export function IALeadStep({ onComplete }: IALeadStepProps) {
     } finally {
       setAuthSubmitting(false);
     }
+  };
+
+  const handleGoogleSuccess = async (
+    credentialResponse: CredentialResponse,
+  ) => {
+    setAuthError(null);
+
+    if (!credentialResponse.credential) {
+      setAuthError("No token received from Google. Please try again.");
+      return;
+    }
+
+    setAuthSubmitting(true);
+    try {
+      await loginWithGoogle(credentialResponse.credential);
+      onComplete();
+    } catch (err) {
+      setAuthError(
+        err instanceof Error ? err.message : "Failed to sign in with Google.",
+      );
+    } finally {
+      setAuthSubmitting(false);
+    }
+  };
+
+  const handleGoogleError = () => {
+    setAuthError("Failed to sign in with Google. Please try again.");
   };
 
   const handleLogin = async (e: React.FormEvent) => {
@@ -180,6 +208,29 @@ export function IALeadStep({ onComplete }: IALeadStepProps) {
                 </button>
               </form>
             )}
+
+            {/* Divider */}
+            <div className="flex items-center gap-4">
+              <div className="h-px flex-1 bg-[#E0DED9]" />
+              <span className="text-xs font-medium uppercase tracking-wider text-slate-dark/50">
+                or continue with
+              </span>
+              <div className="h-px flex-1 bg-[#E0DED9]" />
+            </div>
+
+            {/* Google login */}
+            <div className="flex w-full justify-center scheme:light">
+              <GoogleLogin
+                onSuccess={handleGoogleSuccess}
+                onError={handleGoogleError}
+                theme="outline"
+                size="large"
+                shape="pill"
+                text="continue_with"
+                logo_alignment="left"
+                width="336"
+              />
+            </div>
 
             <p className="text-xs text-center text-slate-dark/40 italic">
               By continuing, you agree to receive art updates from Claw and

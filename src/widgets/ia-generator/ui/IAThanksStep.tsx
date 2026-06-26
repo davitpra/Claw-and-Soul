@@ -61,7 +61,7 @@ export function IAThanksStep({ thanksUrl }: IAThanksStepProps) {
 
                 <div className="flex flex-col items-center gap-3 mt-2 w-full">
                   <button
-                    onClick={() => router.push("/profile")}
+                    onClick={() => router.push("/user")}
                     className="w-full  flex items-center justify-center gap-2 rounded-xl bg-primary hover:bg-primary-dark text-white px-6 py-3 text-sm font-bold transition-all shadow-sm hover:shadow-md hover:scale-105"
                   >
                     <span className="material-symbols-outlined text-[18px]">
