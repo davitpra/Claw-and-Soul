@@ -1,13 +1,25 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { Modal, InlineStack, Text, Spinner } from "@shopify/polaris";
+import {
+  Modal,
+  InlineStack,
+  Text,
+  Spinner,
+  Button,
+  Popover,
+  ActionList,
+} from "@shopify/polaris";
 import {
   adminApi,
   AdminOrderItem,
   EnhanceInfo,
   EnhanceOptions,
 } from "@/entities/admin/api";
+import {
+  cloudinaryDownloadUrl,
+  type DownloadFormat,
+} from "@/shared/lib/cloudinary";
 import { hexToHsb, hsbToHex, HsbColor } from "@/lib/colorUtils";
 import ImagePreviewModal from "@/app/admin/_components/ImagePreviewModal";
 import {
@@ -44,6 +56,7 @@ export default function PrintStudioModal({
   const [measuredPx, setMeasuredPx] = useState<{ w: number; h: number } | null>(
     null,
   );
+  const [dlOpen, setDlOpen] = useState(false);
 
   // Controls
   const [upscaleFactor, setUpscaleFactor] = useState(DEFAULT_UPSCALE_FACTOR);
@@ -282,6 +295,22 @@ export default function PrintStudioModal({
     }
   }
 
+  function handleDownload(fmt: DownloadFormat) {
+    if (!currentImageUrl) return;
+    const href = cloudinaryDownloadUrl(
+      currentImageUrl,
+      fmt,
+      `impresion-${item.id}`,
+    );
+    const a = document.createElement("a");
+    a.href = href;
+    a.rel = "noopener";
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setDlOpen(false);
+  }
+
   return (
     <>
       {zoom && (
@@ -305,6 +334,36 @@ export default function PrintStudioModal({
         secondaryActions={[
           { content: "Cancelar", onAction: onClose, disabled: busy },
         ]}
+        footer={
+          <Popover
+            active={dlOpen}
+            onClose={() => setDlOpen(false)}
+            activator={
+              <Button
+                disclosure
+                disabled={!currentImageUrl || loadingInfo}
+                onClick={() => setDlOpen((v) => !v)}
+              >
+                Descargar
+              </Button>
+            }
+          >
+            <ActionList
+              items={[
+                {
+                  content: "PNG (alta calidad)",
+                  onAction: () => handleDownload("png"),
+                },
+                {
+                  content: "JPG (alta calidad)",
+                  onAction: () => handleDownload("jpg"),
+                },
+                { content: "WEBP", onAction: () => handleDownload("webp") },
+                { content: "PDF", onAction: () => handleDownload("pdf") },
+              ]}
+            />
+          </Popover>
+        }
       >
         <Modal.Section>
           {loadingInfo ? (
@@ -319,7 +378,7 @@ export default function PrintStudioModal({
               style={{
                 display: "flex",
                 gap: 24,
-                alignItems: "flex-start",
+                alignItems: "flex-center",
               }}
             >
               <PrintStudioStage

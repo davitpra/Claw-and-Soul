@@ -23,3 +23,26 @@ export function cloudinaryThumb(url: string | null, width: number): string {
   const transform = `f_auto,q_auto,w_${width}/`;
   return `${url.slice(0, idx + marker.length)}${transform}${after}`;
 }
+
+export type DownloadFormat = "png" | "jpg" | "webp" | "pdf";
+
+/**
+ * Devuelve una URL de Cloudinary que descarga la imagen convertida a `format`
+ * en alta calidad, como adjunto con nombre `filename`. Si la URL no es de
+ * Cloudinary se devuelve sin cambios (se descargará el original tal cual).
+ */
+export function cloudinaryDownloadUrl(
+  url: string | null,
+  format: DownloadFormat,
+  filename: string,
+): string {
+  if (!url || !url.includes("res.cloudinary.com")) return url ?? "";
+
+  const marker = "/upload/";
+  const idx = url.indexOf(marker);
+  if (idx === -1) return url;
+
+  const safeName = filename.replace(/[^a-zA-Z0-9_-]/g, "_");
+  const transform = `f_${format},q_100,fl_attachment:${safeName}/`;
+  return `${url.slice(0, idx + marker.length)}${transform}${url.slice(idx + marker.length)}`;
+}
