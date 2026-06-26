@@ -1,54 +1,23 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
-import { useAuthFetch } from "@/hooks/useAuthFetch";
-import { useGenerateImage } from "@/hooks/useGenerateImage";
-import { useCart } from "@/context/CartContext";
-import type { SelectedProductInfo } from "./IAProductStep";
+import { usePhotoManager } from "./upload-step/usePhotoManager";
+import { usePetUploadForm } from "./upload-step/usePetUploadForm";
+import { PhotoUploadPanel } from "./upload-step/PhotoUploadPanel";
+import { PetDetailsForm } from "./upload-step/PetDetailsForm";
+import type { IAUploadStepProps } from "./upload-step/types";
 
-interface PetPhoto {
-  id: string;
-  photoUrl: string;
-  isPrimary: boolean;
-}
-
-interface Pet {
-  id: string;
-  name: string;
-  species: string;
-  breed?: string;
-  age?: number;
-  photos?: PetPhoto[];
-}
-
-interface IAUploadStepProps {
-  photos: File[];
-  onPhotosChange: (files: File[]) => void;
-  styleId: string | null;
-  productRefId: string | null;
-  formatId: string | null;
-  onNext: () => void;
-  productInfo: SelectedProductInfo | null;
-  styleName: string | null;
-  userSelections?: Record<string, string | number>;
-}
-
-const SPECIES_OPTIONS = ["dog", "cat", "bird", "rabbit", "other"];
-const MAX_PHOTOS = 4;
+const PET_FORM_ID = "pet-form";
 
 /**
- * Componente IAUploadStep
+ * Primer paso del flujo de generación de IA.
  *
- * Este componente representa el primer paso en el flujo de generación de IA.
- * Permite al usuario subir una foto de su mascota o seleccionar una mascota existente.
- * También gestiona los detalles de la mascota (nombre, especie, raza, edad).
+ * Permite subir fotos de la mascota (o reusar una existente) y editar sus
+ * datos. Al continuar, guarda/actualiza la mascota, sube las fotos, dispara la
+ * generación y agrega el resultado al carrito.
  *
- * @param props.photos - Lista de fotos subidas por el usuario.
- * @param props.onPhotosChange - Callback que se ejecuta cuando cambian las fotos.
- * @param props.styleId - ID del estilo de arte seleccionado (viene de la URL).
- * @param props.productRefId - ID del producto base seleccionado (viene de la URL).
- * @param props.formatId - ID del formato del producto (viene de la URL).
- * @param props.onNext - Callback para avanzar al siguiente paso del flujo (generación de IA).
+ * La lógica vive en dos hooks: `usePhotoManager` (fotos + drag & drop) y
+ * `usePetUploadForm` (mascotas, formulario y envío). La UI se divide en
+ * `PhotoUploadPanel` (izquierda) y `PetDetailsForm` (derecha).
  */
 export function IAUploadStep({
   photos,
@@ -61,580 +30,79 @@ export function IAUploadStep({
   styleName,
   userSelections,
 }: IAUploadStepProps) {
-  const { get, post, authFetchJSON } = useAuthFetch();
-  const { generate } = useGenerateImage();
-  const { addToCart } = useCart();
+  const {
+    previews,
+    isDragging,
+    handleDrop,
+    handleDragOver,
+    handleDragLeave,
+    handleFileInput,
+    removePhoto,
+    makePrimary,
+  } = usePhotoManager(photos, onPhotosChange);
 
-  // Estados principales del componente
-  const [pets, setPets] = useState<Pet[]>([]); // Lista de mascotas del usuario
-  const [activePet, setActivePet] = useState<Pet | null>(null); // Mascota seleccionada actualmente
-  const [submitting, setSubmitting] = useState(false);
-  const [formError, setFormError] = useState<string | null>(null);
-  const [previews, setPreviews] = useState<string[]>([]);
-  const [existingPhotoUrl, setExistingPhotoUrl] = useState<string | null>(null);
-  const [isDragging, setIsDragging] = useState(false);
-  const [form, setForm] = useState({
-    name: "",
-    species: "dog",
-    breed: "",
-    age: "",
+  const {
+    pets,
+    activePet,
+    isExistingPet,
+    form,
+    existingPhotoUrl,
+    setExistingPhotoUrl,
+    submitting,
+    formError,
+    selectPet,
+    resetPet,
+    handleFieldChange,
+    handleSubmit,
+  } = usePetUploadForm({
+    photos,
+    styleId,
+    productRefId,
+    formatId,
+    onNext,
+    productInfo,
+    styleName,
+    userSelections,
   });
 
-  // Carga inicial de las mascotas del usuario desde el backend
-  useEffect(() => {
-    get<unknown>("/pets")
-      .then((res) => {
-        const list = Array.isArray(res)
-          ? res
-          : Array.isArray((res as { data?: unknown }).data)
-            ? ((res as { data: unknown[] }).data as Pet[])
-            : [];
-        setPets(list);
-      })
-      .catch(() => {});
-  }, [get]);
-
-  useEffect(() => {
-    const urls = photos.map((f) => URL.createObjectURL(f));
-    setPreviews(urls);
-    return () => urls.forEach((u) => URL.revokeObjectURL(u));
-  }, [photos]);
-
-  // Funciones para manejar la subida de fotos (drag & drop y selección manual)
-  const addPhotos = useCallback(
-    (incoming: File[]) => {
-      const images = incoming.filter((f) => f.type.startsWith("image/"));
-      onPhotosChange([...photos, ...images].slice(0, MAX_PHOTOS));
-    },
-    [photos, onPhotosChange],
-  );
-
-  const handleDrop = useCallback(
-    (e: React.DragEvent) => {
-      e.preventDefault();
-      setIsDragging(false);
-      addPhotos(Array.from(e.dataTransfer.files));
-    },
-    [addPhotos],
-  );
-
-  const handleFileInput = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files) addPhotos(Array.from(e.target.files));
-    e.target.value = "";
-  };
-
-  const removePhoto = (index: number) => {
-    onPhotosChange(photos.filter((_, i) => i !== index));
-  };
-
-  // Mueve la foto seleccionada al inicio para que sea la principal.
-  const makePrimary = (index: number) => {
-    if (index === 0) return;
-    const next = [...photos];
-    const [chosen] = next.splice(index, 1);
-    onPhotosChange([chosen, ...next]);
-  };
-
-  const selectPet = (pet: Pet) => {
-    setActivePet(pet);
-    setForm({
-      name: pet.name,
-      species: pet.species,
-      breed: pet.breed ?? "",
-      age: pet.age != null ? String(pet.age) : "",
-    });
-    const primary =
-      pet.photos?.find((p) => p.isPrimary) ?? pet.photos?.[0] ?? null;
-    setExistingPhotoUrl(primary?.photoUrl ?? null);
-  };
-
-  const handleFieldChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>,
-  ) => {
-    setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }));
-  };
-
-  // Sube todas las fotos en orden: la primera como principal (isPrimary=true) y
-  // el resto como secundarias. Devuelve la foto principal para usar su id.
-  const uploadPhoto = async (petId: string): Promise<PetPhoto | null> => {
-    if (photos.length === 0) return null;
-    let primaryPhoto: PetPhoto | null = null;
-    for (let i = 0; i < photos.length; i++) {
-      const formData = new FormData();
-      formData.append("photo", photos[i]);
-      const raw = await authFetchJSON<{ data: PetPhoto } | PetPhoto>(
-        `/pets/${petId}/photos?isPrimary=${i === 0}`,
-        { method: "POST", body: formData },
-      );
-      const photo = "data" in raw ? raw.data : raw;
-      if (i === 0) primaryPhoto = photo;
-    }
-    return primaryPhoto;
-  };
-
-  // Maneja el envío del formulario: guarda o actualiza la mascota, sube la foto y llama a la API de generación de IA
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setFormError(null);
-    if (!isExistingPet && !form.name.trim()) {
-      setFormError("Pet name is required.");
-      return;
-    }
-    if (!styleId || !productRefId || !formatId) {
-      setFormError(
-        "Missing product or format info. Please start from the catalog link.",
-      );
-      return;
-    }
-    setSubmitting(true);
-    try {
-      let petId: string;
-      let petPhotoId: string | null = null;
-
-      if (isExistingPet) {
-        const raw = await authFetchJSON<{ data: Pet } | Pet>(
-          `/pets/${activePet.id}`,
-          {
-            method: "PATCH",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              species: form.species,
-              breed: form.breed.trim() || undefined,
-              age: form.age ? parseInt(form.age) : undefined,
-            }),
-          },
-        );
-        const updated = "data" in raw ? raw.data : raw;
-        const newPhoto = await uploadPhoto(activePet.id);
-        const existingPrimary =
-          activePet.photos?.find((p) => p.isPrimary) ??
-          activePet.photos?.[0] ??
-          null;
-        petId = activePet.id;
-        petPhotoId = newPhoto?.id ?? existingPrimary?.id ?? null;
-        setPets((prev) => prev.map((p) => (p.id === updated.id ? updated : p)));
-        setActivePet(updated);
-      } else {
-        const raw = await post<{ data: Pet } | Pet>("/pets", {
-          name: form.name.trim(),
-          species: form.species,
-          breed: form.breed.trim() || undefined,
-          age: form.age ? parseInt(form.age) : undefined,
-        });
-        const newPet = "data" in raw ? raw.data : raw;
-        const newPhoto = await uploadPhoto(newPet.id);
-        petId = newPet.id;
-        petPhotoId = newPhoto?.id ?? null;
-        setPets((prev) => [...prev, newPet]);
-        setActivePet(newPet);
-        setForm({
-          name: newPet.name,
-          species: newPet.species,
-          breed: newPet.breed ?? "",
-          age: newPet.age != null ? String(newPet.age) : "",
-        });
-      }
-
-      const generation = await generate({
-        petId,
-        petPhotoId: petPhotoId ?? undefined,
-        formatId,
-        productRefId,
-        userSelections:
-          userSelections && Object.keys(userSelections).length > 0
-            ? userSelections
-            : undefined,
-      });
-
-      // productInfo is null when arriving via URL params without passing through IAProductStep
-      // (e.g. deep link). In that case, generation is still triggered but cart add is skipped.
-      if (productInfo) {
-        try {
-          addToCart({
-            id: generation.id,
-            variantId: productInfo.shopifyVariantId,
-            name: productInfo.productTitle,
-            size: productInfo.formatLabel,
-            style: styleName ?? undefined,
-            price: parseFloat(productInfo.price),
-            quantity: 1,
-            img: productInfo.productImage,
-            generationId: generation.id,
-          });
-        } catch (cartErr) {
-          console.error("addToCart failed:", cartErr);
-        }
-      }
-
-      onNext();
-    } catch {
-      setFormError("Could not start generation. Try again.");
-    } finally {
-      setSubmitting(false);
-    }
-  };
-
-  const isExistingPet = activePet !== null;
   const displayPhoto = previews[0] ?? existingPhotoUrl;
+  const hasPhoto = photos.length > 0 || existingPhotoUrl !== null;
+  const hasParams = !!(styleId && productRefId && formatId);
 
   return (
-    <main className="grow flex items-center px-6 py-8 md:py-10 animate-in fade-in duration-500">
-      <div className="w-full max-w-5xl mx-auto">
-        <div className="grid grid-cols-1 md:grid-cols-[1.1fr_0.9fr] gap-8 md:gap-12 items-stretch">
-          {/* ── LEFT: Photo Upload ── */}
-          <div className="flex flex-col">
-            <h2 className="font-display text-xl font-black text-slate-dark mb-4">
-              Upload Pet Photos
-            </h2>
+    <main className="grow flex flex-col px-6 py-8 md:py-10 animate-in fade-in duration-500">
+      <div className="w-full max-w-5xl mx-auto flex-1 flex flex-col">
+        <div className="grid grid-cols-1 md:grid-cols-[1.1fr_0.9fr] gap-8 md:gap-12 items-stretch flex-1 min-h-0">
+          <PhotoUploadPanel
+            photos={photos}
+            previews={previews}
+            isDragging={isDragging}
+            displayPhoto={displayPhoto}
+            existingPhotoUrl={existingPhotoUrl}
+            onDrop={handleDrop}
+            onDragOver={handleDragOver}
+            onDragLeave={handleDragLeave}
+            onFileInput={handleFileInput}
+            onRemovePhoto={removePhoto}
+            onMakePrimary={makePrimary}
+            onClearExistingPhoto={() => setExistingPhotoUrl(null)}
+          />
 
-            {/* Main preview / drop zone */}
-            <div
-              className={`group relative rounded-xl overflow-hidden cursor-pointer transition-all duration-300 flex-1 min-h-50 ${
-                displayPhoto
-                  ? ""
-                  : `border-2 border-dashed flex flex-col items-center justify-center gap-3 ${
-                      isDragging
-                        ? "border-primary bg-primary/5 scale-[1.01]"
-                        : "border-slate-300 bg-slate-50 hover:border-primary hover:bg-primary/5"
-                    }`
-              }`}
-              onDragOver={(e) => {
-                e.preventDefault();
-                setIsDragging(true);
-              }}
-              onDragLeave={() => setIsDragging(false)}
-              onDrop={handleDrop}
-            >
-              <input
-                type="file"
-                accept="image/*"
-                multiple
-                className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
-                onChange={handleFileInput}
-              />
-
-              {displayPhoto ? (
-                <>
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
-                    src={displayPhoto}
-                    alt="Pet photo"
-                    className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-                  />
-
-                  {/* Hover overlay */}
-                  <div className="absolute inset-0 bg-linear-to-t from-black/60 via-black/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-10 flex flex-col items-center justify-end pb-5 gap-1">
-                    <span className="material-symbols-outlined text-white text-3xl">
-                      photo_camera
-                    </span>
-                    <p className="text-white text-sm font-semibold tracking-wide">
-                      {photos.length >= MAX_PHOTOS
-                        ? "Remove a photo to add another"
-                        : "Click to add more photos"}
-                    </p>
-                  </div>
-
-                  {/* Primary badge */}
-                  <div className="absolute top-3 left-3 z-20 flex items-center gap-1.5 bg-primary text-white text-xs font-semibold px-2.5 py-1.5 rounded-full pointer-events-none">
-                    <span className="material-symbols-outlined text-[14px]">
-                      star
-                    </span>
-                    Principal
-                  </div>
-
-                  {/* Remove button */}
-                  <button
-                    type="button"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      if (photos.length > 0) removePhoto(0);
-                      else setExistingPhotoUrl(null);
-                    }}
-                    className="absolute top-3 right-3 z-20 size-7 bg-black/50 backdrop-blur-sm rounded-full flex items-center justify-center text-white hover:bg-red-500 transition-colors"
-                  >
-                    <span className="material-symbols-outlined text-[16px]">
-                      close
-                    </span>
-                  </button>
-                </>
-              ) : (
-                <>
-                  <div
-                    className={`size-14 rounded-full flex items-center justify-center mb-1 transition-all duration-300 ${
-                      isDragging
-                        ? "bg-primary text-white scale-110"
-                        : "bg-slate-200 text-slate-500 group-hover:bg-primary/10 group-hover:text-primary"
-                    }`}
-                  >
-                    <span className="material-symbols-outlined text-3xl">
-                      {isDragging ? "download" : "add_a_photo"}
-                    </span>
-                  </div>
-                  <p className="text-sm font-semibold text-slate-600 group-hover:text-primary transition-colors">
-                    {isDragging ? "Drop it here!" : "Click or drag & drop"}
-                  </p>
-                  <p className="text-xs text-slate-400">
-                    JPG, PNG, WEBP · Max 10 MB · up to {MAX_PHOTOS} photos
-                  </p>
-                </>
-              )}
-            </div>
-
-            {/* Thumbnail strip */}
-            {previews.length > 0 && (
-              <div className="mt-3 grid grid-cols-4 gap-2">
-                {previews.map((src, i) => (
-                  <div
-                    key={src}
-                    className={`group/thumb relative aspect-square rounded-lg overflow-hidden border-2 ${
-                      i === 0 ? "border-primary" : "border-slate-200"
-                    }`}
-                  >
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img
-                      src={src}
-                      alt={`Pet photo ${i + 1}`}
-                      className="absolute inset-0 w-full h-full object-cover"
-                    />
-
-                    {i === 0 ? (
-                      <span className="absolute bottom-0 inset-x-0 bg-primary text-white text-[10px] font-semibold text-center py-0.5 pointer-events-none">
-                        Principal
-                      </span>
-                    ) : (
-                      <button
-                        type="button"
-                        onClick={() => makePrimary(i)}
-                        title="Hacer principal"
-                        className="absolute bottom-1 left-1 z-10 size-6 bg-black/50 backdrop-blur-sm rounded-full flex items-center justify-center text-white opacity-0 group-hover/thumb:opacity-100 hover:bg-primary transition-all"
-                      >
-                        <span className="material-symbols-outlined text-[14px]">
-                          star
-                        </span>
-                      </button>
-                    )}
-
-                    <button
-                      type="button"
-                      onClick={() => removePhoto(i)}
-                      title="Quitar foto"
-                      className="absolute top-1 right-1 z-10 size-6 bg-black/50 backdrop-blur-sm rounded-full flex items-center justify-center text-white opacity-0 group-hover/thumb:opacity-100 hover:bg-red-500 transition-all"
-                    >
-                      <span className="material-symbols-outlined text-[14px]">
-                        close
-                      </span>
-                    </button>
-                  </div>
-                ))}
-
-                {photos.length < MAX_PHOTOS && (
-                  <label className="relative aspect-square rounded-lg border-2 border-dashed border-slate-300 flex items-center justify-center cursor-pointer text-slate-400 hover:border-primary hover:text-primary transition-colors">
-                    <input
-                      type="file"
-                      accept="image/*"
-                      multiple
-                      className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-                      onChange={handleFileInput}
-                    />
-                    <span className="material-symbols-outlined text-2xl">
-                      add_a_photo
-                    </span>
-                  </label>
-                )}
-              </div>
-            )}
-
-            <p className="mt-3 text-xs text-slate-400 text-center flex items-center justify-center gap-1">
-              <span className="material-symbols-outlined text-[14px] text-amber-400">
-                lightbulb
-              </span>
-              Sube de 1 a {MAX_PHOTOS} fotos · la primera es la principal
-            </p>
-          </div>
-
-          {/* ── RIGHT: Pet Details ── */}
-          <div>
-            <h2 className="font-display text-xl font-black text-slate-dark mb-4">
-              Pet Details
-            </h2>
-
-            {isExistingPet && (
-              <div className="flex items-center gap-2 mb-4 px-3 py-2 bg-primary/10 border border-primary/20 rounded-lg">
-                <span className="material-symbols-outlined text-primary text-[18px]">
-                  check_circle
-                </span>
-                <span className="text-sm font-semibold text-primary">
-                  {activePet.name} selected
-                </span>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setActivePet(null);
-                    setForm({ name: "", species: "dog", breed: "", age: "" });
-                    setExistingPhotoUrl(null);
-                  }}
-                  className="bg-white ml-auto text-xs text-slate-500 hover:text-slate-700 underline"
-                >
-                  Cambiar
-                </button>
-              </div>
-            )}
-
-            <form id="pet-form" onSubmit={handleSubmit} className="space-y-3">
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">
-                  Your Pets
-                </label>
-                {pets.length === 0 ? (
-                  <div className="flex items-center gap-2 px-4 py-2.5 border border-slate-200 rounded-lg bg-slate-50 text-sm text-slate-500">
-                    <span className="material-symbols-outlined text-[16px] text-slate-400">
-                      pets
-                    </span>
-                    <span>No pets yet.</span>
-                  </div>
-                ) : (
-                  <select
-                    value={activePet?.id ?? ""}
-                    onChange={(e) => {
-                      const pet = pets.find((p) => p.id === e.target.value);
-                      if (pet) {
-                        selectPet(pet);
-                      } else {
-                        setActivePet(null);
-                        setForm({
-                          name: "",
-                          species: "dog",
-                          breed: "",
-                          age: "",
-                        });
-                        setExistingPhotoUrl(null);
-                      }
-                    }}
-                    className="w-full border border-slate-300 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary bg-white transition-shadow"
-                  >
-                    <option value="">— Select a pet —</option>
-                    {pets.map((p) => (
-                      <option key={p.id} value={p.id}>
-                        {`${p.name}${p.species ? ` (${p.species}${p.breed ? ` · ${p.breed}` : ""})` : ""}`}
-                      </option>
-                    ))}
-                  </select>
-                )}
-              </div>
-
-              {!isExistingPet && (
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">
-                    Pet Name
-                  </label>
-                  <input
-                    name="name"
-                    value={form.name}
-                    onChange={(e) =>
-                      setForm((prev) => ({ ...prev, name: e.target.value }))
-                    }
-                    placeholder="e.g., Buddy"
-                    maxLength={100}
-                    autoComplete="off"
-                    className="w-full border bg-white border-slate-300 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-shadow"
-                  />
-                </div>
-              )}
-
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">
-                  Species
-                </label>
-                <select
-                  name="species"
-                  value={form.species}
-                  onChange={handleFieldChange}
-                  className="w-full border border-slate-300 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary bg-white transition-shadow"
-                >
-                  {SPECIES_OPTIONS.map((s) => (
-                    <option key={s} value={s}>
-                      {s.charAt(0).toUpperCase() + s.slice(1)}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">
-                  Breed
-                </label>
-                <input
-                  name="breed"
-                  value={form.breed}
-                  onChange={handleFieldChange}
-                  placeholder="e.g., Golden Retriever"
-                  maxLength={100}
-                  className="w-full border bg-white border-slate-300 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-shadow"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">
-                  Age
-                </label>
-                <input
-                  name="age"
-                  value={form.age}
-                  onChange={handleFieldChange}
-                  type="number"
-                  min={0}
-                  max={50}
-                  placeholder="e.g., 3"
-                  className="w-full border bg-white border-slate-300 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-shadow"
-                />
-              </div>
-
-              {formError && <p className="text-red-500 text-xs">{formError}</p>}
-            </form>
-
-            {(() => {
-              const needsPhoto = photos.length === 0 && !existingPhotoUrl;
-              const needsName = !isExistingPet && !form.name.trim();
-              const missingParams = !styleId || !productRefId || !formatId;
-              const disabled =
-                needsPhoto || needsName || missingParams || submitting;
-              const hint = missingParams
-                ? "Missing product or format info — use a catalog link"
-                : needsPhoto && needsName
-                  ? "Upload a photo and enter a pet name to continue"
-                  : needsPhoto
-                    ? "Upload at least one photo to continue"
-                    : needsName
-                      ? "Enter a pet name to continue"
-                      : null;
-
-              return (
-                <>
-                  <button
-                    type="submit"
-                    form="pet-form"
-                    disabled={disabled}
-                    className={`mt-5 w-full font-bold py-3.5 rounded-xl text-base transition-all ${
-                      disabled
-                        ? "bg-slate-200 text-slate-400 cursor-not-allowed"
-                        : "bg-primary text-white hover:bg-primary-dark shadow-md hover:shadow-lg hover:-translate-y-0.5"
-                    }`}
-                  >
-                    {submitting
-                      ? "Saving..."
-                      : isExistingPet
-                        ? "Update & Continue"
-                        : "Save & Continue"}
-                  </button>
-                  {hint && (
-                    <p className="mt-2 text-xs text-slate-400 text-center">
-                      {hint}
-                    </p>
-                  )}
-                </>
-              );
-            })()}
-          </div>
+          <PetDetailsForm
+            formId={PET_FORM_ID}
+            pets={pets}
+            activePet={activePet}
+            isExistingPet={isExistingPet}
+            form={form}
+            formError={formError}
+            hasPhoto={hasPhoto}
+            hasParams={hasParams}
+            submitting={submitting}
+            onSubmit={handleSubmit}
+            onFieldChange={handleFieldChange}
+            onSelectPet={selectPet}
+            onResetPet={resetPet}
+          />
         </div>
       </div>
     </main>
