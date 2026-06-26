@@ -7,19 +7,20 @@ interface PhotoUploadPanelProps {
   previews: string[];
   isDragging: boolean;
   displayPhoto: string | null;
-  existingPhotoUrl: string | null;
+  existingPhotos: string[];
   onDrop: (e: React.DragEvent) => void;
   onDragOver: (e: React.DragEvent) => void;
   onDragLeave: (e: React.DragEvent) => void;
   onFileInput: (e: React.ChangeEvent<HTMLInputElement>) => void;
   onRemovePhoto: (index: number) => void;
   onMakePrimary: (index: number) => void;
-  onClearExistingPhoto: () => void;
+  onRemoveExistingPhoto: (index: number) => void;
+  onMakeExistingPrimary: (index: number) => void;
 }
 
 type Thumb =
   | { kind: "upload"; src: string; index: number }
-  | { kind: "existing"; src: string };
+  | { kind: "existing"; src: string; index: number };
 
 /**
  * Columna izquierda del paso de subida: zona de drop con previsualización
@@ -30,25 +31,24 @@ export function PhotoUploadPanel({
   previews,
   isDragging,
   displayPhoto,
-  existingPhotoUrl,
+  existingPhotos,
   onDrop,
   onDragOver,
   onDragLeave,
   onFileInput,
   onRemovePhoto,
   onMakePrimary,
-  onClearExistingPhoto,
+  onRemoveExistingPhoto,
+  onMakeExistingPrimary,
 }: PhotoUploadPanelProps) {
   const atMax = photos.length >= MAX_PHOTOS;
 
-  // Galería unificada: las fotos subidas mandan; si no hay ninguna pero existe
-  // la foto guardada de la mascota, se muestra esa como miniatura principal.
+  // Galería unificada: las fotos subidas mandan; si no hay ninguna pero la
+  // mascota ya tiene fotos guardadas, se muestran todas esas como miniaturas.
   const thumbs: Thumb[] =
     previews.length > 0
       ? previews.map((src, index) => ({ kind: "upload", src, index }))
-      : existingPhotoUrl
-        ? [{ kind: "existing", src: existingPhotoUrl }]
-        : [];
+      : existingPhotos.map((src, index) => ({ kind: "existing", src, index }));
 
   return (
     <div className="flex flex-col h-full">
@@ -119,7 +119,7 @@ export function PhotoUploadPanel({
               onClick={(e) => {
                 e.stopPropagation();
                 if (photos.length > 0) onRemovePhoto(0);
-                else onClearExistingPhoto();
+                else onRemoveExistingPhoto(0);
               }}
               className="absolute top-3 right-3 z-20 size-7 bg-black/50 backdrop-blur-sm rounded-full flex items-center justify-center text-white hover:bg-red-500 transition-colors"
             >
@@ -193,10 +193,10 @@ export function PhotoUploadPanel({
             );
           }
 
-          const isPrimary = thumb.kind === "existing" || thumb.index === 0;
+          const isPrimary = thumb.index === 0;
           return (
             <div
-              key={thumb.kind === "existing" ? "existing" : thumb.src}
+              key={`${thumb.kind}-${thumb.src}`}
               className={`group/thumb relative aspect-square rounded-lg overflow-hidden border-2 ${
                 isPrimary ? "border-primary" : "border-slate-200"
               }`}
@@ -219,7 +219,11 @@ export function PhotoUploadPanel({
               ) : (
                 <button
                   type="button"
-                  onClick={() => onMakePrimary(thumb.index)}
+                  onClick={() =>
+                    thumb.kind === "upload"
+                      ? onMakePrimary(thumb.index)
+                      : onMakeExistingPrimary(thumb.index)
+                  }
                   title="Hacer principal"
                   aria-label="Hacer foto principal"
                   className="absolute bottom-1 left-1 z-10 size-4 bg-black/50 backdrop-blur-sm rounded-full flex items-center justify-center text-white opacity-0 group-hover/thumb:opacity-100 hover:bg-primary transition-all"
@@ -234,7 +238,7 @@ export function PhotoUploadPanel({
                 type="button"
                 onClick={() =>
                   thumb.kind === "existing"
-                    ? onClearExistingPhoto()
+                    ? onRemoveExistingPhoto(thumb.index)
                     : onRemovePhoto(thumb.index)
                 }
                 title="Quitar foto"

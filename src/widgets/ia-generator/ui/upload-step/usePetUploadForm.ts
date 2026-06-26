@@ -8,6 +8,7 @@ import {
   EMPTY_FORM,
   petToForm,
   primaryPhotoOf,
+  orderedPhotos,
   type Pet,
   type PetPhoto,
   type PetForm,
@@ -54,7 +55,8 @@ export function usePetUploadForm({
   const [pets, setPets] = useState<Pet[]>([]);
   const [activePet, setActivePet] = useState<Pet | null>(null);
   const [form, setForm] = useState<PetForm>(EMPTY_FORM);
-  const [existingPhotoUrl, setExistingPhotoUrl] = useState<string | null>(null);
+  // Fotos ya guardadas de la mascota seleccionada (principal primero).
+  const [existingPhotos, setExistingPhotos] = useState<PetPhoto[]>([]);
   const [submitting, setSubmitting] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
 
@@ -77,14 +79,60 @@ export function usePetUploadForm({
   const selectPet = useCallback((pet: Pet) => {
     setActivePet(pet);
     setForm(petToForm(pet));
-    setExistingPhotoUrl(primaryPhotoOf(pet)?.photoUrl ?? null);
+    setExistingPhotos(orderedPhotos(pet));
   }, []);
 
   const resetPet = useCallback(() => {
     setActivePet(null);
     setForm(EMPTY_FORM);
-    setExistingPhotoUrl(null);
+    setExistingPhotos([]);
   }, []);
+
+  // Quita una foto guardada solo de la vista (no la borra del backend).
+  const removeExistingPhoto = useCallback((index: number) => {
+    setExistingPhotos((prev) => prev.filter((_, i) => i !== index));
+  }, []);
+
+  // Marca una foto guardada como principal: la sube al backend y reordena
+  // localmente (principal primero) en las fotos, la mascota activa y la lista.
+  const makeExistingPrimary = useCallback(
+    async (index: number) => {
+      if (!activePet) return;
+      const target = existingPhotos[index];
+      if (!target || target.isPrimary) return;
+
+      const reordered = existingPhotos
+        .map((p) => ({ ...p, isPrimary: p.id === target.id }))
+        .sort((a, b) => Number(b.isPrimary) - Number(a.isPrimary));
+
+      const previous = existingPhotos;
+      setExistingPhotos(reordered);
+      setActivePet((prev) => (prev ? { ...prev, photos: reordered } : prev));
+      setPets((prev) =>
+        prev.map((p) =>
+          p.id === activePet.id ? { ...p, photos: reordered } : p,
+        ),
+      );
+
+      try {
+        await authFetchJSON(`/pets/${activePet.id}/photos/${target.id}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ is_primary: true }),
+        });
+      } catch {
+        // Revierte si el backend falla.
+        setExistingPhotos(previous);
+        setActivePet((prev) => (prev ? { ...prev, photos: previous } : prev));
+        setPets((prev) =>
+          prev.map((p) =>
+            p.id === activePet.id ? { ...p, photos: previous } : p,
+          ),
+        );
+      }
+    },
+    [activePet, existingPhotos, authFetchJSON],
+  );
 
   const handleFieldChange = useCallback(
     (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
@@ -235,8 +283,9 @@ export function usePetUploadForm({
     activePet,
     isExistingPet,
     form,
-    existingPhotoUrl,
-    setExistingPhotoUrl,
+    existingPhotos,
+    removeExistingPhoto,
+    makeExistingPrimary,
     submitting,
     formError,
     selectPet,

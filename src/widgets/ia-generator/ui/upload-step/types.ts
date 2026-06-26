@@ -55,3 +55,10 @@ export function petToForm(pet: Pet): PetForm {
 export function primaryPhotoOf(pet: Pet): PetPhoto | null {
   return pet.photos?.find((p) => p.isPrimary) ?? pet.photos?.[0] ?? null;
 }
+
+// Todas las fotos de la mascota, con la principal primero.
+export function orderedPhotos(pet: Pet): PetPhoto[] {
+  return [...(pet.photos ?? [])].sort(
+    (a, b) => Number(b.isPrimary) - Number(a.isPrimary),
+  );
+}

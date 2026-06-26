@@ -46,8 +46,9 @@ export function IAUploadStep({
     activePet,
     isExistingPet,
     form,
-    existingPhotoUrl,
-    setExistingPhotoUrl,
+    existingPhotos,
+    removeExistingPhoto,
+    makeExistingPrimary,
     submitting,
     formError,
     selectPet,
@@ -65,8 +66,8 @@ export function IAUploadStep({
     userSelections,
   });
 
-  const displayPhoto = previews[0] ?? existingPhotoUrl;
-  const hasPhoto = photos.length > 0 || existingPhotoUrl !== null;
+  const displayPhoto = previews[0] ?? existingPhotos[0]?.photoUrl ?? null;
+  const hasPhoto = photos.length > 0 || existingPhotos.length > 0;
   const hasParams = !!(styleId && productRefId && formatId);
 
   return (
@@ -78,14 +79,15 @@ export function IAUploadStep({
             previews={previews}
             isDragging={isDragging}
             displayPhoto={displayPhoto}
-            existingPhotoUrl={existingPhotoUrl}
+            existingPhotos={existingPhotos.map((p) => p.photoUrl)}
             onDrop={handleDrop}
             onDragOver={handleDragOver}
             onDragLeave={handleDragLeave}
             onFileInput={handleFileInput}
             onRemovePhoto={removePhoto}
             onMakePrimary={makePrimary}
-            onClearExistingPhoto={() => setExistingPhotoUrl(null)}
+            onRemoveExistingPhoto={removeExistingPhoto}
+            onMakeExistingPrimary={makeExistingPrimary}
           />
 
           <PetDetailsForm

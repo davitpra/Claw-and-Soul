@@ -77,22 +77,27 @@ export function PetDetailsForm({
               <span>No pets yet.</span>
             </div>
           ) : (
-            <select
-              value={activePet?.id ?? ""}
-              onChange={(e) => {
-                const pet = pets.find((p) => p.id === e.target.value);
-                if (pet) onSelectPet(pet);
-                else onResetPet();
-              }}
-              className="w-full border border-slate-300 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary bg-white transition-shadow"
-            >
-              <option value="">— Select a pet —</option>
-              {pets.map((p) => (
-                <option key={p.id} value={p.id}>
-                  {`${p.name}${p.species ? ` (${p.species}${p.breed ? ` · ${p.breed}` : ""})` : ""}`}
-                </option>
-              ))}
-            </select>
+            <div className="relative">
+              <select
+                value={activePet?.id ?? ""}
+                onChange={(e) => {
+                  const pet = pets.find((p) => p.id === e.target.value);
+                  if (pet) onSelectPet(pet);
+                  else onResetPet();
+                }}
+                className="w-full appearance-none border border-slate-300 rounded-lg pl-4 pr-10 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary bg-white transition-shadow"
+              >
+                <option value="">+ Add a new pet</option>
+                {pets.map((p) => (
+                  <option key={p.id} value={p.id}>
+                    {`${p.name}${p.species ? ` (${p.species}${p.breed ? ` · ${p.breed}` : ""})` : ""}`}
+                  </option>
+                ))}
+              </select>
+              <span className="material-symbols-outlined pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-[20px] text-slate-400">
+                expand_more
+              </span>
+            </div>
           )}
         </div>
 
@@ -117,18 +122,23 @@ export function PetDetailsForm({
           <label className="block text-sm font-medium text-slate-700 mb-1">
             Species
           </label>
-          <select
-            name="species"
-            value={form.species}
-            onChange={onFieldChange}
-            className="w-full border border-slate-300 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary bg-white transition-shadow"
-          >
-            {SPECIES_OPTIONS.map((s) => (
-              <option key={s} value={s}>
-                {s.charAt(0).toUpperCase() + s.slice(1)}
-              </option>
-            ))}
-          </select>
+          <div className="relative">
+            <select
+              name="species"
+              value={form.species}
+              onChange={onFieldChange}
+              className="w-full appearance-none border border-slate-300 rounded-lg pl-4 pr-10 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary bg-white transition-shadow"
+            >
+              {SPECIES_OPTIONS.map((s) => (
+                <option key={s} value={s}>
+                  {s.charAt(0).toUpperCase() + s.slice(1)}
+                </option>
+              ))}
+            </select>
+            <span className="material-symbols-outlined pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-[20px] text-slate-400">
+              expand_more
+            </span>
+          </div>
         </div>
 
         <div>
