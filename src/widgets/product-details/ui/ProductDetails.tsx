@@ -6,11 +6,11 @@ import ProductInfo from "@/entities/product/ui/ProductInfo";
 import ProductVariantSelector from "@/entities/product/ui/ProductVariantSelector";
 import PersonalizeButton from "@/features/personalize/ui/PersonalizeButton";
 import ProductAccordions from "./ProductAccordions";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useFormatOptions } from "@/hooks/useFormatOptions";
 import { useStyle } from "@/hooks/useStyle";
 import { StyleOptionsForm } from "@/entities/art-style/ui/StyleOptionsForm";
-import { getSceneImage } from "@/entities/product/lib/getSceneImage";
+import { getLifestyleImage } from "@/entities/product/lib/getLifestyleImage";
 import { getSizeScale } from "@/entities/product/lib/getSizeScale";
 
 interface ProductDetailsProps {
@@ -42,21 +42,34 @@ export default function ProductDetails({
     productRefId,
     styleId,
     formats,
-    contextualImages,
     isLoading: isLoadingFormats,
     error: formatsError,
   } = useFormatOptions(product.handle);
 
-  // Scene image comes from app-owned contextual images (per variant), with
-  // fallback: variant scene → General scene → Shopify variant image.
-  const sceneImage =
-    getSceneImage(contextualImages, selectedVariantId) ??
-    selectedVariant?.image?.url ??
-    null;
+  // Lifestyle image comes from the Shopify variant metafield "Size life style".
+  const lifestyleImage = getLifestyleImage(selectedVariant);
 
   const selectedFormatOption = formats.find(
     (f) => f.shopifyVariantId === selectedVariantId,
   );
+
+  // La variante por defecto es la primera de Shopify (page.tsx), que puede no
+  // estar mapeada a un formato del backend → el botón "Personalize" aparecería
+  // deshabilitado sin motivo aparente. Una sola vez, cuando cargan los formatos,
+  // si la variante actual no es personalizable saltamos a la primera que sí lo
+  // sea. Solo corre una vez para no pisar una selección deliberada del usuario.
+  const didAutoSelectRef = useRef(false);
+  useEffect(() => {
+    if (didAutoSelectRef.current) return;
+    if (isLoadingFormats || formats.length === 0) return;
+    didAutoSelectRef.current = true;
+    const isPersonalizable = formats.some(
+      (f) => f.shopifyVariantId === selectedVariantId,
+    );
+    if (!isPersonalizable) {
+      setSelectedVariantId(formats[0].shopifyVariantId);
+    }
+  }, [isLoadingFormats, formats, selectedVariantId, setSelectedVariantId]);
 
   const hasBackendMapping = !!productRefId;
 
@@ -92,7 +105,7 @@ export default function ProductDetails({
       <ProductGallery
         product={product}
         mainImage={mainImage}
-        otherSetImage={sceneImage}
+        otherSetImage={lifestyleImage}
         variantImage={selectedVariant?.image?.url}
         firstImageScale={firstImageScale}
       />

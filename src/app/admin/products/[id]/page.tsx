@@ -14,7 +14,6 @@ import {
   Box,
 } from "@shopify/polaris";
 import { ExternalIcon, DeleteIcon, RefreshIcon } from "@shopify/polaris-icons";
-import { ContextualImagesCard } from "./_components/ContextualImagesCard";
 import { ShowcaseCollectionCard } from "./_components/ShowcaseCollectionCard";
 import { ProductDetailsSidebar } from "./_components/ProductDetailsSidebar";
 import { LinkedVariantsCard } from "./_components/LinkedVariantsCard";
@@ -37,7 +36,6 @@ export default function AdminProductDetailPage() {
     styles,
     formats,
     allFormats,
-    productVariants,
     loading,
     error,
     saving,
@@ -148,11 +146,6 @@ export default function AdminProductDetailPage() {
                 {saveError}
               </Banner>
             )}
-
-            <ContextualImagesCard
-              productId={product.id}
-              variants={productVariants}
-            />
 
             <ShowcaseCollectionCard
               productId={product.id}

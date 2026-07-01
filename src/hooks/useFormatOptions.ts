@@ -18,17 +18,6 @@ interface BackendProductVariant {
   height: number;
 }
 
-export interface ProductContextualImage {
-  id: string;
-  productFormatVariantId: string | null;
-  shopifyVariantId: string | null; // GID of the variant, or null = General
-  imageUrl: string;
-  type: "scene" | "in_use" | "explainer" | "gallery";
-  altImage: string | null;
-  isPrimary: boolean;
-  orderIndex: number;
-}
-
 interface BackendProductWithVariants {
   productRefId: string;
   shopifyProductId: string;
@@ -38,7 +27,6 @@ interface BackendProductWithVariants {
   description: string | null;
   style: { id: string } | null;
   variants: BackendProductVariant[];
-  images: ProductContextualImage[];
 }
 
 export interface FormatOption {
@@ -58,7 +46,6 @@ interface UseFormatOptionsResult {
   productRefId: string | null;
   styleId: string | null;
   formats: FormatOption[];
-  contextualImages: ProductContextualImage[];
   product: ShopifyProduct | null;
   isLoading: boolean;
   error: string | null;
@@ -75,9 +62,6 @@ export function useFormatOptions(
   const [productRefId, setProductRefId] = useState<string | null>(null);
   const [styleId, setStyleId] = useState<string | null>(null);
   const [formats, setFormats] = useState<FormatOption[]>([]);
-  const [contextualImages, setContextualImages] = useState<
-    ProductContextualImage[]
-  >([]);
   const [product, setProduct] = useState<ShopifyProduct | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -87,7 +71,6 @@ export function useFormatOptions(
       setProductRefId(null);
       setStyleId(null);
       setFormats([]);
-      setContextualImages([]);
       setProduct(null);
       setError(null);
       return;
@@ -123,7 +106,6 @@ export function useFormatOptions(
           setProductRefId(backendProduct.productRefId);
           setStyleId(backendProduct.style?.id ?? null);
           setFormats([]);
-          setContextualImages(backendProduct.images ?? []);
           setProduct(null);
           return;
         }
@@ -141,7 +123,6 @@ export function useFormatOptions(
         setProductRefId(backendProduct.productRefId);
         setStyleId(backendProduct.style?.id ?? null);
         setFormats(merged);
-        setContextualImages(backendProduct.images ?? []);
         setProduct(shopifyProduct);
       })
       .catch((err) => {
@@ -155,7 +136,6 @@ export function useFormatOptions(
         setProductRefId(null);
         setStyleId(null);
         setFormats([]);
-        setContextualImages([]);
         setProduct(null);
       })
       .finally(() => {
@@ -171,7 +151,6 @@ export function useFormatOptions(
     productRefId,
     styleId,
     formats,
-    contextualImages,
     product,
     isLoading,
     error,

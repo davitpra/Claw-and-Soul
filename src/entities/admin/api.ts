@@ -373,26 +373,6 @@ export interface AdminProduct {
   showcaseCollectionHandle: string | null;
 }
 
-export type ProductImageType =
-  | 'scene'
-  | 'in_use'
-  | 'explainer'
-  | 'gallery'
-  | 'thanks';
-
-export interface AdminProductImage {
-  id: string;
-  productRefId: string;
-  productFormatVariantId: string | null;
-  imageUrl: string;
-  storageKey: string;
-  type: ProductImageType;
-  altImage: string | null;
-  orderIndex: number;
-  isPrimary: boolean;
-  createdAt: string;
-}
-
 export interface PodConfig {
   material: string;
   type: string;
@@ -756,53 +736,6 @@ export const adminApi = {
         `/admin/products/${productId}/variants/${shopifyVariantId}`,
         { method: 'PATCH', body: JSON.stringify(body) },
       ),
-    // Contextual images — app-owned (Cloudinary + DB), never synced from Shopify.
-    listImages: (productId: string) =>
-      adminFetch<AdminProductImage[]>(`/admin/products/${productId}/images`),
-    uploadImage: (
-      productId: string,
-      file: File,
-      opts?: {
-        type?: ProductImageType;
-        altImage?: string;
-        orderIndex?: number;
-        productFormatVariantId?: string | null;
-      },
-    ) => {
-      const form = new FormData();
-      form.append('file', file);
-      const params = new URLSearchParams();
-      if (opts?.type) params.set('type', opts.type);
-      if (opts?.altImage) params.set('alt_image', opts.altImage);
-      if (opts?.orderIndex !== undefined)
-        params.set('order_index', String(opts.orderIndex));
-      if (opts?.productFormatVariantId)
-        params.set('product_format_variant_id', opts.productFormatVariantId);
-      const qs = params.toString() ? `?${params.toString()}` : '';
-      return adminFetch<AdminProductImage>(
-        `/admin/products/${productId}/images${qs}`,
-        { method: 'POST', body: form },
-      );
-    },
-    updateImage: (
-      productId: string,
-      imgId: string,
-      body: {
-        isPrimary?: boolean;
-        orderIndex?: number;
-        altImage?: string;
-        type?: ProductImageType;
-        productFormatVariantId?: string | null;
-      },
-    ) =>
-      adminFetch<AdminProductImage>(
-        `/admin/products/${productId}/images/${imgId}`,
-        { method: 'PATCH', body: JSON.stringify(body) },
-      ),
-    deleteImage: (productId: string, imgId: string) =>
-      adminFetch(`/admin/products/${productId}/images/${imgId}`, {
-        method: 'DELETE',
-      }),
   },
   sync: {
     trigger: () => adminFetch('/admin/products/sync', { method: 'POST' }),

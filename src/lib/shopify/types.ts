@@ -19,6 +19,13 @@ export interface ShopifyVariant {
   price: ShopifyPrice;
   compareAtPrice: ShopifyPrice | null;
   image: ShopifyImage | null;
+  lifestyleImage?: {
+    reference?: {
+      field?: {
+        reference?: { image?: ShopifyImage } | null;
+      } | null;
+    } | null;
+  } | null;
 }
 
 export interface ShopifyProduct {
@@ -26,6 +33,9 @@ export interface ShopifyProduct {
   title: string;
   handle: string;
   description: string;
+  thankYouImage?: {
+    reference?: { image?: ShopifyImage } | null;
+  } | null;
   priceRange?: {
     minVariantPrice: ShopifyPrice;
   };

@@ -8,34 +8,13 @@ import {
   AdminProductVariants,
   AdminProductVariantLink,
 } from "@/entities/admin/api";
-import { shopifyFetch } from "@/lib/shopify/client";
-import { GET_PRODUCT } from "@/lib/shopify/queries/products";
-
-// Reduce a Shopify variant id to its numeric tail. The Storefront API returns
-// GIDs (gid://shopify/ProductVariant/123) while the admin getVariants endpoint
-// returns the bare numeric id; normalizing lets the two line up.
-const variantNumericId = (id: string) => id.split("/").pop() ?? id;
-
 type FulfillmentMethod = "in_house" | "pod";
-
-type ShopifyVariantImage = { url: string; alt: string | null };
-
-// Linked Shopify variant enriched with its contextual image — the bucket shape
-// the ContextualImagesCard consumes.
-export interface ProductVariantBucket {
-  id: string;
-  title: string;
-  formatId: string;
-  formatName: string;
-  shopifyImageUrl: string | null;
-  shopifyImageAlt: string | null;
-}
 
 /**
  * Encapsula toda la carga de datos, estado y acciones de la página de detalle
  * de producto del admin. Cruza el producto del backend con sus variantes
- * vinculadas y las imágenes de variante del Storefront de Shopify, y expone los
- * handlers de guardado / activación / resincronización / borrado.
+ * vinculadas y expone los handlers de guardado / activación / resincronización /
+ * borrado.
  */
 export function useProductDetail(id: string) {
   const router = useRouter();
@@ -45,9 +24,6 @@ export function useProductDetail(id: string) {
   const [styles, setStyles] = useState<AdminStyle[]>([]);
   const [formats, setFormats] = useState<AdminFormat[]>([]);
   const [allFormats, setAllFormats] = useState<AdminFormat[]>([]);
-  const [shopifyVariantImages, setShopifyVariantImages] = useState<
-    Record<string, ShopifyVariantImage>
-  >({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
@@ -64,38 +40,6 @@ export function useProductDetail(id: string) {
   const [styleId, setStyleId] = useState("");
   const [fulfillmentMethod, setFulfillmentMethod] =
     useState<FulfillmentMethod>("in_house");
-
-  const loadShopifyImages = async (handle: string) => {
-    try {
-      const { data } = await shopifyFetch<{
-        product: {
-          variants: {
-            edges: Array<{
-              node: {
-                id: string;
-                image: { url: string; altText: string | null } | null;
-              };
-            }>;
-          };
-        } | null;
-      }>({ query: GET_PRODUCT, variables: { handle } });
-      const byVariant: Record<string, ShopifyVariantImage> = {};
-      for (const { node } of data.product?.variants.edges ?? []) {
-        if (node.image) {
-          // Storefront ids are GIDs (gid://shopify/ProductVariant/123) but the
-          // admin getVariants endpoint returns the bare numeric id — key by the
-          // numeric tail so both sides match.
-          byVariant[variantNumericId(node.id)] = {
-            url: node.image.url,
-            alt: node.image.altText,
-          };
-        }
-      }
-      setShopifyVariantImages(byVariant);
-    } catch {
-      // best-effort
-    }
-  };
 
   const loadFormats = async () => {
     try {
@@ -134,7 +78,6 @@ export function useProductDetail(id: string) {
         setFulfillmentMethod(
           (p.fulfillmentMethod as FulfillmentMethod) ?? "in_house",
         );
-        if (p.shopifyHandle) loadShopifyImages(p.shopifyHandle);
         loadVariants(p.id);
       })
       .catch((e: Error) => setError(e.message))
@@ -206,20 +149,6 @@ export function useProductDetail(id: string) {
     }
   };
 
-  // Linked Shopify variants (with their format) — the buckets for contextual images.
-  const productVariants: ProductVariantBucket[] = (
-    variants?.linkedVariants ?? []
-  ).map((v) => ({
-    id: v.id,
-    title: v.shopifyVariantTitle,
-    formatId: v.format.id,
-    formatName: v.format.displayName,
-    shopifyImageUrl:
-      shopifyVariantImages[variantNumericId(v.shopifyVariantId)]?.url ?? null,
-    shopifyImageAlt:
-      shopifyVariantImages[variantNumericId(v.shopifyVariantId)]?.alt ?? null,
-  }));
-
   return {
     // data
     product,
@@ -227,7 +156,6 @@ export function useProductDetail(id: string) {
     styles,
     formats,
     allFormats,
-    productVariants,
     // status
     loading,
     error,

@@ -3,8 +3,7 @@
 import Image from "next/image";
 import { ShopifyProduct } from "@/lib/shopify";
 import { Container } from "@/shared/ui/Container";
-import { useFormatOptions } from "@/hooks/useFormatOptions";
-import { getSceneImage } from "@/entities/product/lib/getSceneImage";
+import { getLifestyleImage } from "@/entities/product/lib/getLifestyleImage";
 
 interface RoomViewProps {
   product: ShopifyProduct;
@@ -19,14 +18,8 @@ export default function RoomView({
     (v) => v.node.id === selectedVariantId,
   )?.node;
 
-  const { contextualImages } = useFormatOptions(product.handle);
-
-  // Scene image from app-owned contextual images, with fallback:
-  // variant scene → General scene → Shopify variant image.
-  const sceneImage =
-    getSceneImage(contextualImages, selectedVariantId) ??
-    selectedVariant?.image?.url ??
-    null;
+  // Lifestyle image from the Shopify variant metafield "Size life style".
+  const sceneImage = getLifestyleImage(selectedVariant);
 
   if (!sceneImage) return null;
 

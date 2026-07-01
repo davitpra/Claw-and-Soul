@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { getProducts } from "@/lib/shopify";
+import { getThankYouImage } from "@/entities/product/lib/getThankYouImage";
 import { useFormatOptions } from "@/hooks/useFormatOptions";
 import { FormatSelector } from "./FormatSelector";
 import { StepNavigation } from "./StepNavigation";
@@ -23,6 +24,7 @@ export type SelectedProductInfo = {
   productTitle: string;
   productImage: string;
   formatLabel: string;
+  thankYouImageUrl: string | null;
 };
 
 interface IAProductStepProps {
@@ -84,6 +86,7 @@ export function IAProductStep({ onSelect }: IAProductStepProps) {
         productTitle: selectedProduct?.title ?? "",
         productImage: selectedProduct?.image ?? "",
         formatLabel: selectedFormat.displayName,
+        thankYouImageUrl: getThankYouImage(product),
       });
     }
   };

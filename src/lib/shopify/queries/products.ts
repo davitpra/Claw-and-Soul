@@ -48,6 +48,16 @@ export const GET_PRODUCT = `
     title
     handle
     description
+    thankYouImage: metafield(namespace: "custom", key: "thank_you_image") {
+      reference {
+        ... on MediaImage {
+          image {
+            url
+            altText
+          }
+        }
+      }
+    }
     images(first: 10) {
       edges {
         node {
@@ -77,6 +87,22 @@ export const GET_PRODUCT = `
           image {
             url
             altText
+          }
+          lifestyleImage: metafield(namespace: "custom", key: "size_life_style") {
+            reference {
+              ... on Metaobject {
+                field(key: "lifestyle_render") {
+                  reference {
+                    ... on MediaImage {
+                      image {
+                        url
+                        altText
+                      }
+                    }
+                  }
+                }
+              }
+            }
           }
         }
       }
