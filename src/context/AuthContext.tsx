@@ -98,10 +98,27 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       // mínimo (id, email, role) sin fullName ni avatarUrl. Al refrescar,
       // checkAuth repuebla `user`, así que si usáramos /auth/me se perdería
       // el avatar. /users/me devuelve el perfil completo directamente en data.
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api'}/users/me`, {
-        method: 'GET',
-        credentials: 'include',
-      });
+      const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api';
+      const fetchMe = () =>
+        fetch(`${API_URL}/users/me`, { method: 'GET', credentials: 'include' });
+
+      let response = await fetchMe();
+
+      // El access token dura 15 min y el refresh proactivo solo corre mientras
+      // `user` ya está seteado. En una recarga (o tras >15 min inactivo) el
+      // access token puede estar vencido aunque el refresh token (7 días) siga
+      // válido. Intentamos refrescar UNA vez y reintentamos, en vez de
+      // desloguear con sesión válida. Si no hay refresh válido (visitante
+      // anónimo), el refresh falla silenciosamente y quedamos como invitado
+      // SIN redirigir a /login (por eso no usamos fetchWithRefresh aquí).
+      if (response.status === 401) {
+        try {
+          await ensureFreshToken();
+          response = await fetchMe();
+        } catch {
+          // Sin refresh token válido → invitado, no es un error.
+        }
+      }
 
       if (response.ok) {
         const data = await response.json();
