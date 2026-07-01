@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { Navbar } from "@/widgets/navbar";
 import { Footer } from "@/widgets/footer";
 import { shopifyFetch, GRAPHQL_QUERIES } from "@/lib/shopify";
@@ -9,7 +10,14 @@ import { useCart } from "@/context/CartContext";
 import { useAuthFetch } from "@/hooks/useAuthFetch";
 
 export default function CartPage() {
-  const { items, updateQuantity, removeItem, subtotal, updateItemImage, clearCart } = useCart();
+  const {
+    items,
+    updateQuantity,
+    removeItem,
+    subtotal,
+    updateItemImage,
+    clearCart,
+  } = useCart();
   const { authFetchJSON } = useAuthFetch();
   const [isCheckingOut, setIsCheckingOut] = useState(false);
 
@@ -21,12 +29,12 @@ export default function CartPage() {
     pending.forEach(async (item) => {
       try {
         const statusRes = await authFetchJSON<{ data: { status: string } }>(
-          `/generations/${item.generationId}/status`
+          `/generations/${item.generationId}/status`,
         );
         if (statusRes.data.status !== "completed") return;
 
         const detailRes = await authFetchJSON<{ data: { resultUrl: string } }>(
-          `/generations/${item.generationId}`
+          `/generations/${item.generationId}`,
         );
         if (detailRes.data.resultUrl) {
           updateItemImage(item.generationId!, detailRes.data.resultUrl);
@@ -35,7 +43,7 @@ export default function CartPage() {
         // generation not ready — silently ignore
       }
     });
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const handleCheckout = async () => {
@@ -47,29 +55,23 @@ export default function CartPage() {
         .map((item) => ({
           merchandiseId: item.variantId || "",
           quantity: item.quantity,
-          attributes: [
-            { key: "Style", value: item.style || "Default" },
-            { key: "Size", value: item.size || "Default" },
-            ...(item.generationId
-              ? [{ key: "generation_id", value: item.generationId }]
-              : []),
-            ...(item.imageUrl
-              ? [{ key: "image_url", value: item.imageUrl }]
-              : []),
-          ],
+          attributes: [{ key: "Style", value: item.style || "Default" }],
         }))
         .filter((line) => line.merchandiseId !== "");
 
       if (lines.length === 0) {
         alert(
-          "To test checkout, you need real Shopify Product Variant IDs. Please add products to your Shopify store and update the items with their Variant IDs."
+          "To test checkout, you need real Shopify Product Variant IDs. Please add products to your Shopify store and update the items with their Variant IDs.",
         );
         setIsCheckingOut(false);
         return;
       }
 
       const response = await shopifyFetch<{
-        cartCreate: { cart: { checkoutUrl: string }; userErrors: any[] };
+        cartCreate: {
+          cart: { checkoutUrl: string };
+          userErrors: { field?: string[]; message: string }[];
+        };
       }>({
         query: GRAPHQL_QUERIES.CREATE_CART,
         variables: {
@@ -105,7 +107,7 @@ export default function CartPage() {
       <Navbar />
 
       <main className="flex-1 px-4 md:px-10 lg:px-40 py-10 font-body">
-        <div className="max-w-[1200px] mx-auto w-full">
+        <div className="max-w-300 mx-auto w-full">
           <div className="mb-8">
             <Link
               className="inline-flex items-center gap-2 text-sm font-bold text-slate-dark/60 hover:text-primary transition-colors"
@@ -125,7 +127,7 @@ export default function CartPage() {
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
             {/* Cart Items */}
             <div className="lg:col-span-8 flex flex-col gap-6">
-              <div className="w-full p-6 rounded-[2rem] border border-slate-dark/5 bg-white">
+              <div className="w-full p-6 rounded-4xl border border-slate-dark/5 bg-white">
                 <div className="flex flex-col w-full">
                   <div className="hidden md:grid grid-cols-12 gap-4 pb-4 border-b border-slate-dark/10 text-[11px] font-black text-slate-dark/40 uppercase tracking-widest">
                     <div className="col-span-6">Product</div>
@@ -163,10 +165,12 @@ export default function CartPage() {
                                 </p>
                               </div>
                             ) : (
-                              <img
+                              <Image
                                 src={item.img}
                                 alt={item.name}
-                                className="w-full h-full object-cover"
+                                fill
+                                sizes="(max-width: 768px) 96px, 128px"
+                                className="object-cover"
                               />
                             )}
                           </div>
@@ -364,11 +368,13 @@ export default function CartPage() {
                   key={i}
                   className="group cursor-pointer flex flex-col gap-4"
                 >
-                  <div className="aspect-square w-full rounded-[2rem] overflow-hidden bg-white shadow-sm relative border border-slate-dark/5">
-                    <img
+                  <div className="aspect-square w-full rounded-4xl overflow-hidden bg-white shadow-sm relative border border-slate-dark/5">
+                    <Image
                       src={rec.img}
                       alt={rec.name}
-                      className="w-full h-full bg-center bg-cover transition-transform duration-700 group-hover:scale-110"
+                      fill
+                      sizes="(max-width: 768px) 50vw, 25vw"
+                      className="object-cover transition-transform duration-700 group-hover:scale-110"
                     />
                     <button className="absolute bottom-4 right-4 size-10 bg-white rounded-full flex items-center justify-center text-slate-dark shadow-xl opacity-0 group-hover:opacity-100 transition-all translate-y-3 group-hover:translate-y-0">
                       <span className="material-symbols-outlined font-bold">
