@@ -14,7 +14,6 @@ import {
   Box,
 } from "@shopify/polaris";
 import { ExternalIcon, DeleteIcon, RefreshIcon } from "@shopify/polaris-icons";
-import { ShowcaseCollectionCard } from "./_components/ShowcaseCollectionCard";
 import { ProductDetailsSidebar } from "./_components/ProductDetailsSidebar";
 import { LinkedVariantsCard } from "./_components/LinkedVariantsCard";
 import { DeleteProductModal } from "./_components/DeleteProductModal";
@@ -146,11 +145,6 @@ export default function AdminProductDetailPage() {
                 {saveError}
               </Banner>
             )}
-
-            <ShowcaseCollectionCard
-              productId={product.id}
-              initialHandle={product.showcaseCollectionHandle}
-            />
 
             <LinkedVariantsCard
               product={product}

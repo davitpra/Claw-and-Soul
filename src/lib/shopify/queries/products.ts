@@ -58,6 +58,33 @@ export const GET_PRODUCT = `
         }
       }
     }
+    relatedProducts: metafield(namespace: "shopify--discovery--product_recommendation", key: "related_products") {
+      references(first: 12) {
+        edges {
+          node {
+            ... on Product {
+              id
+              title
+              handle
+              images(first: 1) {
+                edges {
+                  node {
+                    url
+                    altText
+                  }
+                }
+              }
+              priceRange {
+                minVariantPrice {
+                  amount
+                  currencyCode
+                }
+              }
+            }
+          }
+        }
+      }
+    }
     images(first: 10) {
       edges {
         node {

@@ -36,6 +36,19 @@ export interface ShopifyProduct {
   thankYouImage?: {
     reference?: { image?: ShopifyImage } | null;
   } | null;
+  relatedProducts?: {
+    references?: {
+      edges: {
+        node: {
+          id: string;
+          title: string;
+          handle: string;
+          images: { edges: { node: ShopifyImage }[] };
+          priceRange: { minVariantPrice: ShopifyPrice };
+        };
+      }[];
+    } | null;
+  } | null;
   priceRange?: {
     minVariantPrice: ShopifyPrice;
   };
