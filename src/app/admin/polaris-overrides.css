@@ -16,3 +16,13 @@
   --p-color-text-interactive-hover: #367a8f;
   --p-color-text-interactive-active: #2d6a7d;
 }
+
+/* En Polaris v13 `size="fullScreen"` solo es pantalla completa en móvil; en
+   desktop cae a un ancho default más angosto que `large`. Lo forzamos a ocupar
+   casi toda la pantalla en desktop para modales con editores (p.ej. PBN). */
+@media (min-width: 48em) {
+  .Polaris-Modal-Dialog--sizeFullScreen {
+    max-width: calc(100% - var(--p-space-1600)) !important;
+    width: calc(100% - var(--p-space-1600)) !important;
+  }
+}

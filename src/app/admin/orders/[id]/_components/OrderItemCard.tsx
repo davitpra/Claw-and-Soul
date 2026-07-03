@@ -15,6 +15,7 @@ import { VALID_TRANSITIONS } from "@/entities/admin/lib/order-transitions";
 import { fmtCurrency } from "@/entities/admin/lib/order-format";
 import ImagePreviewModal from "@/app/admin/_components/ImagePreviewModal";
 import PrintStudioModal from "./PrintStudioModal";
+import ConvertToPbnModal from "./ConvertToPbnModal";
 import { Modal } from "@shopify/polaris";
 import { ItemActionsBar } from "./ItemActionsBar";
 import { ItemFulfillmentControl } from "./ItemFulfillmentControl";
@@ -50,6 +51,7 @@ export function OrderItemCard({
   const [savingFulfillment, setSavingFulfillment] = useState(false);
   const [uploadingImage, setUploadingImage] = useState(false);
   const [showStudio, setShowStudio] = useState(false);
+  const [showPBN, setShowPBN] = useState(false);
   const [previewSrc, setPreviewSrc] = useState<string | null>(null);
   const [err, setErr] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -197,6 +199,9 @@ export function OrderItemCard({
           onApplied={onUpdate}
         />
       )}
+      {showPBN && (
+        <ConvertToPbnModal item={item} onClose={() => setShowPBN(false)} />
+      )}
       {previewSrc && (
         <ImagePreviewModal
           src={previewSrc}
@@ -342,6 +347,7 @@ export function OrderItemCard({
             onUploadClick={() => fileInputRef.current?.click()}
             onUploadChange={handleUploadImage}
             onOpenStudio={() => setShowStudio(true)}
+            onOpenPBN={() => setShowPBN(true)}
           />
 
           <ItemProductPreview

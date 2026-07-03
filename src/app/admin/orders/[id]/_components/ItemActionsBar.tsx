@@ -1,7 +1,7 @@
 "use client";
 
 import { RefObject } from "react";
-import { Badge, Button, InlineStack } from "@shopify/polaris";
+import { Button, InlineStack } from "@shopify/polaris";
 import { ImageIcon, MagicIcon } from "@shopify/polaris-icons";
 
 type ItemActionsBarProps = {
@@ -11,6 +11,7 @@ type ItemActionsBarProps = {
   onUploadClick: () => void;
   onUploadChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   onOpenStudio: () => void;
+  onOpenPBN: () => void;
 };
 
 // Barra de acciones del item: subir/reemplazar la imagen de impresión y abrir
@@ -22,6 +23,7 @@ export function ItemActionsBar({
   onUploadClick,
   onUploadChange,
   onOpenStudio,
+  onOpenPBN,
 }: ItemActionsBarProps) {
   return (
     <InlineStack gap="200" blockAlign="center">
@@ -41,7 +43,10 @@ export function ItemActionsBar({
         {hasPrintImage ? "Reemplazar" : "Subir imagen"}
       </Button>
       <Button size="micro" icon={MagicIcon} onClick={onOpenStudio}>
-        Editar para impresión
+        Escalar para impresion
+      </Button>
+      <Button size="micro" icon={MagicIcon} onClick={onOpenPBN}>
+        Convertir a PBN
       </Button>
     </InlineStack>
   );
