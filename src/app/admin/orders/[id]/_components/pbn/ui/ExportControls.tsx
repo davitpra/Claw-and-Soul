@@ -6,18 +6,25 @@ interface ExportControlsProps {
   hasOutput: boolean;
 }
 
-export default function ExportControls({ exp, hasOutput }: ExportControlsProps) {
+export default function ExportControls({
+  exp,
+  hasOutput,
+}: ExportControlsProps) {
   if (!hasOutput) return null;
   return (
     <div className="mt-4 flex flex-col gap-5">
       {/* Direct downloads */}
       <div className="flex flex-wrap gap-3">
         <button className={btnPrimary} onClick={exp.handleDownloadSVG}>
-          <span className="material-symbols-outlined text-[18px]">download</span>
+          <span className="material-symbols-outlined text-[18px]">
+            download
+          </span>
           Download SVG
         </button>
         <button className={btnPrimary} onClick={exp.handleDownloadPNG}>
-          <span className="material-symbols-outlined text-[18px]">download</span>
+          <span className="material-symbols-outlined text-[18px]">
+            download
+          </span>
           Download PNG
         </button>
         <button className={btnSecondary} onClick={exp.handleDownloadPalette}>
@@ -47,7 +54,9 @@ export default function ExportControls({ exp, hasOutput }: ExportControlsProps) 
             min={1}
             step={0.1}
             value={exp.pdfWidth}
-            onChange={(e) => exp.onPdfWidthChange(parseFloat(e.target.value) || 0)}
+            onChange={(e) =>
+              exp.onPdfWidthChange(parseFloat(e.target.value) || 0)
+            }
           />
         </label>
         <label className="flex flex-col gap-1.5">
@@ -64,7 +73,9 @@ export default function ExportControls({ exp, hasOutput }: ExportControlsProps) 
           />
         </label>
         <button className={btnSecondary} onClick={exp.handleDownloadPDF}>
-          <span className="material-symbols-outlined text-[18px]">picture_as_pdf</span>
+          <span className="material-symbols-outlined text-[18px]">
+            picture_as_pdf
+          </span>
           Download PDF
         </button>
       </div>
@@ -80,9 +91,7 @@ export default function ExportControls({ exp, hasOutput }: ExportControlsProps) 
               exp.setPaperFormat(e.target.value as typeof exp.paperFormat)
             }
           >
-            <option value="a3">A3</option>
             <option value="a4">A4</option>
-            <option value="a5">A5</option>
             <option value="letter">Letter</option>
             <option value="legal">Legal</option>
             <option value="tabloid">Tabloid</option>

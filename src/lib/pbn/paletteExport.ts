@@ -21,6 +21,10 @@ export async function downloadGuidePng(
     backgroundColor: "#ffffff",
     pixelRatio: 2,
     cacheBust: true,
+    // Skip web-font embedding: it walks document.styleSheets and reads
+    // `.cssRules`, which throws a SecurityError on our cross-origin sheets
+    // (Google Fonts / Material Symbols). The guide only needs system text.
+    skipFonts: true,
   });
   const dl = document.createElement("a");
   document.body.appendChild(dl);
