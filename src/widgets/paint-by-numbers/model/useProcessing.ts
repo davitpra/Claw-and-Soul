@@ -10,6 +10,9 @@ import { svgToPngDataUrl } from "@/lib/pbn/svgExport";
 import { OverallStatus, PHASE_LABELS, PHASE_WEIGHTS } from "./constants";
 import { RenderOptions } from "./useRenderOptions";
 
+/** Fixed scale factor for the generated SVG (no longer user-adjustable). */
+const SVG_SIZE_MULTIPLIER = 3;
+
 interface UseProcessingArgs {
   buildSettings: () => Settings;
   renderOptions: RenderOptions;
@@ -39,7 +42,6 @@ export function useProcessing({
   onComplete,
 }: UseProcessingArgs) {
   const {
-    sizeMultiplier,
     fillFacets,
     showBorders,
     showLabels,
@@ -100,7 +102,7 @@ export function useProcessing({
       const svg = await GUIProcessManager.createSVG(
         result.facetResult,
         result.colorsByIndex,
-        sizeMultiplier,
+        SVG_SIZE_MULTIPLIER,
         fillFacets,
         showBorders,
         showLabels,
@@ -132,7 +134,6 @@ export function useProcessing({
       setOverall({ progress: 1, label: "Done", state: "complete" });
     },
     [
-      sizeMultiplier,
       fillFacets,
       showBorders,
       showLabels,
@@ -257,7 +258,6 @@ export function useProcessing({
     showLabels,
     fillFacets,
     showBorders,
-    sizeMultiplier,
     labelFontSize,
     labelFontColor,
     fillOpacity,
@@ -285,7 +285,6 @@ export function useProcessing({
   }, [
     hasOutput,
     outputVersion,
-    sizeMultiplier,
     fillFacets,
     showBorders,
     showLabels,

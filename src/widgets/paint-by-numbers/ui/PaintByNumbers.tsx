@@ -138,7 +138,6 @@ export default function PaintByNumbers() {
           showLabels: renderOptions.showLabels,
           fillFacets: renderOptions.fillFacets,
           showBorders: renderOptions.showBorders,
-          sizeMultiplier: renderOptions.sizeMultiplier,
           labelFontSize: renderOptions.labelFontSize,
           labelFontColor: renderOptions.labelFontColor,
           fillOpacity: renderOptions.fillOpacity,
@@ -181,6 +180,67 @@ export default function PaintByNumbers() {
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,380px)_1fr]">
         {/* ---- Sidebar: numbered step cards ---- */}
         <aside className="flex flex-col gap-6">
+          <div className="flex items-center w-full gap-2">
+            <button
+              className={`${btnPrimary} w-full`}
+              onClick={() => void process()}
+              disabled={isProcessing}
+            >
+              {isProcessing ? (
+                <>
+                  <span className="material-symbols-outlined animate-spin text-[18px]">
+                    progress_activity
+                  </span>
+                  Processing...
+                </>
+              ) : (
+                "Process image"
+              )}
+            </button>
+            {isProcessing && (
+              <button className={btnSecondary} onClick={cancel}>
+                Cancel
+              </button>
+            )}
+          </div>
+          {hasOutput && (
+            <button
+              type="button"
+              className={btnPrimary}
+              onClick={handleSave}
+              disabled={saving}
+            >
+              {saving ? (
+                <>
+                  <span className="material-symbols-outlined animate-spin text-[18px]">
+                    progress_activity
+                  </span>
+                  Guardando...
+                </>
+              ) : (
+                <>
+                  <span className="material-symbols-outlined text-[18px]">
+                    {savedId ? "check_circle" : "bookmark_add"}
+                  </span>
+                  {savedId ? "Guardado" : "Guardar en mi cuenta"}
+                </>
+              )}
+            </button>
+          )}
+          {savedId && (
+            <div className="mt-2 flex flex-wrap items-center gap-3">
+              <p className="font-body text-sm text-green-700">
+                Guardado en tu biblioteca.{" "}
+                <a href="/user/pbn" className="font-semibold underline">
+                  Ver mis Paint by Numbers
+                </a>
+              </p>
+              {savedPbn && <PbnBuyButton pbn={savedPbn} variant="inline" />}
+            </div>
+          )}
+          {saveError && (
+            <p className="mt-2 font-body text-sm text-red-600">{saveError}</p>
+          )}
           {/* Step 1: Upload your image */}
           <section className={card}>
             <h3 className={stepTitle}>
@@ -240,44 +300,35 @@ export default function PaintByNumbers() {
 
           {/* Step 2: Image settings */}
           <section className={card}>
-            <h3 className={`${stepTitle} mb-4`}>
+            <h3 className={`${stepTitle}`}>
               <span className={stepNum}>2</span>
               Image settings
             </h3>
             <InputOptionsPane opts={inputOptions} />
           </section>
+
+          {/* Step 3: Preview & download */}
+          <section className={`${card}`}>
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <h3 className={stepTitle}>
+                <span className={stepNum}>3</span>
+                Preview &amp; download
+              </h3>
+            </div>
+
+            <div className="mt-4">
+              <ExportControls exp={exp} hasOutput={hasOutput} />
+            </div>
+          </section>
         </aside>
 
         {/* ---- Main: preview area ---- */}
         <main className="flex flex-col">
-          <div className="mb-3 flex flex-wrap items-center gap-3">
-            <strong className="font-display font-black text-slate-dark">
-              Preview
-            </strong>
-            <button
-              className={btnPrimary}
-              onClick={() => void process()}
-              disabled={isProcessing}
-            >
-              {isProcessing ? (
-                <>
-                  <span className="material-symbols-outlined animate-spin text-[18px]">
-                    progress_activity
-                  </span>
-                  Processing...
-                </>
-              ) : (
-                "Process image"
-              )}
-            </button>
-            {isProcessing && (
-              <button className={btnSecondary} onClick={cancel}>
-                Cancel
-              </button>
-            )}
-          </div>
-
-          <ProgressBar overall={overall} />
+          {showResult ? (
+            <RenderOptionsPane opts={renderOptions} />
+          ) : (
+            <ProgressBar overall={overall} />
+          )}
 
           <div className="relative">
             {/* keep the canvas mounted (the pipeline writes to it) but hide it
@@ -309,8 +360,6 @@ export default function PaintByNumbers() {
               mixingEnabled={ENABLE_MIXING_GUIDE}
             />
           )}
-
-          {showResult && <RenderOptionsPane opts={renderOptions} />}
 
           {/* The mixing guide opens in a modal when toggled. When closed it
               stays mounted off-screen so PNG/PDF export can still capture it. */}
@@ -356,56 +405,6 @@ export default function PaintByNumbers() {
                 />
               </div>
             ))}
-
-          <section className={`${card} mt-6`}>
-            <div className="flex flex-wrap items-center justify-between gap-3">
-              <h3 className={stepTitle}>
-                <span className={stepNum}>3</span>
-                Preview &amp; download
-              </h3>
-              {hasOutput && (
-                <button
-                  type="button"
-                  className={btnPrimary}
-                  onClick={handleSave}
-                  disabled={saving}
-                >
-                  {saving ? (
-                    <>
-                      <span className="material-symbols-outlined animate-spin text-[18px]">
-                        progress_activity
-                      </span>
-                      Guardando...
-                    </>
-                  ) : (
-                    <>
-                      <span className="material-symbols-outlined text-[18px]">
-                        {savedId ? "check_circle" : "bookmark_add"}
-                      </span>
-                      {savedId ? "Guardado" : "Guardar en mi cuenta"}
-                    </>
-                  )}
-                </button>
-              )}
-            </div>
-            {savedId && (
-              <div className="mt-2 flex flex-wrap items-center gap-3">
-                <p className="font-body text-sm text-green-700">
-                  Guardado en tu biblioteca.{" "}
-                  <a href="/user/pbn" className="font-semibold underline">
-                    Ver mis Paint by Numbers
-                  </a>
-                </p>
-                {savedPbn && <PbnBuyButton pbn={savedPbn} variant="inline" />}
-              </div>
-            )}
-            {saveError && (
-              <p className="mt-2 font-body text-sm text-red-600">{saveError}</p>
-            )}
-            <div className="mt-4">
-              <ExportControls exp={exp} hasOutput={hasOutput} />
-            </div>
-          </section>
         </main>
       </div>
 

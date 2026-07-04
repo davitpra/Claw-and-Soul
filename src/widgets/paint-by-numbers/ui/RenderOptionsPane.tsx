@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { RenderOptions } from "../model/useRenderOptions";
 import { Toggle } from "./controls";
 import { fieldInput, fieldLabel } from "./pbnStyles";
@@ -40,93 +41,93 @@ export default function RenderOptionsPane({ opts }: RenderOptionsPaneProps) {
     },
   ];
 
+  const [advancedOpen, setAdvancedOpen] = useState(false);
+
   return (
-    <section className="mt-6 rounded-xl border border-[#E0DED9] bg-white p-6 shadow-sm">
-      <header className="mb-4">
+    <section className="mb-6 rounded-xl border border-[#E0DED9] bg-white p-6 shadow-sm">
+      <header className="flex items-center justify-between gap-4">
         <h4 className="font-display text-lg font-black text-slate-dark">
           Render options
         </h4>
-        <p className="font-body text-sm text-text-muted">
-          Tweak the SVG output — changes apply without reprocessing.
-        </p>
+        <button
+          type="button"
+          className="inline-flex items-center gap-2 self-start font-semibold text-primary transition-colors hover:text-primary-dark"
+          aria-expanded={advancedOpen}
+          onClick={() => setAdvancedOpen((v) => !v)}
+        >
+          <span className="material-symbols-outlined text-[20px]">
+            {advancedOpen ? "expand_more" : "chevron_right"}
+          </span>
+          Advanced settings
+        </button>
       </header>
 
-      <div className="flex flex-wrap gap-6">
-        {toggles.map((t) => (
-          <Toggle
-            key={t.label}
-            checked={t.checked}
-            onChange={t.onChange}
-            label={t.label}
-          />
-        ))}
-      </div>
-
-      <div className="mt-5 grid grid-cols-1 gap-4 sm:grid-cols-2">
-        <label className="flex flex-col gap-1.5">
-          <span className={fieldLabel}>SVG size multiplier</span>
-          <input
-            type="number"
-            className={fieldInput}
-            min={1}
-            value={opts.sizeMultiplier}
-            onChange={(e) =>
-              opts.setSizeMultiplier(parseInt(e.target.value) || 1)
-            }
-          />
-        </label>
-
-        <label className="flex flex-col gap-1.5">
-          <span className={fieldLabel}>Label size</span>
-          <input
-            type="number"
-            className={fieldInput}
-            min={1}
-            max={40}
-            value={opts.labelFontSize}
-            onChange={(e) =>
-              opts.setLabelFontSize(parseInt(e.target.value) || 1)
-            }
-          />
-        </label>
-
-        <label className="flex flex-col gap-1.5">
-          <span className={fieldLabel}>Label color</span>
-          <div className="flex items-center gap-2">
-            <input
-              type="color"
-              className="size-9 shrink-0 cursor-pointer rounded-lg border border-primary/40 bg-white p-0.5"
-              value={toColorInputValue(opts.labelFontColor)}
-              onChange={(e) => opts.setLabelFontColor(e.target.value)}
-            />
-            <input
-              type="text"
-              className={fieldInput}
-              value={opts.labelFontColor}
-              onChange={(e) => opts.setLabelFontColor(e.target.value)}
-            />
+      {advancedOpen && (
+        <>
+          <div className="flex flex-wrap gap-6 mt-6">
+            {toggles.map((t) => (
+              <Toggle
+                key={t.label}
+                checked={t.checked}
+                onChange={t.onChange}
+                label={t.label}
+              />
+            ))}
           </div>
-        </label>
 
-        <label className="flex flex-col gap-1.5">
-          <span className={`${fieldLabel} justify-between`}>
-            Fill opacity
-            <span className="font-bold normal-case text-primary">
-              {Math.round(opts.fillOpacity * 100)}%
+          <div className="mt-5 grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <label className="flex flex-col gap-1.5">
+              <span className={fieldLabel}>Label size</span>
+              <input
+                type="number"
+                className={fieldInput}
+                min={1}
+                max={40}
+                value={opts.labelFontSize}
+                onChange={(e) =>
+                  opts.setLabelFontSize(parseInt(e.target.value) || 1)
+                }
+              />
+            </label>
+
+            <label className="flex flex-col gap-1.5">
+              <span className={fieldLabel}>Label color</span>
+              <div className="flex items-center gap-2">
+                <input
+                  type="color"
+                  className="size-9 shrink-0 cursor-pointer rounded-lg border border-primary/40 bg-white p-0.5"
+                  value={toColorInputValue(opts.labelFontColor)}
+                  onChange={(e) => opts.setLabelFontColor(e.target.value)}
+                />
+                <input
+                  type="text"
+                  className={fieldInput}
+                  value={opts.labelFontColor}
+                  onChange={(e) => opts.setLabelFontColor(e.target.value)}
+                />
+              </div>
+            </label>
+          </div>
+          <label className="flex flex-col gap-1.5">
+            <span className={`${fieldLabel} justify-between`}>
+              Fill opacity
+              <span className="font-bold normal-case text-primary">
+                {Math.round(opts.fillOpacity * 100)}%
+              </span>
             </span>
-          </span>
-          <input
-            type="range"
-            className="w-full accent-primary"
-            min={0}
-            max={100}
-            value={Math.round(opts.fillOpacity * 100)}
-            onChange={(e) =>
-              opts.setFillOpacity((parseInt(e.target.value) || 0) / 100)
-            }
-          />
-        </label>
-      </div>
+            <input
+              type="range"
+              className="w-full accent-primary"
+              min={0}
+              max={100}
+              value={Math.round(opts.fillOpacity * 100)}
+              onChange={(e) =>
+                opts.setFillOpacity((parseInt(e.target.value) || 0) / 100)
+              }
+            />
+          </label>
+        </>
+      )}
     </section>
   );
 }
