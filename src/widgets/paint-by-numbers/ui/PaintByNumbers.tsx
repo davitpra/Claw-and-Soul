@@ -1,8 +1,12 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { RGB } from "@/lib/pbn/common";
 import { getPaperAspect } from "@/lib/pbn/svgExport";
+import { useAuth } from "@/context/AuthContext";
+import { PbnBuyButton } from "@/features/pbn-purchase";
+import { useSavePbn } from "../model/useSavePbn";
 import { PAPER_LABELS, ENABLE_MIXING_GUIDE } from "../model/constants";
 import { useLog } from "../model/useLog";
 import { useImageInput } from "../model/useImageInput";
@@ -96,6 +100,72 @@ export default function PaintByNumbers() {
     recipes,
     palette,
   });
+
+  // ---- Save to account ----
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const generationId = searchParams.get("generationId");
+  const { isAuthenticated } = useAuth();
+  const { save, saving, savedId, error: saveError } = useSavePbn();
+  const [savedPbn, setSavedPbn] = useState<{
+    id: string;
+    previewUrl?: string | null;
+  } | null>(null);
+
+  const handleSave = useCallback(() => {
+    if (!isAuthenticated) {
+      router.push("/login?redirect=/paint-by-numbers");
+      return;
+    }
+    void save({
+      svgContainerRef,
+      guideRef,
+      previewDataUrl: compareImgs?.processed,
+      sourceDataUrl: originalImageRef.current,
+      palette,
+      recipes,
+      generationId,
+      config: {
+        input: inputOptions.buildSettings(),
+        render: {
+          showLabels: renderOptions.showLabels,
+          fillFacets: renderOptions.fillFacets,
+          showBorders: renderOptions.showBorders,
+          sizeMultiplier: renderOptions.sizeMultiplier,
+          labelFontSize: renderOptions.labelFontSize,
+          labelFontColor: renderOptions.labelFontColor,
+          fillOpacity: renderOptions.fillOpacity,
+        },
+        paper: {
+          format: exp.paperFormat,
+          orientation: exp.paperOrientation,
+          width: exp.pdfWidth,
+          height: exp.pdfHeight,
+          unit: exp.pdfUnit,
+        },
+      },
+    }).then((saved) => {
+      if (saved)
+        setSavedPbn({
+          id: saved.id,
+          previewUrl: (saved.previewUrl as string | undefined) ?? null,
+        });
+    });
+  }, [
+    isAuthenticated,
+    router,
+    save,
+    svgContainerRef,
+    guideRef,
+    compareImgs,
+    originalImageRef,
+    palette,
+    recipes,
+    generationId,
+    inputOptions,
+    renderOptions,
+    exp,
+  ]);
 
   const showResult = !!compareImgs && !isProcessing;
 
@@ -300,11 +370,55 @@ export default function PaintByNumbers() {
             ))}
 
           <section className={`${card} mt-6`}>
-            <h3 className={stepTitle}>
-              <span className={stepNum}>3</span>
-              Preview &amp; download
-            </h3>
-            <ExportControls exp={exp} hasOutput={hasOutput} />
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <h3 className={stepTitle}>
+                <span className={stepNum}>3</span>
+                Preview &amp; download
+              </h3>
+              {hasOutput && (
+                <button
+                  type="button"
+                  className={btnPrimary}
+                  onClick={handleSave}
+                  disabled={saving}
+                >
+                  {saving ? (
+                    <>
+                      <span className="material-symbols-outlined animate-spin text-[18px]">
+                        progress_activity
+                      </span>
+                      Guardando...
+                    </>
+                  ) : (
+                    <>
+                      <span className="material-symbols-outlined text-[18px]">
+                        {savedId ? "check_circle" : "bookmark_add"}
+                      </span>
+                      {savedId ? "Guardado" : "Guardar en mi cuenta"}
+                    </>
+                  )}
+                </button>
+              )}
+            </div>
+            {savedId && (
+              <div className="mt-2 flex flex-wrap items-center gap-3">
+                <p className="font-body text-sm text-green-700">
+                  Guardado en tu biblioteca.{" "}
+                  <a href="/user/pbn" className="font-semibold underline">
+                    Ver mis Paint by Numbers
+                  </a>
+                </p>
+                {savedPbn && (
+                  <PbnBuyButton pbn={savedPbn} variant="inline" />
+                )}
+              </div>
+            )}
+            {saveError && (
+              <p className="mt-2 font-body text-sm text-red-600">{saveError}</p>
+            )}
+            <div className="mt-4">
+              <ExportControls exp={exp} hasOutput={hasOutput} />
+            </div>
           </section>
         </main>
       </div>

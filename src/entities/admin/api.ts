@@ -147,6 +147,31 @@ export interface AdminOrderItem {
     pet: { id: string; name: string; species: string } | null;
     style: { id: string; displayName: string } | null;
   } | null;
+  paintByNumbers: {
+    id: string;
+    outlineSvgUrl: string | null;
+    previewUrl: string | null;
+  } | null;
+}
+
+// Config JSON persisted with a PBN. Loosely typed: `input`/`render` mirror the
+// studio hooks' raw option values so they can rehydrate them on reopen.
+export interface PbnConfig {
+  input?: Record<string, unknown>;
+  render?: Record<string, unknown>;
+  paper?: Record<string, unknown>;
+  palette?: number[][];
+}
+
+export interface AdminPaintByNumbers {
+  id: string;
+  sourceImageUrl: string | null;
+  outlineSvgUrl: string | null;
+  previewUrl: string | null;
+  paletteUrl: string | null;
+  colorCount: number | null;
+  origin: string;
+  config: PbnConfig;
 }
 
 export interface AdminOrderEvent {
@@ -880,6 +905,13 @@ export const adminApi = {
         { method: 'POST', body: form },
       );
     },
+    // Guarda un PBN renderizado en el estudio y lo enlaza al item. El estudio
+    // arma el FormData (svg/preview/palette/source + config).
+    savePbnForItem: (orderId: string, itemId: string, form: FormData) =>
+      adminFetch<{ id: string }>(
+        `/admin/orders/${orderId}/items/${itemId}/paint-by-numbers`,
+        { method: 'POST', body: form },
+      ),
     linkGeneration: (orderId: string, itemId: string, generationId: string) =>
       adminFetch(`/admin/orders/${orderId}/items/${itemId}/link-generation`, {
         method: 'POST',
@@ -936,6 +968,11 @@ export const adminApi = {
         method: 'PATCH',
         body: JSON.stringify(body),
       }),
+  },
+  pbn: {
+    // Full saved PBN (config + source) used to preload the studio on reopen.
+    get: (id: string) =>
+      adminFetch<AdminPaintByNumbers>(`/admin/paint-by-numbers/${id}`),
   },
 };
 

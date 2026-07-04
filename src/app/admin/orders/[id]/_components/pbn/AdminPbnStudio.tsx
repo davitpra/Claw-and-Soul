@@ -4,13 +4,15 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { RGB } from "@/lib/pbn/common";
 import { getPaperAspect } from "@/lib/pbn/svgExport";
 import { PAPER_LABELS, ENABLE_MIXING_GUIDE } from "./model/constants";
+import type { PbnConfig } from "@/entities/admin/api";
 import { useLog } from "./model/useLog";
 import { useImageInput } from "./model/useImageInput";
-import { useInputOptions } from "./model/useInputOptions";
-import { useRenderOptions } from "./model/useRenderOptions";
+import { useInputOptions, InputOptionsInit } from "./model/useInputOptions";
+import { useRenderOptions, RenderOptionsInit } from "./model/useRenderOptions";
 import { usePaintMixing } from "./model/usePaintMixing";
 import { useProcessing } from "./model/useProcessing";
 import { useExport } from "./model/useExport";
+import { useSaveToOrder } from "./model/useSaveToOrder";
 import {
   btnPrimary,
   btnSecondary,
@@ -30,6 +32,17 @@ type AdminPbnStudioProps = {
   // URL para precargar en el canvas en vez del ejemplo por defecto (la imagen
   // generada del item del pedido).
   initialImageSrc?: string;
+  // Pedido/item al que se guardará el PBN. Si se pasan, aparece el botón
+  // "Guardar en el pedido" (persiste + enlaza el PBN al OrderItem).
+  orderId?: string;
+  itemId?: string;
+  onSaved?: () => void;
+  // PBN ya guardado en el item: precarga ajustes + imagen fuente + SVG guardado.
+  savedPbn?: {
+    config?: PbnConfig;
+    sourceImageUrl?: string | null;
+    outlineSvgUrl?: string | null;
+  };
 };
 
 // Versión ADMIN, autónoma y editable, del flujo Paint by Numbers. Toda la capa
@@ -39,6 +52,10 @@ type AdminPbnStudioProps = {
 // La salida es solo descarga (no persiste en el pedido).
 export default function AdminPbnStudio({
   initialImageSrc,
+  orderId,
+  itemId,
+  onSaved,
+  savedPbn,
 }: AdminPbnStudioProps) {
   const { log, clearLog } = useLog();
 
@@ -53,10 +70,14 @@ export default function AdminPbnStudio({
     onDragOver,
     onDragLeave,
     onDrop,
-  } = useImageInput(log, initialImageSrc);
+  } = useImageInput(log, savedPbn?.sourceImageUrl ?? initialImageSrc);
 
-  const inputOptions = useInputOptions();
-  const renderOptions = useRenderOptions();
+  const inputOptions = useInputOptions(
+    savedPbn?.config?.input as InputOptionsInit | undefined,
+  );
+  const renderOptions = useRenderOptions(
+    savedPbn?.config?.render as RenderOptionsInit | undefined,
+  );
   const { recipes, setRecipes, computeRecipes } = usePaintMixing();
   const guideRef = useRef<HTMLDivElement>(null);
   const [showGuide, setShowGuide] = useState(false);
@@ -96,6 +117,7 @@ export default function AdminPbnStudio({
     hasOutput,
     isProcessing,
     process,
+    loadSaved,
     cancel,
   } = useProcessing({
     buildSettings: inputOptions.buildSettings,
@@ -116,10 +138,112 @@ export default function AdminPbnStudio({
     palette,
   });
 
+  // Al reabrir un PBN guardado: **lee el SVG guardado** (no reprocesa) una vez la
+  // imagen fuente ya está dibujada (imageSrc deja de ser null, así el compare-
+  // slider puede rasterizar el SVG contra el original). Si la carga falla (p. ej.
+  // CORS), cae a reprocesar. También recalcula las recetas de la guía de mezcla.
+  const didLoadSaved = useRef(false);
+  useEffect(() => {
+    if (!savedPbn || !imageSrc || didLoadSaved.current) return;
+    didLoadSaved.current = true;
+    void (async () => {
+      const savedPalette = savedPbn.config?.palette as RGB[] | undefined;
+      const ok = savedPbn.outlineSvgUrl
+        ? await loadSaved(savedPbn.outlineSvgUrl, savedPalette)
+        : false;
+      if (ok) {
+        if (ENABLE_MIXING_GUIDE && savedPalette?.length) {
+          void computeRecipes(savedPalette);
+        }
+      } else {
+        void process(); // fallback: regenerar desde la imagen + ajustes
+      }
+    })();
+  }, [savedPbn, imageSrc, loadSaved, process, computeRecipes]);
+
+  // ---- Guardar en el pedido ----
+  const { save, saving, savedOk, error: saveError } = useSaveToOrder();
+  const canSaveToOrder = Boolean(orderId && itemId);
+
+  const handleSaveToOrder = useCallback(() => {
+    if (!orderId || !itemId) return;
+    void save({
+      orderId,
+      itemId,
+      svgContainerRef,
+      guideRef,
+      previewDataUrl: compareImgs?.processed,
+      sourceDataUrl: originalImageRef.current,
+      palette,
+      recipes,
+      config: {
+        // Valores crudos del hook (no `buildSettings()`) para poder rehidratar
+        // los paneles tal cual al reabrir el PBN guardado.
+        input: {
+          resizeImage: inputOptions.resizeImage,
+          resizeWidth: inputOptions.resizeWidth,
+          resizeHeight: inputOptions.resizeHeight,
+          nrOfClusters: inputOptions.nrOfClusters,
+          clusterPrecision: inputOptions.clusterPrecision,
+          randomSeed: inputOptions.randomSeed,
+          colorSpace: inputOptions.colorSpace,
+          colorRestrictions: inputOptions.colorRestrictions,
+          narrowPixelCleanupRuns: inputOptions.narrowPixelCleanupRuns,
+          removeFacetsSmallerThan: inputOptions.removeFacetsSmallerThan,
+          maximumNumberOfFacets: inputOptions.maximumNumberOfFacets,
+          largeToSmall: inputOptions.largeToSmall,
+          halveBorderSegments: inputOptions.halveBorderSegments,
+        },
+        render: {
+          showLabels: renderOptions.showLabels,
+          fillFacets: renderOptions.fillFacets,
+          showBorders: renderOptions.showBorders,
+          sizeMultiplier: renderOptions.sizeMultiplier,
+          labelFontSize: renderOptions.labelFontSize,
+          labelFontColor: renderOptions.labelFontColor,
+          fillOpacity: renderOptions.fillOpacity,
+        },
+        paper: {
+          format: exp.paperFormat,
+          orientation: exp.paperOrientation,
+          width: exp.pdfWidth,
+          height: exp.pdfHeight,
+          unit: exp.pdfUnit,
+        },
+      },
+    }).then((saved) => {
+      if (saved) onSaved?.();
+    });
+  }, [
+    orderId,
+    itemId,
+    save,
+    svgContainerRef,
+    guideRef,
+    compareImgs,
+    originalImageRef,
+    palette,
+    recipes,
+    inputOptions,
+    renderOptions,
+    exp,
+    onSaved,
+  ]);
+
   const showResult = !!compareImgs && !isProcessing;
 
   return (
     <>
+      {savedPbn && (
+        <div className="mb-4 flex items-center gap-2 rounded-xl border border-primary/30 bg-primary/5 px-4 py-3 font-body text-sm text-slate-dark">
+          <span className="material-symbols-outlined text-[18px] text-primary">
+            history
+          </span>
+          Mostrando el PBN guardado. Pulsa &quot;Procesar imagen&quot; para
+          regenerarlo con ajustes distintos.
+        </div>
+      )}
+
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,380px)_1fr]">
         {/* ---- Sidebar: numbered step cards ---- */}
         <aside className="flex flex-col gap-6">
@@ -300,11 +424,47 @@ export default function AdminPbnStudio({
             ))}
 
           <section className={`${card} mt-6`}>
-            <h3 className={stepTitle}>
-              <span className={stepNum}>3</span>
-              Descargar
-            </h3>
-            <ExportControls exp={exp} hasOutput={hasOutput} />
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <h3 className={stepTitle}>
+                <span className={stepNum}>3</span>
+                Guardar y descargar
+              </h3>
+              {canSaveToOrder && hasOutput && (
+                <button
+                  type="button"
+                  className={btnPrimary}
+                  onClick={handleSaveToOrder}
+                  disabled={saving}
+                >
+                  {saving ? (
+                    <>
+                      <span className="material-symbols-outlined animate-spin text-[18px]">
+                        progress_activity
+                      </span>
+                      Guardando...
+                    </>
+                  ) : (
+                    <>
+                      <span className="material-symbols-outlined text-[18px]">
+                        {savedOk ? "check_circle" : "save"}
+                      </span>
+                      {savedOk ? "Guardado" : "Guardar en el pedido"}
+                    </>
+                  )}
+                </button>
+              )}
+            </div>
+            {savedOk && (
+              <p className="mt-2 font-body text-sm text-green-700">
+                Paint by Numbers guardado y enlazado a este item del pedido.
+              </p>
+            )}
+            {saveError && (
+              <p className="mt-2 font-body text-sm text-red-600">{saveError}</p>
+            )}
+            <div className="mt-4">
+              <ExportControls exp={exp} hasOutput={hasOutput} />
+            </div>
           </section>
         </main>
       </div>

@@ -142,6 +142,33 @@ export function useProcessing({
     ],
   );
 
+  // Carga un PBN ya guardado sin correr el pipeline: inyecta el SVG guardado en
+  // el contenedor y marca la salida como lista. El efecto del compare-slider
+  // rasteriza ese SVG contra la imagen original. No hay `ProcessResult`, así que
+  // las opciones de render quedan inertes hasta que el admin pulse "Procesar".
+  // Devuelve false si no se pudo (p. ej. CORS), para caer a reprocesar.
+  const loadSaved = useCallback(
+    async (svgUrl: string, savedPalette?: RGB[]): Promise<boolean> => {
+      const container = svgContainerRef.current;
+      if (!container) return false;
+      try {
+        const res = await fetch(svgUrl);
+        if (!res.ok) return false;
+        const svgText = await res.text();
+        container.innerHTML = svgText;
+        if (savedPalette && savedPalette.length) setPalette(savedPalette);
+        setHasOutput(true);
+        // fuerza al efecto del compare-slider a reconstruir desde el SVG inyectado
+        setOutputVersion((v) => v + 1);
+        setOverall({ progress: 1, label: "Cargado", state: "complete" });
+        return true;
+      } catch {
+        return false;
+      }
+    },
+    [],
+  );
+
   const process = useCallback(async () => {
     const canvases = {
       input: inputCanvasRef.current,
@@ -311,6 +338,7 @@ export function useProcessing({
     isProcessing,
     // actions
     process,
+    loadSaved,
     cancel,
   };
 }

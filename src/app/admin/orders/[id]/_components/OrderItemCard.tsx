@@ -200,7 +200,12 @@ export function OrderItemCard({
         />
       )}
       {showPBN && (
-        <ConvertToPbnModal item={item} onClose={() => setShowPBN(false)} />
+        <ConvertToPbnModal
+          item={item}
+          orderId={orderId}
+          onClose={() => setShowPBN(false)}
+          onSaved={onUpdate}
+        />
       )}
       {previewSrc && (
         <ImagePreviewModal
@@ -338,6 +343,41 @@ export function OrderItemCard({
               </Text>
             </BlockStack>
           </ItemMediaRow>
+
+          {item.paintByNumbers && (
+            <>
+              <Divider />
+              <ItemMediaRow
+                image={item.paintByNumbers.previewUrl}
+                alt="Paint by Numbers"
+                onZoom={
+                  item.paintByNumbers.previewUrl
+                    ? () => setPreviewSrc(item.paintByNumbers!.previewUrl)
+                    : undefined
+                }
+              >
+                <BlockStack gap="050">
+                  <InlineStack gap="150" blockAlign="center">
+                    <Text variant="bodySm" tone="subdued" as="span">
+                      Paint by Numbers
+                    </Text>
+                    <Badge tone="success">Guardado</Badge>
+                  </InlineStack>
+                  {item.paintByNumbers.outlineSvgUrl && (
+                    <a
+                      href={item.paintByNumbers.outlineSvgUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      <Text variant="bodyMd" fontWeight="semibold" as="span">
+                        Descargar SVG con números
+                      </Text>
+                    </a>
+                  )}
+                </BlockStack>
+              </ItemMediaRow>
+            </>
+          )}
 
           <Divider />
           <ItemActionsBar

@@ -21,6 +21,7 @@ export interface CartItem {
   quantity: number;
   img: string;
   generationId?: string;
+  paintByNumbersId?: string;
   imageUrl?: string;
 }
 

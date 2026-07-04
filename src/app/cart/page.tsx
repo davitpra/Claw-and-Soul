@@ -52,11 +52,32 @@ export default function CartPage() {
     setIsCheckingOut(true);
     try {
       const lines = items
-        .map((item) => ({
-          merchandiseId: item.variantId || "",
-          quantity: item.quantity,
-          attributes: [{ key: "Style", value: item.style || "Default" }],
-        }))
+        .map((item) => {
+          // Line attributes become Shopify order line-item `properties`, which
+          // the orders webhook (`ingestLineItem`) reads to re-associate the art.
+          // Only include keys that have a value.
+          const attributes = [
+            { key: "Style", value: item.style || "Default" },
+            ...(item.paintByNumbersId
+              ? [{ key: "paint_by_numbers_id", value: item.paintByNumbersId }]
+              : []),
+            ...(item.generationId
+              ? [{ key: "generation_id", value: item.generationId }]
+              : []),
+            // image_url solo para el flujo de generación: le pasa al webhook la
+            // URL del arte IA. Los items PBN se enlazan por paint_by_numbers_id
+            // y el backend deriva la miniatura del preview del PBN, así que no
+            // exponemos la URL de Cloudinary como property en Shopify.
+            ...(item.generationId && item.imageUrl
+              ? [{ key: "image_url", value: item.imageUrl }]
+              : []),
+          ];
+          return {
+            merchandiseId: item.variantId || "",
+            quantity: item.quantity,
+            attributes,
+          };
+        })
         .filter((line) => line.merchandiseId !== "");
 
       if (lines.length === 0) {

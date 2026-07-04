@@ -29,6 +29,11 @@ function headerCopy(
       title: "Your artwork",
       subtitle: "All the pieces you've created with your pets.",
     };
+  if (pathname.startsWith("/user/pbn"))
+    return {
+      title: "Paint by Numbers",
+      subtitle: "Your saved paint-by-numbers templates, ready to order.",
+    };
   if (pathname.startsWith("/user/pets"))
     return {
       title: "Your pets",

@@ -13,6 +13,7 @@ const tabs: TabItem[] = [
   { label: "Overview", icon: "grid_view", href: "/user" },
   { label: "Orders", icon: "receipt_long", href: "/user/orders" },
   { label: "My Artwork", icon: "palette", href: "/user/generations" },
+  { label: "Paint by Numbers", icon: "format_paint", href: "/user/pbn" },
   { label: "My Pets", icon: "pets", href: "/user/pets" },
   { label: "Account", icon: "settings", href: "/user/profile" },
 ];
