@@ -60,6 +60,7 @@ export default function AdminProductsPage() {
     null,
   );
   const [savingTemplate, setSavingTemplate] = useState<string | null>(null);
+  const [savingPbn, setSavingPbn] = useState(false);
   const [imageMap, setImageMap] = useState<Record<string, string>>({});
 
   const loadProducts = () => {
@@ -192,6 +193,22 @@ export default function AdminProductsPage() {
     }
   };
 
+  const handlePbnChange = async (productId: string) => {
+    const target = productId || null;
+    setSavingPbn(true);
+    setProducts((prev) =>
+      prev.map((p) => ({ ...p, isPaintByNumbers: p.id === target })),
+    );
+    try {
+      await adminApi.products.setPbn(target);
+    } catch (e: unknown) {
+      setError((e as Error).message);
+      loadProducts();
+    } finally {
+      setSavingPbn(false);
+    }
+  };
+
   const handleStyleChange = async (productId: string, newStyleId: string) => {
     setSavingStyle(productId);
     const styleId = newStyleId || null;
@@ -311,6 +328,34 @@ export default function AdminProductsPage() {
                     </Text>
                   </BlockStack>
                 )}
+              </InlineStack>
+            </BlockStack>
+          </Card>
+        )}
+
+        {!loading && (
+          <Card>
+            <BlockStack gap="200">
+              <Text variant="headingSm" as="h2">
+                Producto Paint by Numbers
+              </Text>
+              <InlineStack gap="200" blockAlign="center">
+                <div style={{ minWidth: 260 }}>
+                  <Select
+                    label="Kit dedicado al comprar un PBN guardado"
+                    disabled={savingPbn}
+                    value={products.find((p) => p.isPaintByNumbers)?.id ?? ""}
+                    onChange={handlePbnChange}
+                    helpText="Solo puede haber uno. Elegir otro reemplaza al anterior automáticamente."
+                    options={[
+                      { label: "Sin asignar", value: "" },
+                      ...products
+                        .filter((p) => p.isActive)
+                        .map((p) => ({ label: p.displayName, value: p.id })),
+                    ]}
+                  />
+                </div>
+                {savingPbn && <Spinner size="small" />}
               </InlineStack>
             </BlockStack>
           </Card>

@@ -370,6 +370,7 @@ export interface AdminProduct {
   style: { id: string; name: string; displayName: string; previewUrl: string | null } | null;
   template: string | null;
   fulfillmentMethod: string;
+  isPaintByNumbers: boolean;
   showcaseCollectionHandle: string | null;
 }
 
@@ -704,6 +705,12 @@ export const adminApi = {
       adminFetch<AdminProduct>(`/admin/products/${id}`, {
         method: 'PATCH',
         body: JSON.stringify(body),
+      }),
+    /** Fija EL producto dedicado al kit PBN (o ninguno si es null). Garantiza unicidad en backend. */
+    setPbn: (productId: string | null) =>
+      adminFetch<void>('/admin/products/pbn', {
+        method: 'PATCH',
+        body: JSON.stringify({ productId }),
       }),
     deactivate: (id: string) =>
       adminFetch(`/admin/products/${id}`, { method: 'DELETE' }),
