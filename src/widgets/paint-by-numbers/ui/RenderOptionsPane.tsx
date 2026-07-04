@@ -1,17 +1,9 @@
-import { RGB } from "@/lib/pbn/common";
-import type { MixRecipe } from "@/lib/pbn/paintMixing";
 import { RenderOptions } from "../model/useRenderOptions";
 import { Toggle } from "./controls";
 import { fieldInput, fieldLabel } from "./pbnStyles";
 
 interface RenderOptionsPaneProps {
   opts: RenderOptions;
-  palette: RGB[];
-  recipes: MixRecipe[] | null;
-  showGuide: boolean;
-  onToggleGuide: () => void;
-  /** When false the "See mixing guide" toggle is hidden (feature-flagged). */
-  mixingEnabled: boolean;
 }
 
 /** Native <input type="color"> only accepts #rrggbb, so expand shorthand
@@ -25,22 +17,27 @@ function toColorInputValue(value: string): string {
   return "#000000";
 }
 
-export default function RenderOptionsPane({
-  opts,
-  palette,
-  recipes,
-  showGuide,
-  onToggleGuide,
-  mixingEnabled,
-}: RenderOptionsPaneProps) {
+export default function RenderOptionsPane({ opts }: RenderOptionsPaneProps) {
   const toggles: {
     label: string;
     checked: boolean;
     onChange: (v: boolean) => void;
   }[] = [
-    { label: "Show labels", checked: opts.showLabels, onChange: opts.setShowLabels },
-    { label: "Fill facets", checked: opts.fillFacets, onChange: opts.setFillFacets },
-    { label: "Show borders", checked: opts.showBorders, onChange: opts.setShowBorders },
+    {
+      label: "Show labels",
+      checked: opts.showLabels,
+      onChange: opts.setShowLabels,
+    },
+    {
+      label: "Fill facets",
+      checked: opts.fillFacets,
+      onChange: opts.setFillFacets,
+    },
+    {
+      label: "Show borders",
+      checked: opts.showBorders,
+      onChange: opts.setShowBorders,
+    },
   ];
 
   return (
@@ -130,45 +127,6 @@ export default function RenderOptionsPane({
           />
         </label>
       </div>
-
-      <div className="mt-6">
-        <div className="mb-2 flex items-center justify-between">
-          <strong className="font-display font-black text-slate-dark">
-            Color palette
-          </strong>
-          <span className="font-body text-sm text-text-muted">
-            {palette.length} colors
-          </span>
-        </div>
-        <div className="flex flex-wrap gap-1.5">
-          {palette.map((c, i) => (
-            <div
-              key={i}
-              className="flex size-9 items-center justify-center rounded-md border border-black/10 text-xs font-bold text-white mix-blend-difference"
-              style={{ backgroundColor: `rgb(${c[0]},${c[1]},${c[2]})` }}
-              title={`#${i} · rgb(${c[0]}, ${c[1]}, ${c[2]})`}
-            >
-              {i + 1}
-            </div>
-          ))}
-        </div>
-      </div>
-
-      {mixingEnabled && recipes && palette.length > 0 && (
-        <div className="mt-5">
-          <button
-            type="button"
-            className="inline-flex items-center gap-2 font-semibold text-primary transition-colors hover:text-primary-dark"
-            onClick={onToggleGuide}
-            aria-expanded={showGuide}
-          >
-            <span className="material-symbols-outlined text-[20px]">
-              {showGuide ? "expand_more" : "chevron_right"}
-            </span>
-            See mixing guide ({recipes.length} colors)
-          </button>
-        </div>
-      )}
     </section>
   );
 }

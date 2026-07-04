@@ -38,8 +38,8 @@ export default function Navbar() {
   }
 
   const navLinks = [
-    { name: "Shop", href: "/shop" },
     { name: "Paint by Numbers", href: "/paint-by-numbers" },
+    { name: "Shop", href: "/shop" },
     { name: "Contact", href: "/contact" },
   ];
 

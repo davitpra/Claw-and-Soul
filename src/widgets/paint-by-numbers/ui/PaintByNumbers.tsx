@@ -15,7 +15,13 @@ import { useRenderOptions } from "../model/useRenderOptions";
 import { usePaintMixing } from "../model/usePaintMixing";
 import { useProcessing } from "../model/useProcessing";
 import { useExport } from "../model/useExport";
-import { btnPrimary, btnSecondary, card, stepNum, stepTitle } from "./pbnStyles";
+import {
+  btnPrimary,
+  btnSecondary,
+  card,
+  stepNum,
+  stepTitle,
+} from "./pbnStyles";
 import CropModal from "./CropModal";
 import ImageCompareSlider from "./ImageCompareSlider";
 import InputOptionsPane from "./InputOptionsPane";
@@ -23,6 +29,7 @@ import ProgressBar from "./ProgressBar";
 import RenderOptionsPane from "./RenderOptionsPane";
 import MixingGuide from "./MixingGuide";
 import ExportControls from "./ExportControls";
+import ColorPalette from "./ColorPalette";
 
 export default function PaintByNumbers() {
   const { log, clearLog } = useLog();
@@ -171,17 +178,6 @@ export default function PaintByNumbers() {
 
   return (
     <div className="container-site px-6 py-12 lg:px-10">
-      <header className="mb-8 max-w-2xl">
-        <h1 className="font-display text-3xl font-black text-slate-dark md:text-4xl">
-          Paint by Numbers
-        </h1>
-        <p className="mt-2 font-body text-text-muted">
-          Convierte cualquier foto en una plantilla para pintar por números.
-          Pega desde el portapapeles (Ctrl+V) o sube un archivo. Las imágenes
-          muy grandes tardan más en procesarse.
-        </p>
-      </header>
-
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,380px)_1fr]">
         {/* ---- Sidebar: numbered step cards ---- */}
         <aside className="flex flex-col gap-6">
@@ -304,10 +300,8 @@ export default function PaintByNumbers() {
               />
             )}
           </div>
-
           {showResult && (
-            <RenderOptionsPane
-              opts={renderOptions}
+            <ColorPalette
               palette={palette}
               recipes={recipes}
               showGuide={showGuide}
@@ -316,13 +310,7 @@ export default function PaintByNumbers() {
             />
           )}
 
-          {/* keep the SVG container mounted (the pipeline writes into it) but
-              hide it until the image has finished processing */}
-          <div
-            ref={svgContainerRef}
-            className="mt-6 [&_svg]:mx-auto [&_svg]:h-auto [&_svg]:max-w-full"
-            hidden={!showResult}
-          />
+          {showResult && <RenderOptionsPane opts={renderOptions} />}
 
           {/* The mixing guide opens in a modal when toggled. When closed it
               stays mounted off-screen so PNG/PDF export can still capture it. */}
@@ -358,7 +346,7 @@ export default function PaintByNumbers() {
               </div>
             ) : (
               <div
-                className="pointer-events-none absolute -left-[9999px] top-0"
+                className="pointer-events-none absolute -left-2499.75 top-0"
                 aria-hidden
               >
                 <MixingGuide
@@ -408,9 +396,7 @@ export default function PaintByNumbers() {
                     Ver mis Paint by Numbers
                   </a>
                 </p>
-                {savedPbn && (
-                  <PbnBuyButton pbn={savedPbn} variant="inline" />
-                )}
+                {savedPbn && <PbnBuyButton pbn={savedPbn} variant="inline" />}
               </div>
             )}
             {saveError && (
@@ -435,14 +421,15 @@ export default function PaintByNumbers() {
         />
       )}
 
-      {/* intermediate-step canvases: kept in the DOM as draw targets for the
-          pipeline, but never shown to the user */}
+      {/* intermediate-step canvases and the SVG output container: kept in the
+          DOM as draw targets for the pipeline, but never shown to the user */}
       <div hidden>
         <canvas ref={kmeansCanvasRef} />
         <canvas ref={reductionCanvasRef} />
         <canvas ref={borderPathCanvasRef} />
         <canvas ref={borderSegmentationCanvasRef} />
         <canvas ref={labelPlacementCanvasRef} />
+        <div ref={svgContainerRef} />
       </div>
     </div>
   );

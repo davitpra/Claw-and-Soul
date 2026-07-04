@@ -5,7 +5,6 @@ import { Footer } from "@/widgets/footer";
 import { useState, useEffect, use } from "react";
 import { getProduct, ShopifyProduct } from "@/lib/shopify";
 import Link from "next/link";
-import Breadcrumbs from "@/shared/ui/Breadcrumbs";
 import { ProductPageTemplate } from "@/widgets/product-templates";
 import { useBackendProductVariants } from "@/hooks/useBackendProductVariants";
 
@@ -89,23 +88,11 @@ export default function ProductDetail({
     },
   ];
 
-  const breadcrumbItems = [
-    { label: "Home", href: "/" },
-    { label: "Shop", href: "/shop" },
-    { label: product.title },
-  ];
-
   return (
     <div className="relative flex min-h-screen w-full flex-col overflow-x-clip bg-white">
       <Navbar />
 
       <main className="flex-1 flex flex-col">
-        <div className="flex justify-center py-6 md:py-10 px-4 md:px-10 lg:px-40">
-          <div className="layout-content-container flex flex-col max-w-300 w-full">
-            <Breadcrumbs items={breadcrumbItems} />
-          </div>
-        </div>
-
         <ProductPageTemplate
           product={product}
           templateOverride={backendProduct?.template ?? undefined}
