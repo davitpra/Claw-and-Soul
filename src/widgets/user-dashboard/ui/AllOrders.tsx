@@ -6,7 +6,6 @@ import { useAuthFetch } from "@/hooks/useAuthFetch";
 import { ProductCard } from "@/entities/pet-product/ui/ProductCard";
 import type { Product } from "@/entities/pet-product/model/types";
 import {
-  formatOrderDate,
   formatPrice,
   itemThumb,
   statusBadge,
@@ -90,7 +89,7 @@ export function AllOrders() {
             {[0, 1, 2, 3].map((i) => (
               <div
                 key={i}
-                className="aspect-[3/4] animate-pulse rounded-xl bg-cream"
+                className="aspect-3/4 not-only-of-type:animate-pulse rounded-xl bg-cream"
               />
             ))}
           </div>
