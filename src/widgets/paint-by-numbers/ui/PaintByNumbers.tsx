@@ -24,6 +24,7 @@ import {
   stepTitle,
 } from "./pbnStyles";
 import CropModal from "./CropModal";
+import Modal from "./Modal";
 import ImageCompareSlider from "./ImageCompareSlider";
 import InputOptionsPane from "./InputOptionsPane";
 import ProgressBar from "./ProgressBar";
@@ -215,11 +216,7 @@ export default function PaintByNumbers() {
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-[1fr_minmax(0,380px)]">
         {/* ---- Main: preview area ---- */}
         <main className="flex flex-col">
-          {showResult ? (
-            <RenderOptionsPane opts={renderOptions} />
-          ) : (
-            <ProgressBar overall={overall} />
-          )}
+          {!showResult && <ProgressBar overall={overall} />}
 
           <div className="relative">
             {/* keep the canvas mounted (the pipeline writes to it) but hide it
@@ -234,13 +231,16 @@ export default function PaintByNumbers() {
               )}
             </div>
             {showResult && compareImgs && (
-              <ImageCompareSlider
-                originalSrc={compareImgs.original}
-                processedSrc={compareImgs.processed}
-                highlightSrc={highlightSrc}
-                leftLabel="Original"
-                rightLabel="Result"
-              />
+              <>
+                <ImageCompareSlider
+                  originalSrc={compareImgs.original}
+                  processedSrc={compareImgs.processed}
+                  highlightSrc={highlightSrc}
+                  leftLabel="Original"
+                  rightLabel="Result"
+                />
+                <RenderOptionsPane opts={renderOptions} />
+              </>
             )}
           </div>
           {showResult && (
@@ -259,48 +259,33 @@ export default function PaintByNumbers() {
 
           {/* The mixing guide opens in a modal when toggled. When closed it
               stays mounted off-screen so PNG/PDF export can still capture it. */}
-          {ENABLE_MIXING_GUIDE &&
-            (showGuide ? (
-              <div
-                className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
-                onClick={() => setShowGuide(false)}
-              >
-                <div
-                  className="flex max-h-[90vh] w-full max-w-3xl flex-col overflow-hidden rounded-xl bg-white shadow-xl"
-                  onClick={(e) => e.stopPropagation()}
-                >
-                  <div className="flex items-center justify-end border-b border-[#E0DED9] px-4 py-3">
-                    <button
-                      className="flex size-8 items-center justify-center rounded-lg text-text-muted transition-colors hover:bg-gray-100 hover:text-slate-dark"
-                      onClick={() => setShowGuide(false)}
-                      aria-label="Close"
-                    >
-                      <span className="material-symbols-outlined text-[20px]">
-                        close
-                      </span>
-                    </button>
-                  </div>
-                  <div className="overflow-y-auto">
-                    <MixingGuide
-                      recipes={recipes}
-                      palette={palette}
-                      guideRef={guideRef}
-                    />
-                  </div>
-                </div>
-              </div>
-            ) : (
-              <div
-                className="pointer-events-none absolute -left-2499.75 top-0"
-                aria-hidden
+          {ENABLE_MIXING_GUIDE && (
+            <>
+              <Modal
+                open={showGuide}
+                onClose={() => setShowGuide(false)}
+                label="Color mixing guide"
               >
                 <MixingGuide
                   recipes={recipes}
                   palette={palette}
                   guideRef={guideRef}
                 />
-              </div>
-            ))}
+              </Modal>
+              {!showGuide && (
+                <div
+                  className="pointer-events-none absolute -left-2499.75 top-0"
+                  aria-hidden
+                >
+                  <MixingGuide
+                    recipes={recipes}
+                    palette={palette}
+                    guideRef={guideRef}
+                  />
+                </div>
+              )}
+            </>
+          )}
         </main>
         {/* ---- Sidebar: numbered step cards ---- */}
         <aside className="flex flex-col gap-6">

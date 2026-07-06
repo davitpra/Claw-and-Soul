@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { RenderOptions } from "../model/useRenderOptions";
 import { Toggle } from "./controls";
+import Modal from "./Modal";
 import { fieldInput, fieldLabel } from "./pbnStyles";
 
 interface RenderOptionsPaneProps {
@@ -18,7 +19,12 @@ function toColorInputValue(value: string): string {
   return "#000000";
 }
 
+/** Minimalist button anchored (via CSS) to the bottom-left of the slider, which
+ * opens the advanced render controls in a Modal. Meant to be rendered as a
+ * sibling of ImageCompareSlider inside its relative container. */
 export default function RenderOptionsPane({ opts }: RenderOptionsPaneProps) {
+  const [open, setOpen] = useState(false);
+
   const toggles: {
     label: string;
     checked: boolean;
@@ -41,30 +47,29 @@ export default function RenderOptionsPane({ opts }: RenderOptionsPaneProps) {
     },
   ];
 
-  const [advancedOpen, setAdvancedOpen] = useState(false);
-
   return (
-    <section className="mb-6 rounded-xl border border-[#E0DED9] bg-white p-6 shadow-sm">
-      <header className="flex items-center justify-between gap-4">
-        <h4 className="font-display text-lg font-black text-slate-dark">
-          Render options
-        </h4>
-        <button
-          type="button"
-          className="inline-flex items-center gap-2 self-start font-semibold text-primary transition-colors hover:text-primary-dark"
-          aria-expanded={advancedOpen}
-          onClick={() => setAdvancedOpen((v) => !v)}
-        >
-          <span className="material-symbols-outlined text-[20px]">
-            {advancedOpen ? "expand_more" : "chevron_right"}
-          </span>
-          Advanced settings
-        </button>
-      </header>
+    <>
+      {/* Anchored to the bottom-left of the slider's relative container. */}
+      <button
+        type="button"
+        className="absolute bottom-3 left-3 z-10 flex size-9 items-center justify-center rounded-full bg-black/60 text-white shadow-lg transition-colors hover:bg-black/70"
+        aria-label="Render options"
+        aria-haspopup="dialog"
+        aria-expanded={open}
+        onClick={() => setOpen(true)}
+      >
+        <span className="material-symbols-outlined text-[20px]">tune</span>
+      </button>
 
-      {advancedOpen && (
-        <>
-          <div className="flex flex-wrap gap-6 mt-6">
+      <Modal
+        open={open}
+        onClose={() => setOpen(false)}
+        title="Render options"
+        maxWidth="max-w-lg"
+        label="Render options"
+      >
+        <div className="p-6">
+          <div className="flex flex-wrap gap-6">
             {toggles.map((t) => (
               <Toggle
                 key={t.label}
@@ -108,7 +113,8 @@ export default function RenderOptionsPane({ opts }: RenderOptionsPaneProps) {
               </div>
             </label>
           </div>
-          <label className="flex flex-col gap-1.5">
+
+          <label className="mt-5 flex flex-col gap-1.5">
             <span className={`${fieldLabel} justify-between`}>
               Fill opacity
               <span className="font-bold normal-case text-primary">
@@ -126,8 +132,8 @@ export default function RenderOptionsPane({ opts }: RenderOptionsPaneProps) {
               }
             />
           </label>
-        </>
-      )}
-    </section>
+        </div>
+      </Modal>
+    </>
   );
 }
