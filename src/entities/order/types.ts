@@ -99,6 +99,23 @@ export interface UserGeneration {
   style: { id: string; displayName?: string } | null;
 }
 
+// Respuesta de GET /generations/:id (user-scoped). El backend devuelve la
+// Generation completa con pet + style incluidos; aquí surfaceamos los campos
+// extra que la fila de lista (UserGeneration) no declara.
+export interface UserGenerationDetail extends UserGeneration {
+  prompt: string | null;
+  negativePrompt: string | null;
+  provider: string | null;
+  errorMessage: string | null;
+  isFavorite: boolean;
+  isPublic: boolean;
+  completedAt: string | null;
+  formatId: string | null;
+  productRefId: string | null;
+  pet: { id: string; name: string; species?: string; breed?: string | null } | null;
+  style: { id: string; displayName?: string; category?: string } | null;
+}
+
 export interface UserPetPhoto {
   id: string;
   photoUrl: string;

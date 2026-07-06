@@ -8,7 +8,10 @@ import { EXAMPLE_IMAGE } from "./constants";
  * the processing pipeline (k-means) and the before/after comparator needs the
  * untouched original.
  */
-export function useImageInput(log: (msg: string) => void) {
+export function useImageInput(
+  log: (msg: string) => void,
+  initialUrl?: string | null,
+) {
   const inputCanvasRef = useRef<HTMLCanvasElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const originalImageRef = useRef<string | null>(null);
@@ -38,9 +41,27 @@ export function useImageInput(log: (msg: string) => void) {
     img.src = EXAMPLE_IMAGE;
   }, [drawImageToInput, log]);
 
-  // load a default example & wire up clipboard paste
+  // Carga una imagen remota (p.ej. el resultUrl de una generación al llegar desde
+  // "Enviar a PBN"). crossOrigin para poder leer el canvas después.
+  const loadFromUrl = useCallback(
+    (url: string) => {
+      const img = new Image();
+      img.crossOrigin = "anonymous";
+      img.onload = () => drawImageToInput(img);
+      img.onerror = () => {
+        log("Unable to load image, using example instead");
+        loadExample();
+      };
+      img.src = url;
+    },
+    [drawImageToInput, log, loadExample],
+  );
+
+  // load the initial image (remote URL if provided, else the example) & wire up
+  // clipboard paste
   useEffect(() => {
-    loadExample();
+    if (initialUrl) loadFromUrl(initialUrl);
+    else loadExample();
 
     const onPaste = (e: ClipboardEvent) => {
       const items = e.clipboardData?.items;
@@ -63,7 +84,7 @@ export function useImageInput(log: (msg: string) => void) {
     };
     document.addEventListener("paste", onPaste);
     return () => document.removeEventListener("paste", onPaste);
-  }, [loadExample, drawImageToInput]);
+  }, [initialUrl, loadExample, loadFromUrl, drawImageToInput]);
 
   const loadFile = useCallback(
     (file: File) => {
@@ -124,6 +145,7 @@ export function useImageInput(log: (msg: string) => void) {
     imageSrc,
     isDragging,
     openFilePicker,
+    loadFromUrl,
     onDragOver,
     onDragLeave,
     onDrop,

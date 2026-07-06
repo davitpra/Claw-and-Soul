@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { Container } from "@/shared/ui/Container";
+import { ConfirmDialog } from "@/shared/ui/ConfirmDialog";
 import { useAuthFetch } from "@/hooks/useAuthFetch";
 import { PbnBuyButton } from "@/features/pbn-purchase";
 
@@ -24,6 +25,11 @@ export default function UserPbnPage() {
   const [items, setItems] = useState<PaintByNumbersItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [pendingDelete, setPendingDelete] = useState<PaintByNumbersItem | null>(
+    null,
+  );
+  const [deleting, setDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
 
   // setState only inside the promise callbacks (never synchronously in the
   // effect body) to satisfy the repo's react-hooks/set-state-in-effect rule.
@@ -45,18 +51,20 @@ export default function UserPbnPage() {
     fetchList();
   }, [fetchList]);
 
-  const handleDelete = useCallback(
-    async (id: string) => {
-      if (!confirm("¿Eliminar este Paint by Numbers?")) return;
-      setItems((prev) => prev.filter((p) => p.id !== id));
-      try {
-        await del(`/paint-by-numbers/${id}`);
-      } catch {
-        void fetchList(); // Re-sync on failure.
-      }
-    },
-    [del, fetchList],
-  );
+  const confirmDelete = useCallback(async () => {
+    if (!pendingDelete || deleting) return;
+    setDeleting(true);
+    setDeleteError(null);
+    try {
+      await del(`/paint-by-numbers/${pendingDelete.id}`);
+      setItems((prev) => prev.filter((p) => p.id !== pendingDelete.id));
+      setPendingDelete(null);
+    } catch {
+      setDeleteError("No se pudo eliminar este Paint by Numbers.");
+    } finally {
+      setDeleting(false);
+    }
+  }, [del, pendingDelete, deleting]);
 
   return (
     <Container className="pb-10">
@@ -149,7 +157,10 @@ export default function UserPbnPage() {
                         )}
                         <button
                           type="button"
-                          onClick={() => void handleDelete(pbn.id)}
+                          onClick={() => {
+                            setDeleteError(null);
+                            setPendingDelete(pbn);
+                          }}
                           className="rounded-lg px-3 py-1.5 text-xs font-bold text-red-600 transition-colors hover:bg-red-50"
                         >
                           Eliminar
@@ -163,6 +174,28 @@ export default function UserPbnPage() {
           )}
         </div>
       </section>
+
+      <ConfirmDialog
+        open={pendingDelete !== null}
+        title="¿Eliminar este Paint by Numbers?"
+        description="Esta acción no se puede deshacer."
+        confirmLabel="Eliminar"
+        cancelLabel="Cancelar"
+        loadingLabel="Eliminando…"
+        loading={deleting}
+        error={deleteError}
+        onConfirm={confirmDelete}
+        onCancel={() => {
+          if (!deleting) setPendingDelete(null);
+        }}
+      >
+        {pendingDelete?.previewUrl && (
+          <div
+            className="aspect-4/5 w-full rounded-xl bg-cover bg-center"
+            style={{ backgroundImage: `url('${pendingDelete.previewUrl}')` }}
+          />
+        )}
+      </ConfirmDialog>
     </Container>
   );
 }

@@ -32,9 +32,16 @@ import { card, stepTitle } from "./pbnStyles";
 export default function PaintByNumbers() {
   const { log, clearLog } = useLog();
 
+  // Al llegar desde "Enviar a PBN" (detalle de generación) traemos la imagen del
+  // artwork por query param para precargarla en el canvas; generationId liga el
+  // PBN guardado a esa generación (ver handleSave más abajo).
+  const searchParams = useSearchParams();
+  const generationId = searchParams.get("generationId");
+  const initialImageUrl = searchParams.get("imageUrl");
+
   // Keep the whole object so it can be handed to <PbnSidebar> as one prop; the
   // main preview area only needs the two refs below.
-  const imageInput = useImageInput(log);
+  const imageInput = useImageInput(log, initialImageUrl);
   const {
     inputCanvasRef,
     originalImageRef,
@@ -143,8 +150,6 @@ export default function PaintByNumbers() {
 
   // ---- Save to account ----
   const router = useRouter();
-  const searchParams = useSearchParams();
-  const generationId = searchParams.get("generationId");
   const { isAuthenticated } = useAuth();
   const { save, saving, savedId, error: saveError } = useSavePbn();
   const [savedPbn, setSavedPbn] = useState<{
