@@ -1,4 +1,6 @@
-import { Fragment } from "react";
+"use client";
+
+import { Fragment, useState } from "react";
 import { RGB } from "@/lib/pbn/common";
 import { DEFAULT_BASE_PAINTS } from "@/lib/pbn/basePaints";
 import type { BasePaint, MixRecipe } from "@/lib/pbn/paintMixing";
@@ -14,6 +16,8 @@ export default function MixingGuide({
   palette,
   guideRef,
 }: MixingGuideProps) {
+  const [showBasePaints, setShowBasePaints] = useState(false);
+
   if (!recipes || palette.length === 0) return null;
 
   const usedPaints: BasePaint[] = [];
@@ -31,27 +35,45 @@ export default function MixingGuide({
     <div className="rounded-xl bg-white p-6" ref={guideRef}>
       <div className="mb-5">
         <p className="font-body text-sm text-text-muted">
-          {recipes.length} colors and the formulas to create them
+          {recipes.length} colors and the formulas to create from this{" "}
+          <button
+            type="button"
+            onClick={() => setShowBasePaints((v) => !v)}
+            aria-expanded={showBasePaints}
+            className="inline-flex items-center gap-0.5 font-bold text-primary transition-all hover:text-primary-dark"
+          >
+            list of base paints
+            <span
+              className={`material-symbols-outlined text-[18px] transition-all ${
+                showBasePaints ? "rotate-180" : ""
+              }`}
+            >
+              expand_more
+            </span>
+          </button>
+          .
         </p>
-        <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4">
-          {(usedPaints.length > 0 ? usedPaints : DEFAULT_BASE_PAINTS).map(
-            (p) => (
-              <div key={p.id} className="flex items-center gap-2">
-                <span
-                  className="size-7 shrink-0 rounded-md border border-black/10"
-                  style={{
-                    backgroundColor: `rgb(${p.rgb[0]},${p.rgb[1]},${p.rgb[2]})`,
-                  }}
-                  title={`${p.nameEn} — nº ${p.codigo} (${p.pigmento}) — ${p.rgb[0]},${p.rgb[1]},${p.rgb[2]}`}
-                />
-                <span className="flex flex-col text-xs leading-tight text-slate-dark">
-                  {p.nameEn}
-                  <span className="text-text-muted">no. {p.codigo}</span>
-                </span>
-              </div>
-            ),
-          )}
-        </div>
+        {showBasePaints && (
+          <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4">
+            {(usedPaints.length > 0 ? usedPaints : DEFAULT_BASE_PAINTS).map(
+              (p) => (
+                <div key={p.id} className="flex items-center gap-2">
+                  <span
+                    className="size-7 shrink-0 rounded-md border border-black/10"
+                    style={{
+                      backgroundColor: `rgb(${p.rgb[0]},${p.rgb[1]},${p.rgb[2]})`,
+                    }}
+                    title={`${p.nameEn} — nº ${p.codigo} (${p.pigmento}) — ${p.rgb[0]},${p.rgb[1]},${p.rgb[2]}`}
+                  />
+                  <span className="flex flex-col text-xs leading-tight text-slate-dark">
+                    {p.nameEn}
+                    <span className="text-text-muted">no. {p.codigo}</span>
+                  </span>
+                </div>
+              ),
+            )}
+          </div>
+        )}
       </div>
 
       <div className="overflow-x-auto">

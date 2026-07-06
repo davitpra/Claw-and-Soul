@@ -24,13 +24,15 @@ export default function ColorPalette({
   onSelectColor,
 }: ColorPaletteProps) {
   const hasSelection = selectedColor !== null;
-  const showGuideButton =
-    mixingEnabled && recipes && palette.length > 0;
+  const showGuideButton = mixingEnabled && recipes && palette.length > 0;
   return (
     <section className="mt-6 rounded-xl border border-[#E0DED9] bg-white p-6 shadow-sm">
       <strong className="font-display font-black text-slate-dark">
         Color palette ({palette.length})
       </strong>
+      <p className="text-sm text-slate-500">
+        Click a color to highlight its sections in the preview.
+      </p>
       <div className="mt-4 flex flex-wrap items-center gap-x-6 gap-y-3">
         <div className="flex flex-1 flex-wrap gap-2">
           {palette.map((c, i) => {
@@ -51,9 +53,7 @@ export default function ColorPalette({
                 aria-pressed={isSelected}
                 onClick={() => onSelectColor(i)}
               >
-                <span className="text-white mix-blend-difference">
-                  {i + 1}
-                </span>
+                <span className="text-white mix-blend-difference">{i + 1}</span>
               </button>
             );
           })}

@@ -222,8 +222,8 @@ export default function InputOptionsPane({
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               <label className="flex flex-col gap-1.5">
                 <span className={fieldLabel}>
-                  Thin pixel strip cleanup
-                  <HelpTip text="Number of passes that remove narrow one-pixel-wide strips between regions for cleaner borders." />
+                  Cleanup passes
+                  <HelpTip text="How many times the cleanup runs. Each pass removes thin one-pixel strips between areas for cleaner, more consistent borders." />
                 </span>
                 <input
                   type="number"
