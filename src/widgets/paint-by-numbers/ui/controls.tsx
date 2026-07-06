@@ -71,7 +71,7 @@ export function Segmented<T extends string | number>({
         return (
           <label
             key={o.label}
-            className={`cursor-pointer px-4 py-2 text-sm font-semibold transition-colors ${
+            className={`cursor-pointer px-4 py-2 text-sm font-semibold transition-colors w-full text-center ${
               active
                 ? "bg-primary text-white"
                 : "bg-white text-slate-dark hover:bg-primary/5"

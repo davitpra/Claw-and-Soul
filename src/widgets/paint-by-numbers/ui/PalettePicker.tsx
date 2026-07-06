@@ -12,9 +12,6 @@ const rgbKey = (c: RGB) => `${c[0]},${c[1]},${c[2]}`;
 const sameColor = (a: RGB, b: RGB) =>
   a[0] === b[0] && a[1] === b[1] && a[2] === b[2];
 
-const groupTitle =
-  "text-xs font-semibold uppercase tracking-wide text-text-muted";
-
 // Loupe magnification and the size of the source region it magnifies.
 const LOUPE_SIZE = 120;
 const LOUPE_SRC = 15; // odd, so there's a centered pixel under the crosshair
@@ -101,14 +98,6 @@ export default function PalettePicker({
 
   return (
     <div className="flex flex-col gap-3">
-      <div className="flex flex-col gap-1">
-        <span className={groupTitle}>Palette</span>
-        <span className="text-xs text-text-muted">
-          Pick the colors your paint-by-number should use. Leave empty to let the
-          app choose them automatically.
-        </span>
-      </div>
-
       {opts.pickedColors.length > 0 && (
         <div className="flex flex-col gap-1.5">
           <span className={fieldLabel}>Your colors</span>
@@ -146,10 +135,14 @@ export default function PalettePicker({
           </div>
         </div>
       )}
+      <span className="text-xs text-text-muted">
+        Pick the colors your paint-by-number should use. Leave empty to let the
+        app choose them automatically.
+      </span>
 
       <button
         type="button"
-        className={`${btnSecondary} self-start`}
+        className={`${btnSecondary} w-full`}
         onClick={() => setPickerOpen(true)}
         disabled={!imageSrc}
       >
@@ -274,7 +267,12 @@ function EyedropperModal({
         lctx.lineWidth = 1;
         lctx.strokeRect(px - cell / 2, px - cell / 2, cell, cell);
         lctx.strokeStyle = "rgba(255,255,255,0.9)";
-        lctx.strokeRect(px - cell / 2 - 1, px - cell / 2 - 1, cell + 2, cell + 2);
+        lctx.strokeRect(
+          px - cell / 2 - 1,
+          px - cell / 2 - 1,
+          cell + 2,
+          cell + 2,
+        );
       }
     }
   };
