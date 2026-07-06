@@ -7,7 +7,7 @@ export function useRenderOptions() {
   const [showBorders, setShowBorders] = useState(true);
   const [labelFontSize, setLabelFontSize] = useState(12);
   const [labelFontColor, setLabelFontColor] = useState("#000");
-  const [fillOpacity, setFillOpacity] = useState(1);
+  const [fillOpacity, setFillOpacity] = useState(0.3);
 
   return {
     showLabels,
