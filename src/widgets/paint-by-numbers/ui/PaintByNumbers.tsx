@@ -6,7 +6,7 @@ import { RGB } from "@/lib/pbn/common";
 import { buildHighlightOverlayDataUrl } from "@/lib/pbn/highlight";
 import { getPaperAspect } from "@/lib/pbn/svgExport";
 import { useAuth } from "@/context/AuthContext";
-import { PbnBuyButton } from "@/features/pbn-purchase";
+import { useIsMobile } from "@/hooks/useMediaQuery";
 import { useSavePbn } from "../model/useSavePbn";
 import { PAPER_LABELS, ENABLE_MIXING_GUIDE } from "../model/constants";
 import { useLog } from "../model/useLog";
@@ -16,33 +16,24 @@ import { useRenderOptions } from "../model/useRenderOptions";
 import { usePaintMixing } from "../model/usePaintMixing";
 import { useProcessing } from "../model/useProcessing";
 import { useExport } from "../model/useExport";
-import { card, stepNum, stepTitle } from "./pbnStyles";
 import ProcessSaveButtons from "./ProcessSaveButtons";
 import CropModal from "./CropModal";
 import Modal from "./Modal";
 import ImageCompareSlider from "./ImageCompareSlider";
-import InputOptionsPane from "./InputOptionsPane";
 import ProgressBar from "./ProgressBar";
 import RenderOptionsPane from "./RenderOptionsPane";
 import MixingGuide from "./MixingGuide";
-import ExportControls from "./ExportControls";
 import ColorPalette from "./ColorPalette";
+import PbnSidebar from "./PbnSidebar";
+import PbnSettingsDrawer from "./PbnSettingsDrawer";
 
 export default function PaintByNumbers() {
   const { log, clearLog } = useLog();
 
-  const {
-    inputCanvasRef,
-    fileInputRef,
-    originalImageRef,
-    onFileChange,
-    imageSrc,
-    isDragging,
-    openFilePicker,
-    onDragOver,
-    onDragLeave,
-    onDrop,
-  } = useImageInput(log);
+  // Keep the whole object so it can be handed to <PbnSidebar> as one prop; the
+  // main preview area only needs the two refs below.
+  const imageInput = useImageInput(log);
+  const { inputCanvasRef, originalImageRef } = imageInput;
 
   const inputOptions = useInputOptions();
   const renderOptions = useRenderOptions();
@@ -206,16 +197,30 @@ export default function PaintByNumbers() {
 
   const showResult = !!compareImgs && !isProcessing;
 
+  // On mobile the sidebar lives in a bottom sheet; on desktop it stays inline in
+  // the grid. A single mounted instance is reused in both places (mounting twice
+  // would duplicate the file <input> and its ref).
+  const isMobile = useIsMobile();
+  const sidebar = (
+    <PbnSidebar
+      imageInput={imageInput}
+      inputOptions={inputOptions}
+      exp={exp}
+      hasOutput={hasOutput}
+      savedPbn={savedPbn}
+    />
+  );
+
   return (
     <div className="container-site px-6 py-4 lg:px-10">
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-[1fr_minmax(0,380px)]">
         {/* ---- Main: preview area ---- */}
-        <main className="flex flex-col lg:h-[calc(100dvh-5rem)]">
+        <main className="flex flex-col pb-28 lg:h-[calc(100dvh-5rem)] lg:pb-0">
           {/*Progress bar: only shown while processing, hidden once the result is available */}
           {!showResult && <ProgressBar overall={overall} />}
           {/* Fixed-height preview box: the canvas and the compare slider both
               fill it with h-full, so they render at the exact same size. */}
-          <div className="relative flex flex-none items-stretch justify-center lg:h-[calc(100dvh-5rem)]">
+          <div className="relative flex flex-none items-stretch justify-center lg:h-[calc(100dvh)]">
             {/* keep the canvas mounted (the pipeline writes to it) but hide it
                 once the comparison slider is available */}
             <div
@@ -301,97 +306,12 @@ export default function PaintByNumbers() {
           </>
         )}
 
-        {/* ---- Sidebar: numbered step cards ---- */}
-        <aside className="flex flex-col gap-6">
-          {/* Step 1: Upload your image */}
-          <section className={card}>
-            <h3 className={stepTitle}>
-              <span className={stepNum}>1</span>
-              Upload your image
-            </h3>
-            <p className="mt-2 font-body text-sm text-text-muted">
-              Upload a clear photo with good lighting.
-            </p>
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept="image/x-png,image/gif,image/jpeg"
-              onChange={onFileChange}
-              hidden
-            />
-            <button
-              type="button"
-              className={`mt-4 flex min-h-40 w-full flex-col items-center justify-center gap-2 overflow-hidden rounded-xl border-2 border-dashed p-4 text-center transition-all ${
-                isDragging
-                  ? "border-primary bg-primary/5 scale-[1.01]"
-                  : "border-slate-300 bg-slate-50 hover:border-primary hover:bg-primary/5"
-              }`}
-              onClick={openFilePicker}
-              onDragOver={onDragOver}
-              onDragLeave={onDragLeave}
-              onDrop={onDrop}
-            >
-              {imageSrc ? (
-                <div className="group relative w-full">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
-                    src={imageSrc}
-                    alt="Selected image preview"
-                    className="mx-auto max-h-52 w-auto rounded-lg"
-                  />
-                  <span className="absolute inset-0 flex items-center justify-center rounded-lg bg-black/50 font-body text-sm font-semibold text-white opacity-0 transition-opacity group-hover:opacity-100">
-                    Click or drop to replace
-                  </span>
-                </div>
-              ) : (
-                <>
-                  <span className="material-symbols-outlined text-3xl text-primary">
-                    upload_file
-                  </span>
-                  <span className="font-body text-sm text-slate-dark">
-                    Drag &amp; drop your image here, or{" "}
-                    <strong>click to browse</strong>
-                  </span>
-                  <span className="font-body text-xs text-text-muted">
-                    Paste from your clipboard (Ctrl+V) · PNG, JPG or GIF
-                  </span>
-                </>
-              )}
-            </button>
-          </section>
-
-          {/* Step 2: Image settings */}
-          <section className={card}>
-            <h3 className={`${stepTitle}`}>
-              <span className={stepNum}>2</span>
-              Image settings
-            </h3>
-            <InputOptionsPane opts={inputOptions} imageSrc={imageSrc} />
-          </section>
-
-          {/* Step 3: Preview & download */}
-          {hasOutput && (
-            <section className={`${card}`}>
-              <div className="flex flex-wrap items-center justify-between gap-3">
-                <h3 className={stepTitle}>
-                  <span className={stepNum}>3</span>
-                  Preview &amp; download
-                </h3>
-              </div>
-
-              <div className="mt-4">
-                <ExportControls exp={exp} hasOutput={hasOutput} />
-              </div>
-            </section>
-          )}
-
-          {savedPbn && (
-            <section className={card}>
-              <PbnBuyButton pbn={savedPbn} variant="inline" />{" "}
-            </section>
-          )}
-        </aside>
+        {/* ---- Sidebar: numbered step cards (inline on desktop) ---- */}
+        {!isMobile && <aside>{sidebar}</aside>}
       </div>
+
+      {/* On mobile the same sidebar lives in a bottom sheet. */}
+      {isMobile && <PbnSettingsDrawer>{sidebar}</PbnSettingsDrawer>}
 
       {exp.cropModal && (
         <CropModal
