@@ -16,13 +16,8 @@ import { useRenderOptions } from "../model/useRenderOptions";
 import { usePaintMixing } from "../model/usePaintMixing";
 import { useProcessing } from "../model/useProcessing";
 import { useExport } from "../model/useExport";
-import {
-  btnPrimary,
-  btnSecondary,
-  card,
-  stepNum,
-  stepTitle,
-} from "./pbnStyles";
+import { card, stepNum, stepTitle } from "./pbnStyles";
+import ProcessSaveButtons from "./ProcessSaveButtons";
 import CropModal from "./CropModal";
 import Modal from "./Modal";
 import ImageCompareSlider from "./ImageCompareSlider";
@@ -212,10 +207,21 @@ export default function PaintByNumbers() {
   const showResult = !!compareImgs && !isProcessing;
 
   return (
-    <div className="container-site px-6 py-12 lg:px-10">
+    <div className="container-site px-6 py-4 lg:px-10">
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-[1fr_minmax(0,380px)]">
         {/* ---- Main: preview area ---- */}
         <main className="flex flex-col">
+          {/* Buttons for process and save */}
+          <ProcessSaveButtons
+            hasOutput={hasOutput}
+            saving={saving}
+            savedId={savedId}
+            saveError={saveError}
+            onSave={handleSave}
+            isProcessing={isProcessing}
+            onProcess={() => void process()}
+            onCancel={cancel}
+          />
           {!showResult && <ProgressBar overall={overall} />}
 
           <div className="relative">
@@ -263,6 +269,7 @@ export default function PaintByNumbers() {
             <>
               <Modal
                 open={showGuide}
+                title="Color mixing guide"
                 onClose={() => setShowGuide(false)}
                 label="Color mixing guide"
               >
@@ -286,70 +293,11 @@ export default function PaintByNumbers() {
               )}
             </>
           )}
+
+          {savedPbn && <PbnBuyButton pbn={savedPbn} variant="inline" />}
         </main>
         {/* ---- Sidebar: numbered step cards ---- */}
         <aside className="flex flex-col gap-6">
-          <div className="flex items-center w-full gap-2">
-            <button
-              className={`${btnPrimary} w-full`}
-              onClick={() => void process()}
-              disabled={isProcessing}
-            >
-              {isProcessing ? (
-                <>
-                  <span className="material-symbols-outlined animate-spin text-[18px]">
-                    progress_activity
-                  </span>
-                  Processing...
-                </>
-              ) : (
-                "Process image"
-              )}
-            </button>
-            {isProcessing && (
-              <button className={btnSecondary} onClick={cancel}>
-                Cancel
-              </button>
-            )}
-          </div>
-          {hasOutput && (
-            <button
-              type="button"
-              className={btnPrimary}
-              onClick={handleSave}
-              disabled={saving}
-            >
-              {saving ? (
-                <>
-                  <span className="material-symbols-outlined animate-spin text-[18px]">
-                    progress_activity
-                  </span>
-                  Guardando...
-                </>
-              ) : (
-                <>
-                  <span className="material-symbols-outlined text-[18px]">
-                    {savedId ? "check_circle" : "bookmark_add"}
-                  </span>
-                  {savedId ? "Guardado" : "Guardar en mi cuenta"}
-                </>
-              )}
-            </button>
-          )}
-          {savedId && (
-            <div className="mt-2 flex flex-wrap items-center gap-3">
-              <p className="font-body text-sm text-green-700">
-                Guardado en tu biblioteca.{" "}
-                <a href="/user/pbn" className="font-semibold underline">
-                  Ver mis Paint by Numbers
-                </a>
-              </p>
-              {savedPbn && <PbnBuyButton pbn={savedPbn} variant="inline" />}
-            </div>
-          )}
-          {saveError && (
-            <p className="mt-2 font-body text-sm text-red-600">{saveError}</p>
-          )}
           {/* Step 1: Upload your image */}
           <section className={card}>
             <h3 className={stepTitle}>

@@ -52,7 +52,7 @@ export default function RenderOptionsPane({ opts }: RenderOptionsPaneProps) {
       {/* Anchored to the bottom-left of the slider's relative container. */}
       <button
         type="button"
-        className="absolute bottom-3 left-3 z-10 flex size-9 items-center justify-center rounded-full bg-black/60 text-white shadow-lg transition-colors hover:bg-black/70"
+        className="absolute bottom-3 left-3 z-10 flex size-10 items-center justify-center rounded-full bg-primary text-white shadow-lg transition-colors hover:bg-black/70"
         aria-label="Render options"
         aria-haspopup="dialog"
         aria-expanded={open}
