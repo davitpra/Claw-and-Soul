@@ -26,6 +26,8 @@ import MixingGuide from "./MixingGuide";
 import ColorPalette from "./ColorPalette";
 import PbnSidebar from "./PbnSidebar";
 import PbnSettingsDrawer from "./PbnSettingsDrawer";
+import ExportControls from "./ExportControls";
+import { card, stepTitle } from "./pbnStyles";
 
 export default function PaintByNumbers() {
   const { log, clearLog } = useLog();
@@ -215,7 +217,7 @@ export default function PaintByNumbers() {
     <div className="container-site px-6 py-4 lg:px-10">
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-[1fr_minmax(0,380px)]">
         {/* ---- Main: preview area ---- */}
-        <main className="flex flex-col pb-28 lg:h-[calc(100dvh-5rem)] lg:pb-0">
+        <main className="flex flex-col">
           {/*Progress bar: only shown while processing, hidden once the result is available */}
           {!showResult && <ProgressBar overall={overall} />}
           {/* Fixed-height preview box: the canvas and the compare slider both
@@ -272,6 +274,18 @@ export default function PaintByNumbers() {
                 setSelectedColor((prev) => (prev === i ? null : i))
               }
             />
+          )}
+          {/* Step 3: Preview & download */}
+          {hasOutput && (
+            <section className={`${card} mt-4`}>
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <h3 className={stepTitle}>Download</h3>
+              </div>
+
+              <div className="mt-4">
+                <ExportControls exp={exp} hasOutput={hasOutput} />
+              </div>
+            </section>
           )}
         </main>
 

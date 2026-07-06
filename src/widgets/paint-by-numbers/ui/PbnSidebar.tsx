@@ -6,7 +6,6 @@ import type { InputOptions } from "../model/useInputOptions";
 import type { ExportControls as ExportControlsState } from "../model/useExport";
 import { card, stepNum, stepTitle } from "./pbnStyles";
 import InputOptionsPane from "./InputOptionsPane";
-import ExportControls from "./ExportControls";
 
 interface PbnSidebarProps {
   imageInput: ReturnType<typeof useImageInput>;
@@ -25,8 +24,6 @@ interface PbnSidebarProps {
 export default function PbnSidebar({
   imageInput,
   inputOptions,
-  exp,
-  hasOutput,
   savedPbn,
 }: PbnSidebarProps) {
   const {
@@ -107,22 +104,6 @@ export default function PbnSidebar({
         </h3>
         <InputOptionsPane opts={inputOptions} imageSrc={imageSrc} />
       </section>
-
-      {/* Step 3: Preview & download */}
-      {hasOutput && (
-        <section className={`${card}`}>
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <h3 className={stepTitle}>
-              <span className={stepNum}>3</span>
-              Preview &amp; download
-            </h3>
-          </div>
-
-          <div className="mt-4">
-            <ExportControls exp={exp} hasOutput={hasOutput} />
-          </div>
-        </section>
-      )}
 
       {savedPbn && (
         <section className={card}>

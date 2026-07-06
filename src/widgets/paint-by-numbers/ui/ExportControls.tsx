@@ -14,7 +14,7 @@ export default function ExportControls({
   return (
     <div className="flex flex-col gap-5">
       {/* PDF cropped to a standard paper size */}
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
         <label className="flex flex-col gap-1.5">
           <span className={fieldLabel}>Paper size</span>
           <select
@@ -47,14 +47,14 @@ export default function ExportControls({
             <option value="landscape">Landscape</option>
           </select>
         </label>
+        <button
+          className={btnPrimary}
+          onClick={() => void exp.handleDownloadPDFStandard()}
+        >
+          <span className="material-symbols-outlined text-[18px]">crop</span>
+          Select area &amp; download PDF
+        </button>
       </div>
-      <button
-        className={btnPrimary}
-        onClick={() => void exp.handleDownloadPDFStandard()}
-      >
-        <span className="material-symbols-outlined text-[18px]">crop</span>
-        Select area &amp; download PDF
-      </button>
     </div>
   );
 }
