@@ -457,7 +457,7 @@ export default function AdminPbnStudio({
               </div>
             ) : (
               <div
-                className="pointer-events-none absolute -left-[9999px] top-0"
+                className="pointer-events-none absolute -left-2499.75 top-0"
                 aria-hidden
               >
                 <MixingGuide
