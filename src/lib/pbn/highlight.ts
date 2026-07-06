@@ -1,4 +1,5 @@
 import { RGB } from "./common";
+import { FacetCreator } from "./facetCreator";
 import { FacetResult } from "./facetmanagement";
 import { buildFacetLabel, buildFacetPathData } from "./guiprocessmanager";
 
@@ -50,6 +51,49 @@ export function buildHighlightOverlayDataUrl(
     fillPath.setAttribute("d", data);
     fillPath.style.stroke = "none";
     fillPath.style.fill = `rgb(${c[0]},${c[1]},${c[2]})`;
+
+    // A facet only stores its outer contour, so a ring-shaped facet's fill
+    // would also cover the other-color facets enclosed inside it. Punch those
+    // neighbours out with a mask so the base image shows through the holes.
+    // Directly enclosed neighbours also cover any deeper nested facets, and
+    // outside neighbours only touch along the shared border (same geometry).
+    if (f.neighbourFacetsIsDirty) {
+      FacetCreator.buildFacetNeighbour(f, facetResult);
+    }
+    const holes: string[] = [];
+    for (const idx of f.neighbourFacets!) {
+      const n = facets[idx];
+      if (n == null || n.color === colorIndex) continue;
+      // Skip neighbours whose bbox contains ours: they surround us (or wrap
+      // around us), and punching their outer contour would erase our own fill.
+      if (
+        n.bbox.minX <= f.bbox.minX &&
+        n.bbox.minY <= f.bbox.minY &&
+        n.bbox.maxX >= f.bbox.maxX &&
+        n.bbox.maxY >= f.bbox.maxY
+      ) {
+        continue;
+      }
+      const holeData = buildFacetPathData(n);
+      if (holeData != null) holes.push(holeData);
+    }
+    if (holes.length > 0) {
+      const maskId = `hl-mask-${f.id}`;
+      const mask = document.createElementNS(XMLNS, "mask");
+      mask.setAttribute("id", maskId);
+      const keep = document.createElementNS(XMLNS, "path");
+      keep.setAttribute("d", data);
+      keep.setAttribute("fill", "#fff");
+      mask.appendChild(keep);
+      for (const holeData of holes) {
+        const hole = document.createElementNS(XMLNS, "path");
+        hole.setAttribute("d", holeData);
+        hole.setAttribute("fill", "#000");
+        mask.appendChild(hole);
+      }
+      svg.appendChild(mask);
+      fillPath.setAttribute("mask", `url(#${maskId})`);
+    }
     svg.appendChild(fillPath);
 
     // The solid fill would cover the base image's border, so redraw it here.
