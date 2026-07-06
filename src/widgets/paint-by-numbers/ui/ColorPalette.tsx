@@ -41,7 +41,7 @@ export default function ColorPalette({
             <button
               key={i}
               type="button"
-              className={`flex size-9 items-center justify-center rounded-md border text-xs font-bold text-white mix-blend-difference transition-all ${
+              className={`flex size-9 items-center justify-center rounded-md border text-xs font-bold transition-all ${
                 isSelected
                   ? "border-primary ring-2 ring-primary ring-offset-1 scale-105"
                   : "border-black/10"
@@ -53,7 +53,7 @@ export default function ColorPalette({
               aria-pressed={isSelected}
               onClick={() => onSelectColor(i)}
             >
-              {i + 1}
+              <span className="text-white mix-blend-difference">{i + 1}</span>
             </button>
           );
         })}
