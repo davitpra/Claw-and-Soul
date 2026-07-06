@@ -212,7 +212,96 @@ export default function PaintByNumbers() {
 
   return (
     <div className="container-site px-6 py-12 lg:px-10">
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,380px)_1fr]">
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-[1fr_minmax(0,380px)]">
+        {/* ---- Main: preview area ---- */}
+        <main className="flex flex-col">
+          {showResult ? (
+            <RenderOptionsPane opts={renderOptions} />
+          ) : (
+            <ProgressBar overall={overall} />
+          )}
+
+          <div className="relative">
+            {/* keep the canvas mounted (the pipeline writes to it) but hide it
+                once the comparison slider is available */}
+            <div
+              className="overflow-hidden rounded-xl border-4 border-white shadow-xl"
+              hidden={showResult}
+            >
+              <canvas ref={inputCanvasRef} className="block h-auto w-full" />
+              {isProcessing && (
+                <div className="absolute inset-0 animate-pulse bg-white/40" />
+              )}
+            </div>
+            {showResult && compareImgs && (
+              <ImageCompareSlider
+                originalSrc={compareImgs.original}
+                processedSrc={compareImgs.processed}
+                highlightSrc={highlightSrc}
+                leftLabel="Original"
+                rightLabel="Result"
+              />
+            )}
+          </div>
+          {showResult && (
+            <ColorPalette
+              palette={palette}
+              recipes={recipes}
+              showGuide={showGuide}
+              onToggleGuide={() => setShowGuide((v) => !v)}
+              mixingEnabled={ENABLE_MIXING_GUIDE}
+              selectedColor={selectedColor}
+              onSelectColor={(i) =>
+                setSelectedColor((prev) => (prev === i ? null : i))
+              }
+            />
+          )}
+
+          {/* The mixing guide opens in a modal when toggled. When closed it
+              stays mounted off-screen so PNG/PDF export can still capture it. */}
+          {ENABLE_MIXING_GUIDE &&
+            (showGuide ? (
+              <div
+                className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
+                onClick={() => setShowGuide(false)}
+              >
+                <div
+                  className="flex max-h-[90vh] w-full max-w-3xl flex-col overflow-hidden rounded-xl bg-white shadow-xl"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <div className="flex items-center justify-end border-b border-[#E0DED9] px-4 py-3">
+                    <button
+                      className="flex size-8 items-center justify-center rounded-lg text-text-muted transition-colors hover:bg-gray-100 hover:text-slate-dark"
+                      onClick={() => setShowGuide(false)}
+                      aria-label="Close"
+                    >
+                      <span className="material-symbols-outlined text-[20px]">
+                        close
+                      </span>
+                    </button>
+                  </div>
+                  <div className="overflow-y-auto">
+                    <MixingGuide
+                      recipes={recipes}
+                      palette={palette}
+                      guideRef={guideRef}
+                    />
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <div
+                className="pointer-events-none absolute -left-2499.75 top-0"
+                aria-hidden
+              >
+                <MixingGuide
+                  recipes={recipes}
+                  palette={palette}
+                  guideRef={guideRef}
+                />
+              </div>
+            ))}
+        </main>
         {/* ---- Sidebar: numbered step cards ---- */}
         <aside className="flex flex-col gap-6">
           <div className="flex items-center w-full gap-2">
@@ -356,96 +445,6 @@ export default function PaintByNumbers() {
             </div>
           </section>
         </aside>
-
-        {/* ---- Main: preview area ---- */}
-        <main className="flex flex-col">
-          {showResult ? (
-            <RenderOptionsPane opts={renderOptions} />
-          ) : (
-            <ProgressBar overall={overall} />
-          )}
-
-          <div className="relative">
-            {/* keep the canvas mounted (the pipeline writes to it) but hide it
-                once the comparison slider is available */}
-            <div
-              className="overflow-hidden rounded-xl border-4 border-white shadow-xl"
-              hidden={showResult}
-            >
-              <canvas ref={inputCanvasRef} className="block h-auto w-full" />
-              {isProcessing && (
-                <div className="absolute inset-0 animate-pulse bg-white/40" />
-              )}
-            </div>
-            {showResult && compareImgs && (
-              <ImageCompareSlider
-                originalSrc={compareImgs.original}
-                processedSrc={compareImgs.processed}
-                highlightSrc={highlightSrc}
-                leftLabel="Original"
-                rightLabel="Result"
-              />
-            )}
-          </div>
-          {showResult && (
-            <ColorPalette
-              palette={palette}
-              recipes={recipes}
-              showGuide={showGuide}
-              onToggleGuide={() => setShowGuide((v) => !v)}
-              mixingEnabled={ENABLE_MIXING_GUIDE}
-              selectedColor={selectedColor}
-              onSelectColor={(i) =>
-                setSelectedColor((prev) => (prev === i ? null : i))
-              }
-            />
-          )}
-
-          {/* The mixing guide opens in a modal when toggled. When closed it
-              stays mounted off-screen so PNG/PDF export can still capture it. */}
-          {ENABLE_MIXING_GUIDE &&
-            (showGuide ? (
-              <div
-                className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
-                onClick={() => setShowGuide(false)}
-              >
-                <div
-                  className="flex max-h-[90vh] w-full max-w-3xl flex-col overflow-hidden rounded-xl bg-white shadow-xl"
-                  onClick={(e) => e.stopPropagation()}
-                >
-                  <div className="flex items-center justify-end border-b border-[#E0DED9] px-4 py-3">
-                    <button
-                      className="flex size-8 items-center justify-center rounded-lg text-text-muted transition-colors hover:bg-gray-100 hover:text-slate-dark"
-                      onClick={() => setShowGuide(false)}
-                      aria-label="Close"
-                    >
-                      <span className="material-symbols-outlined text-[20px]">
-                        close
-                      </span>
-                    </button>
-                  </div>
-                  <div className="overflow-y-auto">
-                    <MixingGuide
-                      recipes={recipes}
-                      palette={palette}
-                      guideRef={guideRef}
-                    />
-                  </div>
-                </div>
-              </div>
-            ) : (
-              <div
-                className="pointer-events-none absolute -left-2499.75 top-0"
-                aria-hidden
-              >
-                <MixingGuide
-                  recipes={recipes}
-                  palette={palette}
-                  guideRef={guideRef}
-                />
-              </div>
-            ))}
-        </main>
       </div>
 
       {exp.cropModal && (
