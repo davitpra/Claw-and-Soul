@@ -19,6 +19,11 @@ export class Settings {
     // them collapse to the exact color while the rest are clustered normally.
     public kMeansFixedColors: RGB[] = [];
 
+    // Colors the user explicitly chose (eyedropper / suggested swatches). Like
+    // kMeansFixedColors these are added as pinned clusters, but unconditionally:
+    // no presence check, because the user asked for them.
+    public kMeansPinnedColors: RGB[] = [];
+
     public colorAliases: { [key: string]: RGB } = {};
 
     public narrowPixelStripCleanupRuns: number = 3; // 3 seems like a good compromise between removing enough narrow pixel strips to convergence. This fixes e.g. https://i.imgur.com/dz4ANz1.png

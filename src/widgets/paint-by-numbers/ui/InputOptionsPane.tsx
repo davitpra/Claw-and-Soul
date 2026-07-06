@@ -3,6 +3,7 @@ import { ClusteringColorSpace } from "@/lib/pbn/settings";
 import { PRESETS } from "../model/constants";
 import { InputOptions } from "../model/useInputOptions";
 import { HelpTip, Segmented, Toggle } from "./controls";
+import PalettePicker from "./PalettePicker";
 import { fieldInput, fieldLabel } from "./pbnStyles";
 
 const COLOR_SPACES: { value: ClusteringColorSpace; label: string }[] = [
@@ -14,8 +15,16 @@ const COLOR_SPACES: { value: ClusteringColorSpace; label: string }[] = [
 const groupTitle =
   "text-xs font-semibold uppercase tracking-wide text-text-muted";
 
-export default function InputOptionsPane({ opts }: { opts: InputOptions }) {
+export default function InputOptionsPane({
+  opts,
+  imageSrc,
+}: {
+  opts: InputOptions;
+  imageSrc: string | null;
+}) {
   const [advancedOpen, setAdvancedOpen] = useState(false);
+  const colorCountLocked =
+    opts.pickedColors.length > 0 && opts.paletteMode === "exact";
 
   return (
     <div className="flex flex-col gap-6">
@@ -42,6 +51,9 @@ export default function InputOptionsPane({ opts }: { opts: InputOptions }) {
           })}
         </div>
       </div>
+
+      {/* Palette (suggested colors + eyedropper) */}
+      <PalettePicker opts={opts} imageSrc={imageSrc} />
 
       {/* Custom */}
       <div className="flex flex-col gap-4">
@@ -88,16 +100,27 @@ export default function InputOptionsPane({ opts }: { opts: InputOptions }) {
               onChange={(e) => opts.setResizeHeight(parseInt(e.target.value) || 0)}
             />
           </label>
-          <label className="flex flex-col gap-1.5">
+          <label
+            className="flex flex-col gap-1.5"
+            style={{ opacity: colorCountLocked ? 0.5 : 1 }}
+            aria-disabled={colorCountLocked}
+          >
             <span className={fieldLabel}>
               Number of colors
-              <HelpTip text="How many distinct colors the final palette will contain." />
+              <HelpTip
+                text={
+                  colorCountLocked
+                    ? "Locked: in “Only my colors” mode the palette size equals the number of colors you picked."
+                    : "How many distinct colors the final palette will contain."
+                }
+              />
             </span>
             <input
               type="number"
               className={fieldInput}
               min={1}
-              value={opts.nrOfClusters}
+              disabled={colorCountLocked}
+              value={colorCountLocked ? opts.pickedColors.length : opts.nrOfClusters}
               onChange={(e) => opts.setNrOfClusters(parseInt(e.target.value) || 1)}
             />
           </label>

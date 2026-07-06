@@ -1,7 +1,8 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { RGB } from "@/lib/pbn/common";
+import { buildHighlightOverlayDataUrl } from "@/lib/pbn/highlight";
 import { getPaperAspect } from "@/lib/pbn/svgExport";
 import { PAPER_LABELS, ENABLE_MIXING_GUIDE } from "./model/constants";
 import type { PbnConfig } from "@/entities/admin/api";
@@ -81,6 +82,8 @@ export default function AdminPbnStudio({
   const { recipes, setRecipes, computeRecipes } = usePaintMixing();
   const guideRef = useRef<HTMLDivElement>(null);
   const [showGuide, setShowGuide] = useState(false);
+  // Index of the palette color whose sections are highlighted on the result.
+  const [selectedColor, setSelectedColor] = useState<number | null>(null);
 
   // Close the mixing-guide modal with Escape.
   useEffect(() => {
@@ -92,7 +95,11 @@ export default function AdminPbnStudio({
     return () => window.removeEventListener("keydown", onKey);
   }, [showGuide]);
 
-  const onProcessStart = useCallback(() => setRecipes(null), [setRecipes]);
+  const onProcessStart = useCallback(() => {
+    setRecipes(null);
+    // drop the highlight tied to the palette that's about to be replaced
+    setSelectedColor(null);
+  }, [setRecipes]);
   const onComplete = useCallback(
     (colors: RGB[]) => {
       // La guía de mezcla usa spectral.js (MIT). Sólo se calcula cuando el
@@ -137,6 +144,37 @@ export default function AdminPbnStudio({
     recipes,
     palette,
   });
+
+  // Overlay que resalta las secciones del color seleccionado sobre el resultado.
+  // Se reconstruye al cambiar el color, la paleta (reproceso) o las opciones de
+  // borde/etiqueta para que el overlay las siga. Si el PBN se abrió desde el SVG
+  // guardado no hay facetResult, así que devuelve undefined (no resalta hasta
+  // reprocesar).
+  const highlightSrc = useMemo(() => {
+    const result = processResultRef.current;
+    if (selectedColor === null || !result) return undefined;
+    return buildHighlightOverlayDataUrl(
+      result.facetResult,
+      selectedColor,
+      result.colorsByIndex,
+      {
+        showBorders: renderOptions.showBorders,
+        showLabels: renderOptions.showLabels,
+        fontSize: renderOptions.labelFontSize,
+        fontColor: renderOptions.labelFontColor,
+        strokeWidth: 1 / renderOptions.sizeMultiplier,
+      },
+    );
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [
+    selectedColor,
+    palette,
+    renderOptions.showBorders,
+    renderOptions.showLabels,
+    renderOptions.labelFontSize,
+    renderOptions.labelFontColor,
+    renderOptions.sizeMultiplier,
+  ]);
 
   // Al reabrir un PBN guardado: **lee el SVG guardado** (no reprocesa) una vez la
   // imagen fuente ya está dibujada (imageSrc deja de ser null, así el compare-
@@ -188,6 +226,8 @@ export default function AdminPbnStudio({
           randomSeed: inputOptions.randomSeed,
           colorSpace: inputOptions.colorSpace,
           colorRestrictions: inputOptions.colorRestrictions,
+          pickedColors: inputOptions.pickedColors,
+          paletteMode: inputOptions.paletteMode,
           narrowPixelCleanupRuns: inputOptions.narrowPixelCleanupRuns,
           removeFacetsSmallerThan: inputOptions.removeFacetsSmallerThan,
           maximumNumberOfFacets: inputOptions.maximumNumberOfFacets,
@@ -310,7 +350,7 @@ export default function AdminPbnStudio({
               <span className={stepNum}>2</span>
               Ajustes de imagen
             </h3>
-            <InputOptionsPane opts={inputOptions} />
+            <InputOptionsPane opts={inputOptions} imageSrc={imageSrc} />
           </section>
         </aside>
 
@@ -361,6 +401,7 @@ export default function AdminPbnStudio({
               <ImageCompareSlider
                 originalSrc={compareImgs.original}
                 processedSrc={compareImgs.processed}
+                highlightSrc={highlightSrc}
                 leftLabel="Original"
                 rightLabel="Resultado"
               />
@@ -375,6 +416,10 @@ export default function AdminPbnStudio({
               showGuide={showGuide}
               onToggleGuide={() => setShowGuide((v) => !v)}
               mixingEnabled={ENABLE_MIXING_GUIDE}
+              selectedColor={selectedColor}
+              onSelectColor={(i) =>
+                setSelectedColor((prev) => (prev === i ? null : i))
+              }
             />
           )}
 

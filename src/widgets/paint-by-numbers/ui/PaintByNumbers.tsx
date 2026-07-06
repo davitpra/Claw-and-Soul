@@ -1,8 +1,9 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { RGB } from "@/lib/pbn/common";
+import { buildHighlightOverlayDataUrl } from "@/lib/pbn/highlight";
 import { getPaperAspect } from "@/lib/pbn/svgExport";
 import { useAuth } from "@/context/AuthContext";
 import { PbnBuyButton } from "@/features/pbn-purchase";
@@ -52,6 +53,8 @@ export default function PaintByNumbers() {
   const { recipes, setRecipes, computeRecipes } = usePaintMixing();
   const guideRef = useRef<HTMLDivElement>(null);
   const [showGuide, setShowGuide] = useState(false);
+  // Index of the palette color whose sections are highlighted on the result.
+  const [selectedColor, setSelectedColor] = useState<number | null>(null);
 
   // Close the mixing-guide modal with Escape.
   useEffect(() => {
@@ -63,7 +66,11 @@ export default function PaintByNumbers() {
     return () => window.removeEventListener("keydown", onKey);
   }, [showGuide]);
 
-  const onProcessStart = useCallback(() => setRecipes(null), [setRecipes]);
+  const onProcessStart = useCallback(() => {
+    setRecipes(null);
+    // drop the highlight tied to the palette that's about to be replaced
+    setSelectedColor(null);
+  }, [setRecipes]);
   const onComplete = useCallback(
     (colors: RGB[]) => {
       // La guía de mezcla usa spectral.js (MIT). Sólo se calcula cuando el
@@ -107,6 +114,34 @@ export default function PaintByNumbers() {
     recipes,
     palette,
   });
+
+  // Overlay that spotlights the selected color's sections on the result. Rebuilt
+  // when the color, palette (reprocessed) or the border/label render options
+  // change so the overlay's border and numbers track the base image.
+  const highlightSrc = useMemo(() => {
+    const result = processResultRef.current;
+    if (selectedColor === null || !result) return undefined;
+    return buildHighlightOverlayDataUrl(
+      result.facetResult,
+      selectedColor,
+      result.colorsByIndex,
+      {
+        showBorders: renderOptions.showBorders,
+        showLabels: renderOptions.showLabels,
+        fontSize: renderOptions.labelFontSize,
+        fontColor: renderOptions.labelFontColor,
+        strokeWidth: 1 / 3, // match the base image's 1px stroke at 3× multiplier
+      },
+    );
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [
+    selectedColor,
+    palette,
+    renderOptions.showBorders,
+    renderOptions.showLabels,
+    renderOptions.labelFontSize,
+    renderOptions.labelFontColor,
+  ]);
 
   // ---- Save to account ----
   const router = useRouter();
@@ -304,7 +339,7 @@ export default function PaintByNumbers() {
               <span className={stepNum}>2</span>
               Image settings
             </h3>
-            <InputOptionsPane opts={inputOptions} />
+            <InputOptionsPane opts={inputOptions} imageSrc={imageSrc} />
           </section>
 
           {/* Step 3: Preview & download */}
@@ -346,6 +381,7 @@ export default function PaintByNumbers() {
               <ImageCompareSlider
                 originalSrc={compareImgs.original}
                 processedSrc={compareImgs.processed}
+                highlightSrc={highlightSrc}
                 leftLabel="Original"
                 rightLabel="Result"
               />
@@ -358,6 +394,10 @@ export default function PaintByNumbers() {
               showGuide={showGuide}
               onToggleGuide={() => setShowGuide((v) => !v)}
               mixingEnabled={ENABLE_MIXING_GUIDE}
+              selectedColor={selectedColor}
+              onSelectColor={(i) =>
+                setSelectedColor((prev) => (prev === i ? null : i))
+              }
             />
           )}
 

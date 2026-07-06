@@ -8,6 +8,10 @@ interface ColorPaletteProps {
   onToggleGuide: () => void;
   /** When false the "See mixing guide" toggle is hidden (feature-flagged). */
   mixingEnabled: boolean;
+  /** Index of the color whose sections are highlighted, or null. */
+  selectedColor: number | null;
+  /** Click a swatch to highlight/unhighlight its sections in the preview. */
+  onSelectColor: (index: number) => void;
 }
 
 export default function ColorPalette({
@@ -16,7 +20,10 @@ export default function ColorPalette({
   showGuide,
   onToggleGuide,
   mixingEnabled,
+  selectedColor,
+  onSelectColor,
 }: ColorPaletteProps) {
+  const hasSelection = selectedColor !== null;
   return (
     <section className="mt-6 rounded-xl border border-[#E0DED9] bg-white p-6 shadow-sm">
       <div className="mb-2 flex items-center justify-between">
@@ -28,19 +35,32 @@ export default function ColorPalette({
         </span>
       </div>
       <div className="flex flex-wrap gap-1.5">
-        {palette.map((c, i) => (
-          <div
-            key={i}
-            className="flex size-9 items-center justify-center rounded-md border border-black/10 text-xs font-bold text-white mix-blend-difference"
-            style={{
-              backgroundColor: `rgb(${c[0]},${c[1]},${c[2]})`,
-            }}
-            title={`#${i} · rgb(${c[0]}, ${c[1]}, ${c[2]})`}
-          >
-            {i + 1}
-          </div>
-        ))}
+        {palette.map((c, i) => {
+          const isSelected = selectedColor === i;
+          return (
+            <button
+              key={i}
+              type="button"
+              className={`flex size-9 items-center justify-center rounded-md border text-xs font-bold text-white mix-blend-difference transition-all ${
+                isSelected
+                  ? "border-primary ring-2 ring-primary ring-offset-1 scale-105"
+                  : "border-black/10"
+              } ${hasSelection && !isSelected ? "opacity-45" : ""}`}
+              style={{
+                backgroundColor: `rgb(${c[0]},${c[1]},${c[2]})`,
+              }}
+              title={`#${i} · rgb(${c[0]}, ${c[1]}, ${c[2]})`}
+              aria-pressed={isSelected}
+              onClick={() => onSelectColor(i)}
+            >
+              {i + 1}
+            </button>
+          );
+        })}
       </div>
+      <p className="mt-2 font-body text-xs text-text-muted">
+        Click a color to highlight its sections in the preview.
+      </p>
       {mixingEnabled && recipes && palette.length > 0 && (
         <div className="mt-5">
           <button

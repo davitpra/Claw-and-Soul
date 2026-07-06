@@ -1,6 +1,13 @@
 import { useCallback, useState } from "react";
+import { RGB } from "@/lib/pbn/common";
 import { ClusteringColorSpace, Settings } from "@/lib/pbn/settings";
 import { PresetValues } from "./constants";
+
+/** How the user's picked colors drive the palette. */
+export type PaletteMode = "exact" | "complement";
+
+const sameColor = (a: RGB, b: RGB) =>
+  a[0] === b[0] && a[1] === b[1] && a[2] === b[2];
 
 /**
  * Owns every input-side option (resize, clustering, facet pruning, …) together
@@ -17,6 +24,8 @@ export interface InputOptionsInit {
   randomSeed?: number;
   colorSpace?: ClusteringColorSpace;
   colorRestrictions?: string;
+  pickedColors?: RGB[];
+  paletteMode?: PaletteMode;
   narrowPixelCleanupRuns?: number;
   removeFacetsSmallerThan?: number;
   maximumNumberOfFacets?: number;
@@ -40,6 +49,15 @@ export function useInputOptions(initial?: InputOptionsInit) {
   );
   const [colorRestrictions, setColorRestrictions] = useState(
     initial?.colorRestrictions ?? "//0,0,0\n//255,255,255\n",
+  );
+  // Colors the user picked from the photo (eyedropper / suggested swatches).
+  const [pickedColors, setPickedColors] = useState<RGB[]>(
+    initial?.pickedColors ?? [],
+  );
+  // How those colors drive the palette: "exact" = only these, "complement" =
+  // these guaranteed plus automatic colors to fill up to nrOfClusters.
+  const [paletteMode, setPaletteMode] = useState<PaletteMode>(
+    initial?.paletteMode ?? "complement",
   );
   const [narrowPixelCleanupRuns, setNarrowPixelCleanupRuns] = useState(
     initial?.narrowPixelCleanupRuns ?? 3,
@@ -78,12 +96,33 @@ export function useInputOptions(initial?: InputOptionsInit) {
     narrowPixelCleanupRuns === p.narrowPixelCleanupRuns &&
     halveBorderSegments === p.halveBorderSegments;
 
+  // toggle a color in/out of the picked list (used by suggested swatches)
+  const togglePickedColor = useCallback((rgb: RGB) => {
+    setPickedColors((prev) =>
+      prev.some((c) => sameColor(c, rgb))
+        ? prev.filter((c) => !sameColor(c, rgb))
+        : [...prev, rgb],
+    );
+  }, []);
+
+  // add a color if not already present (used by the eyedropper)
+  const addPickedColor = useCallback((rgb: RGB) => {
+    setPickedColors((prev) =>
+      prev.some((c) => sameColor(c, rgb)) ? prev : [...prev, rgb],
+    );
+  }, []);
+
+  const removePickedColor = useCallback((rgb: RGB) => {
+    setPickedColors((prev) => prev.filter((c) => !sameColor(c, rgb)));
+  }, []);
+
+  const clearPickedColors = useCallback(() => setPickedColors([]), []);
+
   const buildSettings = useCallback((): Settings => {
     const settings = new Settings();
     settings.kMeansClusteringColorSpace = colorSpace;
     settings.removeFacetsFromLargeToSmall = largeToSmall;
     settings.randomSeed = randomSeed;
-    settings.kMeansNrOfClusters = nrOfClusters;
     settings.kMeansMinDeltaDifference = clusterPrecision;
     settings.removeFacetsSmallerThanNrOfPoints = removeFacetsSmallerThan;
     settings.maximumNumberOfFacets = maximumNumberOfFacets;
@@ -93,12 +132,26 @@ export function useInputOptions(initial?: InputOptionsInit) {
     settings.resizeImageWidth = resizeWidth;
     settings.resizeImageHeight = resizeHeight;
 
-    // black and white are candidates; the pipeline only adds them to the palette
-    // when the image actually contains them (see ColorReducer.isColorPresent)
-    settings.kMeansFixedColors = [
-      [0, 0, 0],
-      [255, 255, 255],
-    ];
+    // user-chosen colors are pinned into the palette unconditionally
+    settings.kMeansPinnedColors = pickedColors;
+
+    if (pickedColors.length > 0 && paletteMode === "exact") {
+      // exact mode: the palette IS the chosen colors — pin them all and size the
+      // clustering to match so every centroid is fixed. Skip the automatic
+      // black/white candidates so the user's palette is the only source.
+      settings.kMeansNrOfClusters = pickedColors.length;
+      settings.kMeansFixedColors = [];
+    } else {
+      // complement (or no picks): keep automatic black/white candidates and make
+      // sure there's room for the pinned colors on top of the requested count.
+      // black and white are candidates; the pipeline only adds them to the
+      // palette when the image actually contains them (ColorReducer.isColorPresent)
+      settings.kMeansNrOfClusters = Math.max(nrOfClusters, pickedColors.length);
+      settings.kMeansFixedColors = [
+        [0, 0, 0],
+        [255, 255, 255],
+      ];
+    }
 
     settings.kMeansColorRestrictions = [];
     for (const line of colorRestrictions.split("\n")) {
@@ -135,6 +188,8 @@ export function useInputOptions(initial?: InputOptionsInit) {
     resizeWidth,
     resizeHeight,
     colorRestrictions,
+    pickedColors,
+    paletteMode,
   ]);
 
   return {
@@ -147,6 +202,8 @@ export function useInputOptions(initial?: InputOptionsInit) {
     randomSeed,
     colorSpace,
     colorRestrictions,
+    pickedColors,
+    paletteMode,
     narrowPixelCleanupRuns,
     removeFacetsSmallerThan,
     maximumNumberOfFacets,
@@ -161,11 +218,17 @@ export function useInputOptions(initial?: InputOptionsInit) {
     setRandomSeed,
     setColorSpace,
     setColorRestrictions,
+    setPaletteMode,
     setNarrowPixelCleanupRuns,
     setRemoveFacetsSmallerThan,
     setMaximumNumberOfFacets,
     setLargeToSmall,
     setHalveBorderSegments,
+    // picked-color helpers
+    togglePickedColor,
+    addPickedColor,
+    removePickedColor,
+    clearPickedColors,
     // helpers
     applyPreset,
     isPresetActive,

@@ -7,6 +7,8 @@ interface ImageCompareSliderProps {
   originalSrc: string;
   /** Shown on the right side and defines the rendered size. */
   processedSrc: string;
+  /** Optional overlay that highlights one color's sections (Result side only). */
+  highlightSrc?: string;
   leftLabel?: string;
   rightLabel?: string;
 }
@@ -14,6 +16,7 @@ interface ImageCompareSliderProps {
 export default function ImageCompareSlider({
   originalSrc,
   processedSrc,
+  highlightSrc,
   leftLabel,
   rightLabel,
 }: ImageCompareSliderProps) {
@@ -68,6 +71,18 @@ export default function ImageCompareSlider({
         alt=""
         draggable={false}
       />
+      {/* highlight overlay — sits between the processed base and the (clipped)
+          original, so the original stacked on top hides it on the left side and
+          the highlight only shows on the Result (right) side */}
+      {highlightSrc && (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img
+          className="pointer-events-none absolute inset-0 h-full w-full object-fill"
+          src={highlightSrc}
+          alt=""
+          draggable={false}
+        />
+      )}
       {/* overlay = original, clipped to the left of the divider */}
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img
