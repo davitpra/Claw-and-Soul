@@ -57,7 +57,7 @@ export default function ImageCompareSlider({
   return (
     <div
       ref={wrapperRef}
-      className="relative w-full cursor-ew-resize touch-none select-none overflow-hidden rounded-xl border-4 border-white shadow-xl"
+      className="relative mx-auto h-full w-fit max-w-full cursor-ew-resize touch-none select-none overflow-hidden rounded-xl border-4 border-white shadow-xl"
       onPointerDown={onPointerDown}
       onPointerMove={onPointerMove}
       onPointerUp={onPointerUp}
@@ -66,7 +66,7 @@ export default function ImageCompareSlider({
       {/* base = processed, defines the rendered size */}
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img
-        className="block h-auto w-full"
+        className="block h-full max-w-full w-auto object-contain"
         src={processedSrc}
         alt=""
         draggable={false}

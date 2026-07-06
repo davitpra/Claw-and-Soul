@@ -4,8 +4,7 @@
  * #448da6 / cream, rounded-xl, Epilogue/Lato) entre todos los sub-componentes.
  */
 
-export const card =
-  "rounded-xl border border-[#E0DED9] bg-white p-6 shadow-sm";
+export const card = "rounded-xl border border-[#E0DED9] bg-white p-6 shadow-sm";
 
 export const btnPrimary =
   "inline-flex items-center justify-center gap-2 rounded-xl bg-primary px-6 py-3 text-sm font-bold text-white shadow-md shadow-primary/20 transition-all hover:bg-primary-dark hover:scale-105 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:scale-100";

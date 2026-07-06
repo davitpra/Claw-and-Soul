@@ -30,14 +30,14 @@ export default function InputOptionsPane({
       {/* Presets */}
       <div className="flex flex-col gap-2 mt-4">
         <span className={groupTitle}>Presets</span>
-        <div className="flex flex-wrap gap-2">
+        <div className="flex gap-2">
           {PRESETS.map((p) => {
             const active = opts.isPresetActive(p.apply);
             return (
               <button
                 key={p.key}
                 type="button"
-                className={`rounded-xl px-4 py-2 text-sm font-semibold transition-all ${
+                className={`rounded-xl px-4 py-2 text-sm font-semibold transition-all w-full ${
                   active
                     ? "bg-primary text-white shadow-md shadow-primary/20"
                     : "border border-[#E0DED9] bg-white text-slate-dark hover:bg-gray-50"

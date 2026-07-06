@@ -29,7 +29,7 @@ export default function ProcessSaveButtons({
 }: ProcessSaveButtonsProps) {
   return (
     <>
-      <div className="flex gap-4 mb-4">
+      <div className="flex gap-4 mt-4">
         <div className="flex items-center w-full gap-2">
           <button
             className={`${btnPrimary} w-full`}

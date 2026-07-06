@@ -122,7 +122,7 @@ export default function PalettePicker({
 
       {suggested.length > 0 && (
         <div className="flex flex-col gap-1.5">
-          <span className={fieldLabel}>Suggested from photo</span>
+          <span className={fieldLabel}>Choose your palette</span>
           <div className="flex flex-wrap gap-1.5">
             {suggested.map((c) => (
               <Swatch

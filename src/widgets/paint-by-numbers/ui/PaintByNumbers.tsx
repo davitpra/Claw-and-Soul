@@ -210,28 +210,22 @@ export default function PaintByNumbers() {
     <div className="container-site px-6 py-4 lg:px-10">
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-[1fr_minmax(0,380px)]">
         {/* ---- Main: preview area ---- */}
-        <main className="flex flex-col">
-          {/* Buttons for process and save */}
-          <ProcessSaveButtons
-            hasOutput={hasOutput}
-            saving={saving}
-            savedId={savedId}
-            saveError={saveError}
-            onSave={handleSave}
-            isProcessing={isProcessing}
-            onProcess={() => void process()}
-            onCancel={cancel}
-          />
+        <main className="flex flex-col lg:h-[calc(100dvh-5rem)]">
+          {/*Progress bar: only shown while processing, hidden once the result is available */}
           {!showResult && <ProgressBar overall={overall} />}
-
-          <div className="relative">
+          {/* Fixed-height preview box: the canvas and the compare slider both
+              fill it with h-full, so they render at the exact same size. */}
+          <div className="relative flex flex-none items-stretch justify-center lg:h-[calc(100dvh-5rem)]">
             {/* keep the canvas mounted (the pipeline writes to it) but hide it
                 once the comparison slider is available */}
             <div
-              className="overflow-hidden rounded-xl border-4 border-white shadow-xl"
+              className="mx-auto flex h-full w-fit justify-center overflow-hidden rounded-xl border-4 border-white shadow-xl"
               hidden={showResult}
             >
-              <canvas ref={inputCanvasRef} className="block h-auto w-full" />
+              <canvas
+                ref={inputCanvasRef}
+                className="block h-full w-auto max-w-full object-contain"
+              />
               {isProcessing && (
                 <div className="absolute inset-0 animate-pulse bg-white/40" />
               )}
@@ -249,6 +243,18 @@ export default function PaintByNumbers() {
               </>
             )}
           </div>
+          {/* Buttons for process and save */}
+          <ProcessSaveButtons
+            hasOutput={hasOutput}
+            saving={saving}
+            savedId={savedId}
+            saveError={saveError}
+            onSave={handleSave}
+            isProcessing={isProcessing}
+            onProcess={() => void process()}
+            onCancel={cancel}
+          />
+
           {showResult && (
             <ColorPalette
               palette={palette}
@@ -262,40 +268,39 @@ export default function PaintByNumbers() {
               }
             />
           )}
+        </main>
 
-          {/* The mixing guide opens in a modal when toggled. When closed it
+        {/* The mixing guide opens in a modal when toggled. When closed it
               stays mounted off-screen so PNG/PDF export can still capture it. */}
-          {ENABLE_MIXING_GUIDE && (
-            <>
-              <Modal
-                open={showGuide}
-                title="Color mixing guide"
-                onClose={() => setShowGuide(false)}
-                label="Color mixing guide"
+        {ENABLE_MIXING_GUIDE && (
+          <>
+            <Modal
+              open={showGuide}
+              title="Color mixing guide"
+              onClose={() => setShowGuide(false)}
+              label="Color mixing guide"
+            >
+              <MixingGuide
+                recipes={recipes}
+                palette={palette}
+                guideRef={guideRef}
+              />
+            </Modal>
+            {!showGuide && (
+              <div
+                className="pointer-events-none absolute -left-2499.75 top-0"
+                aria-hidden
               >
                 <MixingGuide
                   recipes={recipes}
                   palette={palette}
                   guideRef={guideRef}
                 />
-              </Modal>
-              {!showGuide && (
-                <div
-                  className="pointer-events-none absolute -left-2499.75 top-0"
-                  aria-hidden
-                >
-                  <MixingGuide
-                    recipes={recipes}
-                    palette={palette}
-                    guideRef={guideRef}
-                  />
-                </div>
-              )}
-            </>
-          )}
+              </div>
+            )}
+          </>
+        )}
 
-          {savedPbn && <PbnBuyButton pbn={savedPbn} variant="inline" />}
-        </main>
         {/* ---- Sidebar: numbered step cards ---- */}
         <aside className="flex flex-col gap-6">
           {/* Step 1: Upload your image */}
@@ -365,18 +370,26 @@ export default function PaintByNumbers() {
           </section>
 
           {/* Step 3: Preview & download */}
-          <section className={`${card}`}>
-            <div className="flex flex-wrap items-center justify-between gap-3">
-              <h3 className={stepTitle}>
-                <span className={stepNum}>3</span>
-                Preview &amp; download
-              </h3>
-            </div>
+          {hasOutput && (
+            <section className={`${card}`}>
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <h3 className={stepTitle}>
+                  <span className={stepNum}>3</span>
+                  Preview &amp; download
+                </h3>
+              </div>
 
-            <div className="mt-4">
-              <ExportControls exp={exp} hasOutput={hasOutput} />
-            </div>
-          </section>
+              <div className="mt-4">
+                <ExportControls exp={exp} hasOutput={hasOutput} />
+              </div>
+            </section>
+          )}
+
+          {savedPbn && (
+            <section className={card}>
+              <PbnBuyButton pbn={savedPbn} variant="inline" />{" "}
+            </section>
+          )}
         </aside>
       </div>
 
