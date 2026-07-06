@@ -96,6 +96,25 @@ export function productionStatusBadge(
   );
 }
 
+// Estado de una generación de IA (status que devuelve /generations).
+const GENERATION_STATUS: Record<string, StatusBadge> = {
+  completed: { label: "Ready", classes: "bg-primary/10 text-primary" },
+  processing: { label: "Processing", classes: "bg-blue-100 text-blue-700" },
+  pending: { label: "Pending", classes: "bg-amber-100 text-amber-700" },
+  failed: { label: "Failed", classes: "bg-red-100 text-red-700" },
+};
+
+export function generationStatusBadge(status: string): StatusBadge {
+  return (
+    GENERATION_STATUS[status?.toLowerCase()] ?? {
+      label: status
+        ? status.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase())
+        : "Unknown",
+      classes: "bg-gray-100 text-gray-600",
+    }
+  );
+}
+
 // Mejor imagen disponible para un item: thumbnail de generación → resultado → imagen.
 export function itemThumb(item: OrderItemThumb): string | null {
   return (
