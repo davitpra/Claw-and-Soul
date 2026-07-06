@@ -57,7 +57,7 @@ export default function ImageCompareSlider({
   return (
     <div
       ref={wrapperRef}
-      className="relative mx-auto h-full w-fit max-w-full cursor-ew-resize touch-none select-none overflow-hidden rounded-xl border-4 border-white shadow-xl"
+      className="relative mx-auto h-full w-fit max-w-full cursor-ew-resize touch-none select-none overflow-hidden rounded-xl border-4 border-white shadow-xl lg:h-[calc(100dvh)]"
       onPointerDown={onPointerDown}
       onPointerMove={onPointerMove}
       onPointerUp={onPointerUp}

@@ -35,7 +35,16 @@ export default function PaintByNumbers() {
   // Keep the whole object so it can be handed to <PbnSidebar> as one prop; the
   // main preview area only needs the two refs below.
   const imageInput = useImageInput(log);
-  const { inputCanvasRef, originalImageRef } = imageInput;
+  const {
+    inputCanvasRef,
+    originalImageRef,
+    imageSrc,
+    isDragging,
+    openFilePicker,
+    onDragOver,
+    onDragLeave,
+    onDrop,
+  } = imageInput;
 
   const inputOptions = useInputOptions();
   const renderOptions = useRenderOptions();
@@ -215,28 +224,56 @@ export default function PaintByNumbers() {
 
   return (
     <div className="container-site px-6 py-4 lg:px-10">
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-[1fr_minmax(0,380px)]">
+      <div className="h-full grid grid-cols-1 gap-6 lg:grid-cols-[1fr_minmax(0,380px)]">
         {/* ---- Main: preview area ---- */}
         <main className="flex flex-col">
           {/*Progress bar: only shown while processing, hidden once the result is available */}
           {!showResult && <ProgressBar overall={overall} />}
-          {/* Fixed-height preview box: the canvas and the compare slider both
-              fill it with h-full, so they render at the exact same size. */}
-          <div className="relative flex flex-none items-stretch justify-center lg:h-[calc(100dvh)]">
-            {/* keep the canvas mounted (the pipeline writes to it) but hide it
-                once the comparison slider is available */}
+          {/* Fixed-height preview box*/}
+          <div className="relative flex flex-none items-stretch justify-center">
             <div
-              className="mx-auto flex h-full w-fit justify-center overflow-hidden rounded-xl border-4 border-white shadow-xl"
-              hidden={showResult}
+              className="mx-auto flex h-full w-fit justify-center overflow-hidden rounded-xl border-4 bg-white border-white shadow-xl"
+              hidden={showResult || !imageSrc}
             >
               <canvas
                 ref={inputCanvasRef}
-                className="block h-full w-auto max-w-full object-contain"
+                className="block h-full w-auto max-w-full object-contain lg:h-[calc(100dvh)]"
               />
               {isProcessing && (
-                <div className="absolute inset-0 animate-pulse bg-white/40" />
+                <div className="absolute inset-0 animate-pulse bg-white/40 lg:h-[calc(100dvh)]" />
               )}
             </div>
+            {/* Drop zone hero: fills the viewport height until an image is
+                loaded. The hidden file <input> lives in the sidebar, so we just
+                trigger it via openFilePicker (avoids a duplicate ref). */}
+            {!imageSrc && !showResult && (
+              <button
+                type="button"
+                onClick={openFilePicker}
+                onDragOver={onDragOver}
+                onDragLeave={onDragLeave}
+                onDrop={onDrop}
+                className={`flex h-full min-h-[70vh] md:min-h-[80vh] w-full flex-col items-center justify-center gap-4 rounded-xl border-4 border-dashed p-8 text-center transition-all ${
+                  isDragging
+                    ? "border-primary bg-primary/5 scale-[1.005]"
+                    : "border-[#E0DED9] bg-white hover:border-primary hover:bg-primary/5"
+                }`}
+              >
+                <span className="material-symbols-outlined text-6xl text-primary">
+                  upload_file
+                </span>
+                <span className="font-display text-2xl font-black text-text-main sm:text-3xl">
+                  Drag and drop your image
+                </span>
+                <span className="font-body text-sm text-text-muted">
+                  or <strong>click to browse</strong> · paste from your
+                  clipboard (Ctrl+V)
+                </span>
+                <span className="font-body text-xs text-text-muted">
+                  PNG, JPG or GIF
+                </span>
+              </button>
+            )}
             {showResult && compareImgs && (
               <>
                 <ImageCompareSlider
@@ -275,7 +312,7 @@ export default function PaintByNumbers() {
               }
             />
           )}
-          {/* Step 3: Preview & download */}
+          {/* Download */}
           {hasOutput && (
             <section className={`${card} mt-4`}>
               <div className="flex flex-wrap items-center justify-between gap-3">
