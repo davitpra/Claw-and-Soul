@@ -4,9 +4,10 @@ import { PbnBuyButton } from "@/features/pbn-purchase";
 import type { useImageInput } from "../model/useImageInput";
 import type { InputOptions } from "../model/useInputOptions";
 import type { ExportControls as ExportControlsState } from "../model/useExport";
-import { card, stepNum, stepTitle, btnSecondary } from "./pbnStyles";
+import { card, stepTitle } from "./pbnStyles";
 import InputOptionsPane from "./InputOptionsPane";
 import ProcessButtons from "./ProcessButtons";
+import PbnImageStep from "./PbnImageStep";
 
 interface PbnSidebarProps {
   imageInput: ReturnType<typeof useImageInput>;
@@ -33,76 +34,22 @@ export default function PbnSidebar({
   onProcess,
   onCancel,
 }: PbnSidebarProps) {
-  const { fileInputRef, onFileChange, imageSrc, openFilePicker } = imageInput;
+  const { imageSrc } = imageInput;
 
   return (
     <div className="flex flex-col gap-6 pb-10">
       {/* Step 1: image — thumbnail on the right, click to replace */}
-      <section className={card}>
-        <input
-          ref={fileInputRef}
-          type="file"
-          accept="image/x-png,image/gif,image/jpeg"
-          onChange={onFileChange}
-          hidden
-        />
-        {imageSrc ? (
-          <div className="flex items-center justify-between gap-4">
-            <div className="min-w-0">
-              <p className="font-display text-base font-black text-slate-dark">
-                Your image
-              </p>
-              <p className="mt-0.5 font-body text-xs text-text-muted">
-                Click the image to replace it.
-              </p>
-            </div>
-            <button
-              type="button"
-              onClick={openFilePicker}
-              aria-label="Change image"
-              className="group relative size-20 shrink-0 overflow-hidden rounded-xl shadow-sm transition-all hover:shadow-md"
-            >
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src={imageSrc}
-                alt="Selected image preview"
-                className="size-full object-cover"
-              />
-              <span className="absolute inset-0 flex flex-col items-center justify-center gap-0.5 bg-black/50 opacity-0 transition-opacity group-hover:opacity-100">
-                <span className="material-symbols-outlined text-[18px] text-white">
-                  sync
-                </span>
-                <span className="font-body text-[10px] font-semibold text-white">
-                  Change
-                </span>
-              </span>
-            </button>
-          </div>
-        ) : (
-          <button
-            type="button"
-            onClick={openFilePicker}
-            className={`${btnSecondary} w-full`}
-          >
-            <span className="material-symbols-outlined text-[18px]">
-              upload_file
-            </span>
-            Upload image
-          </button>
-        )}
-      </section>
+      <PbnImageStep imageInput={imageInput} />
 
       {/* Step 2: Image settings */}
       <section className={card}>
-        <h3 className={`${stepTitle}`}>
-          <span className={stepNum}>2</span>
-          Image settings
-        </h3>
+        <h3 className={`${stepTitle}`}>Image settings</h3>
         <InputOptionsPane opts={inputOptions} imageSrc={imageSrc} />
       </section>
       {/* Buttons for process*/}
       <ProcessButtons
         isProcessing={isProcessing}
+        hasImage={!!imageSrc}
         onProcess={onProcess}
         onCancel={onCancel}
       />

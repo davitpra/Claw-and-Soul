@@ -66,7 +66,7 @@ export default function ImageCompareSlider({
       {/* base = processed, defines the rendered size */}
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img
-        className="block h-full max-w-full w-auto object-contain"
+        className="block h-full max-w-full w-auto object-cover"
         src={processedSrc}
         alt=""
         draggable={false}

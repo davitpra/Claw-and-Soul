@@ -71,30 +71,45 @@ export default function PalettePicker({
   const [suggested, setSuggested] = useState<RGB[]>([]);
   const [pickerOpen, setPickerOpen] = useState(false);
 
-  // Extract dominant colors whenever the source image changes.
+  const { setAllPickedColors } = opts;
+
+  // Extract dominant colors whenever the source image changes, and select them
+  // all by default so the user starts with the full suggested palette.
   useEffect(() => {
     let cancelled = false;
     void (async () => {
       if (!imageSrc) {
-        if (!cancelled) setSuggested([]);
+        if (!cancelled) {
+          setSuggested([]);
+          setAllPickedColors([]);
+        }
         return;
       }
       try {
         const colors = await extractDominantColors(imageSrc, 12);
-        if (!cancelled) setSuggested(colors);
+        if (!cancelled) {
+          setSuggested(colors);
+          setAllPickedColors(colors);
+        }
       } catch {
-        if (!cancelled) setSuggested([]);
+        if (!cancelled) {
+          setSuggested([]);
+          setAllPickedColors([]);
+        }
       }
     })();
     return () => {
       cancelled = true;
     };
-  }, [imageSrc]);
+  }, [imageSrc, setAllPickedColors]);
 
   const isPicked = useCallback(
     (c: RGB) => opts.pickedColors.some((p) => sameColor(p, c)),
     [opts.pickedColors],
   );
+
+  // suggested colors the user hasn't picked yet — the only ones worth offering.
+  const unpicked = suggested.filter((c) => !isPicked(c));
 
   return (
     <div className="flex flex-col gap-3">
@@ -120,35 +135,34 @@ export default function PalettePicker({
         </div>
       )}
 
-      {suggested.length > 0 && (
+      {unpicked.length > 0 && (
         <div className="flex flex-col gap-1.5">
           <span className={fieldLabel}>Choose your palette</span>
           <div className="flex flex-wrap gap-1.5">
-            {suggested.map((c) => (
+            {unpicked.map((c) => (
               <Swatch
                 key={rgbKey(c)}
                 color={c}
-                active={isPicked(c)}
                 onClick={() => opts.togglePickedColor(c)}
               />
             ))}
           </div>
         </div>
       )}
-      <span className="text-xs text-text-muted">
-        Pick the colors your paint-by-number should use. Leave empty to let the
-        app choose them automatically.
-      </span>
 
       <button
         type="button"
-        className={`${btnSecondary} w-full`}
+        className={`${btnSecondary} w-full mt-2`}
         onClick={() => setPickerOpen(true)}
         disabled={!imageSrc}
       >
         <span className="material-symbols-outlined text-[18px]">colorize</span>
         Pick from photo
       </button>
+      <span className="text-xs text-text-muted">
+        Pick the colors your paint-by-number should use. Leave empty to let the
+        app choose them automatically.
+      </span>
 
       {opts.pickedColors.length > 0 && (
         <div className="flex flex-col gap-1.5">

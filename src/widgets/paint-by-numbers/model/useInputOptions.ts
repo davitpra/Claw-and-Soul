@@ -118,6 +118,12 @@ export function useInputOptions(initial?: InputOptionsInit) {
 
   const clearPickedColors = useCallback(() => setPickedColors([]), []);
 
+  // replace the whole picked list (used to default-select the suggested palette)
+  const setAllPickedColors = useCallback(
+    (colors: RGB[]) => setPickedColors(colors),
+    [],
+  );
+
   const buildSettings = useCallback((): Settings => {
     const settings = new Settings();
     settings.kMeansClusteringColorSpace = colorSpace;
@@ -229,6 +235,7 @@ export function useInputOptions(initial?: InputOptionsInit) {
     addPickedColor,
     removePickedColor,
     clearPickedColors,
+    setAllPickedColors,
     // helpers
     applyPreset,
     isPresetActive,

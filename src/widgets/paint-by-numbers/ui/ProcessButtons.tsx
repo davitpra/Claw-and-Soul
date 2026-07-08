@@ -4,6 +4,7 @@ import { btnPrimary, btnSecondary } from "./pbnStyles";
 
 interface ProcessButtonsProps {
   isProcessing: boolean;
+  hasImage: boolean;
   onProcess: () => void;
   onCancel: () => void;
 }
@@ -13,6 +14,7 @@ interface ProcessButtonsProps {
  */
 export default function ProcessButtons({
   isProcessing,
+  hasImage,
   onProcess,
   onCancel,
 }: ProcessButtonsProps) {
@@ -23,7 +25,7 @@ export default function ProcessButtons({
           <button
             className={`${btnPrimary} w-full`}
             onClick={onProcess}
-            disabled={isProcessing}
+            disabled={isProcessing || !hasImage}
           >
             {isProcessing ? (
               <>

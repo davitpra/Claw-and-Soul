@@ -337,13 +337,6 @@ function PaintByNumbersStudio({
               </>
             )}
           </div>
-          {/* Buttons for process and save */}
-          {/* <ProcessButtons
-            isProcessing={isProcessing}
-            onProcess={() => void process()}
-            onCancel={cancel}
-          /> */}
-
           {showResult && (
             <ColorPalette
               palette={palette}
