@@ -361,6 +361,8 @@ export interface AdminStyle {
   promptTemplate: string;
   templateVars: Record<string, unknown> | null;
   templateVarOptions: Record<string, unknown> | null;
+  // Default del estudio PBN para el estilo ({ input, render }); ver PbnConfig.
+  pbnConfig: PbnConfig | null;
   visionConfigId: string | null;
   imageGenConfigId: string | null;
   visionConfig: AdminVisionConfig | null;

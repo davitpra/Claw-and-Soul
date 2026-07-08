@@ -10,6 +10,7 @@ import {
   OrderIcon,
   PrintIcon,
   PaintBrushFlatIcon,
+  ColorIcon,
   InventoryIcon,
   ReceiptIcon,
 } from "@shopify/polaris-icons";
@@ -20,6 +21,7 @@ const navItems = [
   { label: "Pedidos", href: "/admin/orders", icon: OrderIcon },
   { label: "Producción", href: "/admin/production", icon: PrintIcon },
   { label: "Estilos", href: "/admin/styles", icon: PaintBrushFlatIcon },
+  { label: "PBN", href: "/admin/pbn", icon: ColorIcon },
   { label: "Productos", href: "/admin/products", icon: InventoryIcon },
   { label: "Gastos", href: "/admin/expenses", icon: ReceiptIcon },
 ];

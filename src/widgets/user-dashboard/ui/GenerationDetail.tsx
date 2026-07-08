@@ -305,7 +305,7 @@ export function GenerationDetail({ id }: Props) {
               {/* Enviar a PBN */}
               {isReady && imageUrl && (
                 <Link
-                  href={`/paint-by-numbers?generationId=${generation.id}&imageUrl=${encodeURIComponent(imageUrl)}`}
+                  href={`/paint-by-numbers?generationId=${generation.id}&imageUrl=${encodeURIComponent(imageUrl)}${generation.style?.id ? `&styleId=${generation.style.id}` : ""}`}
                   className="flex flex-1 items-center justify-center gap-2 rounded-xl border border-[#E0DED9] bg-white px-5 py-3 text-sm font-bold text-text-main shadow-sm transition-all hover:bg-gray-50 hover:shadow-md"
                 >
                   <span className="material-symbols-outlined text-[20px]">

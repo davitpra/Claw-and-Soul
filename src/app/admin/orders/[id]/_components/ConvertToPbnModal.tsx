@@ -7,7 +7,7 @@ import {
   AdminOrderItem,
   AdminPaintByNumbers,
 } from "@/entities/admin/api";
-import AdminPbnStudio from "./pbn/AdminPbnStudio";
+import AdminPbnStudio from "@/app/admin/_components/pbn/AdminPbnStudio";
 
 // Modal del admin para convertir la imagen generada de un item en una plantilla
 // Paint by Numbers. Usa una composición propia y editable del admin
@@ -82,6 +82,7 @@ export default function ConvertToPbnModal({
             orderId={orderId}
             itemId={item.id}
             onSaved={onSaved}
+            styleTarget={item.generation?.style ?? undefined}
             savedPbn={
               savedPbn
                 ? {

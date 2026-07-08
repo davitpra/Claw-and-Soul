@@ -5,7 +5,7 @@ import { RGB } from "@/lib/pbn/common";
 import { buildHighlightOverlayDataUrl } from "@/lib/pbn/highlight";
 import { getPaperAspect } from "@/lib/pbn/svgExport";
 import { PAPER_LABELS, ENABLE_MIXING_GUIDE } from "./model/constants";
-import type { PbnConfig } from "@/entities/admin/api";
+import { adminApi, type PbnConfig } from "@/entities/admin/api";
 import { useLog } from "./model/useLog";
 import { useImageInput } from "./model/useImageInput";
 import { useInputOptions, InputOptionsInit } from "./model/useInputOptions";
@@ -38,6 +38,14 @@ type AdminPbnStudioProps = {
   orderId?: string;
   itemId?: string;
   onSaved?: () => void;
+  // Estilo de la generación del item. Si se pasa, aparece "Guardar como default
+  // del estilo": persiste los ajustes actuales (input+render) en Style.pbnConfig
+  // para que el estudio público arranque con ellos.
+  styleTarget?: { id: string; displayName: string };
+  // Config con la que sembrar los paneles (p. ej. el `pbnConfig` actual del
+  // estilo) sin activar la lógica de `savedPbn` (banner + auto-carga del SVG).
+  // Si también viene `savedPbn`, su config tiene prioridad.
+  configInit?: PbnConfig;
   // PBN ya guardado en el item: precarga ajustes + imagen fuente + SVG guardado.
   savedPbn?: {
     config?: PbnConfig;
@@ -56,6 +64,8 @@ export default function AdminPbnStudio({
   orderId,
   itemId,
   onSaved,
+  styleTarget,
+  configInit,
   savedPbn,
 }: AdminPbnStudioProps) {
   const { log, clearLog } = useLog();
@@ -74,10 +84,14 @@ export default function AdminPbnStudio({
   } = useImageInput(log, savedPbn?.sourceImageUrl ?? initialImageSrc);
 
   const inputOptions = useInputOptions(
-    savedPbn?.config?.input as InputOptionsInit | undefined,
+    (savedPbn?.config?.input ?? configInit?.input) as
+      | InputOptionsInit
+      | undefined,
   );
   const renderOptions = useRenderOptions(
-    savedPbn?.config?.render as RenderOptionsInit | undefined,
+    (savedPbn?.config?.render ?? configInit?.render) as
+      | RenderOptionsInit
+      | undefined,
   );
   const { recipes, setRecipes, computeRecipes } = usePaintMixing();
   const guideRef = useRef<HTMLDivElement>(null);
@@ -270,6 +284,60 @@ export default function AdminPbnStudio({
     onSaved,
   ]);
 
+  // ---- Guardar como default del estilo ----
+  const [savingStyleDefault, setSavingStyleDefault] = useState(false);
+  const [styleDefaultOk, setStyleDefaultOk] = useState(false);
+  const [styleDefaultError, setStyleDefaultError] = useState<string | null>(
+    null,
+  );
+
+  const handleSaveAsStyleDefault = useCallback(() => {
+    if (!styleTarget) return;
+    setSavingStyleDefault(true);
+    setStyleDefaultOk(false);
+    setStyleDefaultError(null);
+    adminApi.styles
+      .update(styleTarget.id, {
+        pbnConfig: {
+          // Mismos valores crudos que el config del PBN guardado, pero sin
+          // `paper` ni `pickedColors`: el papel lo elige el cliente y los
+          // colores pineados son específicos de esta imagen, no del estilo.
+          input: {
+            resizeImage: inputOptions.resizeImage,
+            resizeWidth: inputOptions.resizeWidth,
+            resizeHeight: inputOptions.resizeHeight,
+            nrOfClusters: inputOptions.nrOfClusters,
+            clusterPrecision: inputOptions.clusterPrecision,
+            randomSeed: inputOptions.randomSeed,
+            colorSpace: inputOptions.colorSpace,
+            colorRestrictions: inputOptions.colorRestrictions,
+            paletteMode: inputOptions.paletteMode,
+            narrowPixelCleanupRuns: inputOptions.narrowPixelCleanupRuns,
+            removeFacetsSmallerThan: inputOptions.removeFacetsSmallerThan,
+            maximumNumberOfFacets: inputOptions.maximumNumberOfFacets,
+            largeToSmall: inputOptions.largeToSmall,
+            halveBorderSegments: inputOptions.halveBorderSegments,
+          },
+          render: {
+            showLabels: renderOptions.showLabels,
+            fillFacets: renderOptions.fillFacets,
+            showBorders: renderOptions.showBorders,
+            sizeMultiplier: renderOptions.sizeMultiplier,
+            labelFontSize: renderOptions.labelFontSize,
+            labelFontColor: renderOptions.labelFontColor,
+            fillOpacity: renderOptions.fillOpacity,
+          },
+        },
+      })
+      .then(() => setStyleDefaultOk(true))
+      .catch((e: unknown) =>
+        setStyleDefaultError(
+          e instanceof Error ? e.message : "No se pudo guardar la configuración",
+        ),
+      )
+      .finally(() => setSavingStyleDefault(false));
+  }, [styleTarget, inputOptions, renderOptions]);
+
   const showResult = !!compareImgs && !isProcessing;
 
   return (
@@ -294,7 +362,9 @@ export default function AdminPbnStudio({
               Imagen a convertir
             </h3>
             <p className="mt-2 font-body text-sm text-text-muted">
-              Se precarga la imagen generada del pedido. Puedes reemplazarla.
+              {orderId
+                ? "Se precarga la imagen generada del pedido. Puedes reemplazarla."
+                : "Se precarga la imagen de referencia. Puedes reemplazarla."}
             </p>
             <input
               ref={fileInputRef}
@@ -474,6 +544,33 @@ export default function AdminPbnStudio({
                 <span className={stepNum}>3</span>
                 Guardar y descargar
               </h3>
+              <div className="flex flex-wrap items-center gap-2">
+                {styleTarget && hasOutput && (
+                  <button
+                    type="button"
+                    className={btnSecondary}
+                    onClick={handleSaveAsStyleDefault}
+                    disabled={savingStyleDefault || isProcessing}
+                  >
+                    {savingStyleDefault ? (
+                      <>
+                        <span className="material-symbols-outlined animate-spin text-[18px]">
+                          progress_activity
+                        </span>
+                        Guardando...
+                      </>
+                    ) : (
+                      <>
+                        <span className="material-symbols-outlined text-[18px]">
+                          {styleDefaultOk ? "check_circle" : "palette"}
+                        </span>
+                        {styleDefaultOk
+                          ? "Default guardado"
+                          : `Guardar como default de "${styleTarget.displayName}"`}
+                      </>
+                    )}
+                  </button>
+                )}
               {canSaveToOrder && hasOutput && (
                 <button
                   type="button"
@@ -498,7 +595,20 @@ export default function AdminPbnStudio({
                   )}
                 </button>
               )}
+              </div>
             </div>
+            {styleDefaultOk && styleTarget && (
+              <p className="mt-2 font-body text-sm text-green-700">
+                Configuración guardada como default del estilo &quot;
+                {styleTarget.displayName}&quot;: el estudio público la usará al
+                llegar desde una generación de ese estilo.
+              </p>
+            )}
+            {styleDefaultError && (
+              <p className="mt-2 font-body text-sm text-red-600">
+                {styleDefaultError}
+              </p>
+            )}
             {savedOk && (
               <p className="mt-2 font-body text-sm text-green-700">
                 Paint by Numbers guardado y enlazado a este item del pedido.

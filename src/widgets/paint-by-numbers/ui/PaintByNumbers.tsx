@@ -11,8 +11,9 @@ import { useSavePbn } from "../model/useSavePbn";
 import { PAPER_LABELS, ENABLE_MIXING_GUIDE } from "../model/constants";
 import { useLog } from "../model/useLog";
 import { useImageInput } from "../model/useImageInput";
-import { useInputOptions } from "../model/useInputOptions";
-import { useRenderOptions } from "../model/useRenderOptions";
+import { useInputOptions, InputOptionsInit } from "../model/useInputOptions";
+import { useRenderOptions, RenderOptionsInit } from "../model/useRenderOptions";
+import { useStylePbnConfig } from "../model/useStylePbnConfig";
 import { usePaintMixing } from "../model/usePaintMixing";
 import { useProcessing } from "../model/useProcessing";
 import { useExport } from "../model/useExport";
@@ -29,15 +30,43 @@ import PbnSettingsDrawer from "./PbnSettingsDrawer";
 import ExportControls from "./ExportControls";
 import { card, stepTitle } from "./pbnStyles";
 
+// Al llegar desde "Enviar a PBN" (detalle de generación) traemos la imagen del
+// artwork por query param para precargarla en el canvas; generationId liga el
+// PBN guardado a esa generación (ver handleSave) y styleId trae el default PBN
+// del estilo (Style.pbnConfig) con el que se seedean los paneles de opciones.
 export default function PaintByNumbers() {
-  const { log, clearLog } = useLog();
-
-  // Al llegar desde "Enviar a PBN" (detalle de generación) traemos la imagen del
-  // artwork por query param para precargarla en el canvas; generationId liga el
-  // PBN guardado a esa generación (ver handleSave más abajo).
   const searchParams = useSearchParams();
   const generationId = searchParams.get("generationId");
   const initialImageUrl = searchParams.get("imageUrl");
+  const styleId = searchParams.get("styleId");
+
+  // Los hooks de opciones solo leen su init en el primer render, así que el
+  // estudio no se monta hasta resolver el fetch (sin styleId resuelve al tiro).
+  const { inputInit, renderInit, loading } = useStylePbnConfig(styleId);
+  if (loading) return null;
+
+  return (
+    <PaintByNumbersStudio
+      generationId={generationId}
+      initialImageUrl={initialImageUrl}
+      inputInit={inputInit}
+      renderInit={renderInit}
+    />
+  );
+}
+
+function PaintByNumbersStudio({
+  generationId,
+  initialImageUrl,
+  inputInit,
+  renderInit,
+}: {
+  generationId: string | null;
+  initialImageUrl: string | null;
+  inputInit?: InputOptionsInit;
+  renderInit?: RenderOptionsInit;
+}) {
+  const { log, clearLog } = useLog();
 
   // Keep the whole object so it can be handed to <PbnSidebar> as one prop; the
   // main preview area only needs the two refs below.
@@ -53,8 +82,8 @@ export default function PaintByNumbers() {
     onDrop,
   } = imageInput;
 
-  const inputOptions = useInputOptions();
-  const renderOptions = useRenderOptions();
+  const inputOptions = useInputOptions(inputInit);
+  const renderOptions = useRenderOptions(renderInit);
   const { recipes, setRecipes, computeRecipes } = usePaintMixing();
   const guideRef = useRef<HTMLDivElement>(null);
   const [showGuide, setShowGuide] = useState(false);

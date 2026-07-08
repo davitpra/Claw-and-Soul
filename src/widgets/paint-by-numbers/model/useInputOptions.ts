@@ -9,34 +9,71 @@ export type PaletteMode = "exact" | "complement";
 const sameColor = (a: RGB, b: RGB) =>
   a[0] === b[0] && a[1] === b[1] && a[2] === b[2];
 
+/** Optional values to seed the input options (e.g. a style's PBN default). */
+export interface InputOptionsInit {
+  resizeImage?: boolean;
+  resizeWidth?: number;
+  resizeHeight?: number;
+  nrOfClusters?: number;
+  clusterPrecision?: number;
+  randomSeed?: number;
+  colorSpace?: ClusteringColorSpace;
+  colorRestrictions?: string;
+  paletteMode?: PaletteMode;
+  narrowPixelCleanupRuns?: number;
+  removeFacetsSmallerThan?: number;
+  maximumNumberOfFacets?: number;
+  largeToSmall?: boolean;
+  halveBorderSegments?: number;
+}
+
 /**
  * Owns every input-side option (resize, clustering, facet pruning, …) together
  * with the helpers that act on them: applying a preset, deciding whether a preset
  * is currently active and building the `Settings` object the pipeline consumes.
+ *
+ * `initial` only seeds the first render (no re-sync): mount the studio after
+ * the init is resolved. pickedColors never seeds — it's image-specific.
  */
-export function useInputOptions() {
-  const [resizeImage, setResizeImage] = useState(true);
-  const [resizeWidth, setResizeWidth] = useState(600);
-  const [resizeHeight, setResizeHeight] = useState(600);
-  const [nrOfClusters, setNrOfClusters] = useState(12);
-  const [clusterPrecision, setClusterPrecision] = useState(1);
-  const [randomSeed, setRandomSeed] = useState(0);
+export function useInputOptions(initial?: InputOptionsInit) {
+  const [resizeImage, setResizeImage] = useState(initial?.resizeImage ?? true);
+  const [resizeWidth, setResizeWidth] = useState(initial?.resizeWidth ?? 600);
+  const [resizeHeight, setResizeHeight] = useState(
+    initial?.resizeHeight ?? 600,
+  );
+  const [nrOfClusters, setNrOfClusters] = useState(initial?.nrOfClusters ?? 12);
+  const [clusterPrecision, setClusterPrecision] = useState(
+    initial?.clusterPrecision ?? 1,
+  );
+  const [randomSeed, setRandomSeed] = useState(initial?.randomSeed ?? 0);
   const [colorSpace, setColorSpace] = useState<ClusteringColorSpace>(
-    ClusteringColorSpace.RGB,
+    initial?.colorSpace ?? ClusteringColorSpace.RGB,
   );
   const [colorRestrictions, setColorRestrictions] = useState(
-    "//0,0,0\n//255,255,255\n",
+    initial?.colorRestrictions ?? "//0,0,0\n//255,255,255\n",
   );
   // Colors the user picked from the photo (eyedropper / suggested swatches).
   const [pickedColors, setPickedColors] = useState<RGB[]>([]);
   // How those colors drive the palette: "exact" = only these, "complement" =
   // these guaranteed plus automatic colors to fill up to nrOfClusters.
-  const [paletteMode, setPaletteMode] = useState<PaletteMode>("complement");
-  const [narrowPixelCleanupRuns, setNarrowPixelCleanupRuns] = useState(1);
-  const [removeFacetsSmallerThan, setRemoveFacetsSmallerThan] = useState(60);
-  const [maximumNumberOfFacets, setMaximumNumberOfFacets] = useState(100000);
-  const [largeToSmall, setLargeToSmall] = useState(true);
-  const [halveBorderSegments, setHalveBorderSegments] = useState(2);
+  const [paletteMode, setPaletteMode] = useState<PaletteMode>(
+    initial?.paletteMode ?? "complement",
+  );
+  const [narrowPixelCleanupRuns, setNarrowPixelCleanupRuns] = useState(
+    initial?.narrowPixelCleanupRuns ?? 1,
+  );
+  const [removeFacetsSmallerThan, setRemoveFacetsSmallerThan] = useState(
+    initial?.removeFacetsSmallerThan ?? 60,
+  );
+  const [maximumNumberOfFacets, setMaximumNumberOfFacets] = useState(
+    initial?.maximumNumberOfFacets ?? 100000,
+  );
+  const [largeToSmall, setLargeToSmall] = useState(
+    initial?.largeToSmall ?? true,
+  );
+  const [halveBorderSegments, setHalveBorderSegments] = useState(
+    initial?.halveBorderSegments ?? 2,
+  );
 
   const applyPreset = (p: PresetValues) => {
     setResizeImage(true);
