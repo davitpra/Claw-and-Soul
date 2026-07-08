@@ -17,7 +17,7 @@ import { useStylePbnConfig } from "../model/useStylePbnConfig";
 import { usePaintMixing } from "../model/usePaintMixing";
 import { useProcessing } from "../model/useProcessing";
 import { useExport } from "../model/useExport";
-import ProcessSaveButtons from "./ProcessSaveButtons";
+import DropZone from "./DropZone";
 import CropModal from "./CropModal";
 import Modal from "./Modal";
 import ImageCompareSlider from "./ImageCompareSlider";
@@ -253,6 +253,9 @@ function PaintByNumbersStudio({
       exp={exp}
       hasOutput={hasOutput}
       savedPbn={savedPbn}
+      isProcessing={isProcessing}
+      onProcess={() => void process()}
+      onCancel={cancel}
     />
   );
 
@@ -271,42 +274,20 @@ function PaintByNumbersStudio({
             >
               <canvas
                 ref={inputCanvasRef}
-                className="block h-full w-auto max-w-full object-contain lg:h-[calc(100dvh)]"
+                className="block w-auto max-w-full object-cover h-[calc(80dvh)]"
               />
               {isProcessing && (
-                <div className="absolute inset-0 animate-pulse bg-white/40 lg:h-[calc(100dvh)]" />
+                <div className="absolute inset-0 animate-pulse bg-white/40 h-[calc(80dvh)]" />
               )}
             </div>
-            {/* Drop zone hero: fills the viewport height until an image is
-                loaded. The hidden file <input> lives in the sidebar, so we just
-                trigger it via openFilePicker (avoids a duplicate ref). */}
             {!imageSrc && !showResult && (
-              <button
-                type="button"
-                onClick={openFilePicker}
+              <DropZone
+                isDragging={isDragging}
+                openFilePicker={openFilePicker}
                 onDragOver={onDragOver}
                 onDragLeave={onDragLeave}
                 onDrop={onDrop}
-                className={`flex h-full min-h-[70vh] md:min-h-[80vh] w-full flex-col items-center justify-center gap-4 rounded-xl border-4 border-dashed p-8 text-center transition-all ${
-                  isDragging
-                    ? "border-primary bg-primary/5 scale-[1.005]"
-                    : "border-[#E0DED9] bg-white hover:border-primary hover:bg-primary/5"
-                }`}
-              >
-                <span className="material-symbols-outlined text-6xl text-primary">
-                  upload_file
-                </span>
-                <span className="font-display text-2xl font-black text-text-main sm:text-3xl">
-                  Drag and drop your image
-                </span>
-                <span className="font-body text-sm text-text-muted">
-                  or <strong>click to browse</strong> · paste from your
-                  clipboard (Ctrl+V)
-                </span>
-                <span className="font-body text-xs text-text-muted">
-                  PNG, JPG or GIF
-                </span>
-              </button>
+              />
             )}
             {showResult && compareImgs && (
               <>
@@ -318,20 +299,50 @@ function PaintByNumbersStudio({
                   rightLabel="Result"
                 />
                 <RenderOptionsPane opts={renderOptions} />
+                {hasOutput && !isProcessing && (
+                  <button
+                    type="button"
+                    className="absolute right-3 top-3 z-10 flex h-10 w-10 items-center justify-center rounded-full bg-white/90 text-background-dark shadow-md backdrop-blur transition hover:bg-white disabled:opacity-60"
+                    onClick={handleSave}
+                    disabled={saving}
+                    title={savedId ? "Saved" : "Save to my account"}
+                    aria-label={savedId ? "Saved" : "Save to my account"}
+                  >
+                    <span
+                      className={`material-symbols-outlined ${saving ? "animate-spin" : ""}`}
+                    >
+                      {saving
+                        ? "progress_activity"
+                        : savedId
+                          ? "check_circle"
+                          : "bookmark_add"}
+                    </span>
+                  </button>
+                )}
+                {savedId && (
+                  <div className="absolute bottom-3 left-1/2 z-10 -translate-x-1/2 rounded-full bg-white/90 px-4 py-1.5 shadow-md backdrop-blur">
+                    <p className="font-body text-sm text-background-dark">
+                      Saved.{" "}
+                      <a href="/user/pbn" className="font-semibold underline">
+                        View my Paint by Numbers
+                      </a>
+                    </p>
+                  </div>
+                )}
+                {saveError && (
+                  <p className="absolute bottom-3 left-1/2 z-10 -translate-x-1/2 rounded-full bg-white/90 px-4 py-1.5 font-body text-sm text-red-600 shadow-md backdrop-blur">
+                    {saveError}
+                  </p>
+                )}
               </>
             )}
           </div>
           {/* Buttons for process and save */}
-          <ProcessSaveButtons
-            hasOutput={hasOutput}
-            saving={saving}
-            savedId={savedId}
-            saveError={saveError}
-            onSave={handleSave}
+          {/* <ProcessButtons
             isProcessing={isProcessing}
             onProcess={() => void process()}
             onCancel={cancel}
-          />
+          /> */}
 
           {showResult && (
             <ColorPalette
