@@ -5,6 +5,7 @@ import { usePetUploadForm } from "./upload-step/usePetUploadForm";
 import { PhotoUploadPanel } from "./upload-step/PhotoUploadPanel";
 import { PetDetailsForm } from "./upload-step/PetDetailsForm";
 import type { IAUploadStepProps } from "./upload-step/types";
+import { useAuth } from "@/context/AuthContext";
 
 const PET_FORM_ID = "pet-form";
 
@@ -41,6 +42,8 @@ export function IAUploadStep({
     makePrimary,
   } = usePhotoManager(photos, onPhotosChange);
 
+  const { isAdmin } = useAuth();
+
   const {
     pets,
     activePet,
@@ -51,6 +54,7 @@ export function IAUploadStep({
     makeExistingPrimary,
     submitting,
     formError,
+    creditBalance,
     selectPet,
     resetPet,
     handleFieldChange,
@@ -73,6 +77,16 @@ export function IAUploadStep({
   return (
     <main className="grow flex flex-col px-6 py-8 md:py-10 animate-in fade-in duration-500">
       <div className="w-full max-w-5xl mx-auto flex-1 flex flex-col">
+        {!isAdmin && creditBalance !== null && (
+          <div className="mb-4 flex justify-end">
+            <span className="inline-flex items-center gap-1.5 rounded-full bg-[#448da6]/10 px-3 py-1 text-sm font-medium text-[#448da6]">
+              <span className="material-symbols-outlined text-base leading-none">
+                auto_awesome
+              </span>
+              {creditBalance} {creditBalance === 1 ? "credit" : "credits"} left
+            </span>
+          </div>
+        )}
         <div className="grid grid-cols-1 md:grid-cols-[1.1fr_0.9fr] gap-8 md:gap-12 items-stretch flex-1 min-h-0">
           <PhotoUploadPanel
             photos={photos}

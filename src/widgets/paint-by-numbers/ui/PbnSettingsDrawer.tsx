@@ -58,9 +58,9 @@ export default function PbnSettingsDrawer({
             />
             <span className="flex items-center gap-2 font-display text-lg font-black text-slate-dark">
               <span className="material-symbols-outlined text-[20px] text-primary">
-                tune
+                refresh
               </span>
-              Settings
+              Re-Generate
             </span>
           </button>
           <Drawer.Title className="sr-only">

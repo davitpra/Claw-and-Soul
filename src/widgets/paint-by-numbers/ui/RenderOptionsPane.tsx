@@ -1,4 +1,3 @@
-import { useState } from "react";
 import { RenderOptions } from "../model/useRenderOptions";
 import { Toggle } from "./controls";
 import Modal from "./Modal";
@@ -6,6 +5,9 @@ import { fieldInput, fieldLabel } from "./pbnStyles";
 
 interface RenderOptionsPaneProps {
   opts: RenderOptions;
+  /** Controlled by the parent (opened from the post's ⋯ menu). */
+  open: boolean;
+  onClose: () => void;
 }
 
 /** Native <input type="color"> only accepts #rrggbb, so expand shorthand
@@ -19,12 +21,13 @@ function toColorInputValue(value: string): string {
   return "#000000";
 }
 
-/** Minimalist button anchored (via CSS) to the bottom-left of the slider, which
- * opens the advanced render controls in a Modal. Meant to be rendered as a
- * sibling of ImageCompareSlider inside its relative container. */
-export default function RenderOptionsPane({ opts }: RenderOptionsPaneProps) {
-  const [open, setOpen] = useState(false);
-
+/** Advanced render controls shown in a Modal. Opened from the post's ⋯ menu
+ * ("Settings"); the parent owns the open/close state. */
+export default function RenderOptionsPane({
+  opts,
+  open,
+  onClose,
+}: RenderOptionsPaneProps) {
   const toggles: {
     label: string;
     checked: boolean;
@@ -48,26 +51,13 @@ export default function RenderOptionsPane({ opts }: RenderOptionsPaneProps) {
   ];
 
   return (
-    <>
-      {/* Anchored to the bottom-left of the slider's relative container. */}
-      <button
-        type="button"
-        className="absolute bottom-3 left-3 z-10 flex size-10 items-center justify-center rounded-full bg-primary text-white shadow-lg transition-colors hover:bg-black/70"
-        aria-label="Render options"
-        aria-haspopup="dialog"
-        aria-expanded={open}
-        onClick={() => setOpen(true)}
-      >
-        <span className="material-symbols-outlined text-[20px]">tune</span>
-      </button>
-
-      <Modal
-        open={open}
-        onClose={() => setOpen(false)}
-        title="Render options"
-        maxWidth="max-w-lg"
-        label="Render options"
-      >
+    <Modal
+      open={open}
+      onClose={onClose}
+      title="Render options"
+      maxWidth="max-w-lg"
+      label="Render options"
+    >
         <div className="p-6">
           <div className="flex flex-wrap gap-6">
             {toggles.map((t) => (
@@ -133,7 +123,6 @@ export default function RenderOptionsPane({ opts }: RenderOptionsPaneProps) {
             />
           </label>
         </div>
-      </Modal>
-    </>
+    </Modal>
   );
 }

@@ -51,8 +51,10 @@ export default function ImageCompareSlider({
     e.currentTarget.releasePointerCapture(e.pointerId);
   }, []);
 
+  // Anchored to the bottom corners so they don't collide with the Instagram-
+  // style post header overlaid on the top of the result.
   const label =
-    "pointer-events-none absolute top-3 rounded-full bg-black/60 px-2.5 py-1 font-body text-xs font-semibold text-white";
+    "pointer-events-none absolute bottom-3 rounded-full bg-black/60 px-2.5 py-1 font-body text-xs font-semibold text-white";
 
   return (
     <div

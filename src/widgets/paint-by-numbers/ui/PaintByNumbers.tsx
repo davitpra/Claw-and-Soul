@@ -23,6 +23,8 @@ import Modal from "./Modal";
 import ImageCompareSlider from "./ImageCompareSlider";
 import ProgressBar from "./ProgressBar";
 import RenderOptionsPane from "./RenderOptionsPane";
+import PbnPostHeader from "./PbnPostHeader";
+import { PbnPostMenuItem } from "./PbnPostMenu";
 import MixingGuide from "./MixingGuide";
 import ColorPalette from "./ColorPalette";
 import InputOptionsPane from "./InputOptionsPane";
@@ -188,6 +190,10 @@ function PaintByNumbersStudio({
     previewUrl?: string | null;
   } | null>(null);
 
+  // Modals opened from the Instagram-style post ⋯ menu / action row.
+  const [settingsOpen, setSettingsOpen] = useState(false);
+  const [downloadOpen, setDownloadOpen] = useState(false);
+
   const handleSave = useCallback(() => {
     if (!isAuthenticated) {
       router.push("/login?redirect=/paint-by-numbers");
@@ -244,6 +250,33 @@ function PaintByNumbersStudio({
 
   const showResult = !!compareImgs && !isProcessing;
 
+  const canSave = hasOutput && !isProcessing;
+  const menuItems: PbnPostMenuItem[] = [
+    {
+      label: "Settings",
+      icon: "tune",
+      onClick: () => setSettingsOpen(true),
+    },
+    {
+      label: savedId ? "Saved" : "Save to my account",
+      icon: savedId ? "check_circle" : "bookmark_add",
+      onClick: handleSave,
+      hidden: !canSave,
+    },
+    {
+      label: "Download",
+      icon: "download",
+      onClick: () => setDownloadOpen(true),
+      hidden: !hasOutput,
+    },
+    {
+      label: "Color mixing guide",
+      icon: "palette",
+      onClick: () => setShowGuide(true),
+      hidden: !ENABLE_MIXING_GUIDE || !recipes,
+    },
+  ];
+
   // On mobile the sidebar lives in a bottom sheet; on desktop it stays inline in
   // the grid. A single mounted instance is reused in both places (mounting twice
   // would duplicate the file <input> and its ref).
@@ -291,8 +324,10 @@ function PaintByNumbersStudio({
                 onDrop={onDrop}
               />
             )}
+            {/* Result PBN — Instagram-style post: header overlay (avatar + name
+                + ⋯ menu) on top of the compare slider. */}
             {showResult && compareImgs && (
-              <>
+              <div className="relative mx-auto w-fit max-w-full">
                 <ImageCompareSlider
                   originalSrc={compareImgs.original}
                   processedSrc={compareImgs.processed}
@@ -300,27 +335,7 @@ function PaintByNumbersStudio({
                   leftLabel="Original"
                   rightLabel="Result"
                 />
-                <RenderOptionsPane opts={renderOptions} />
-                {hasOutput && !isProcessing && (
-                  <button
-                    type="button"
-                    className="absolute right-3 top-3 z-10 flex h-10 w-10 items-center justify-center rounded-full bg-white/90 text-background-dark shadow-md backdrop-blur transition hover:bg-white disabled:opacity-60"
-                    onClick={handleSave}
-                    disabled={saving}
-                    title={savedId ? "Saved" : "Save to my account"}
-                    aria-label={savedId ? "Saved" : "Save to my account"}
-                  >
-                    <span
-                      className={`material-symbols-outlined ${saving ? "animate-spin" : ""}`}
-                    >
-                      {saving
-                        ? "progress_activity"
-                        : savedId
-                          ? "check_circle"
-                          : "bookmark_add"}
-                    </span>
-                  </button>
-                )}
+                <PbnPostHeader menuItems={menuItems} />
                 {savedId && (
                   <div className="absolute bottom-3 left-1/2 z-10 -translate-x-1/2 rounded-full bg-white/90 px-4 py-1.5 shadow-md backdrop-blur">
                     <p className="font-body text-sm text-background-dark">
@@ -336,7 +351,7 @@ function PaintByNumbersStudio({
                     {saveError}
                   </p>
                 )}
-              </>
+              </div>
             )}
           </div>
 
@@ -364,32 +379,72 @@ function PaintByNumbersStudio({
             </section>
           )}
 
+          {/* Instagram-style post footer: action row + palette as "caption". */}
           {showResult && (
-            <ColorPalette
-              palette={palette}
-              recipes={recipes}
-              showGuide={showGuide}
-              onToggleGuide={() => setShowGuide((v) => !v)}
-              mixingEnabled={ENABLE_MIXING_GUIDE}
-              selectedColor={selectedColor}
-              onSelectColor={(i) =>
-                setSelectedColor((prev) => (prev === i ? null : i))
-              }
-            />
-          )}
-          {/* Download */}
-          {hasOutput && (
-            <section className={`${card} mt-4`}>
-              <div className="flex flex-wrap items-center justify-between gap-3">
-                <h3 className={stepTitle}>Download</h3>
+            <div className="mx-auto mt-2 w-full max-w-full">
+              <div className="flex items-center gap-1 px-1">
+                {menuItems
+                  .filter((i) => !i.hidden)
+                  .map((item) => (
+                    <button
+                      key={item.label}
+                      type="button"
+                      onClick={item.onClick}
+                      title={item.label}
+                      aria-label={item.label}
+                      className="flex size-10 items-center justify-center rounded-full text-slate-dark transition-colors hover:bg-cream disabled:opacity-50"
+                      disabled={item.label !== "Settings" && saving}
+                    >
+                      <span
+                        className={`material-symbols-outlined text-[24px] ${
+                          saving && item.icon === "bookmark_add"
+                            ? "animate-spin"
+                            : ""
+                        }`}
+                      >
+                        {saving && item.icon === "bookmark_add"
+                          ? "progress_activity"
+                          : item.icon}
+                      </span>
+                    </button>
+                  ))}
               </div>
-
-              <div className="mt-4">
-                <ExportControls exp={exp} hasOutput={hasOutput} />
+              <div className="mt-2">
+                <ColorPalette
+                  palette={palette}
+                  recipes={recipes}
+                  showGuide={showGuide}
+                  onToggleGuide={() => setShowGuide((v) => !v)}
+                  mixingEnabled={ENABLE_MIXING_GUIDE}
+                  selectedColor={selectedColor}
+                  onSelectColor={(i) =>
+                    setSelectedColor((prev) => (prev === i ? null : i))
+                  }
+                />
               </div>
-            </section>
+            </div>
           )}
         </main>
+
+        {/* Settings (render options) opened from the post ⋯ menu. */}
+        <RenderOptionsPane
+          opts={renderOptions}
+          open={settingsOpen}
+          onClose={() => setSettingsOpen(false)}
+        />
+
+        {/* Download opened from the post ⋯ menu / action row. */}
+        <Modal
+          open={downloadOpen}
+          onClose={() => setDownloadOpen(false)}
+          title="Download"
+          maxWidth="max-w-lg"
+          label="Download"
+        >
+          <div className="p-6">
+            <ExportControls exp={exp} hasOutput={hasOutput} />
+          </div>
+        </Modal>
 
         {/* The mixing guide opens in a modal when toggled. When closed it
               stays mounted off-screen so PNG/PDF export can still capture it. */}
@@ -427,7 +482,9 @@ function PaintByNumbersStudio({
       </div>
 
       {/* On mobile the same sidebar lives in a bottom sheet. */}
-      {isMobile && <PbnSettingsDrawer>{sidebar}</PbnSettingsDrawer>}
+      {isMobile && showResult && (
+        <PbnSettingsDrawer>{sidebar}</PbnSettingsDrawer>
+      )}
 
       {exp.cropModal && (
         <CropModal

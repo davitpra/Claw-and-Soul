@@ -17,6 +17,7 @@ export interface User {
   fullName?: string;
   avatarUrl?: string | null;
   role?: 'user' | 'premium' | 'admin';
+  generationCredits?: number;
 }
 
 interface AuthContextType {

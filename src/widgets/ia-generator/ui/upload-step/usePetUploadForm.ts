@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { useAuthFetch } from "@/hooks/useAuthFetch";
 import { useGenerateImage } from "@/hooks/useGenerateImage";
+import { useCredits } from "@/hooks/useCredits";
 import { useCart } from "@/context/CartContext";
 import {
   EMPTY_FORM,
@@ -50,6 +51,7 @@ export function usePetUploadForm({
 }: UploadFormDeps) {
   const { get, post, authFetchJSON } = useAuthFetch();
   const { generate } = useGenerateImage();
+  const { balance: creditBalance, refresh: refreshCredits } = useCredits();
   const { addToCart } = useCart();
 
   const [pets, setPets] = useState<Pet[]>([]);
@@ -235,6 +237,9 @@ export function usePetUploadForm({
               : undefined,
         });
 
+        // La generación consumió 1 crédito: refrescamos el saldo del badge.
+        void refreshCredits();
+
         // productInfo es null al llegar por URL sin pasar por IAProductStep
         // (deep link). La generación se dispara igual, pero se omite el carrito.
         if (productInfo) {
@@ -256,8 +261,14 @@ export function usePetUploadForm({
         }
 
         onNext();
-      } catch {
-        setFormError("Could not start generation. Try again.");
+      } catch (err) {
+        // Surface the backend message (e.g. the 402 "out of credits" error)
+        // when available, falling back to a generic one.
+        setFormError(
+          err instanceof Error && err.message
+            ? err.message
+            : "Could not start generation. Try again.",
+        );
       } finally {
         setSubmitting(false);
       }
@@ -270,6 +281,7 @@ export function usePetUploadForm({
       formatId,
       savePet,
       generate,
+      refreshCredits,
       userSelections,
       productInfo,
       styleName,
@@ -288,6 +300,7 @@ export function usePetUploadForm({
     makeExistingPrimary,
     submitting,
     formError,
+    creditBalance,
     selectPet,
     resetPet,
     handleFieldChange,
