@@ -25,6 +25,8 @@ import ProgressBar from "./ProgressBar";
 import RenderOptionsPane from "./RenderOptionsPane";
 import MixingGuide from "./MixingGuide";
 import ColorPalette from "./ColorPalette";
+import InputOptionsPane from "./InputOptionsPane";
+import ProcessButtons from "./ProcessButtons";
 import PbnSidebar from "./PbnSidebar";
 import PbnSettingsDrawer from "./PbnSettingsDrawer";
 import ExportControls from "./ExportControls";
@@ -266,8 +268,8 @@ function PaintByNumbersStudio({
         <main className="flex flex-col">
           {/*Progress bar: only shown while processing, hidden once the result is available */}
           {!showResult && <ProgressBar overall={overall} />}
-          {/* Fixed-height preview box*/}
-          <div className="relative flex flex-none items-stretch justify-center">
+          {/* Preview PBN box*/}
+          <div className="relative flex flex-none items-stretch justify-center ">
             <div
               className="mx-auto flex h-full w-fit justify-center overflow-hidden rounded-xl border-4 bg-white border-white shadow-xl"
               hidden={showResult || !imageSrc}
@@ -337,6 +339,31 @@ function PaintByNumbersStudio({
               </>
             )}
           </div>
+
+          {/* Image settings panel for Mobile — inline bajo el preview/dropzone
+              para ajustar y generar sin abrir el drawer. Se oculta una vez que
+              hay resultado. */}
+          {isMobile && !showResult && (
+            <section className={`${card} mt-4`}>
+              <h3 className={stepTitle}>Image settings</h3>
+              <div className="mt-4">
+                <InputOptionsPane
+                  opts={inputOptions}
+                  imageSrc={imageSrc}
+                  showAdvanced={false}
+                />
+              </div>
+              <div className="mt-4">
+                <ProcessButtons
+                  isProcessing={isProcessing}
+                  hasImage={!!imageSrc}
+                  onProcess={() => void process()}
+                  onCancel={cancel}
+                />
+              </div>
+            </section>
+          )}
+
           {showResult && (
             <ColorPalette
               palette={palette}

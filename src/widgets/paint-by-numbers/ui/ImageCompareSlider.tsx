@@ -77,7 +77,7 @@ export default function ImageCompareSlider({
       {highlightSrc && (
         // eslint-disable-next-line @next/next/no-img-element
         <img
-          className="pointer-events-none absolute inset-0 h-full w-full object-fill"
+          className="pointer-events-none absolute inset-0 h-full w-full object-cover"
           src={highlightSrc}
           alt=""
           draggable={false}

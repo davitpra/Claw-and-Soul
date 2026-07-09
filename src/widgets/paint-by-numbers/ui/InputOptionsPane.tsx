@@ -17,9 +17,11 @@ const groupTitle = "text-xs font-bold uppercase tracking-wide text-text-muted";
 export default function InputOptionsPane({
   opts,
   imageSrc,
+  showAdvanced = true,
 }: {
   opts: InputOptions;
   imageSrc: string | null;
+  showAdvanced?: boolean;
 }) {
   const [advancedOpen, setAdvancedOpen] = useState(false);
   const colorCountLocked =
@@ -106,6 +108,7 @@ export default function InputOptionsPane({
       </div>
 
       {/* Advanced settings */}
+      {showAdvanced && (
       <div className="flex flex-col gap-4">
         <button
           type="button"
@@ -298,6 +301,7 @@ export default function InputOptionsPane({
           </>
         )}
       </div>
+      )}
     </div>
   );
 }
