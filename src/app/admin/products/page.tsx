@@ -61,6 +61,7 @@ export default function AdminProductsPage() {
   );
   const [savingTemplate, setSavingTemplate] = useState<string | null>(null);
   const [savingPbn, setSavingPbn] = useState(false);
+  const [savingCreditPack, setSavingCreditPack] = useState(false);
   const [imageMap, setImageMap] = useState<Record<string, string>>({});
 
   const loadProducts = () => {
@@ -206,6 +207,22 @@ export default function AdminProductsPage() {
       loadProducts();
     } finally {
       setSavingPbn(false);
+    }
+  };
+
+  const handleCreditPackChange = async (productId: string) => {
+    const target = productId || null;
+    setSavingCreditPack(true);
+    setProducts((prev) =>
+      prev.map((p) => ({ ...p, isCreditPack: p.id === target })),
+    );
+    try {
+      await adminApi.products.setCreditPack(target);
+    } catch (e: unknown) {
+      setError((e as Error).message);
+      loadProducts();
+    } finally {
+      setSavingCreditPack(false);
     }
   };
 
@@ -361,6 +378,34 @@ export default function AdminProductsPage() {
           </Card>
         )}
 
+        {!loading && (
+          <Card>
+            <BlockStack gap="200">
+              <Text variant="headingSm" as="h2">
+                Producto Credit Pack
+              </Text>
+              <InlineStack gap="200" blockAlign="center">
+                <div style={{ minWidth: 260 }}>
+                  <Select
+                    label="Producto dedicado a la venta de créditos"
+                    disabled={savingCreditPack}
+                    value={products.find((p) => p.isCreditPack)?.id ?? ""}
+                    onChange={handleCreditPackChange}
+                    helpText="Solo puede haber uno. Configura los créditos por variante en la página del producto."
+                    options={[
+                      { label: "Sin asignar", value: "" },
+                      ...products
+                        .filter((p) => p.isActive)
+                        .map((p) => ({ label: p.displayName, value: p.id })),
+                    ]}
+                  />
+                </div>
+                {savingCreditPack && <Spinner size="small" />}
+              </InlineStack>
+            </BlockStack>
+          </Card>
+        )}
+
         {loading ? (
           <Card>
             <InlineStack align="center" gap="300">
@@ -468,6 +513,7 @@ export default function AdminProductsPage() {
                             { label: "Por defecto", value: "" },
                             { label: "Canvas", value: "Canvas" },
                             { label: "Poster", value: "Poster" },
+                            { label: "Credits", value: "Credits" },
                           ]}
                         />
                       </div>

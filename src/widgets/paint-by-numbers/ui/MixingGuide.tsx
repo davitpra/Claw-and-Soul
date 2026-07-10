@@ -11,6 +11,55 @@ interface MixingGuideProps {
   guideRef: React.RefObject<HTMLDivElement | null>;
 }
 
+function PaintChip({ entry }: { entry: MixRecipe["entries"][number] }) {
+  const { paint, parts } = entry;
+  return (
+    <span className="flex items-center gap-2 rounded-lg bg-cream px-2.5 py-1.5">
+      <span
+        className="size-4 shrink-0 rounded-full border border-black/10"
+        style={{
+          backgroundColor: `rgb(${paint.rgb[0]},${paint.rgb[1]},${paint.rgb[2]})`,
+        }}
+      />
+      <span className="flex flex-col leading-tight">
+        <span className="text-xs font-bold text-primary">
+          {parts} {parts === 1 ? "part" : "parts"}
+        </span>
+        <span className="text-xs text-slate-dark">{paint.nameShortEn}</span>
+      </span>
+    </span>
+  );
+}
+
+function FormulaChips({
+  entries,
+  layout = "inline",
+}: {
+  entries: MixRecipe["entries"];
+  layout?: "inline" | "grid";
+}) {
+  if (layout === "grid") {
+    return (
+      <div className="grid grid-cols-2 gap-2">
+        {entries.map((e, j) => (
+          <PaintChip key={j} entry={e} />
+        ))}
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex flex-wrap items-center gap-2">
+      {entries.map((e, j) => (
+        <Fragment key={j}>
+          {j > 0 && <span className="font-bold text-text-muted">+</span>}
+          <PaintChip entry={e} />
+        </Fragment>
+      ))}
+    </div>
+  );
+}
+
 export default function MixingGuide({
   recipes,
   palette,
@@ -32,7 +81,7 @@ export default function MixingGuide({
   }
 
   return (
-    <div className="rounded-xl bg-white p-6" ref={guideRef}>
+    <div className="rounded-xl bg-white p-4 sm:p-6" ref={guideRef}>
       <div className="mb-5">
         <p className="font-body text-sm text-text-muted">
           {recipes.length} colors and the formulas to create from this{" "}
@@ -76,7 +125,37 @@ export default function MixingGuide({
         )}
       </div>
 
-      <div className="overflow-x-auto">
+      {/* Mobile: stacked cards */}
+      <div className="space-y-3 md:hidden">
+        {recipes.map((recipe, i) => {
+          const m = recipe.mixedRgb;
+          return (
+            <div
+              key={i}
+              className="overflow-hidden rounded-xl border border-[#E0DED9]"
+            >
+              <div className="flex items-center gap-3 border-b border-[#E0DED9] p-3">
+                <span className="flex size-6 shrink-0 items-center justify-center rounded-full bg-cream text-xs font-bold text-slate-dark">
+                  {i + 1}
+                </span>
+                <span
+                  className="h-9 flex-1 rounded-md border border-black/10"
+                  style={{
+                    backgroundColor: `rgb(${m[0]},${m[1]},${m[2]})`,
+                  }}
+                  title={`Mix: ${m[0]},${m[1]},${m[2]}`}
+                />
+              </div>
+              <div className="p-3">
+                <FormulaChips entries={recipe.entries} layout="grid" />
+              </div>
+            </div>
+          );
+        })}
+      </div>
+
+      {/* Desktop: table */}
+      <div className="hidden overflow-x-auto md:block">
         <table className="w-full border-collapse text-left text-sm">
           <thead>
             <tr className="border-b border-[#E0DED9] text-text-muted">
@@ -109,31 +188,7 @@ export default function MixingGuide({
                     </div>
                   </td>
                   <td className="py-3">
-                    <div className="flex flex-wrap items-center gap-2">
-                      {recipe.entries.map((e, j) => (
-                        <Fragment key={j}>
-                          {j > 0 && (
-                            <span className="font-bold text-text-muted">+</span>
-                          )}
-                          <span className="flex items-center gap-2 rounded-lg bg-cream px-2.5 py-1.5">
-                            <span
-                              className="size-4 shrink-0 rounded-full border border-black/10"
-                              style={{
-                                backgroundColor: `rgb(${e.paint.rgb[0]},${e.paint.rgb[1]},${e.paint.rgb[2]})`,
-                              }}
-                            />
-                            <span className="flex flex-col leading-tight">
-                              <span className="text-xs font-bold text-primary">
-                                {e.parts} {e.parts === 1 ? "part" : "parts"}
-                              </span>
-                              <span className="text-xs text-slate-dark">
-                                {e.paint.nameEn}
-                              </span>
-                            </span>
-                          </span>
-                        </Fragment>
-                      ))}
-                    </div>
+                    <FormulaChips entries={recipe.entries} />
                   </td>
                 </tr>
               );

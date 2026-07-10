@@ -61,6 +61,9 @@ export function usePetUploadForm({
   const [existingPhotos, setExistingPhotos] = useState<PetPhoto[]>([]);
   const [submitting, setSubmitting] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
+  // true cuando el fallo fue por saldo de créditos agotado (402): muestra el CTA
+  // "Buy credits" junto al error.
+  const [outOfCredits, setOutOfCredits] = useState(false);
 
   const isExistingPet = activePet !== null;
 
@@ -210,6 +213,7 @@ export function usePetUploadForm({
     async (e: React.FormEvent) => {
       e.preventDefault();
       setFormError(null);
+      setOutOfCredits(false);
 
       if (!isExistingPet && !form.name.trim()) {
         setFormError("Pet name is required.");
@@ -264,11 +268,13 @@ export function usePetUploadForm({
       } catch (err) {
         // Surface the backend message (e.g. the 402 "out of credits" error)
         // when available, falling back to a generic one.
-        setFormError(
+        const msg =
           err instanceof Error && err.message
             ? err.message
-            : "Could not start generation. Try again.",
-        );
+            : "Could not start generation. Try again.";
+        setFormError(msg);
+        // El 402 de créditos trae este mensaje del backend; muestra el CTA.
+        setOutOfCredits(/out of generation credits/i.test(msg));
       } finally {
         setSubmitting(false);
       }
@@ -300,6 +306,7 @@ export function usePetUploadForm({
     makeExistingPrimary,
     submitting,
     formError,
+    outOfCredits,
     creditBalance,
     selectPet,
     resetPet,

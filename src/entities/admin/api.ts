@@ -16,6 +16,7 @@ export interface AdminUserListItem {
   fullName: string | null;
   role: string;
   isActive: boolean;
+  generationCredits: number;
   createdAt: string;
   lastLoginAt: string | null;
   _count: { pets: number; generations: number };
@@ -44,6 +45,7 @@ export interface AdminUserDetail {
   role: string;
   isActive: boolean;
   emailVerified: boolean;
+  generationCredits: number;
   createdAt: string;
   lastLoginAt: string | null;
   pets: AdminUserPet[];
@@ -398,7 +400,20 @@ export interface AdminProduct {
   template: string | null;
   fulfillmentMethod: string;
   isPaintByNumbers: boolean;
+  isCreditPack: boolean;
   showcaseCollectionHandle: string | null;
+}
+
+export interface AdminCreditPackVariant {
+  shopifyVariantId: string;
+  shopifyVariantTitle: string | null;
+  price: string | null;
+  creditAmount: number | null;
+}
+
+export interface AdminCreditPackVariants {
+  product: { id: string; displayName: string };
+  variants: AdminCreditPackVariant[];
 }
 
 export interface PodConfig {
@@ -739,6 +754,24 @@ export const adminApi = {
         method: 'PATCH',
         body: JSON.stringify({ productId }),
       }),
+    /** Fija EL producto dedicado al pack de créditos (o ninguno si es null). */
+    setCreditPack: (productId: string | null) =>
+      adminFetch<void>('/admin/products/credit-pack', {
+        method: 'PATCH',
+        body: JSON.stringify({ productId }),
+      }),
+    getCreditPackVariants: (id: string) =>
+      adminFetch<AdminCreditPackVariants>(
+        `/admin/products/${id}/credit-pack-variants`,
+      ),
+    setCreditPackVariants: (
+      id: string,
+      body: { variants: { shopifyVariantId: string; creditAmount: number }[] },
+    ) =>
+      adminFetch<{ shopifyVariantId: string; creditAmount: number }[]>(
+        `/admin/products/${id}/credit-pack-variants`,
+        { method: 'PUT', body: JSON.stringify(body) },
+      ),
     deactivate: (id: string) =>
       adminFetch(`/admin/products/${id}`, { method: 'DELETE' }),
     delete: (id: string) =>
@@ -795,6 +828,17 @@ export const adminApi = {
       ),
     expenses: (id: string) =>
       adminFetch<CustomerExpenses>(`/admin/users/${id}/expenses`),
+    grantCredits: (
+      id: string,
+      body: { amount: number; note?: string },
+    ): Promise<{ granted: boolean; balance: number }> =>
+      adminFetch<{ granted: boolean; balance: number }>(
+        '/admin/credits/grant',
+        {
+          method: 'POST',
+          body: JSON.stringify({ userId: id, ...body }),
+        },
+      ),
   },
   orders: {
     list: (params: {

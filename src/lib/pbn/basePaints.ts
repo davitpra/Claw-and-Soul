@@ -4,6 +4,8 @@ export interface BasePaint {
   id: string;
   nameEs: string;
   nameEn: string;
+  /** Short display name for recipe chips (e.g. "Phthalo Green") */
+  nameShortEn: string;
   rgb: RGB;
   /** Product/reference code for buying in store (e.g. "410") */
   codigo: string;
@@ -17,6 +19,7 @@ export const DEFAULT_BASE_PAINTS: BasePaint[] = [
     id: "primary-yellow",
     nameEs: "Amarillo Primario",
     nameEn: "Primary Yellow",
+    nameShortEn: "Primary Yellow",
     codigo: "410",
     pigmento: "PY74",
     rgb: [255, 216, 0],
@@ -25,6 +28,7 @@ export const DEFAULT_BASE_PAINTS: BasePaint[] = [
     id: "cadmium-orange-hue",
     nameEs: "Naranja de Cadmio",
     nameEn: "Cadmium Orange Hue",
+    nameShortEn: "Cadmium Orange",
     codigo: "720",
     pigmento: "PO73",
     rgb: [242, 124, 22],
@@ -33,6 +37,7 @@ export const DEFAULT_BASE_PAINTS: BasePaint[] = [
     id: "alizarin-crimson-hue",
     nameEs: "Carmesí de Alizarina",
     nameEn: "Alizarin Crimson Hue Permanent",
+    nameShortEn: "Alizarin Crimson",
     codigo: "116",
     pigmento: "PR206, PR202",
     rgb: [138, 22, 40],
@@ -41,6 +46,7 @@ export const DEFAULT_BASE_PAINTS: BasePaint[] = [
     id: "primary-red",
     nameEs: "Rojo Primario",
     nameEn: "Primary Red",
+    nameShortEn: "Primary Red",
     codigo: "415",
     pigmento: "PV19",
     rgb: [222, 32, 55],
@@ -49,6 +55,7 @@ export const DEFAULT_BASE_PAINTS: BasePaint[] = [
     id: "dioxazine-purple",
     nameEs: "Púrpura de Dioxazina",
     nameEn: "Dioxazine Purple",
+    nameShortEn: "Dioxazine Purple",
     codigo: "186",
     pigmento: "PV23 RS",
     rgb: [58, 22, 80],
@@ -57,6 +64,7 @@ export const DEFAULT_BASE_PAINTS: BasePaint[] = [
     id: "primary-blue",
     nameEs: "Azul Primario",
     nameEn: "Primary Blue",
+    nameShortEn: "Primary Blue",
     codigo: "420",
     pigmento: "PB15:3",
     rgb: [16, 52, 156],
@@ -65,6 +73,7 @@ export const DEFAULT_BASE_PAINTS: BasePaint[] = [
     id: "phthalocyanine-green",
     nameEs: "Verde Ftalocianina",
     nameEn: "Phthalocyanine Green",
+    nameShortEn: "Phthalo Green",
     codigo: "317",
     pigmento: "PG7",
     rgb: [0, 78, 72],
@@ -73,6 +82,7 @@ export const DEFAULT_BASE_PAINTS: BasePaint[] = [
     id: "light-green-permanent",
     nameEs: "Verde Claro",
     nameEn: "Light Green",
+    nameShortEn: "Light Green",
     codigo: "312",
     pigmento: "PG7, PY74, PW6",
     rgb: [64, 168, 52],
@@ -81,6 +91,7 @@ export const DEFAULT_BASE_PAINTS: BasePaint[] = [
     id: "burnt-sienna",
     nameEs: "Siena Tostado",
     nameEn: "Burnt Sienna",
+    nameShortEn: "Burnt Sienna",
     codigo: "127",
     pigmento: "PBk9, PR101",
     rgb: [128, 48, 24],
@@ -89,6 +100,7 @@ export const DEFAULT_BASE_PAINTS: BasePaint[] = [
     id: "burnt-umber",
     nameEs: "Sombra Tostada",
     nameEn: "Burnt Umber",
+    nameShortEn: "Burnt Umber",
     codigo: "128",
     pigmento: "PBr7",
     rgb: [58, 40, 28],
@@ -97,6 +109,7 @@ export const DEFAULT_BASE_PAINTS: BasePaint[] = [
     id: "titanium-white",
     nameEs: "Blanco de Titanio",
     nameEn: "Titanium White",
+    nameShortEn: "Titanium White",
     codigo: "432",
     pigmento: "PW6",
     rgb: [248, 248, 246],
@@ -105,6 +118,7 @@ export const DEFAULT_BASE_PAINTS: BasePaint[] = [
     id: "mars-black",
     nameEs: "Negro Marte",
     nameEn: "Mars Black",
+    nameShortEn: "Mars Black",
     codigo: "276",
     pigmento: "PBk11",
     rgb: [26, 26, 26],

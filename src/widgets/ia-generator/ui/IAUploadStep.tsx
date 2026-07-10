@@ -54,6 +54,7 @@ export function IAUploadStep({
     makeExistingPrimary,
     submitting,
     formError,
+    outOfCredits,
     creditBalance,
     selectPet,
     resetPet,
@@ -111,6 +112,7 @@ export function IAUploadStep({
             isExistingPet={isExistingPet}
             form={form}
             formError={formError}
+            outOfCredits={outOfCredits}
             hasPhoto={hasPhoto}
             hasParams={hasParams}
             submitting={submitting}

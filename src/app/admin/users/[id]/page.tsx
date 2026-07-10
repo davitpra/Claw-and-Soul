@@ -32,6 +32,7 @@ import {
   Paginated,
 } from "@/entities/admin/api";
 import { PRODUCTION_STATUS_LABELS } from "@/entities/admin/lib/production-status";
+import { GrantCreditsCard } from "./_components/GrantCreditsCard";
 
 const EXPENSE_CATEGORY_LABELS: Record<string, string> = {
   pod_production: "Producción (Pictorem)",
@@ -281,6 +282,17 @@ export default function AdminUserDetailPage() {
                 </Grid>
               </BlockStack>
             </Card>
+
+            {/* Acreditar créditos */}
+            <GrantCreditsCard
+              userId={id}
+              balance={user.generationCredits}
+              onGranted={(newBalance) =>
+                setUser((prev) =>
+                  prev ? { ...prev, generationCredits: newBalance } : prev
+                )
+              }
+            />
 
             {/* Gastos del cliente */}
             <Card>

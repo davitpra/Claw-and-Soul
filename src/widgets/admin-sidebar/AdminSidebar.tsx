@@ -7,6 +7,7 @@ import { Avatar, Icon } from "@shopify/polaris";
 import {
   HomeIcon,
   TeamIcon,
+  GiftCardIcon,
   OrderIcon,
   PrintIcon,
   PaintBrushFlatIcon,
@@ -18,6 +19,7 @@ import {
 const navItems = [
   { label: "Dashboard", href: "/admin", icon: HomeIcon, exact: true },
   { label: "Usuarios", href: "/admin/users", icon: TeamIcon },
+  { label: "Créditos", href: "/admin/credits", icon: GiftCardIcon },
   { label: "Pedidos", href: "/admin/orders", icon: OrderIcon },
   { label: "Producción", href: "/admin/production", icon: PrintIcon },
   { label: "Estilos", href: "/admin/styles", icon: PaintBrushFlatIcon },

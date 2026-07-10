@@ -16,6 +16,7 @@ import {
 import { ExternalIcon, DeleteIcon, RefreshIcon } from "@shopify/polaris-icons";
 import { ProductDetailsSidebar } from "./_components/ProductDetailsSidebar";
 import { LinkedVariantsCard } from "./_components/LinkedVariantsCard";
+import { CreditPackVariantsCard } from "./_components/CreditPackVariantsCard";
 import { DeleteProductModal } from "./_components/DeleteProductModal";
 import { FormatsModal } from "./_components/FormatsModal";
 import { PodConfigModal } from "./_components/PodConfigModal";
@@ -157,6 +158,10 @@ export default function AdminProductDetailPage() {
               onManageFormats={() => setFormatsModalOpen(true)}
               onError={setError}
             />
+
+            {product.isCreditPack && (
+              <CreditPackVariantsCard productId={product.id} />
+            )}
           </BlockStack>
         </Layout.Section>
         {/* Sidebar */}

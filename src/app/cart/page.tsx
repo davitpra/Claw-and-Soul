@@ -8,6 +8,7 @@ import { Footer } from "@/widgets/footer";
 import { shopifyFetch, GRAPHQL_QUERIES } from "@/lib/shopify";
 import { useCart } from "@/context/CartContext";
 import { useAuthFetch } from "@/hooks/useAuthFetch";
+import { useAuth } from "@/context/AuthContext";
 
 export default function CartPage() {
   const {
@@ -19,6 +20,7 @@ export default function CartPage() {
     clearCart,
   } = useCart();
   const { authFetchJSON } = useAuthFetch();
+  const { user, isAuthenticated } = useAuth();
   const [isCheckingOut, setIsCheckingOut] = useState(false);
 
   // On mount, fetch status for any items whose AI generation hasn't resolved yet.
@@ -58,6 +60,13 @@ export default function CartPage() {
           // Only include keys that have a value.
           const attributes = [
             { key: "Style", value: item.style || "Default" },
+            // _user_id (prefijo "_" → Shopify lo oculta al cliente) permite al
+            // webhook acreditar/vincular la orden a la cuenta correcta sin
+            // depender del email tecleado en el checkout. Se adjunta a todas las
+            // líneas cuando hay sesión.
+            ...(isAuthenticated && user
+              ? [{ key: "_user_id", value: user.id }]
+              : []),
             ...(item.paintByNumbersId
               ? [{ key: "paint_by_numbers_id", value: item.paintByNumbersId }]
               : []),

@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { ContinueButton } from "./ContinueButton";
 import { SPECIES_OPTIONS, type Pet, type PetForm } from "./types";
 
@@ -10,6 +11,7 @@ interface PetDetailsFormProps {
   isExistingPet: boolean;
   form: PetForm;
   formError: string | null;
+  outOfCredits: boolean;
   hasPhoto: boolean;
   hasParams: boolean;
   submitting: boolean;
@@ -32,6 +34,7 @@ export function PetDetailsForm({
   isExistingPet,
   form,
   formError,
+  outOfCredits,
   hasPhoto,
   hasParams,
   submitting,
@@ -171,7 +174,22 @@ export function PetDetailsForm({
           />
         </div>
 
-        {formError && <p className="text-red-500 text-xs">{formError}</p>}
+        {formError && (
+          <div className="space-y-1">
+            <p className="text-red-500 text-xs">{formError}</p>
+            {outOfCredits && (
+              <Link
+                href="/credits"
+                className="inline-flex items-center gap-1 text-xs font-bold text-primary hover:text-primary-dark transition-colors"
+              >
+                <span className="material-symbols-outlined text-[16px]">
+                  add_shopping_cart
+                </span>
+                Buy credits
+              </Link>
+            )}
+          </div>
+        )}
       </form>
 
       <ContinueButton
