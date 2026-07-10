@@ -1,9 +1,11 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import { Container } from "@/shared/ui/Container";
 import { useAuth } from "@/context/AuthContext";
 import { useAuthFetch } from "@/hooks/useAuthFetch";
+import { useCredits } from "@/hooks/useCredits";
 import { ActiveSessions } from "@/widgets/active-sessions";
 import { useAvatarUpload } from "@/features/avatar";
 import { cloudinaryThumb } from "@/shared/lib/cloudinary";
@@ -99,8 +101,9 @@ function Alert({
 }
 
 export default function UserProfilePage() {
-  const { user } = useAuth();
+  const { user, isAdmin } = useAuth();
   const { get, authFetchJSON } = useAuthFetch();
+  const { balance: credits } = useCredits();
 
   const [profile, setProfile] = useState<UserProfile | null>(null);
 
@@ -302,6 +305,39 @@ export default function UserProfilePage() {
             </form>
           </div>
         </SectionCard>
+
+        {/* Credits */}
+        {!isAdmin && (
+          <SectionCard
+            title="Credits"
+            description="Generation credits available on your account."
+          >
+            <div className="flex flex-col items-start gap-5 sm:flex-row sm:items-center sm:justify-between">
+              <div className="inline-flex items-center gap-3 rounded-xl bg-primary/10 px-5 py-4">
+                <span className="material-symbols-outlined text-3xl leading-none text-primary">
+                  auto_awesome
+                </span>
+                <div className="flex flex-col leading-tight">
+                  <span className="font-display text-2xl font-black text-primary">
+                    {credits === null ? "—" : credits}
+                  </span>
+                  <span className="text-sm text-text-muted">
+                    {credits === 1 ? "credit left" : "credits left"}
+                  </span>
+                </div>
+              </div>
+              <Link
+                href="/credits"
+                className="flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-primary px-6 text-base font-bold text-white transition-colors hover:bg-primary-dark sm:w-auto"
+              >
+                <span className="material-symbols-outlined text-xl">
+                  add_shopping_cart
+                </span>
+                Buy credits
+              </Link>
+            </div>
+          </SectionCard>
+        )}
 
         {/* Password */}
         <SectionCard

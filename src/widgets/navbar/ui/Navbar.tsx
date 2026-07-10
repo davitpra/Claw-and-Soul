@@ -9,6 +9,7 @@ import type { FormEvent } from "react";
 import { useCart } from "@/context/CartContext";
 import { useAuth } from "@/context/AuthContext";
 import UserMenu from "./UserMenu";
+import CreditsBadge from "./CreditsBadge";
 
 export default function Navbar() {
   const pathname = usePathname();
@@ -163,7 +164,10 @@ export default function Navbar() {
               {!isLoading && (
                 <>
                   {isAuthenticated ? (
-                    <UserMenu />
+                    <>
+                      <CreditsBadge />
+                      <UserMenu />
+                    </>
                   ) : (
                     <div className="hidden md:flex gap-2">
                       <Link
