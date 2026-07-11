@@ -232,6 +232,15 @@ export interface AdminUserOrderListItem {
   items: AdminUserOrderItem[];
 }
 
+export interface AdminCreditTransaction {
+  id: string;
+  amount: number; // + grant, - spend
+  reason: string; // signup_bonus | order_bonus | pack_purchase | admin_grant | generation_spend | generation_refund | order_bonus_reversal | pack_purchase_reversal
+  referenceId: string | null;
+  note: string | null;
+  createdAt: string;
+}
+
 export interface OrderStats {
   total: number;
   period: number;
@@ -825,6 +834,13 @@ export const adminApi = {
     orders: (id: string, page = 1): Promise<Paginated<AdminUserOrderListItem>> =>
       adminFetch<Paginated<AdminUserOrderListItem>>(
         `/admin/users/${id}/orders?page=${page}&limit=10`,
+      ),
+    creditTransactions: (
+      id: string,
+      page = 1,
+    ): Promise<Paginated<AdminCreditTransaction>> =>
+      adminFetch<Paginated<AdminCreditTransaction>>(
+        `/admin/users/${id}/credit-transactions?page=${page}&limit=20`,
       ),
     expenses: (id: string) =>
       adminFetch<CustomerExpenses>(`/admin/users/${id}/expenses`),

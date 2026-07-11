@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
+import Link from "next/link";
 import {
   Page,
   Card,
@@ -165,13 +166,20 @@ export default function AdminCreditsPage() {
                     <Badge tone="info">{`${u.generationCredits} créditos`}</Badge>
                   </IndexTable.Cell>
                   <IndexTable.Cell>
-                    <Button
-                      variant="plain"
-                      size="slim"
-                      onClick={() => setActiveUser(u)}
-                    >
-                      Acreditar
-                    </Button>
+                    <InlineStack gap="300" blockAlign="center">
+                      <Link href={`/admin/credits/${u.id}`}>
+                        <Button variant="plain" size="slim">
+                          Movimientos
+                        </Button>
+                      </Link>
+                      <Button
+                        variant="plain"
+                        size="slim"
+                        onClick={() => setActiveUser(u)}
+                      >
+                        Acreditar
+                      </Button>
+                    </InlineStack>
                   </IndexTable.Cell>
                 </IndexTable.Row>
               ))}
