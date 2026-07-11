@@ -33,6 +33,8 @@ export interface ShopifyProduct {
   title: string;
   handle: string;
   description: string;
+  /** Rich HTML body from the Shopify admin (sanitized by Shopify). */
+  descriptionHtml?: string;
   thankYouImage?: {
     reference?: { image?: ShopifyImage } | null;
   } | null;

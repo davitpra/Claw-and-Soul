@@ -60,3 +60,46 @@ summary::-webkit-details-marker {
 summary {
   list-style: none;
 }
+
+/* Rich product description (Shopify descriptionHtml) — light prose styles */
+.pbn-desc > *:first-child {
+  margin-top: 0;
+}
+.pbn-desc > *:last-child {
+  margin-bottom: 0;
+}
+.pbn-desc p {
+  margin: 0 0 0.5rem;
+}
+.pbn-desc ul,
+.pbn-desc ol {
+  margin: 0 0 0.5rem;
+  padding-left: 1.25rem;
+}
+.pbn-desc ul {
+  list-style: disc;
+}
+.pbn-desc ol {
+  list-style: decimal;
+}
+.pbn-desc li {
+  margin: 0.15rem 0;
+}
+.pbn-desc strong,
+.pbn-desc b {
+  font-weight: 700;
+  color: var(--color-slate-dark, inherit);
+}
+.pbn-desc a {
+  color: var(--color-primary, #448da6);
+  text-decoration: underline;
+}
+.pbn-desc h1,
+.pbn-desc h2,
+.pbn-desc h3,
+.pbn-desc h4 {
+  font-family: var(--font-display);
+  font-weight: 900;
+  color: var(--color-slate-dark, inherit);
+  margin: 0.5rem 0 0.25rem;
+}

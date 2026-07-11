@@ -20,14 +20,6 @@ interface PbnPurchaseCardProps {
   ensureSaved: () => Promise<{ id: string; previewUrl?: string | null } | null>;
 }
 
-/** Static "what's in the box" copy — the kit contents don't vary per variant. */
-const INCLUDED = [
-  "Pre-printed numbered canvas",
-  "Matched acrylic paint set",
-  "Two brushes (fine + broad)",
-  "Color mixing guide",
-];
-
 function variantLabel(v: ShopifyVariant): string {
   const size = v.selectedOptions.find((o) => /size|tama/i.test(o.name));
   return size?.value ?? v.title;
@@ -68,13 +60,14 @@ export function PbnPurchaseCard({
   const [qty, setQty] = useState(1);
   const [added, setAdded] = useState(false);
   const [busy, setBusy] = useState(false);
+  const [descExpanded, setDescExpanded] = useState(false);
 
   const selectedId = variantId ?? defaultVariantId;
   const selected = variants.find((v) => v.id === selectedId) ?? variants[0];
 
   if (loading) {
     return (
-      <div className="mx-auto mt-4 w-full max-w-105 animate-pulse rounded-2xl border border-cream bg-white p-6">
+      <div className="mx-auto mt-4 w-full max-w-105 animate-pulse rounded-xl bg-white p-6 lg:max-w-3xl">
         <div className="h-40 rounded-xl bg-cream" />
       </div>
     );
@@ -112,190 +105,245 @@ export function PbnPurchaseCard({
   };
 
   return (
-    <div className="mx-auto mt-4 w-full max-w-105 rounded-2xl border border-cream bg-white p-5 shadow-[0_1px_2px_rgba(18,50,60,.04),0_12px_28px_-18px_rgba(18,50,60,.22)] sm:p-6">
-      {/* Header */}
-      <div className="mb-4 flex items-center gap-3">
-        <div
-          className="grid size-14 shrink-0 grid-cols-3 grid-rows-3 overflow-hidden rounded-xl border border-cream bg-cream bg-cover bg-center"
-          style={
-            thumbUrl ? { backgroundImage: `url(${thumbUrl})` } : undefined
-          }
-        >
-          {!thumbUrl &&
-            palette
-              .slice(0, 9)
-              .map((c, i) => (
-                <div key={i} style={{ backgroundColor: swatch(c) }} />
-              ))}
-        </div>
-        <div className="min-w-0">
-          <p className="text-[10px] font-bold uppercase tracking-wider text-primary">
-            Paint-by-Numbers kit
-          </p>
-          <h3 className="font-display text-lg font-black leading-tight text-slate-dark">
-            Your custom canvas
-          </h3>
-          <p className="mt-0.5 text-[13px] text-text-muted">
-            {palette.length}-color kit · printed from your artwork
-          </p>
-        </div>
-      </div>
-
-      {/* Palette strip */}
-      {palette.length > 0 && (
-        <div
-          aria-hidden
-          className="mb-5 flex h-2.5 overflow-hidden rounded-lg border border-cream"
-        >
-          {palette.map((c, i) => (
-            <div key={i} className="flex-1" style={{ backgroundColor: swatch(c) }} />
-          ))}
-        </div>
-      )}
-
-      {/* Size selector */}
-      <p className="mb-2.5 text-[10px] font-bold uppercase tracking-wider text-text-muted">
-        Choose a size
-      </p>
-      <div role="radiogroup" aria-label="Canvas size" className="mb-5 grid gap-2">
-        {variants.map((v) => {
-          const isSelected = v.id === selected.id;
-          return (
-            <button
-              key={v.id}
-              type="button"
-              role="radio"
-              aria-checked={isSelected}
-              onClick={() => setVariantId(v.id)}
-              className={`flex w-full items-center justify-between rounded-xl border-[1.5px] px-3.5 py-2.5 text-left transition-colors ${
-                isSelected
-                  ? "border-primary bg-primary/5"
-                  : "border-cream bg-white hover:border-primary/40"
-              }`}
-            >
-              <span className="flex items-center gap-2.5">
-                <span
-                  className={`grid size-4.5 shrink-0 place-items-center rounded-full border-[1.5px] ${
-                    isSelected
-                      ? "border-primary bg-primary text-white"
-                      : "border-black/20"
-                  }`}
-                >
-                  {isSelected && (
-                    <svg
-                      viewBox="0 0 24 24"
-                      className="size-3"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth={4}
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      aria-hidden
-                    >
-                      <path d="M5 13l4.5 4.5L19 7" />
-                    </svg>
-                  )}
-                </span>
-                <span className="text-sm font-semibold text-slate-dark">
-                  {variantLabel(v)}
-                </span>
-              </span>
-              <span className="text-sm font-bold text-slate-dark">
-                {formatPrice(Number.parseFloat(v.price.amount) || 0, v.price.currencyCode)}
-              </span>
-            </button>
-          );
-        })}
-      </div>
-
-      {/* What's included */}
-      <p className="mb-2.5 text-[10px] font-bold uppercase tracking-wider text-text-muted">
-        In the box
-      </p>
-      <ul className="mb-5 grid gap-1.5">
-        {INCLUDED.map((item) => (
-          <li key={item} className="flex items-center gap-2 text-[13px] text-slate-dark">
-            <span className="material-symbols-outlined text-[16px] text-primary">
-              check
-            </span>
-            {item}
-          </li>
-        ))}
-      </ul>
-
-      <div className="mb-4 h-px bg-cream" />
-
-      {/* Quantity + total */}
-      <div className="mb-4 flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <span className="text-sm font-semibold text-text-muted">Quantity</span>
-          <div className="flex items-center overflow-hidden rounded-lg border border-cream">
-            <button
-              type="button"
-              aria-label="Decrease quantity"
-              onClick={() => setQty((q) => Math.max(1, q - 1))}
-              disabled={qty <= 1}
-              className="grid size-9 place-items-center text-primary transition-colors hover:bg-cream disabled:text-black/20 disabled:hover:bg-transparent"
-            >
-              <span className="material-symbols-outlined text-[18px]">remove</span>
-            </button>
-            <span className="w-9 text-center text-sm font-bold text-slate-dark">
-              {qty}
-            </span>
-            <button
-              type="button"
-              aria-label="Increase quantity"
-              onClick={() => setQty((q) => Math.min(10, q + 1))}
-              disabled={qty >= 10}
-              className="grid size-9 place-items-center text-primary transition-colors hover:bg-cream disabled:text-black/20 disabled:hover:bg-transparent"
-            >
-              <span className="material-symbols-outlined text-[18px]">add</span>
-            </button>
+    <div className="mx-auto mt-4 w-full max-w-105 rounded-xl bg-white p-5 sm:p-6 lg:grid lg:max-w-3xl lg:grid-cols-2 lg:gap-x-8">
+      {/* Left column on desktop: what the kit is. */}
+      <div>
+        {/* Header */}
+        <div className="mb-4 flex items-center gap-3">
+          <div
+            className="grid size-14 shrink-0 grid-cols-3 grid-rows-3 overflow-hidden rounded-xl border border-[#E0DED9] bg-cream bg-cover bg-center"
+            style={
+              thumbUrl ? { backgroundImage: `url(${thumbUrl})` } : undefined
+            }
+          >
+            {!thumbUrl &&
+              palette
+                .slice(0, 9)
+                .map((c, i) => (
+                  <div key={i} style={{ backgroundColor: swatch(c) }} />
+                ))}
+          </div>
+          <div className="min-w-0">
+            <p className="text-[10px] font-bold uppercase tracking-wider text-primary">
+              Paint-by-Numbers kit
+            </p>
+            <h3 className="font-display text-lg font-black leading-tight text-slate-dark">
+              Your custom canvas
+            </h3>
+            <p className="mt-0.5 text-[13px] text-text-muted">
+              {palette.length}-color kit · printed from your artwork
+            </p>
           </div>
         </div>
-        <div className="text-right">
-          <p className="text-[11px] text-text-muted">Total</p>
-          <p className="font-display text-2xl font-black leading-none text-slate-dark">
-            {formatPrice(total, currency)}
-          </p>
-        </div>
+
+        {/* Palette swatches */}
+        {palette.length > 0 && (
+          <div aria-hidden className="mb-5 flex flex-wrap gap-1.5">
+            {palette.map((c, i) => (
+              <div
+                key={i}
+                className="h-3.5 w-6 rounded-full"
+                style={{ backgroundColor: swatch(c) }}
+              />
+            ))}
+          </div>
+        )}
+
+        {/* Product description — rich HTML authored in the Shopify admin
+            (Shopify sanitizes descriptionHtml, so it's a trusted source). */}
+        {product?.descriptionHtml ? (
+          <div>
+            <div
+              className={`pbn-desc text-[13px] leading-relaxed text-text-muted ${
+                descExpanded ? "" : "line-clamp-4"
+              }`}
+              dangerouslySetInnerHTML={{ __html: product.descriptionHtml }}
+            />
+            {product.description.length > 160 && (
+              <button
+                type="button"
+                onClick={() => setDescExpanded((v) => !v)}
+                className="mt-1 text-[12px] font-semibold text-primary transition-colors hover:text-primary-dark"
+              >
+                {descExpanded ? "Show less" : "Read more"}
+              </button>
+            )}
+          </div>
+        ) : (
+          product?.description && (
+            <p className="whitespace-pre-line text-[13px] leading-relaxed text-text-muted">
+              {product.description}
+            </p>
+          )
+        )}
       </div>
 
-      {/* CTA */}
-      {added ? (
-        <Link
-          href="/cart"
-          className="flex w-full items-center justify-center gap-2 rounded-xl bg-primary/10 px-4 py-3.5 text-[15px] font-bold text-primary transition-colors hover:bg-primary/20"
-        >
-          <span className="material-symbols-outlined text-[20px]">shopping_cart</span>
-          View cart
-        </Link>
-      ) : (
-        <button
-          type="button"
-          onClick={handleAdd}
-          disabled={busy}
-          className="flex w-full items-center justify-center gap-2 rounded-xl bg-primary px-4 py-3.5 text-[15px] font-bold text-white shadow-md transition-all hover:bg-primary-dark disabled:opacity-70"
-        >
-          <span
-            className={`material-symbols-outlined text-[20px] ${busy ? "animate-spin" : ""}`}
+      {/* Right column on desktop: configure + buy. */}
+      <div className="lg:border-l lg:border-[#E0DED9] lg:pl-8">
+        {/* Size selector */}
+        <p className="mb-2.5 text-[10px] font-bold uppercase tracking-wider text-text-muted">
+          Choose a size
+        </p>
+        {/* Desktop: compact native select. */}
+        <div className="relative mb-5 hidden lg:block">
+          <select
+            aria-label="Canvas size"
+            value={selected.id}
+            onChange={(e) => setVariantId(e.target.value)}
+            className="w-full appearance-none rounded-xl border-[1.5px] border-[#E0DED9] bg-white py-2.5 pl-3.5 pr-10 text-sm font-semibold text-slate-dark transition-colors hover:border-primary/40 focus:border-primary focus:outline-none"
           >
-            {busy ? "progress_activity" : "shopping_bag"}
+            {variants.map((v) => (
+              <option key={v.id} value={v.id}>
+                {variantLabel(v)}
+              </option>
+            ))}
+          </select>
+          <span className="material-symbols-outlined pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-[20px] text-text-muted">
+            expand_more
           </span>
-          {busy ? "Adding…" : `Add to cart · ${formatPrice(total, currency)}`}
-        </button>
-      )}
+        </div>
 
-      {/* Reassurance */}
-      <div className="mt-3 flex items-center justify-center gap-1.5 text-xs text-text-muted">
-        <span className="material-symbols-outlined text-[16px] text-primary">
-          local_shipping
-        </span>
-        Free shipping · ships in 5–7 days
-      </div>
-      <div className="mt-2 flex items-start justify-center gap-1 text-[11px] text-black/40">
-        <span className="material-symbols-outlined text-[13px]">info</span>
-        Printed from the design you generated above.
+        {/* Mobile: tappable radio cards. */}
+        <div
+          role="radiogroup"
+          aria-label="Canvas size"
+          className="mb-5 grid gap-2 lg:hidden"
+        >
+          {variants.map((v) => {
+            const isSelected = v.id === selected.id;
+            return (
+              <button
+                key={v.id}
+                type="button"
+                role="radio"
+                aria-checked={isSelected}
+                onClick={() => setVariantId(v.id)}
+                className={`flex w-full items-center justify-between rounded-xl border-[1.5px] px-3.5 py-2.5 text-left transition-colors ${
+                  isSelected
+                    ? "border-primary bg-primary/5"
+                    : "border-[#E0DED9] bg-white hover:border-primary/40"
+                }`}
+              >
+                <span className="flex items-center gap-2.5">
+                  <span
+                    className={`grid size-4.5 shrink-0 place-items-center rounded-full border-[1.5px] ${
+                      isSelected
+                        ? "border-primary bg-primary text-white"
+                        : "border-black/20"
+                    }`}
+                  >
+                    {isSelected && (
+                      <svg
+                        viewBox="0 0 24 24"
+                        className="size-3"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth={4}
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        aria-hidden
+                      >
+                        <path d="M5 13l4.5 4.5L19 7" />
+                      </svg>
+                    )}
+                  </span>
+                  <span className="text-sm font-semibold text-slate-dark">
+                    {variantLabel(v)}
+                  </span>
+                </span>
+                <span className="text-sm font-bold text-slate-dark">
+                  {formatPrice(
+                    Number.parseFloat(v.price.amount) || 0,
+                    v.price.currencyCode,
+                  )}
+                </span>
+              </button>
+            );
+          })}
+        </div>
+
+        <div className="mb-4 h-px bg-[#E0DED9]" />
+
+        {/* Quantity + total */}
+        <div className="mb-4 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <span className="text-sm font-semibold text-text-muted">
+              Quantity
+            </span>
+            <div className="flex items-center overflow-hidden rounded-xl border border-[#E0DED9]">
+              <button
+                type="button"
+                aria-label="Decrease quantity"
+                onClick={() => setQty((q) => Math.max(1, q - 1))}
+                disabled={qty <= 1}
+                className="grid size-9 place-items-center text-primary transition-colors hover:bg-cream disabled:text-black/20 disabled:hover:bg-transparent"
+              >
+                <span className="material-symbols-outlined text-[18px]">
+                  remove
+                </span>
+              </button>
+              <span className="w-9 text-center text-sm font-bold text-slate-dark">
+                {qty}
+              </span>
+              <button
+                type="button"
+                aria-label="Increase quantity"
+                onClick={() => setQty((q) => Math.min(10, q + 1))}
+                disabled={qty >= 10}
+                className="grid size-9 place-items-center text-primary transition-colors hover:bg-cream disabled:text-black/20 disabled:hover:bg-transparent"
+              >
+                <span className="material-symbols-outlined text-[18px]">
+                  add
+                </span>
+              </button>
+            </div>
+          </div>
+          <div className="text-right">
+            <p className="text-[11px] text-text-muted">Total</p>
+            <p className="font-display text-2xl font-black leading-none text-slate-dark">
+              {formatPrice(total, currency)}
+            </p>
+          </div>
+        </div>
+
+        {/* CTA */}
+        {added ? (
+          <Link
+            href="/cart"
+            className="flex w-full items-center justify-center gap-2 rounded-xl bg-primary/10 px-4 py-3.5 text-[15px] font-bold text-primary transition-colors hover:bg-primary/20"
+          >
+            <span className="material-symbols-outlined text-[20px]">
+              shopping_cart
+            </span>
+            View cart
+          </Link>
+        ) : (
+          <button
+            type="button"
+            onClick={handleAdd}
+            disabled={busy}
+            className="flex w-full items-center justify-center gap-2 rounded-xl bg-primary px-4 py-3.5 text-[15px] font-bold text-white shadow-lg shadow-primary/20 transition-all hover:bg-primary-dark disabled:opacity-70"
+          >
+            <span
+              className={`material-symbols-outlined text-[20px] ${busy ? "animate-spin" : ""}`}
+            >
+              {busy ? "progress_activity" : "shopping_bag"}
+            </span>
+            {busy ? "Adding…" : `Add to cart · ${formatPrice(total, currency)}`}
+          </button>
+        )}
+
+        {/* Reassurance */}
+        <div className="mt-3 flex items-center justify-center gap-1.5 text-xs text-text-muted">
+          <span className="material-symbols-outlined text-[16px] text-primary">
+            local_shipping
+          </span>
+          Free shipping · ships in 5–7 days
+        </div>
+        <div className="mt-2 flex items-start justify-center gap-1 text-[11px] text-black/40">
+          <span className="material-symbols-outlined text-[13px]">info</span>
+          Printed from the design you generated above.
+        </div>
       </div>
     </div>
   );

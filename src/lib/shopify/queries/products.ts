@@ -48,6 +48,7 @@ export const GET_PRODUCT = `
     title
     handle
     description
+    descriptionHtml
     thankYouImage: metafield(namespace: "custom", key: "thank_you_image") {
       reference {
         ... on MediaImage {
