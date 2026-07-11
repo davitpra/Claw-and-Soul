@@ -247,8 +247,6 @@ function PaintByNumbersStudio({
       <div className="h-full grid grid-cols-1 gap-6 md:grid-cols-[1fr_minmax(0,340px)] lg:grid-cols-[1fr_minmax(0,380px)]">
         {/* ---- Main: preview area ---- */}
         <main className="flex flex-col">
-          {/*Progress bar: only shown while processing, hidden once the result is available */}
-          {!showResult && <ProgressBar overall={overall} />}
           {/* Preview PBN box*/}
           <section className="relative flex flex-none items-stretch justify-center ">
             <div
@@ -275,6 +273,9 @@ function PaintByNumbersStudio({
               />
             )}
           </section>
+
+          {/*Progress bar: only shown while processing, hidden once the result is available */}
+          {!showResult && <ProgressBar overall={overall} />}
 
           {/* Image settings panel for Mobile */}
           {isMobile && !showResult && (
@@ -335,7 +336,11 @@ function PaintByNumbersStudio({
           label="Download"
         >
           <div className="p-6">
-            <ExportControls exp={exp} hasOutput={hasOutput} />
+            <ExportControls
+              exp={exp}
+              hasOutput={hasOutput}
+              onClose={() => setDownloadOpen(false)}
+            />
           </div>
         </Modal>
 

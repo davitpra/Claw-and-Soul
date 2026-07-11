@@ -4,11 +4,13 @@ import { btnPrimary, fieldInput, fieldLabel } from "./pbnStyles";
 interface ExportControlsProps {
   exp: ExportControlsState;
   hasOutput: boolean;
+  onClose?: () => void;
 }
 
 export default function ExportControls({
   exp,
   hasOutput,
+  onClose,
 }: ExportControlsProps) {
   if (!hasOutput) return null;
   return (
@@ -47,13 +49,17 @@ export default function ExportControls({
             <option value="landscape">Landscape</option>
           </select>
         </label>
-        <button
-          className={btnPrimary}
-          onClick={() => void exp.handleDownloadPDFStandard()}
-        >
-          <span className="material-symbols-outlined text-[18px]">crop</span>
-          Select area &amp; download PDF
-        </button>
+        <label className="flex flex-col gap-1.5">
+          <span className={fieldLabel}>Download PDF</span>
+          <button
+            className={btnPrimary}
+            onClick={() =>
+              void exp.handleDownloadPDFStandard().finally(() => onClose?.())
+            }
+          >
+            Continue
+          </button>
+        </label>
       </div>
     </div>
   );

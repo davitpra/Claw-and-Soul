@@ -36,7 +36,6 @@ export default function PbnResultView({
   compareImgs,
   highlightSrc,
   menuItems,
-  saving,
   savedId,
   saveError,
   palette,
@@ -51,10 +50,9 @@ export default function PbnResultView({
     <>
       {/* Result PBN */}
       <div className="relative flex flex-none items-stretch justify-center">
-        <div className="relative mx-auto w-fit max-w-full overflow-hidden ">
+        <div className="relative mx-auto max-w-full overflow-hidden ">
           {/* Image Post  */}
-          <div className="relative rounded-2xl border-4 bg-white border-white shadow-xl">
-            {/* mx-auto flex h-full w-fit justify-center overflow-hidden rounded-xl border-4 bg-white border-white shadow-xl */}
+          <div className="relative mx-auto w-fit border-4 rounded-2xl bg-white border-white shadow-xl">
             <PbnPostHeader menuItems={menuItems} />
             <ImageCompareSlider
               originalSrc={compareImgs.original}
@@ -80,37 +78,9 @@ export default function PbnResultView({
                 {saveError}
               </p>
             )}
-            {/* Post footer on the same card: action row + palette as "caption". */}
-            {/* <div className="w-full flex items-center gap-1 px-2 pt-2">
-              {menuItems
-                .filter((i) => !i.hidden)
-                .map((item) => (
-                  <button
-                    key={item.label}
-                    type="button"
-                    onClick={item.onClick}
-                    title={item.label}
-                    aria-label={item.label}
-                    className="flex size-10 items-center justify-center rounded-full text-slate-dark transition-colors hover:bg-cream disabled:opacity-50"
-                    disabled={item.label !== "Settings" && saving}
-                  >
-                    <span
-                      className={`material-symbols-outlined text-[24px] ${
-                        saving && item.icon === "bookmark_add"
-                          ? "animate-spin"
-                          : ""
-                      }`}
-                    >
-                      {saving && item.icon === "bookmark_add"
-                        ? "progress_activity"
-                        : item.icon}
-                    </span>
-                  </button>
-                ))}
-            </div> */}
           </div>
 
-          <div className="w-0 min-w-full pb-2">
+          <div className="w-full pb-2">
             <ColorPalette
               palette={palette}
               recipes={recipes}

@@ -300,7 +300,7 @@ export function PbnPurchaseCard({
           </div>
           <div className="text-right">
             <p className="text-[11px] text-text-muted">Total</p>
-            <p className="font-display text-2xl font-black leading-none text-slate-dark">
+            <p className="font-display sm:text-xl font-black leading-none text-slate-dark">
               {formatPrice(total, currency)}
             </p>
           </div>
@@ -329,7 +329,7 @@ export function PbnPurchaseCard({
             >
               {busy ? "progress_activity" : "shopping_bag"}
             </span>
-            {busy ? "Adding…" : `Add to cart · ${formatPrice(total, currency)}`}
+            {busy ? "Adding…" : `Add to cart`}
           </button>
         )}
 
@@ -338,7 +338,7 @@ export function PbnPurchaseCard({
           <span className="material-symbols-outlined text-[16px] text-primary">
             local_shipping
           </span>
-          Free shipping · ships in 5–7 days
+          ships in 5–7 days
         </div>
         <div className="mt-2 flex items-start justify-center gap-1 text-[11px] text-black/40">
           <span className="material-symbols-outlined text-[13px]">info</span>

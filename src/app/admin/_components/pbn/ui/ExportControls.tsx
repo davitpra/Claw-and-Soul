@@ -112,13 +112,15 @@ export default function ExportControls({
             <option value="landscape">Landscape</option>
           </select>
         </label>
-        <button
-          className={btnSecondary}
-          onClick={() => void exp.handleDownloadPDFStandard()}
-        >
-          <span className="material-symbols-outlined text-[18px]">crop</span>
-          Select area &amp; download PDF
-        </button>
+        <label className="flex flex-col gap-1.5">
+          <span className={fieldLabel}>Select area &amp; download PDF</span>
+          <button
+            className={btnSecondary}
+            onClick={() => void exp.handleDownloadPDFStandard()}
+          >
+            Contnue
+          </button>
+        </label>
       </div>
     </div>
   );
