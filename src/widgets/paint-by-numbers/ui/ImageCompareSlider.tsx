@@ -11,6 +11,12 @@ interface ImageCompareSliderProps {
   highlightSrc?: string;
   leftLabel?: string;
   rightLabel?: string;
+  /**
+   * Renders the slider with its own rounded white frame + shadow (default).
+   * Set false when a parent supplies the card surface (e.g. the Instagram-style
+   * post, where the image and footer share one card).
+   */
+  framed?: boolean;
 }
 
 export default function ImageCompareSlider({
@@ -19,6 +25,7 @@ export default function ImageCompareSlider({
   highlightSrc,
   leftLabel,
   rightLabel,
+  framed = true,
 }: ImageCompareSliderProps) {
   const wrapperRef = useRef<HTMLDivElement>(null);
   const [pos, setPos] = useState(50);
@@ -59,7 +66,9 @@ export default function ImageCompareSlider({
   return (
     <div
       ref={wrapperRef}
-      className="relative mx-auto w-fit max-w-full cursor-ew-resize touch-none select-none overflow-hidden rounded-xl border-4 border-white shadow-xl h-[calc(80dvh)]"
+      className={`relative mx-auto w-fit max-w-full cursor-ew-resize touch-none select-none overflow-hidden h-[calc(80dvh)] ${
+        framed ? "rounded-xl border-4 border-white shadow-xl" : ""
+      }`}
       onPointerDown={onPointerDown}
       onPointerMove={onPointerMove}
       onPointerUp={onPointerUp}
@@ -85,15 +94,21 @@ export default function ImageCompareSlider({
           draggable={false}
         />
       )}
-      {/* overlay = original, clipped to the left of the divider */}
-      {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img
-        className="absolute inset-0 h-full w-full object-cover"
-        src={originalSrc}
-        alt=""
-        draggable={false}
+      {/* overlay = original, clipped to the left of the divider. The clip-path
+          lives on the wrapping div (not the <img>) to avoid Chrome's dark
+          anti-aliasing fringe at the clip edge on replaced elements. */}
+      <div
+        className="absolute inset-0"
         style={{ clipPath: `inset(0 ${100 - pos}% 0 0)` }}
-      />
+      >
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          className="absolute inset-0 h-full w-full object-cover"
+          src={originalSrc}
+          alt=""
+          draggable={false}
+        />
+      </div>
       {/* transparent guard: absorbs right-click / long-press so it lands on a
           plain div instead of an <img> (no "Save image as"). Pointer events
           still bubble to the wrapper, so the slider drag keeps working. */}

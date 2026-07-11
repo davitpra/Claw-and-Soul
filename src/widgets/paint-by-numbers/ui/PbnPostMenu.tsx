@@ -51,7 +51,9 @@ export default function PbnPostMenu({ items }: { items: PbnPostMenuItem[] }) {
         aria-haspopup="menu"
         aria-expanded={isOpen}
       >
-        <span className="material-symbols-outlined text-[22px]">more_horiz</span>
+        <span className="material-symbols-outlined text-[22px]">
+          more_horiz
+        </span>
       </button>
 
       {isOpen && (
