@@ -1,6 +1,5 @@
 "use client";
 
-import { PbnBuyButton } from "@/features/pbn-purchase";
 import type { useImageInput } from "../model/useImageInput";
 import type { InputOptions } from "../model/useInputOptions";
 import type { ExportControls as ExportControlsState } from "../model/useExport";
@@ -14,7 +13,6 @@ interface PbnSidebarProps {
   inputOptions: InputOptions;
   exp: ExportControlsState;
   hasOutput: boolean;
-  savedPbn: { id: string; previewUrl?: string | null } | null;
   isProcessing: boolean;
   onProcess: () => void;
   onCancel: () => void;
@@ -29,7 +27,6 @@ interface PbnSidebarProps {
 export default function PbnSidebar({
   imageInput,
   inputOptions,
-  savedPbn,
   isProcessing,
   onProcess,
   onCancel,
@@ -53,12 +50,6 @@ export default function PbnSidebar({
         onProcess={onProcess}
         onCancel={onCancel}
       />
-
-      {savedPbn && (
-        <section className={card}>
-          <PbnBuyButton pbn={savedPbn} variant="inline" />{" "}
-        </section>
-      )}
     </div>
   );
 }

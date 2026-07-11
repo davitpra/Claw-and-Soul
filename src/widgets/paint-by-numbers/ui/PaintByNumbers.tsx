@@ -33,6 +33,7 @@ import PbnSidebar from "./PbnSidebar";
 import PbnSettingsDrawer from "./PbnSettingsDrawer";
 import ExportControls from "./ExportControls";
 import { card, stepTitle } from "./pbnStyles";
+import { PbnPurchaseCard } from "@/features/pbn-purchase";
 
 // Al llegar desde "Enviar a PBN" (detalle de generación) traemos la imagen del
 // artwork por query param para precargarla en el canvas; generationId liga el
@@ -194,12 +195,15 @@ function PaintByNumbersStudio({
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [downloadOpen, setDownloadOpen] = useState(false);
 
-  const handleSave = useCallback(() => {
+  const handleSave = useCallback(async (): Promise<{
+    id: string;
+    previewUrl?: string | null;
+  } | null> => {
     if (!isAuthenticated) {
       router.push("/login?redirect=/paint-by-numbers");
-      return;
+      return null;
     }
-    void save({
+    const saved = await save({
       svgContainerRef,
       guideRef,
       previewDataUrl: compareImgs?.processed,
@@ -225,13 +229,14 @@ function PaintByNumbersStudio({
           unit: exp.pdfUnit,
         },
       },
-    }).then((saved) => {
-      if (saved)
-        setSavedPbn({
-          id: saved.id,
-          previewUrl: (saved.previewUrl as string | undefined) ?? null,
-        });
     });
+    if (!saved) return null;
+    const savedRef = {
+      id: saved.id,
+      previewUrl: (saved.previewUrl as string | undefined) ?? null,
+    };
+    setSavedPbn(savedRef);
+    return savedRef;
   }, [
     isAuthenticated,
     router,
@@ -247,6 +252,13 @@ function PaintByNumbersStudio({
     renderOptions,
     exp,
   ]);
+
+  // Resolve a saved PBN for the purchase card: reuse the existing one, or save
+  // on demand (handleSave redirects to login when there's no session).
+  const ensureSaved = useCallback(
+    () => (savedPbn ? Promise.resolve(savedPbn) : handleSave()),
+    [savedPbn, handleSave],
+  );
 
   const showResult = !!compareImgs && !isProcessing;
 
@@ -287,7 +299,6 @@ function PaintByNumbersStudio({
       inputOptions={inputOptions}
       exp={exp}
       hasOutput={hasOutput}
-      savedPbn={savedPbn}
       isProcessing={isProcessing}
       onProcess={() => void process()}
       onCancel={cancel}
@@ -355,9 +366,7 @@ function PaintByNumbersStudio({
             )}
           </div>
 
-          {/* Image settings panel for Mobile — inline bajo el preview/dropzone
-              para ajustar y generar sin abrir el drawer. Se oculta una vez que
-              hay resultado. */}
+          {/* Image settings panel for Mobile */}
           {isMobile && !showResult && (
             <section className={`${card} mt-4`}>
               <h3 className={stepTitle}>Image settings</h3>
@@ -423,6 +432,15 @@ function PaintByNumbersStudio({
                 />
               </div>
             </div>
+          )}
+
+          {/* Purchase card: appears with the result, saves on demand at buy. */}
+          {showResult && (
+            <PbnPurchaseCard
+              palette={palette}
+              previewUrl={compareImgs?.processed}
+              ensureSaved={ensureSaved}
+            />
           )}
         </main>
 

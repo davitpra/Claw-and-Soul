@@ -7,7 +7,7 @@ import type { ShopifyVariant } from "@/lib/shopify/types";
 import { usePbnProduct } from "./usePbnProduct";
 
 interface PbnBuyButtonProps {
-  pbn: { id: string; previewUrl?: string | null };
+  pbn: { id: string; previewUrl?: string | null } | null;
   /** Visual style: full-width primary (library card) or inline (generator). */
   variant?: "block" | "inline";
   className?: string;
@@ -45,7 +45,7 @@ export function PbnBuyButton({
   const [added, setAdded] = useState(false);
 
   const addVariant = (v: ShopifyVariant) => {
-    if (!product) return;
+    if (!product || !pbn) return;
     addToCart({
       id: `pbn-${pbn.id}-${v.id}`,
       variantId: v.id,
@@ -83,7 +83,7 @@ export function PbnBuyButton({
     );
   }
 
-  if (unavailable || variants.length === 0) return null;
+  if (!pbn || unavailable || variants.length === 0) return null;
 
   if (added) {
     return (
