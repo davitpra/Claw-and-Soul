@@ -2,7 +2,7 @@
 
 import { RGB } from "@/lib/pbn/common";
 import type { MixRecipe } from "@/lib/pbn/paintMixing";
-import { PbnPurchaseCard } from "@/features/pbn-purchase";
+import { PbnPurchaseCard, AccessoryUpsell } from "@/features/pbn-purchase";
 import { ENABLE_MIXING_GUIDE } from "../model/constants";
 import type { SavedPbnRef } from "../model/useSavePbnFlow";
 import ImageCompareSlider from "./ImageCompareSlider";
@@ -96,6 +96,9 @@ export default function PbnResultView({
               previewUrl={compareImgs.processed}
               ensureSaved={ensureSaved}
             />
+            {/* Cross-sell: generic accessories (paints, brushes…). Plain line
+                items, no coupling with the generation flow. */}
+            <AccessoryUpsell />
           </div>
         </div>
       </div>

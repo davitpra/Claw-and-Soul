@@ -410,6 +410,7 @@ export interface AdminProduct {
   fulfillmentMethod: string;
   isPaintByNumbers: boolean;
   isCreditPack: boolean;
+  isAccessory: boolean;
   showcaseCollectionHandle: string | null;
 }
 
@@ -768,6 +769,12 @@ export const adminApi = {
       adminFetch<void>('/admin/products/credit-pack', {
         method: 'PATCH',
         body: JSON.stringify({ productId }),
+      }),
+    /** Marca/desmarca un producto como accesorio PBN. NO es único: pueden ser muchos. */
+    setAccessory: (productId: string, isAccessory: boolean) =>
+      adminFetch<AdminProduct>(`/admin/products/${productId}/accessory`, {
+        method: 'PATCH',
+        body: JSON.stringify({ isAccessory }),
       }),
     getCreditPackVariants: (id: string) =>
       adminFetch<AdminCreditPackVariants>(

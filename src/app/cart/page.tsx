@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { Navbar } from "@/widgets/navbar";
@@ -22,6 +22,134 @@ export default function CartPage() {
   const { authFetchJSON } = useAuthFetch();
   const { user, isAuthenticated } = useAuth();
   const [isCheckingOut, setIsCheckingOut] = useState(false);
+  // Automatic Shopify "Buy X Get Y" bundle discount, previewed live (see effect
+  // below). null while unknown or when the cart doesn't qualify. `title` is the
+  // discount's name in the Shopify admin; `byVariant` maps each discounted
+  // variantId to its line savings so items can show struck-through prices.
+  const [bundleDiscount, setBundleDiscount] = useState<{
+    amount: number;
+    currency: string;
+    title: string | null;
+    byVariant: Record<string, number>;
+  } | null>(null);
+
+  // Build the Shopify cart lines from our local cart. Line attributes become
+  // Shopify order line-item `properties`, which the orders webhook
+  // (`ingestLineItem`) reads to re-associate the art. Accessories carry no
+  // generation/paint-by-numbers attributes, so they stay decoupled.
+  const buildLines = useCallback(() => {
+    return items
+      .map((item) => {
+        const attributes = [
+          { key: "Style", value: item.style || "Default" },
+          // _user_id (prefijo "_" → Shopify lo oculta al cliente) permite al
+          // webhook acreditar/vincular la orden a la cuenta correcta sin
+          // depender del email tecleado en el checkout.
+          ...(isAuthenticated && user
+            ? [{ key: "_user_id", value: user.id }]
+            : []),
+          ...(item.paintByNumbersId
+            ? [{ key: "paint_by_numbers_id", value: item.paintByNumbersId }]
+            : []),
+          ...(item.generationId
+            ? [{ key: "generation_id", value: item.generationId }]
+            : []),
+          ...(item.generationId && item.imageUrl
+            ? [{ key: "image_url", value: item.imageUrl }]
+            : []),
+        ];
+        return {
+          merchandiseId: item.variantId || "",
+          quantity: item.quantity,
+          attributes,
+        };
+      })
+      .filter((line) => line.merchandiseId !== "");
+  }, [items, isAuthenticated, user]);
+
+  // Preview the automatic bundle discount by creating a throwaway Shopify cart
+  // and reading its `discountAllocations`. Debounced so quick quantity edits
+  // don't spam the API. The real checkout cart is created on checkout click.
+  useEffect(() => {
+    const lines = buildLines();
+    if (lines.length === 0) {
+      setBundleDiscount(null);
+      return;
+    }
+    let cancelled = false;
+    const timer = setTimeout(async () => {
+      try {
+        type DiscountAllocation = {
+          discountedAmount: { amount: string; currencyCode: string };
+          title?: string;
+        };
+        const response = await shopifyFetch<{
+          cartCreate: {
+            cart: {
+              cost?: { subtotalAmount?: { currencyCode: string } };
+              discountAllocations?: DiscountAllocation[];
+              lines?: {
+                edges: {
+                  node: {
+                    merchandise?: { id?: string };
+                    discountAllocations?: DiscountAllocation[];
+                  };
+                }[];
+              };
+            } | null;
+          };
+        }>({
+          query: GRAPHQL_QUERIES.CREATE_CART,
+          variables: { input: { lines } },
+        });
+        if (cancelled) return;
+        const cart = response.data.cartCreate.cart;
+        // BXGY discounts are allocated per line; whole-cart discounts arrive
+        // at the cart level. Sum both to show total savings, and keep the
+        // per-variant amounts so each cart item can show its discounted price.
+        const byVariant: Record<string, number> = {};
+        for (const edge of cart?.lines?.edges ?? []) {
+          const variantId = edge.node.merchandise?.id;
+          if (!variantId) continue;
+          const lineTotal = (edge.node.discountAllocations ?? []).reduce(
+            (sum, d) =>
+              sum + (Number.parseFloat(d.discountedAmount.amount) || 0),
+            0,
+          );
+          if (lineTotal > 0) byVariant[variantId] = lineTotal;
+        }
+        const allocations = [
+          ...(cart?.discountAllocations ?? []),
+          ...(cart?.lines?.edges ?? []).flatMap(
+            (edge) => edge.node.discountAllocations ?? [],
+          ),
+        ];
+        const total = allocations.reduce(
+          (sum, d) => sum + (Number.parseFloat(d.discountedAmount.amount) || 0),
+          0,
+        );
+        const currency =
+          allocations[0]?.discountedAmount.currencyCode ??
+          cart?.cost?.subtotalAmount?.currencyCode ??
+          "USD";
+        const title =
+          allocations.find((d) => d.title && Number.parseFloat(d.discountedAmount.amount) > 0)
+            ?.title ?? null;
+        setBundleDiscount(
+          total > 0 ? { amount: total, currency, title, byVariant } : null,
+        );
+      } catch (error) {
+        if (!cancelled) {
+          console.error("Cart discount preview failed:", error);
+          setBundleDiscount(null);
+        }
+      }
+    }, 500);
+    return () => {
+      cancelled = true;
+      clearTimeout(timer);
+    };
+  }, [buildLines]);
 
   // On mount, fetch status for any items whose AI generation hasn't resolved yet.
   useEffect(() => {
@@ -53,41 +181,7 @@ export default function CartPage() {
 
     setIsCheckingOut(true);
     try {
-      const lines = items
-        .map((item) => {
-          // Line attributes become Shopify order line-item `properties`, which
-          // the orders webhook (`ingestLineItem`) reads to re-associate the art.
-          // Only include keys that have a value.
-          const attributes = [
-            { key: "Style", value: item.style || "Default" },
-            // _user_id (prefijo "_" → Shopify lo oculta al cliente) permite al
-            // webhook acreditar/vincular la orden a la cuenta correcta sin
-            // depender del email tecleado en el checkout. Se adjunta a todas las
-            // líneas cuando hay sesión.
-            ...(isAuthenticated && user
-              ? [{ key: "_user_id", value: user.id }]
-              : []),
-            ...(item.paintByNumbersId
-              ? [{ key: "paint_by_numbers_id", value: item.paintByNumbersId }]
-              : []),
-            ...(item.generationId
-              ? [{ key: "generation_id", value: item.generationId }]
-              : []),
-            // image_url solo para el flujo de generación: le pasa al webhook la
-            // URL del arte IA. Los items PBN se enlazan por paint_by_numbers_id
-            // y el backend deriva la miniatura del preview del PBN, así que no
-            // exponemos la URL de Cloudinary como property en Shopify.
-            ...(item.generationId && item.imageUrl
-              ? [{ key: "image_url", value: item.imageUrl }]
-              : []),
-          ];
-          return {
-            merchandiseId: item.variantId || "",
-            quantity: item.quantity,
-            attributes,
-          };
-        })
-        .filter((line) => line.merchandiseId !== "");
+      const lines = buildLines();
 
       if (lines.length === 0) {
         alert(
@@ -129,8 +223,9 @@ export default function CartPage() {
     }
   };
 
+  const discountAmount = bundleDiscount?.amount ?? 0;
   const tax = subtotal * 0.08;
-  const total = subtotal + tax;
+  const total = Math.max(0, subtotal - discountAmount) + tax;
 
   return (
     <div className="bg-cream min-h-screen flex flex-col">
@@ -178,7 +273,12 @@ export default function CartPage() {
                       </Link>
                     </div>
                   ) : (
-                    items.map((item) => (
+                    items.map((item) => {
+                      // Line savings from the automatic bundle discount (0 when
+                      // this item isn't discounted or the preview hasn't loaded).
+                      const itemDiscount =
+                        bundleDiscount?.byVariant[item.variantId] ?? 0;
+                      return (
                       <div
                         key={item.id}
                         className="grid grid-cols-1 md:grid-cols-12 gap-6 md:gap-4 items-center py-8 border-b border-slate-dark/10 last:border-none relative group"
@@ -222,6 +322,14 @@ export default function CartPage() {
                               <p className="text-sm text-slate-dark/60 font-medium">
                                 Color: {item.color}
                               </p>
+                            )}
+                            {itemDiscount > 0 && (
+                              <span className="mt-1 flex w-fit items-center gap-1 rounded-full bg-primary/10 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-primary">
+                                <span className="material-symbols-outlined text-[12px]">
+                                  sell
+                                </span>
+                                {bundleDiscount?.title ?? "Bundle discount"}
+                              </span>
                             )}
                             <button
                               onClick={() => removeItem(item.variantId)}
@@ -269,12 +377,28 @@ export default function CartPage() {
                           <span className="md:hidden text-[11px] font-black text-slate-dark/40 uppercase tracking-widest">
                             Total
                           </span>
-                          <span className="text-lg font-black text-slate-dark">
-                            ${(item.price * item.quantity).toFixed(2)}
-                          </span>
+                          {itemDiscount > 0 ? (
+                            <span className="flex items-baseline gap-2">
+                              <span className="text-sm font-bold text-slate-dark/40 line-through">
+                                ${(item.price * item.quantity).toFixed(2)}
+                              </span>
+                              <span className="text-lg font-black text-primary">
+                                $
+                                {Math.max(
+                                  0,
+                                  item.price * item.quantity - itemDiscount,
+                                ).toFixed(2)}
+                              </span>
+                            </span>
+                          ) : (
+                            <span className="text-lg font-black text-slate-dark">
+                              ${(item.price * item.quantity).toFixed(2)}
+                            </span>
+                          )}
                         </div>
                       </div>
-                    ))
+                      );
+                    })
                   )}
                 </div>
               </div>
@@ -293,6 +417,19 @@ export default function CartPage() {
                       ${subtotal.toFixed(2)}
                     </span>
                   </div>
+                  {discountAmount > 0 && (
+                    <div className="flex items-center justify-between font-medium">
+                      <span className="flex items-center gap-1.5 text-primary">
+                        <span className="material-symbols-outlined text-[18px]">
+                          sell
+                        </span>
+                        {bundleDiscount?.title ?? "Bundle discount"}
+                      </span>
+                      <span className="font-black text-primary">
+                        -${discountAmount.toFixed(2)}
+                      </span>
+                    </div>
+                  )}
                   <div className="flex items-center justify-between text-slate-dark/70 font-medium">
                     <span>Shipping estimate</span>
                     <span className="text-primary font-black uppercase tracking-wider text-sm">

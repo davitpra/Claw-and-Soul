@@ -39,6 +39,19 @@ export const GET_COLLECTION = `
                 }
               }
             }
+            variants(first: 1) {
+              edges {
+                node {
+                  id
+                  title
+                  availableForSale
+                  price {
+                    amount
+                    currencyCode
+                  }
+                }
+              }
+            }
           }
         }
       }

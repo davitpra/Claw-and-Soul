@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import Link from "next/link";
+import { useRouter } from "next/navigation";
 import {
   Page,
   Card,
@@ -25,6 +25,7 @@ import {
   SyncStatus,
 } from "@/entities/admin/api";
 import { shopifyFetch } from "@/lib/shopify/client";
+import { SelectedProductTable } from "./_components/SelectedProductTable";
 
 const GET_PRODUCTS_IMAGES = `
   query getProductsImages($first: Int!) {
@@ -44,6 +45,7 @@ const GET_PRODUCTS_IMAGES = `
 `;
 
 export default function AdminProductsPage() {
+  const router = useRouter();
   const [products, setProducts] = useState<AdminProduct[]>([]);
   const [syncStatus, setSyncStatus] = useState<SyncStatus | null>(null);
   const [loading, setLoading] = useState(true);
@@ -60,6 +62,7 @@ export default function AdminProductsPage() {
     null,
   );
   const [savingTemplate, setSavingTemplate] = useState<string | null>(null);
+  const [savingAccessory, setSavingAccessory] = useState<string | null>(null);
   const [savingPbn, setSavingPbn] = useState(false);
   const [savingCreditPack, setSavingCreditPack] = useState(false);
   const [imageMap, setImageMap] = useState<Record<string, string>>({});
@@ -178,6 +181,21 @@ export default function AdminProductsPage() {
     }
   };
 
+  const handleAccessoryToggle = async (productId: string, next: boolean) => {
+    setSavingAccessory(productId);
+    setProducts((prev) =>
+      prev.map((p) => (p.id === productId ? { ...p, isAccessory: next } : p)),
+    );
+    try {
+      await adminApi.products.setAccessory(productId, next);
+    } catch (e: unknown) {
+      setError((e as Error).message);
+      loadProducts();
+    } finally {
+      setSavingAccessory(null);
+    }
+  };
+
   const handleTemplateChange = async (productId: string, value: string) => {
     const template = value || null;
     setSavingTemplate(productId);
@@ -262,6 +280,15 @@ export default function AdminProductsPage() {
     }
   };
 
+  const pbnProduct = products.find((p) => p.isPaintByNumbers) ?? null;
+  const creditPackProduct = products.find((p) => p.isCreditPack) ?? null;
+  // Los productos asignados a un rol especial se muestran en su card y se
+  // excluyen de la tabla principal para no duplicarlos.
+  const specialIds = new Set(
+    [pbnProduct?.id, creditPackProduct?.id].filter(Boolean),
+  );
+  const listProducts = products.filter((p) => !specialIds.has(p.id));
+
   const syncTone =
     syncStatus?.status === "completed"
       ? "success"
@@ -287,6 +314,287 @@ export default function AdminProductsPage() {
           </Banner>
         )}
 
+        {!loading && (
+          <Card>
+            <BlockStack gap="200">
+              <Text variant="headingSm" as="h2">
+                Producto Paint by Numbers
+              </Text>
+              <InlineStack gap="200" blockAlign="center">
+                <div style={{ minWidth: 260 }}>
+                  <Select
+                    label="Kit dedicado al comprar un PBN guardado"
+                    disabled={savingPbn}
+                    value={products.find((p) => p.isPaintByNumbers)?.id ?? ""}
+                    onChange={handlePbnChange}
+                    helpText="Solo puede haber uno. Elegir otro reemplaza al anterior automáticamente."
+                    options={[
+                      { label: "Sin asignar", value: "" },
+                      ...products
+                        .filter((p) => p.isActive)
+                        .map((p) => ({ label: p.displayName, value: p.id })),
+                    ]}
+                  />
+                </div>
+                {savingPbn && <Spinner size="small" />}
+              </InlineStack>
+              {pbnProduct && (
+                <SelectedProductTable
+                  product={pbnProduct}
+                  imageMap={imageMap}
+                  onRowClick={(id) => router.push(`/admin/products/${id}`)}
+                />
+              )}
+            </BlockStack>
+          </Card>
+        )}
+
+        {!loading && (
+          <Card>
+            <BlockStack gap="200">
+              <Text variant="headingSm" as="h2">
+                Producto Credit Pack
+              </Text>
+              <InlineStack gap="200" blockAlign="center">
+                <div style={{ minWidth: 260 }}>
+                  <Select
+                    label="Producto dedicado a la venta de créditos"
+                    disabled={savingCreditPack}
+                    value={products.find((p) => p.isCreditPack)?.id ?? ""}
+                    onChange={handleCreditPackChange}
+                    helpText="Solo puede haber uno. Configura los créditos por variante en la página del producto."
+                    options={[
+                      { label: "Sin asignar", value: "" },
+                      ...products
+                        .filter((p) => p.isActive)
+                        .map((p) => ({ label: p.displayName, value: p.id })),
+                    ]}
+                  />
+                </div>
+                {savingCreditPack && <Spinner size="small" />}
+              </InlineStack>
+              {creditPackProduct && (
+                <SelectedProductTable
+                  product={creditPackProduct}
+                  imageMap={imageMap}
+                  onRowClick={(id) => router.push(`/admin/products/${id}`)}
+                />
+              )}
+            </BlockStack>
+          </Card>
+        )}
+
+        {loading ? (
+          <Card>
+            <InlineStack align="center" gap="300">
+              <Spinner size="small" />
+              <Text as="span" tone="subdued">
+                Cargando productos…
+              </Text>
+            </InlineStack>
+          </Card>
+        ) : (
+          <Card padding="0">
+            <IndexTable
+              resourceName={{ singular: "producto", plural: "productos" }}
+              itemCount={listProducts.length}
+              headings={[
+                { title: "Producto" },
+                { title: "Estilo asignado" },
+                { title: "Fulfillment" },
+                { title: "Template" },
+                { title: "Accesorio" },
+                { title: "Estado" },
+                { title: "Acciones" },
+              ]}
+              selectable={false}
+            >
+              {listProducts.map((p, index) => (
+                <IndexTable.Row
+                  id={p.id}
+                  key={p.id}
+                  position={index}
+                  tone={p.isActive ? undefined : "subdued"}
+                  onClick={() => router.push(`/admin/products/${p.id}`)}
+                >
+                  <IndexTable.Cell>
+                    <InlineStack gap="300" blockAlign="center">
+                      <Thumbnail
+                        source={
+                          (p.shopifyHandle && imageMap[p.shopifyHandle]) ||
+                          ImageIcon
+                        }
+                        alt={p.displayName}
+                        size="small"
+                      />
+                      <BlockStack gap="0">
+                        <Text variant="bodyMd" fontWeight="semibold" as="span">
+                          {p.displayName}
+                        </Text>
+                        <Text variant="bodySm" tone="subdued" as="span">
+                          {p.name}
+                        </Text>
+                      </BlockStack>
+                    </InlineStack>
+                  </IndexTable.Cell>
+                  <IndexTable.Cell>
+                    <div onClick={(e) => e.stopPropagation()}>
+                      <InlineStack gap="200" blockAlign="center">
+                        <div style={{ minWidth: 180 }}>
+                          <Select
+                            label=""
+                            labelHidden
+                            disabled={savingStyle === p.id}
+                            value={p.styleId ?? ""}
+                            onChange={(value) => handleStyleChange(p.id, value)}
+                            options={[
+                              { label: "Sin asignar", value: "" },
+                              ...styles.map((s) => ({
+                                label: s.displayName,
+                                value: s.id,
+                              })),
+                            ]}
+                          />
+                        </div>
+                        {savingStyle === p.id && <Spinner size="small" />}
+                      </InlineStack>
+                    </div>
+                  </IndexTable.Cell>
+                  <IndexTable.Cell>
+                    <div onClick={(e) => e.stopPropagation()}>
+                      <InlineStack gap="200" blockAlign="center">
+                        <div style={{ minWidth: 170 }}>
+                          <Select
+                            label=""
+                            labelHidden
+                            disabled={savingFulfillment === p.id}
+                            value={p.fulfillmentMethod ?? "in_house"}
+                            onChange={(value) =>
+                              handleFulfillmentChange(p.id, value)
+                            }
+                            options={[
+                              { label: "Taller (in-house)", value: "in_house" },
+                              { label: "POD (externo)", value: "pod" },
+                            ]}
+                          />
+                        </div>
+                        {savingFulfillment === p.id && <Spinner size="small" />}
+                      </InlineStack>
+                    </div>
+                  </IndexTable.Cell>
+                  <IndexTable.Cell>
+                    <div onClick={(e) => e.stopPropagation()}>
+                      <InlineStack gap="200" blockAlign="center">
+                        <div style={{ minWidth: 150 }}>
+                          <Select
+                            label=""
+                            labelHidden
+                            disabled={savingTemplate === p.id}
+                            value={p.template ?? ""}
+                            onChange={(value) =>
+                              handleTemplateChange(p.id, value)
+                            }
+                            options={[
+                              { label: "Por defecto", value: "" },
+                              { label: "Canvas", value: "Canvas" },
+                              { label: "Poster", value: "Poster" },
+                              { label: "Credits", value: "Credits" },
+                              { label: "Accessory", value: "Accessory" },
+                            ]}
+                          />
+                        </div>
+                        {savingTemplate === p.id && <Spinner size="small" />}
+                      </InlineStack>
+                    </div>
+                  </IndexTable.Cell>
+                  <IndexTable.Cell>
+                    <div onClick={(e) => e.stopPropagation()}>
+                      <InlineStack gap="200" blockAlign="center">
+                        <button
+                          type="button"
+                          onClick={() =>
+                            handleAccessoryToggle(p.id, !p.isAccessory)
+                          }
+                          disabled={savingAccessory === p.id}
+                          aria-label={
+                            p.isAccessory
+                              ? "Desmarcar como accesorio"
+                              : "Marcar como accesorio"
+                          }
+                          title={
+                            p.isAccessory
+                              ? "Click para desmarcar accesorio"
+                              : "Click para marcar accesorio"
+                          }
+                          style={{
+                            background: "transparent",
+                            border: "none",
+                            padding: 0,
+                            cursor:
+                              savingAccessory === p.id ? "wait" : "pointer",
+                            opacity: savingAccessory === p.id ? 0.6 : 1,
+                          }}
+                        >
+                          <Badge tone={p.isAccessory ? "info" : undefined}>
+                            {p.isAccessory ? "Accesorio" : "No"}
+                          </Badge>
+                        </button>
+                        {savingAccessory === p.id && <Spinner size="small" />}
+                      </InlineStack>
+                    </div>
+                  </IndexTable.Cell>
+                  <IndexTable.Cell>
+                    <div onClick={(e) => e.stopPropagation()}>
+                      <InlineStack gap="200" blockAlign="center">
+                        <button
+                          type="button"
+                          onClick={() => handleToggle(p)}
+                          disabled={toggling === p.id}
+                          aria-label={
+                            p.isActive
+                              ? "Desactivar producto"
+                              : "Activar producto"
+                          }
+                          title={
+                            p.isActive
+                              ? "Click para desactivar"
+                              : "Click para activar"
+                          }
+                          style={{
+                            background: "transparent",
+                            border: "none",
+                            padding: 0,
+                            cursor: toggling === p.id ? "wait" : "pointer",
+                            opacity: toggling === p.id ? 0.6 : 1,
+                          }}
+                        >
+                          <Badge tone={p.isActive ? "success" : "enabled"}>
+                            {p.isActive ? "Activo" : "Inactivo"}
+                          </Badge>
+                        </button>
+                        {toggling === p.id && <Spinner size="small" />}
+                      </InlineStack>
+                    </div>
+                  </IndexTable.Cell>
+                  <IndexTable.Cell>
+                    <div onClick={(e) => e.stopPropagation()}>
+                      <InlineStack gap="200" blockAlign="center">
+                        <Button
+                          variant="plain"
+                          tone="critical"
+                          size="slim"
+                          icon={DeleteIcon}
+                          accessibilityLabel={`Eliminar ${p.displayName}`}
+                          onClick={() => setDeletingTarget(p)}
+                        />
+                      </InlineStack>
+                    </div>
+                  </IndexTable.Cell>
+                </IndexTable.Row>
+              ))}
+            </IndexTable>
+          </Card>
+        )}
         {syncStatus && (
           <Card>
             <BlockStack gap="200">
@@ -347,230 +655,6 @@ export default function AdminProductsPage() {
                 )}
               </InlineStack>
             </BlockStack>
-          </Card>
-        )}
-
-        {!loading && (
-          <Card>
-            <BlockStack gap="200">
-              <Text variant="headingSm" as="h2">
-                Producto Paint by Numbers
-              </Text>
-              <InlineStack gap="200" blockAlign="center">
-                <div style={{ minWidth: 260 }}>
-                  <Select
-                    label="Kit dedicado al comprar un PBN guardado"
-                    disabled={savingPbn}
-                    value={products.find((p) => p.isPaintByNumbers)?.id ?? ""}
-                    onChange={handlePbnChange}
-                    helpText="Solo puede haber uno. Elegir otro reemplaza al anterior automáticamente."
-                    options={[
-                      { label: "Sin asignar", value: "" },
-                      ...products
-                        .filter((p) => p.isActive)
-                        .map((p) => ({ label: p.displayName, value: p.id })),
-                    ]}
-                  />
-                </div>
-                {savingPbn && <Spinner size="small" />}
-              </InlineStack>
-            </BlockStack>
-          </Card>
-        )}
-
-        {!loading && (
-          <Card>
-            <BlockStack gap="200">
-              <Text variant="headingSm" as="h2">
-                Producto Credit Pack
-              </Text>
-              <InlineStack gap="200" blockAlign="center">
-                <div style={{ minWidth: 260 }}>
-                  <Select
-                    label="Producto dedicado a la venta de créditos"
-                    disabled={savingCreditPack}
-                    value={products.find((p) => p.isCreditPack)?.id ?? ""}
-                    onChange={handleCreditPackChange}
-                    helpText="Solo puede haber uno. Configura los créditos por variante en la página del producto."
-                    options={[
-                      { label: "Sin asignar", value: "" },
-                      ...products
-                        .filter((p) => p.isActive)
-                        .map((p) => ({ label: p.displayName, value: p.id })),
-                    ]}
-                  />
-                </div>
-                {savingCreditPack && <Spinner size="small" />}
-              </InlineStack>
-            </BlockStack>
-          </Card>
-        )}
-
-        {loading ? (
-          <Card>
-            <InlineStack align="center" gap="300">
-              <Spinner size="small" />
-              <Text as="span" tone="subdued">
-                Cargando productos…
-              </Text>
-            </InlineStack>
-          </Card>
-        ) : (
-          <Card padding="0">
-            <IndexTable
-              resourceName={{ singular: "producto", plural: "productos" }}
-              itemCount={products.length}
-              headings={[
-                { title: "Producto" },
-                { title: "Estilo asignado" },
-                { title: "Fulfillment" },
-                { title: "Template" },
-                { title: "Estado" },
-                { title: "Acciones" },
-              ]}
-              selectable={false}
-            >
-              {products.map((p, index) => (
-                <IndexTable.Row
-                  id={p.id}
-                  key={p.id}
-                  position={index}
-                  tone={p.isActive ? undefined : "subdued"}
-                >
-                  <IndexTable.Cell>
-                    <InlineStack gap="300" blockAlign="center">
-                      <Thumbnail
-                        source={
-                          (p.shopifyHandle && imageMap[p.shopifyHandle]) ||
-                          ImageIcon
-                        }
-                        alt={p.displayName}
-                        size="small"
-                      />
-                      <BlockStack gap="0">
-                        <Text variant="bodyMd" fontWeight="semibold" as="span">
-                          {p.displayName}
-                        </Text>
-                        <Text variant="bodySm" tone="subdued" as="span">
-                          {p.name}
-                        </Text>
-                      </BlockStack>
-                    </InlineStack>
-                  </IndexTable.Cell>
-                  <IndexTable.Cell>
-                    <InlineStack gap="200" blockAlign="center">
-                      <div style={{ minWidth: 180 }}>
-                        <Select
-                          label=""
-                          labelHidden
-                          disabled={savingStyle === p.id}
-                          value={p.styleId ?? ""}
-                          onChange={(value) => handleStyleChange(p.id, value)}
-                          options={[
-                            { label: "Sin asignar", value: "" },
-                            ...styles.map((s) => ({
-                              label: s.displayName,
-                              value: s.id,
-                            })),
-                          ]}
-                        />
-                      </div>
-                      {savingStyle === p.id && <Spinner size="small" />}
-                    </InlineStack>
-                  </IndexTable.Cell>
-                  <IndexTable.Cell>
-                    <InlineStack gap="200" blockAlign="center">
-                      <div style={{ minWidth: 170 }}>
-                        <Select
-                          label=""
-                          labelHidden
-                          disabled={savingFulfillment === p.id}
-                          value={p.fulfillmentMethod ?? "in_house"}
-                          onChange={(value) =>
-                            handleFulfillmentChange(p.id, value)
-                          }
-                          options={[
-                            { label: "Taller (in-house)", value: "in_house" },
-                            { label: "POD (externo)", value: "pod" },
-                          ]}
-                        />
-                      </div>
-                      {savingFulfillment === p.id && <Spinner size="small" />}
-                    </InlineStack>
-                  </IndexTable.Cell>
-                  <IndexTable.Cell>
-                    <InlineStack gap="200" blockAlign="center">
-                      <div style={{ minWidth: 150 }}>
-                        <Select
-                          label=""
-                          labelHidden
-                          disabled={savingTemplate === p.id}
-                          value={p.template ?? ""}
-                          onChange={(value) =>
-                            handleTemplateChange(p.id, value)
-                          }
-                          options={[
-                            { label: "Por defecto", value: "" },
-                            { label: "Canvas", value: "Canvas" },
-                            { label: "Poster", value: "Poster" },
-                            { label: "Credits", value: "Credits" },
-                          ]}
-                        />
-                      </div>
-                      {savingTemplate === p.id && <Spinner size="small" />}
-                    </InlineStack>
-                  </IndexTable.Cell>
-                  <IndexTable.Cell>
-                    <InlineStack gap="200" blockAlign="center">
-                      <button
-                        type="button"
-                        onClick={() => handleToggle(p)}
-                        disabled={toggling === p.id}
-                        aria-label={
-                          p.isActive
-                            ? "Desactivar producto"
-                            : "Activar producto"
-                        }
-                        title={
-                          p.isActive
-                            ? "Click para desactivar"
-                            : "Click para activar"
-                        }
-                        style={{
-                          background: "transparent",
-                          border: "none",
-                          padding: 0,
-                          cursor: toggling === p.id ? "wait" : "pointer",
-                          opacity: toggling === p.id ? 0.6 : 1,
-                        }}
-                      >
-                        <Badge tone={p.isActive ? "success" : "enabled"}>
-                          {p.isActive ? "Activo" : "Inactivo"}
-                        </Badge>
-                      </button>
-                      {toggling === p.id && <Spinner size="small" />}
-                    </InlineStack>
-                  </IndexTable.Cell>
-                  <IndexTable.Cell>
-                    <InlineStack gap="200" blockAlign="center">
-                      <Link href={`/admin/products/${p.id}`}>
-                        <Button variant="plain" size="slim">
-                          Ver
-                        </Button>
-                      </Link>
-                      <Button
-                        variant="plain"
-                        tone="critical"
-                        size="slim"
-                        icon={DeleteIcon}
-                        accessibilityLabel={`Eliminar ${p.displayName}`}
-                        onClick={() => setDeletingTarget(p)}
-                      />
-                    </InlineStack>
-                  </IndexTable.Cell>
-                </IndexTable.Row>
-              ))}
-            </IndexTable>
           </Card>
         )}
       </BlockStack>
