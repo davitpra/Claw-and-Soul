@@ -244,9 +244,11 @@ function PaintByNumbersStudio({
 
   return (
     <div className="container-site px-6 py-4 lg:px-10">
-      <div className="h-full grid grid-cols-1 gap-6 md:grid-cols-[1fr_minmax(0,340px)] lg:grid-cols-[1fr_minmax(0,380px)]">
+      {/* minmax(0,1fr): without it the main column can't shrink below its
+          content's min-content width, and the wide result cards squash the sidebar. */}
+      <div className="h-full grid grid-cols-1 gap-6 md:grid-cols-[minmax(0,1fr)_minmax(0,340px)] lg:grid-cols-[minmax(0,1fr)_minmax(0,380px)]">
         {/* ---- Main: preview area ---- */}
-        <main className="flex flex-col">
+        <main className="flex min-w-0 flex-col">
           {/* Preview PBN box*/}
           <section className="relative flex flex-none items-stretch justify-center ">
             <div

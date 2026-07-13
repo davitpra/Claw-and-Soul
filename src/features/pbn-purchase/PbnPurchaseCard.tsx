@@ -67,7 +67,7 @@ export function PbnPurchaseCard({
 
   if (loading) {
     return (
-      <div className="mt-4 w-full animate-pulse rounded-xl bg-white p-6">
+      <div className="w-full animate-pulse rounded-2xl bg-white p-6">
         <div className="h-40 rounded-xl bg-cream" />
       </div>
     );
@@ -105,7 +105,7 @@ export function PbnPurchaseCard({
   };
 
   return (
-    <div className="mt-4 w-full rounded-xl bg-white p-5 sm:p-6 lg:grid lg:grid-cols-2 lg:gap-x-8">
+    <div className="h-full w-full rounded-2xl bg-white p-5 sm:p-6 lg:grid lg:grid-cols-2 lg:gap-x-8">
       {/* Left column on desktop: what the kit is. */}
       <div>
         {/* Header */}

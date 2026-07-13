@@ -2,7 +2,12 @@
 
 import { RGB } from "@/lib/pbn/common";
 import type { MixRecipe } from "@/lib/pbn/paintMixing";
-import { PbnPurchaseCard, AccessoryUpsell } from "@/features/pbn-purchase";
+import {
+  PbnPurchaseCard,
+  AccessoryUpsell,
+  usePbnAccessories,
+} from "@/features/pbn-purchase";
+import { Carousel } from "@/shared/ui/Carousel";
 import { ENABLE_MIXING_GUIDE } from "../model/constants";
 import type { SavedPbnRef } from "../model/useSavePbnFlow";
 import ImageCompareSlider from "./ImageCompareSlider";
@@ -46,11 +51,13 @@ export default function PbnResultView({
   onSelectColor,
   ensureSaved,
 }: PbnResultViewProps) {
+  const { accessories, bundlePercent } = usePbnAccessories();
+
   return (
     <>
       {/* Result PBN */}
       <div className="relative flex flex-none items-stretch justify-center">
-        <div className="relative mx-auto max-w-full overflow-hidden ">
+        <div className="relative mx-auto w-full min-w-0 overflow-hidden">
           {/* Image Post  */}
           <div className="relative mx-auto w-fit border-4 rounded-2xl bg-white border-white shadow-xl">
             <PbnPostHeader menuItems={menuItems} />
@@ -90,15 +97,34 @@ export default function PbnResultView({
               selectedColor={selectedColor}
               onSelectColor={onSelectColor}
             />
-            {/* Purchase card: appears with the result, saves on demand at buy. */}
-            <PbnPurchaseCard
-              palette={palette}
-              previewUrl={compareImgs.processed}
-              ensureSaved={ensureSaved}
-            />
-            {/* Cross-sell: generic accessories (paints, brushes…). Plain line
-                items, no coupling with the generation flow. */}
-            <AccessoryUpsell />
+            {/* The kit and its accessories share one carousel: one full-width
+                slide each. Horizontal padding leaves room for the arrows, which
+                Embla renders outside the viewport. */}
+            <div className="mt-4 px-5">
+              <Carousel gap="gap-4" showDots>
+                {/* Purchase card: appears with the result, saves on demand at buy. */}
+                <div className="min-w-0 flex-[0_0_100%]">
+                  <PbnPurchaseCard
+                    palette={palette}
+                    previewUrl={compareImgs.processed}
+                    ensureSaved={ensureSaved}
+                  />
+                </div>
+                {/* Cross-sell: generic accessories (paints, brushes…). Plain line
+                    items, no coupling with the generation flow. */}
+                {accessories.map((accessory) => (
+                  <div
+                    key={accessory.productId}
+                    className="min-w-0 flex-[0_0_100%]"
+                  >
+                    <AccessoryUpsell
+                      accessory={accessory}
+                      bundlePercent={bundlePercent}
+                    />
+                  </div>
+                ))}
+              </Carousel>
+            </div>
           </div>
         </div>
       </div>
