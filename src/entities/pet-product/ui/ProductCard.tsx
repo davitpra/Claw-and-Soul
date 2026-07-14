@@ -23,6 +23,8 @@ interface ProductCardProps {
   zoomable?: boolean;
   /** Imagen a resolución completa que se carga solo al ampliar. Requiere `zoomable`. */
   zoomSrc?: string;
+  /** Se invoca si la imagen no carga, para poder mostrar un fallback en su lugar. */
+  onImageError?: () => void;
 }
 
 /**
@@ -39,6 +41,7 @@ export function ProductCard({
   href,
   zoomable = false,
   zoomSrc,
+  onImageError,
 }: ProductCardProps) {
   const badge = label ?? product.label;
   // Sin href explícito ni handle de Shopify (p. ej. items de una orden) la card no
@@ -52,6 +55,7 @@ export function ProductCard({
       imageUrl={product.img}
       imageAlt={product.name}
       naturalAspect
+      onImageError={onImageError}
       className={posterClasses}
     >
       {showBadge && badge && (

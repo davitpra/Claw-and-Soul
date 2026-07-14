@@ -18,6 +18,26 @@
   --container-max-w: 90rem;
   --container-padding-x: 1.5rem;
   --container-padding-x-lg: 2.5rem;
+
+  --animate-fade-in-up: fade-in-up 0.5s ease-out both;
+
+  @keyframes fade-in-up {
+    from {
+      opacity: 0;
+      transform: translateY(14px);
+    }
+    to {
+      opacity: 1;
+      transform: none;
+    }
+  }
+}
+
+/* Las cards de la galería entran escalonadas; sin movimiento si el usuario lo pide. */
+@media (prefers-reduced-motion: reduce) {
+  .animate-fade-in-up {
+    animation: none;
+  }
 }
 
 .container-site {

@@ -11,6 +11,12 @@ interface CardProps {
   children?: ReactNode;
   /** Muestra la imagen en su proporción natural (alto variable) en vez de recortarla a 4/5. */
   naturalAspect?: boolean;
+  /**
+   * Se invoca si la imagen no carga (404, host caído…), para que el consumidor pueda
+   * renderizar un fallback en vez del icono de imagen rota del navegador.
+   * Solo aplica con `naturalAspect` (la otra rama pinta la imagen como background).
+   */
+  onImageError?: () => void;
 }
 
 /**
@@ -18,7 +24,7 @@ interface CardProps {
  * Con `naturalAspect` el alto se adapta a la proporción real de la imagen.
  * Los `children` se posicionan con `absolute` sobre la imagen.
  */
-export function Card({ imageUrl, imageAlt, className = "", children, naturalAspect = false }: CardProps) {
+export function Card({ imageUrl, imageAlt, className = "", children, naturalAspect = false, onImageError }: CardProps) {
   return (
     <div className={`relative overflow-hidden bg-white shadow-sm ${className}`}>
       {naturalAspect ? (
@@ -26,6 +32,9 @@ export function Card({ imageUrl, imageAlt, className = "", children, naturalAspe
         <img
           src={imageUrl}
           alt={imageAlt ?? ""}
+          loading="lazy"
+          decoding="async"
+          onError={onImageError}
           className="block w-full h-auto"
         />
       ) : (
