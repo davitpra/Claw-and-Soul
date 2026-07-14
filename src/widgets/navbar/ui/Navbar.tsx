@@ -39,7 +39,7 @@ export default function Navbar() {
   }
 
   const navLinks = [
-    { name: "Paint by Numbers", href: "/paint-by-numbers" },
+    { name: "Studio", href: "/paint-by-numbers" },
     { name: "Shop", href: "/shop" },
     { name: "Contact", href: "/contact" },
   ];
