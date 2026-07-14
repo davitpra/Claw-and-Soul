@@ -6,9 +6,6 @@ import { Container } from "@/shared/ui/Container";
 import { Carousel } from "@/shared/ui/Carousel";
 import { Card } from "@/shared/ui/Card";
 
-const cardSizeClasses =
-  "flex-[0_0_72%] sm:flex-[0_0_45%] md:flex-[0_0_33%] lg:flex-[0_0_22%] min-w-0";
-
 // Aspecto de "poster flotando": ligera elevación y sombra teñida en teal al hover.
 const posterClasses =
   "transition-all duration-300 ease-out hover:-translate-y-1.5 hover:shadow-[0_22px_40px_-14px_rgba(16,54,66,0.50)]";
@@ -21,7 +18,7 @@ interface StyleCardProps {
 
 function StyleCard({ image, badgeLabel, altText }: StyleCardProps) {
   return (
-    <div className={`group ${cardSizeClasses} flex flex-col gap-4`}>
+    <div className="group flex flex-col gap-4">
       <Card
         imageUrl={image.imageUrl}
         imageAlt={image.altImage ?? undefined}
@@ -47,7 +44,7 @@ function StyleCard({ image, badgeLabel, altText }: StyleCardProps) {
 
 function SkeletonCard() {
   return (
-    <div className={`${cardSizeClasses} overflow-hidden`}>
+    <div className="overflow-hidden">
       <div className="aspect-4/5 w-full animate-pulse bg-slate-200" />
       <div className="p-3 space-y-2">
         <div className="h-3 w-3/4 mx-auto animate-pulse bg-slate-200 rounded" />
@@ -94,7 +91,7 @@ export default function CollectionSection({
           </h2>
         </div>
 
-        <Carousel gap="gap-8">
+        <Carousel gap="gap-8" perView={4}>
           {isLoading
             ? Array.from({ length: 5 }).map((_, i) => <SkeletonCard key={i} />)
             : images.map((image) => (

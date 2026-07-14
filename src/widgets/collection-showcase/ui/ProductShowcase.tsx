@@ -37,16 +37,20 @@ export default function ProductShowcase({
   // Con más de 4 productos usamos carrusel; con 4 o menos, una grilla centrada.
   const useCarousel = products.length > 4;
 
-  // Lista de tarjetas reutilizada por el carrusel y la grilla centrada.
-  // El ancho del item lo define este wrapper (la tarjeta es agnóstica al ancho).
-  const cards = products.map((product) => (
-    <div
-      key={product.productRefId ?? product.shopifyHandle}
-      className="flex-[0_0_72%] sm:flex-[0_0_45%] md:flex-[0_0_33%] lg:flex-[0_0_22%] min-w-0 self-center"
-    >
-      <ProductCard product={product} label={label ?? "New"} />
-    </div>
-  ));
+  // Lista de tarjetas reutilizada por el carrusel y la grilla centrada. Dentro del
+  // carrusel el ancho lo define `perView`; en la grilla lo define `className`.
+  const renderCards = (className = "") =>
+    products.map((product) => (
+      <div
+        key={product.productRefId ?? product.shopifyHandle}
+        className={`min-w-0 self-center ${className}`}
+      >
+        <ProductCard product={product} label={label ?? "New"} />
+      </div>
+    ));
+
+  // La grilla solo se ve en desktop (lg+), donde caben hasta 4 tarjetas por fila.
+  const gridCardWidth = "lg:w-[calc((100%-6rem)/4)]";
 
   return (
     <section className="py-20 bg-white">
@@ -67,12 +71,9 @@ export default function ProductShowcase({
         {error && <p className="text-center text-slate-dark/60">{error}</p>}
 
         {!error && isLoading && (
-          <Carousel gap="gap-8">
+          <Carousel gap="gap-8" perView={4}>
             {Array.from({ length: 4 }).map((_, i) => (
-              <div
-                key={i}
-                className="flex-[0_0_72%] sm:flex-[0_0_45%] md:flex-[0_0_33%] lg:flex-[0_0_22%] min-w-0 overflow-hidden animate-pulse"
-              >
+              <div key={i} className="overflow-hidden animate-pulse">
                 <div className="aspect-4/5 w-full bg-slate-dark/10" />
                 <div className="p-3 space-y-2">
                   <div className="h-3 w-3/4 mx-auto bg-slate-dark/10 rounded" />
@@ -84,19 +85,23 @@ export default function ProductShowcase({
         )}
 
         {!error && !isLoading && useCarousel && (
-          <Carousel gap="gap-8">{cards}</Carousel>
+          <Carousel gap="gap-8" perView={4}>
+            {renderCards()}
+          </Carousel>
         )}
 
         {!error && !isLoading && !useCarousel && (
           <>
             {/* Mobile y tablet: siempre carrusel */}
             <div className="lg:hidden">
-              <Carousel gap="gap-8">{cards}</Carousel>
+              <Carousel gap="gap-8" perView={4}>
+                {renderCards()}
+              </Carousel>
             </div>
 
             {/* Desktop: grilla centrada */}
             <div className="hidden lg:flex flex-wrap justify-center gap-8">
-              {cards}
+              {renderCards(gridCardWidth)}
             </div>
           </>
         )}

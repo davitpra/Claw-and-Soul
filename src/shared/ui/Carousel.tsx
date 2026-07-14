@@ -10,7 +10,25 @@ interface CarouselProps {
   showDots?: boolean;
   autoplayMs?: number;
   loop?: boolean;
+  /**
+   * Slides visibles en desktop (lg+). Cuando se define, el carrusel dimensiona
+   * las slides él mismo (el hijo no necesita clases de ancho) para que entren
+   * exactamente `perView` sin recorte. Asume `gap-8` (2rem) entre slides.
+   */
+  perView?: 3 | 4 | 5;
 }
+
+// Ancho de cada slide. Móvil/tablet dejan asomar la siguiente; en desktop entran
+// exactamente `perView`: (100% - gaps) / perView, asumiendo gap-8 (2rem).
+// Clases completas y estáticas para que Tailwind las detecte al escanear.
+const slideSizingByPerView: Record<
+  NonNullable<CarouselProps["perView"]>,
+  string
+> = {
+  3: "[&>*]:min-w-0 [&>*]:flex-[0_0_72%] sm:[&>*]:flex-[0_0_45%] md:[&>*]:flex-[0_0_33%] lg:[&>*]:flex-[0_0_calc((100%-4rem)/3)]",
+  4: "[&>*]:min-w-0 [&>*]:flex-[0_0_72%] sm:[&>*]:flex-[0_0_45%] md:[&>*]:flex-[0_0_33%] lg:[&>*]:flex-[0_0_calc((100%-6rem)/4)]",
+  5: "[&>*]:min-w-0 [&>*]:flex-[0_0_72%] sm:[&>*]:flex-[0_0_45%] md:[&>*]:flex-[0_0_33%] lg:[&>*]:flex-[0_0_calc((100%-8rem)/5)]",
+};
 
 export function Carousel({
   children,
@@ -19,8 +37,11 @@ export function Carousel({
   showDots = false,
   autoplayMs = 0,
   loop = false,
+  perView,
 }: CarouselProps) {
   const [emblaRef, emblaApi] = useEmblaCarousel({ align: "start", loop });
+
+  const slideSizing = perView ? slideSizingByPerView[perView] : "";
   const [canScrollPrev, setCanScrollPrev] = useState(false);
   const [canScrollNext, setCanScrollNext] = useState(true);
   const [snaps, setSnaps] = useState<number[]>([]);
@@ -80,7 +101,9 @@ export function Carousel({
       )}
 
       <div className="overflow-hidden py-4" ref={emblaRef}>
-        <div className={`flex ${gap} align-center`}>{children}</div>
+        <div className={`flex ${gap} ${slideSizing} align-center`}>
+          {children}
+        </div>
       </div>
 
       {showArrows && (
