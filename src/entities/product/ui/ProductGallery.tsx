@@ -3,6 +3,7 @@
 import { ShopifyProduct } from "@/lib/shopify";
 import Image from "next/image";
 import { Carousel } from "@/shared/ui/Carousel";
+import { ImageZoom } from "@/shared/ui/ImageZoom";
 
 interface ProductGalleryProps {
   product: ShopifyProduct;
@@ -45,31 +46,41 @@ export default function ProductGallery({
                 key={src}
                 className="flex-[0_0_100%] min-w-0 flex items-center justify-center px-6 md:px-10 pt-6 pb-12"
               >
-                <Image
-                  src={src}
+                <ImageZoom
+                  zoomSrc={src}
                   alt={product.title}
-                  width={0}
-                  height={0}
-                  sizes={sizes}
-                  className={`${imageClassName} ${i === 0 ? hoverClassName : ""}`}
                   style={i === 0 ? firstImageStyle : undefined}
-                  priority={i === 0}
-                />
+                >
+                  <Image
+                    src={src}
+                    alt={product.title}
+                    width={0}
+                    height={0}
+                    sizes={sizes}
+                    className={`${imageClassName} ${i === 0 ? hoverClassName : ""}`}
+                    priority={i === 0}
+                  />
+                </ImageZoom>
               </div>
             ))}
           </Carousel>
         ) : (
           <div className="flex-[0_0_100%] min-w-0 flex items-center justify-center px-6 md:px-10 pt-6 pb-12">
-            <Image
-              src={primaryImage}
+            <ImageZoom
+              zoomSrc={primaryImage}
               alt={product.title}
-              width={0}
-              height={0}
-              sizes={sizes}
-              className={`${imageClassName} ${hoverClassName}`}
               style={firstImageStyle}
-              priority
-            />
+            >
+              <Image
+                src={primaryImage}
+                alt={product.title}
+                width={0}
+                height={0}
+                sizes={sizes}
+                className={`${imageClassName} ${hoverClassName}`}
+                priority
+              />
+            </ImageZoom>
           </div>
         )}
       </div>

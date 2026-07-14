@@ -1,6 +1,7 @@
 import { ReactNode } from "react";
 import Link from "next/link";
 import { Card } from "@/shared/ui/Card";
+import { ImageZoom } from "@/shared/ui/ImageZoom";
 import { Product } from "@/entities/pet-product/model/types";
 
 // Aspecto de "poster flotando": ligera elevación y sombra teñida en teal al hover.
@@ -18,6 +19,10 @@ interface ProductCardProps {
   showBadge?: boolean;
   /** Sobreescribe el href del link de la imagen. Por defecto: /product/{shopifyHandle}. */
   href?: string;
+  /** Permite ampliar la imagen al hacer click. Se ignora si la card enlaza a un producto. */
+  zoomable?: boolean;
+  /** Imagen a resolución completa que se carga solo al ampliar. Requiere `zoomable`. */
+  zoomSrc?: string;
 }
 
 /**
@@ -32,6 +37,8 @@ export function ProductCard({
   cta,
   showBadge = true,
   href,
+  zoomable = false,
+  zoomSrc,
 }: ProductCardProps) {
   const badge = label ?? product.label;
   // Sin href explícito ni handle de Shopify (p. ej. items de una orden) la card no
@@ -61,6 +68,10 @@ export function ProductCard({
         <Link href={linkHref} className="block">
           {poster}
         </Link>
+      ) : zoomable ? (
+        <ImageZoom alt={product.name} zoomSrc={zoomSrc}>
+          {poster}
+        </ImageZoom>
       ) : (
         poster
       )}

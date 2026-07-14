@@ -7,6 +7,7 @@ import { useAuthFetch } from "@/hooks/useAuthFetch";
 import { isNotFound } from "@/shared/lib/http";
 import Accordion from "@/shared/ui/Accordion";
 import { ConfirmDialog } from "@/shared/ui/ConfirmDialog";
+import { ImageZoom } from "@/shared/ui/ImageZoom";
 import {
   formatOrderDate,
   generationStatusBadge,
@@ -173,12 +174,14 @@ export function GenerationDetail({ id }: Props) {
         <div className="lg:col-span-7">
           <div className="flex items-center justify-center px-4 pt-4 pb-10 md:px-8">
             {isReady && imageUrl ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img
-                src={imageUrl}
-                alt={petName}
-                className="h-auto w-full bg-white shadow-[0_14px_32px_-12px_rgba(16,54,66,0.40)] transition-all duration-300 ease-out hover:-translate-y-1.5 hover:shadow-[0_22px_40px_-14px_rgba(16,54,66,0.50)]"
-              />
+              <ImageZoom alt={petName}>
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={imageUrl}
+                  alt={petName}
+                  className="h-auto w-full bg-white shadow-[0_14px_32px_-12px_rgba(16,54,66,0.40)] transition-all duration-300 ease-out hover:-translate-y-1.5 hover:shadow-[0_22px_40px_-14px_rgba(16,54,66,0.50)]"
+                />
+              </ImageZoom>
             ) : isFailed ? (
               <div className="flex aspect-4/5 w-full flex-col items-center justify-center gap-3 rounded-xl bg-cream text-center text-text-muted">
                 <span className="material-symbols-outlined text-[40px] text-red-500">

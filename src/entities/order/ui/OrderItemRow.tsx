@@ -15,16 +15,23 @@ interface OrderItemRowProps {
  * Pensado para componerse dentro de una `<ul>` con layout de grilla.
  */
 export function OrderItemRow({ item }: OrderItemRowProps) {
+  const thumb = itemThumb(item);
   const product: Product = {
     name: item.title,
     desc: "",
     price: "",
-    img: cloudinaryThumb(itemThumb(item), 480),
+    img: cloudinaryThumb(thumb, 480),
   };
 
   return (
     <li className="min-w-0">
-      <ProductCard product={product} showPrice={false} showBadge={true} />
+      <ProductCard
+        product={product}
+        showPrice={false}
+        showBadge={true}
+        zoomable={Boolean(thumb)}
+        zoomSrc={thumb || undefined}
+      />
     </li>
   );
 }

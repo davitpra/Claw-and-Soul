@@ -23,6 +23,7 @@
     "next": "16.1.1",
     "react": "19.2.3",
     "react-dom": "19.2.3",
+    "react-medium-image-zoom": "^5.4.8",
     "recharts": "^3.8.1",
     "spectral.js": "^3.0.0",
     "vaul": "^1.1.2"
