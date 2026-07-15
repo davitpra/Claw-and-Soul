@@ -107,7 +107,7 @@ export default function CollectionSection({
           )}
         </div>
 
-        <Carousel gap="gap-8" perView={4}>
+        <Carousel gap="gap-8" perView={4} mobileOne>
           {isLoading
             ? Array.from({ length: 5 }).map((_, i) => <SkeletonCard key={i} />)
             : images.map((image) => (

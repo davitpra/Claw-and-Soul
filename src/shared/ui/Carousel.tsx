@@ -16,18 +16,30 @@ interface CarouselProps {
    * exactamente `perView` sin recorte. Asume `gap-8` (2rem) entre slides.
    */
   perView?: 3 | 4 | 5;
+  /**
+   * En móvil (base) muestra una sola slide a ancho completo en vez de dejar
+   * asomar la siguiente. Requiere `perView`. Tablet/desktop no cambian.
+   */
+  mobileOne?: boolean;
 }
 
-// Ancho de cada slide. Móvil/tablet dejan asomar la siguiente; en desktop entran
-// exactamente `perView`: (100% - gaps) / perView, asumiendo gap-8 (2rem).
+// Ancho de cada slide de tablet en adelante; en desktop entran exactamente
+// `perView`: (100% - gaps) / perView, asumiendo gap-8 (2rem).
 // Clases completas y estáticas para que Tailwind las detecte al escanear.
 const slideSizingByPerView: Record<
   NonNullable<CarouselProps["perView"]>,
   string
 > = {
-  3: "[&>*]:min-w-0 [&>*]:flex-[0_0_72%] sm:[&>*]:flex-[0_0_45%] md:[&>*]:flex-[0_0_33%] lg:[&>*]:flex-[0_0_calc((100%-4rem)/3)]",
-  4: "[&>*]:min-w-0 [&>*]:flex-[0_0_72%] sm:[&>*]:flex-[0_0_45%] md:[&>*]:flex-[0_0_33%] lg:[&>*]:flex-[0_0_calc((100%-6rem)/4)]",
-  5: "[&>*]:min-w-0 [&>*]:flex-[0_0_72%] sm:[&>*]:flex-[0_0_45%] md:[&>*]:flex-[0_0_33%] lg:[&>*]:flex-[0_0_calc((100%-8rem)/5)]",
+  3: "sm:[&>*]:flex-[0_0_45%] md:[&>*]:flex-[0_0_33%] lg:[&>*]:flex-[0_0_calc((100%-4rem)/3)]",
+  4: "sm:[&>*]:flex-[0_0_45%] md:[&>*]:flex-[0_0_33%] lg:[&>*]:flex-[0_0_calc((100%-6rem)/4)]",
+  5: "sm:[&>*]:flex-[0_0_45%] md:[&>*]:flex-[0_0_33%] lg:[&>*]:flex-[0_0_calc((100%-8rem)/5)]",
+};
+
+// Ancho base (móvil). Por defecto deja asomar la siguiente slide (72%);
+// con `mobileOne` ocupa el ancho completo para ver una sola a la vez.
+const mobileSizing = {
+  peek: "[&>*]:min-w-0 [&>*]:flex-[0_0_72%]",
+  full: "[&>*]:min-w-0 [&>*]:flex-[0_0_100%]",
 };
 
 export function Carousel({
@@ -38,10 +50,13 @@ export function Carousel({
   autoplayMs = 0,
   loop = false,
   perView,
+  mobileOne = false,
 }: CarouselProps) {
   const [emblaRef, emblaApi] = useEmblaCarousel({ align: "start", loop });
 
-  const slideSizing = perView ? slideSizingByPerView[perView] : "";
+  const slideSizing = perView
+    ? `${mobileOne ? mobileSizing.full : mobileSizing.peek} ${slideSizingByPerView[perView]}`
+    : "";
   const [canScrollPrev, setCanScrollPrev] = useState(false);
   const [canScrollNext, setCanScrollNext] = useState(true);
   const [snaps, setSnaps] = useState<number[]>([]);
