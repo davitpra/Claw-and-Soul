@@ -33,9 +33,24 @@
   }
 }
 
+/* El track duplica su contenido 2×; -50% deja el loop sin salto visible. */
+@keyframes marquee {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+@utility animate-marquee {
+  animation: marquee 45s linear infinite;
+}
+
 /* Las cards de la galería entran escalonadas; sin movimiento si el usuario lo pide. */
 @media (prefers-reduced-motion: reduce) {
-  .animate-fade-in-up {
+  .animate-fade-in-up,
+  .animate-marquee {
     animation: none;
   }
 }

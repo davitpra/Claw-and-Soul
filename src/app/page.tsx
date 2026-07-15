@@ -5,6 +5,7 @@ import { CollectionShowcase } from "@/widgets/collection-showcase";
 import { Reviews } from "@/widgets/reviews";
 import { NewCollection } from "@/widgets/collection";
 import { AIProcess } from "@/widgets/ai-process";
+import { HomeStyleGallery } from "@/widgets/style-gallery";
 
 export default async function Home() {
   return (
@@ -14,6 +15,7 @@ export default async function Home() {
       <main className="flex-1">
         <Hero />
         <NewCollection />
+        <HomeStyleGallery />
         <CollectionShowcase handle="feature-collection" />
         <AIProcess />
         <Reviews />
