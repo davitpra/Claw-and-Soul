@@ -6,7 +6,7 @@ import ProductFAQ from "@/widgets/product-faq/ui/ProductFAQ";
 import { ProductTemplateProps } from "./ProductPageTemplate";
 import { RoomView } from "@/widgets/room-view";
 import { Reviews } from "@/widgets/reviews";
-import { ProductShowcase } from "@/widgets/collection-showcase";
+import { RelatedProductsDeck } from "@/widgets/related-gallery";
 import { getRelatedProducts } from "@/entities/product/lib/getRelatedProducts";
 
 export default function CanvasTemplate({
@@ -38,7 +38,10 @@ export default function CanvasTemplate({
 
       <RoomView product={product} selectedVariantId={selectedVariantId} />
       {relatedProducts.length > 0 && (
-        <ProductShowcase products={relatedProducts} heading="You may also like" />
+        <RelatedProductsDeck
+          products={relatedProducts}
+          heading="You may also like"
+        />
       )}
       <Reviews />
       <ProductFAQ faqs={faqs} />

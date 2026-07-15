@@ -6,6 +6,7 @@ import { Reviews } from "@/widgets/reviews";
 import { NewCollection } from "@/widgets/collection";
 import { AIProcess } from "@/widgets/ai-process";
 import { HomeStyleGallery } from "@/widgets/style-gallery";
+import { StudioShowcase } from "@/widgets/studio-showcase";
 
 export default async function Home() {
   return (
@@ -18,6 +19,7 @@ export default async function Home() {
         <HomeStyleGallery />
         <CollectionShowcase handle="feature-collection" />
         <AIProcess />
+        <StudioShowcase />
         <Reviews />
       </main>
 
