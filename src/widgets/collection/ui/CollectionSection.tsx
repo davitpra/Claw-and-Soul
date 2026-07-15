@@ -59,6 +59,8 @@ interface CollectionSectionProps {
   isLoading: boolean;
   error: string | null;
   title: string;
+  eyebrow?: string | null;
+  description?: string | null;
   ctaHref?: string;
   ctaLabel?: string;
   badgeLabel?: string;
@@ -71,6 +73,8 @@ export default function CollectionSection({
   isLoading,
   error,
   title,
+  eyebrow,
+  description,
   ctaHref,
   ctaLabel,
   badgeLabel,
@@ -82,13 +86,25 @@ export default function CollectionSection({
   return (
     <section className={`py-20 ${background}`}>
       <Container>
-        <div className="flex flex-col gap-1">
-          <span className="text-center text-primary font-bold tracking-wider uppercase text-md">
-            Choose Your Style
-          </span>
-          <h2 className="font-display text-4xl font-black text-[#103642] leading-[1.1] tracking-tight text-center mb-10">
+        <div className="flex flex-col items-center gap-5 mb-12">
+          {eyebrow && (
+            <span className="inline-flex items-center gap-2 rounded-full border border-[#E0DED9] bg-white px-4 py-1.5 text-primary">
+              <span className="material-symbols-outlined text-[16px]">
+                pets
+              </span>
+              <span className="text-xs font-bold tracking-wider uppercase">
+                {eyebrow}
+              </span>
+            </span>
+          )}
+          <h2 className="font-display text-4xl md:text-5xl font-black text-text-main leading-[1.1] tracking-tight text-center max-w-2xl whitespace-pre-line">
             {title}
           </h2>
+          {description && (
+            <p className="text-center text-text-muted max-w-xl leading-relaxed">
+              {description}
+            </p>
+          )}
         </div>
 
         <Carousel gap="gap-8" perView={4}>

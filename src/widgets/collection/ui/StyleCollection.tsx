@@ -14,9 +14,11 @@ export default function StyleCollection({
   handle,
   styleId: styleIdProp,
 }: StyleCollectionProps) {
-  const { styleId: derivedStyleId, isLoading: styleLoading } = useProductStyle(
-    styleIdProp ? null : (handle ?? null),
-  );
+  const {
+    styleId: derivedStyleId,
+    styleName,
+    isLoading: styleLoading,
+  } = useProductStyle(styleIdProp ? null : (handle ?? null));
 
   const resolvedStyleId = styleIdProp ?? derivedStyleId;
   const {
@@ -34,6 +36,12 @@ export default function StyleCollection({
       isLoading={isLoading}
       error={error}
       title={title}
+      eyebrow={styleName}
+      description={
+        styleName
+          ? `Our ${styleName} style captures your pet's unique personality with elegant, hand-illustrated detail and a timeless finish.`
+          : null
+      }
     />
   );
 }
