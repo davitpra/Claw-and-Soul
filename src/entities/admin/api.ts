@@ -365,6 +365,7 @@ export interface AdminStyle {
   name: string;
   displayName: string;
   category: string;
+  difficulty: "easy" | "medium" | "challenging" | null;
   isActive: boolean;
   createdAt: string;
   updatedAt: string;

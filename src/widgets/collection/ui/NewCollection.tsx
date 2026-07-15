@@ -7,6 +7,12 @@ import CollectionSection from "./CollectionSection";
 
 const COLLECTION_HANDLE = "new-collection";
 
+const DIFFICULTY_LABELS: Record<string, string> = {
+  easy: "Easy",
+  medium: "Medium",
+  challenging: "Challenging",
+};
+
 export default function NewCollection() {
   // 1. Producto(s) dentro de la colección Shopify "new-collection".
   const {
@@ -20,6 +26,7 @@ export default function NewCollection() {
   const {
     styleId,
     styleName,
+    difficulty,
     isLoading: styleLoading,
   } = useProductStyle(productHandle);
 
@@ -38,7 +45,7 @@ export default function NewCollection() {
       description={description}
       ctaHref={`/product/${productHandle}`}
       ctaLabel="Paint yours!"
-      badgeLabel="New"
+      badgeLabel={difficulty ? DIFFICULTY_LABELS[difficulty] : undefined}
       background="bg-white"
       altText={false}
     />

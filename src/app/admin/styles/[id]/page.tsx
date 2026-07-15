@@ -357,6 +357,7 @@ export default function AdminStyleDetailPage() {
         name: trimmedName !== style.name ? trimmedName : undefined,
         displayName,
         category,
+        difficulty: style.difficulty,
       });
       setStyle((prev) => (prev ? { ...prev, ...updated } : updated));
     } catch (e: unknown) {
@@ -995,6 +996,26 @@ export default function AdminStyleDetailPage() {
                     value={category}
                     onChange={setCategory}
                     autoComplete="off"
+                  />
+                  {/* anade un select de dificultad: easy, medium, challenging */}
+                  <Select
+                    label="Dificultad"
+                    options={[
+                      { label: "Fácil", value: "easy" },
+                      { label: "Media", value: "medium" },
+                      { label: "Difícil", value: "challenging" },
+                    ]}
+                    value={style.difficulty ?? "medium"}
+                    onChange={(v) => {
+                      setStyle((prev) =>
+                        prev
+                          ? {
+                              ...prev,
+                              difficulty: v as AdminStyle["difficulty"],
+                            }
+                          : prev,
+                      );
+                    }}
                   />
                 </FormLayout>
                 <InlineStack align="end">

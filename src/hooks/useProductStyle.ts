@@ -2,9 +2,12 @@ import { useEffect, useState } from "react";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001/api";
 
+type StyleDifficulty = "easy" | "medium" | "challenging";
+
 interface UseProductStyleResult {
   styleId: string | null;
   styleName: string | null;
+  difficulty: StyleDifficulty | null;
   isLoading: boolean;
   error: string | null;
 }
@@ -12,6 +15,7 @@ interface UseProductStyleResult {
 export function useProductStyle(handle: string | null): UseProductStyleResult {
   const [styleId, setStyleId] = useState<string | null>(null);
   const [styleName, setStyleName] = useState<string | null>(null);
+  const [difficulty, setDifficulty] = useState<StyleDifficulty | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -19,6 +23,7 @@ export function useProductStyle(handle: string | null): UseProductStyleResult {
     if (!handle) {
       setStyleId(null);
       setStyleName(null);
+      setDifficulty(null);
       setError(null);
       return;
     }
@@ -40,6 +45,7 @@ export function useProductStyle(handle: string | null): UseProductStyleResult {
         if (cancelled) return;
         setStyleId(style?.id ?? null);
         setStyleName(style?.displayName ?? null);
+        setDifficulty(style?.difficulty ?? null);
       })
       .catch((err) => {
         if (cancelled) return;
@@ -47,6 +53,7 @@ export function useProductStyle(handle: string | null): UseProductStyleResult {
         setError("Failed to load product style.");
         setStyleId(null);
         setStyleName(null);
+        setDifficulty(null);
       })
       .finally(() => {
         if (!cancelled) setIsLoading(false);
@@ -57,5 +64,5 @@ export function useProductStyle(handle: string | null): UseProductStyleResult {
     };
   }, [handle]);
 
-  return { styleId, styleName, isLoading, error };
+  return { styleId, styleName, difficulty, isLoading, error };
 }
