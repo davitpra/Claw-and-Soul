@@ -28,6 +28,22 @@ export interface ShopifyVariant {
   } | null;
 }
 
+/** Producto referenciado desde un metafield list.product_reference. */
+export interface ShopifyProductReference {
+  id: string;
+  title: string;
+  handle: string;
+  images: { edges: { node: ShopifyImage }[] };
+  priceRange: { minVariantPrice: ShopifyPrice };
+}
+
+/** Metafield list.product_reference resuelto con `references`. */
+export interface ShopifyProductReferences {
+  references?: {
+    edges: { node: ShopifyProductReference }[];
+  } | null;
+}
+
 export interface ShopifyProduct {
   id: string;
   title: string;
@@ -38,19 +54,10 @@ export interface ShopifyProduct {
   thankYouImage?: {
     reference?: { image?: ShopifyImage } | null;
   } | null;
-  relatedProducts?: {
-    references?: {
-      edges: {
-        node: {
-          id: string;
-          title: string;
-          handle: string;
-          images: { edges: { node: ShopifyImage }[] };
-          priceRange: { minVariantPrice: ShopifyPrice };
-        };
-      }[];
-    } | null;
-  } | null;
+  /** Curados en Shopify vía Search & Discovery (related_products). */
+  relatedProducts?: ShopifyProductReferences | null;
+  /** Curados a mano en el metafield custom.similar_products. */
+  similarProducts?: ShopifyProductReferences | null;
   priceRange?: {
     minVariantPrice: ShopifyPrice;
   };

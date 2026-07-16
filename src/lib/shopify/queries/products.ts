@@ -86,6 +86,33 @@ export const GET_PRODUCT = `
         }
       }
     }
+    similarProducts: metafield(namespace: "custom", key: "similar_products") {
+      references(first: 12) {
+        edges {
+          node {
+            ... on Product {
+              id
+              title
+              handle
+              images(first: 1) {
+                edges {
+                  node {
+                    url
+                    altText
+                  }
+                }
+              }
+              priceRange {
+                minVariantPrice {
+                  amount
+                  currencyCode
+                }
+              }
+            }
+          }
+        }
+      }
+    }
     images(first: 10) {
       edges {
         node {
