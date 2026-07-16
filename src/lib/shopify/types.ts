@@ -33,10 +33,18 @@ export interface ShopifyProductReference {
   id: string;
   title: string;
   handle: string;
-  /** Formato del producto (Canvas, Poster…); solo lo pide el query de related. */
-  productType?: string;
+  /** Solo lo piden los queries que muestran la referencia como card de compra. */
+  description?: string;
   images: { edges: { node: ShopifyImage }[] };
   priceRange: { minVariantPrice: ShopifyPrice };
+  /** Primera variante, para add-to-cart directo; solo la pide el query de related. */
+  variants?: {
+    edges: {
+      node: Pick<ShopifyVariant, "id" | "title" | "availableForSale"> & {
+        price?: ShopifyPrice;
+      };
+    }[];
+  };
 }
 
 /** Metafield list.product_reference resuelto con `references`. */

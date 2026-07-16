@@ -7,9 +7,11 @@ import { ProductTemplateProps } from "./ProductPageTemplate";
 import { RoomView } from "@/widgets/room-view";
 import { Reviews } from "@/widgets/reviews";
 import { SimilarProductsDeck } from "@/widgets/similar-gallery";
-import { RelatedProducts } from "@/widgets/related-products";
+import {
+  RelatedProducts,
+  getRelatedAccessories,
+} from "@/widgets/related-products";
 import { getSimilarProducts } from "@/entities/product/lib/getSimilarProducts";
-import { getRelatedProducts } from "@/entities/product/lib/getRelatedProducts";
 
 export default function CanvasTemplate({
   product,
@@ -21,7 +23,7 @@ export default function CanvasTemplate({
   faqs,
 }: ProductTemplateProps) {
   const similarProducts = getSimilarProducts(product);
-  const relatedProducts = getRelatedProducts(product);
+  const relatedAccessories = getRelatedAccessories(product);
 
   return (
     <>
@@ -38,8 +40,8 @@ export default function CanvasTemplate({
       </div>
 
       <StyleCollection handle={handle} />
-      {relatedProducts.length > 0 && (
-        <RelatedProducts products={relatedProducts} />
+      {relatedAccessories.length > 0 && (
+        <RelatedProducts accessories={relatedAccessories} />
       )}
 
       {similarProducts.length > 0 && (

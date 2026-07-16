@@ -67,7 +67,7 @@ export const GET_PRODUCT = `
               id
               title
               handle
-              productType
+              description
               images(first: 1) {
                 edges {
                   node {
@@ -80,6 +80,19 @@ export const GET_PRODUCT = `
                 minVariantPrice {
                   amount
                   currencyCode
+                }
+              }
+              variants(first: 1) {
+                edges {
+                  node {
+                    id
+                    title
+                    availableForSale
+                    price {
+                      amount
+                      currencyCode
+                    }
+                  }
                 }
               }
             }

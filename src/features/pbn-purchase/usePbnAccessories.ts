@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { shopifyFetch, GRAPHQL_QUERIES } from "@/lib/shopify";
 import { getCollectionProducts } from "@/lib/shopify/actions/collections";
-import type { ShopifyProduct } from "@/lib/shopify/types";
+import type { ShopifyPrice, ShopifyVariant } from "@/lib/shopify/types";
 import { usePbnProduct } from "./usePbnProduct";
 
 /**
@@ -27,7 +27,27 @@ export interface AccessoryCard {
   available: boolean;
 }
 
-function toCard(node: ShopifyProduct): AccessoryCard | null {
+/**
+ * Forma estructural mínima que necesita `toAccessoryCard`; la cumplen tanto
+ * `ShopifyProduct` como `ShopifyProductReference` (con variantes pedidas).
+ */
+interface AccessorySource {
+  id: string;
+  title: string;
+  handle: string;
+  description?: string;
+  images: { edges: { node: { url: string } }[] };
+  variants?: {
+    edges: {
+      node: Pick<ShopifyVariant, "id" | "title" | "availableForSale"> & {
+        price?: ShopifyPrice;
+      };
+    }[];
+  };
+  priceRange?: { minVariantPrice: ShopifyPrice };
+}
+
+export function toAccessoryCard(node: AccessorySource): AccessoryCard | null {
   const variant = node.variants?.edges[0]?.node;
   if (!variant) return null; // no purchasable variant → skip
   const price = variant.price ?? node.priceRange?.minVariantPrice;
@@ -86,7 +106,9 @@ export function usePbnAccessories(): UsePbnAccessoriesResult {
         if (cancelled) return;
         const nodes = collection?.products.edges.map((e) => e.node) ?? [];
         setAccessories(
-          nodes.map(toCard).filter((c): c is AccessoryCard => c !== null),
+          nodes
+            .map(toAccessoryCard)
+            .filter((c): c is AccessoryCard => c !== null),
         );
       })
       .catch((err) => {
