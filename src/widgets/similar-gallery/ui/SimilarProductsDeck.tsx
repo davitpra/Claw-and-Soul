@@ -1,15 +1,16 @@
 "use client";
 
+import { ReactNode } from "react";
 import { useRouter } from "next/navigation";
 import { Container } from "@/shared/ui/Container";
 import { DeckGallery, DeckGalleryItem } from "@/shared/ui/DeckGallery";
 import { Product } from "@/entities/pet-product/model/types";
 
-interface RelatedProductsDeckProps {
+interface SimilarProductsDeckProps {
   /** Productos ya resueltos (p. ej. de `getRelatedProducts`). */
   products: Product[];
-  /** Título de la sección. */
-  heading: string;
+  /** Título de la sección; por defecto el editorial en dos líneas. */
+  heading?: ReactNode;
   /** Descripción opcional bajo el título. */
   description?: string | null;
 }
@@ -17,14 +18,14 @@ interface RelatedProductsDeckProps {
 /**
  * Sección de productos relacionados presentada como mazo de cartas
  * (DeckGallery): se arrastra para barajar y un click en la carta frontal
- * navega al detalle del producto. Fondo oscuro para que el abanico destaque,
+ * navega al detalle del producto. Fondo cream con heading editorial navy,
  * al estilo gallery18 de shadcnblocks.
  */
-export default function RelatedProductsDeck({
+export default function SimilarProductsDeck({
   products,
   heading,
   description,
-}: RelatedProductsDeckProps) {
+}: SimilarProductsDeckProps) {
   const router = useRouter();
 
   const items: DeckGalleryItem[] = products.map((product) => ({
@@ -36,13 +37,19 @@ export default function RelatedProductsDeck({
   if (items.length === 0) return null;
 
   return (
-    <section className="py-20 bg-slate-dark text-white/90">
+    <section className="py-20 bg-cream text-slate-dark">
       <Container>
         <div className="flex flex-col items-center gap-4 mb-12 text-center">
-          <h2 className="font-display font-black text-white md:text-4xl">
-            {heading}
+          <h2 className="font-display text-4xl md:text-5xl font-black text-text-main leading-[1.1] tracking-tight text-center max-w-2xl whitespace-pre-line">
+            {heading ?? (
+              <>
+                More souls,
+                <br />
+                framed.
+              </>
+            )}
           </h2>
-          <p className="text-white/60 max-w-xl">
+          <p className="text-slate-dark/60 max-w-xl">
             {description ?? "Drag to shuffle the deck, tap a card to view it"}
           </p>
         </div>
