@@ -33,6 +33,8 @@ export interface ShopifyProductReference {
   id: string;
   title: string;
   handle: string;
+  /** Formato del producto (Canvas, Poster…); solo lo pide el query de related. */
+  productType?: string;
   images: { edges: { node: ShopifyImage }[] };
   priceRange: { minVariantPrice: ShopifyPrice };
 }

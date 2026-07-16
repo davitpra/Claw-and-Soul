@@ -29,6 +29,7 @@ export function mapProductReferences(
         img:
           node.images.edges[0]?.node.url ??
           "https://placehold.co/400x300?text=Product",
+        tag: node.productType || undefined,
         shopifyHandle: node.handle,
         productRefId: node.id,
       } satisfies Product;

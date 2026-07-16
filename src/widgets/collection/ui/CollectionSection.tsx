@@ -1,5 +1,6 @@
 "use client";
 
+import { ReactNode } from "react";
 import Link from "next/link";
 import { StyleImage } from "@/hooks/useStyleImages";
 import { Container } from "@/shared/ui/Container";
@@ -10,15 +11,23 @@ import { Card } from "@/shared/ui/Card";
 const posterClasses =
   "transition-all duration-300 ease-out hover:-translate-y-1.5 hover:shadow-[0_22px_40px_-14px_rgba(16,54,66,0.50)]";
 
+/** Datos mínimos que necesita cada card; `StyleImage` los cumple. */
+export type CollectionCardImage = Pick<
+  StyleImage,
+  "id" | "imageUrl" | "altImage"
+>;
+
 interface StyleCardProps {
-  image: StyleImage;
+  image: CollectionCardImage;
   badgeLabel?: string;
   altText?: boolean;
+  href?: string;
+  footer?: ReactNode;
 }
 
-function StyleCard({ image, badgeLabel, altText }: StyleCardProps) {
-  return (
-    <div className="group flex flex-col gap-4">
+function StyleCard({ image, badgeLabel, altText, href, footer }: StyleCardProps) {
+  const content = (
+    <>
       <Card
         imageUrl={image.imageUrl}
         imageAlt={image.altImage ?? undefined}
@@ -31,15 +40,26 @@ function StyleCard({ image, badgeLabel, altText }: StyleCardProps) {
           </span>
         )}
       </Card>
-      {image.altImage && altText && (
-        <div className="flex items-center justify-center">
-          <h3 className="font-display font-black text-slate-dark md:text-lg">
-            {image.altImage}
-          </h3>
-        </div>
-      )}
-    </div>
+      {footer ??
+        (image.altImage && altText && (
+          <div className="flex items-center justify-center">
+            <h3 className="font-display font-black text-slate-dark md:text-lg">
+              {image.altImage}
+            </h3>
+          </div>
+        ))}
+    </>
   );
+
+  if (href) {
+    return (
+      <Link href={href} className="group flex flex-col gap-4">
+        {content}
+      </Link>
+    );
+  }
+
+  return <div className="group flex flex-col gap-4">{content}</div>;
 }
 
 function SkeletonCard() {
@@ -55,7 +75,7 @@ function SkeletonCard() {
 }
 
 interface CollectionSectionProps {
-  images: StyleImage[];
+  images: CollectionCardImage[];
   isLoading: boolean;
   error: string | null;
   title: string;
@@ -66,6 +86,10 @@ interface CollectionSectionProps {
   badgeLabel?: string;
   background?: string;
   altText?: boolean;
+  /** Si se define, cada card enlaza a la URL devuelta. */
+  getHref?: (image: CollectionCardImage) => string | undefined;
+  /** Footer custom bajo cada card; reemplaza el caption centrado por defecto. */
+  renderFooter?: (image: CollectionCardImage) => ReactNode;
 }
 
 export default function CollectionSection({
@@ -80,6 +104,8 @@ export default function CollectionSection({
   badgeLabel,
   background,
   altText = true,
+  getHref,
+  renderFooter,
 }: CollectionSectionProps) {
   if (!isLoading && (error || images.length === 0)) return null;
 
@@ -116,6 +142,8 @@ export default function CollectionSection({
                   image={image}
                   badgeLabel={badgeLabel}
                   altText={altText}
+                  href={getHref?.(image)}
+                  footer={renderFooter?.(image)}
                 />
               ))}
         </Carousel>

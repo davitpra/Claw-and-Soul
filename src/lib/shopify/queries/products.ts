@@ -67,6 +67,7 @@ export const GET_PRODUCT = `
               id
               title
               handle
+              productType
               images(first: 1) {
                 edges {
                   node {
