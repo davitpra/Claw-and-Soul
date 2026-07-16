@@ -22,7 +22,10 @@ interface DeckGalleryProps {
   items: DeckGalleryItem[];
   /** Milisegundos entre pases automáticos; 0 lo desactiva. */
   autoplayMs?: number;
-  /** Tamaño/estilos del mazo (por defecto w-64 md:w-80, cuadrado). */
+  /**
+   * Ancho/estilos del mazo (por defecto w-64 md:w-80). Cada carta conserva el
+   * aspect ratio de su imagen; el alto del mazo lo marca la carta más alta.
+   */
   className?: string;
   /**
    * Click en la carta frontal (un tap sin arrastre). Permite, p. ej., navegar
@@ -37,6 +40,7 @@ const ROTATE_PER_CARD = 7; // grados por posición
 const SHIFT_PER_CARD = 3; // % de translateX por posición
 const SCALE_PER_CARD = 0.02;
 const VISIBLE_RANGE = 3.5; // a partir de aquí la carta se desvanece
+const FADE_BAND = 0.5; // posiciones que tarda el desvanecimiento en completarse
 
 // Excursión de la carta en tránsito (posición -1..0): en vez de deslizarse
 // directa a su hueco del abanico, sale en arco hacia el lado —se aleja, gira y
@@ -96,6 +100,16 @@ export function DeckGallery({
   const [dragging, setDragging] = useState(false);
   const [hovered, setHovered] = useState(false);
 
+  // Aspect ratio natural (ancho/alto) de cada imagen, medido al cargar. Hasta
+  // entonces la carta se asume cuadrada para no colapsar el layout.
+  const [ratios, setRatios] = useState<Record<string, number>>({});
+
+  const noteRatio = useCallback((src: string, img: HTMLImageElement | null) => {
+    if (!img?.complete || !img.naturalWidth || !img.naturalHeight) return;
+    const r = img.naturalWidth / img.naturalHeight;
+    setRatios((prev) => (prev[src] === r ? prev : { ...prev, [src]: r }));
+  }, []);
+
   const deckRef = useRef<HTMLDivElement>(null);
   const virtualRef = useRef(0); // espejo de `virtual` para los handlers
   const targetRef = useRef(0); // entero al que el mazo tiende a asentarse
@@ -142,16 +156,20 @@ export function DeckGallery({
 
   useEffect(() => {
     if (!autoplayMs || n < 2 || dragging || hovered) return;
-    const id = setInterval(
-      () => animateTo(targetRef.current + 1),
-      autoplayMs,
-    );
+    const id = setInterval(() => animateTo(targetRef.current + 1), autoplayMs);
     return () => clearInterval(id);
   }, [autoplayMs, n, dragging, hovered, animateTo]);
 
   if (n === 0) return null;
 
   const active = items[mod(Math.round(virtual), n)];
+
+  // El mazo mide lo que su carta más alta (el menor ancho/alto); las cartas se
+  // alinean por la base, como sostenidas en la mano.
+  const stackAspect = items.reduce(
+    (min, item) => Math.min(min, ratios[item.src] ?? 1),
+    Infinity,
+  );
 
   const onPointerDown = (e: ReactPointerEvent<HTMLDivElement>) => {
     if (n < 2 && !onItemClick) return;
@@ -179,7 +197,9 @@ export function DeckGallery({
     // Arrastrar a la izquierda (dx<0) empuja la carta frontal y trae la siguiente.
     const raw = -dx / (width * DRAG_DISTANCE_RATIO) + drag.current.baseProgress;
     // Solo se pasa de una en una: se frena con resistencia más allá de ±1.
-    const clamped = Math.max(-1, Math.min(1, raw)) + (raw - Math.max(-1, Math.min(1, raw))) * 0.15;
+    const clamped =
+      Math.max(-1, Math.min(1, raw)) +
+      (raw - Math.max(-1, Math.min(1, raw))) * 0.15;
     setV(targetRef.current + clamped);
 
     const dt = e.timeStamp - drag.current.lastT;
@@ -246,12 +266,19 @@ export function DeckGallery({
       if (t < 0.5) z += 80;
     }
 
+    // La carta más lejana envuelve del lado izquierdo al derecho del abanico
+    // (wrapOffset cambia de signo en abs = n/2), y ese salto de transform es
+    // instantáneo. Como abs sí es continua a través del salto, la opacidad se
+    // conduce por abs con el fade terminando en la frontera: la carta se
+    // desvanece antes de saltar y reaparece ya del otro lado.
+    const fadeEnd = Math.min(VISIBLE_RANGE + FADE_BAND, n / 2);
+    const opacity = Math.min(1, Math.max(0, (fadeEnd - abs) / FADE_BAND));
+
     return {
       transform: `translateX(${x}%) rotate(${rotate}deg) scale(${scale})`,
       transformOrigin: "50% 115%",
       zIndex: z,
-      opacity: abs > VISIBLE_RANGE ? 0 : 1,
-      transition: "opacity 300ms ease",
+      opacity,
     };
   };
 
@@ -272,7 +299,7 @@ export function DeckGallery({
         onPointerUp={endDrag}
         onPointerCancel={endDrag}
         onKeyDown={onKeyDown}
-        className={`relative aspect-square select-none focus-visible:outline-2 focus-visible:outline-primary focus-visible:outline-offset-8 rounded-[2.5rem] ${
+        className={`relative select-none focus-visible:outline-2 focus-visible:outline-primary focus-visible:outline-offset-8 ${
           n > 1
             ? dragging
               ? "cursor-grabbing"
@@ -281,19 +308,21 @@ export function DeckGallery({
               ? "cursor-pointer"
               : ""
         } ${className}`}
-        style={{ touchAction: "pan-y" }}
+        style={{ touchAction: "pan-y", aspectRatio: stackAspect }}
       >
         {items.map((item, i) => (
           <div
             key={`${item.src}-${i}`}
-            className="absolute inset-0 overflow-hidden rounded-[2.5rem] bg-white shadow-[0_18px_40px_-18px_rgba(0,0,0,0.45)]"
-            style={cardStyle(i)}
+            className="absolute inset-x-0 bottom-0 overflow-hidden bg-white shadow-[0_18px_40px_-18px_rgba(0,0,0,0.45)]"
+            style={{ ...cardStyle(i), aspectRatio: ratios[item.src] ?? 1 }}
             aria-hidden={mod(Math.round(virtual), n) !== i}
           >
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src={item.src}
               alt={item.alt ?? ""}
+              ref={(el) => noteRatio(item.src, el)}
+              onLoad={(e) => noteRatio(item.src, e.currentTarget)}
               draggable={false}
               loading={i === 0 ? "eager" : "lazy"}
               decoding="async"
@@ -304,12 +333,12 @@ export function DeckGallery({
       </div>
 
       {active?.caption && (
-        <p
+        <h3
           key={active.caption}
-          className="mt-10 font-mono text-sm tracking-wider animate-fade-in-up"
+          className="mt-10 font-display text-lg font-black animate-fade-in-up"
         >
           {active.caption}
-        </p>
+        </h3>
       )}
     </div>
   );
