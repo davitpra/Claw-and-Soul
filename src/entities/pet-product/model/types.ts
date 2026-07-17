@@ -15,4 +15,8 @@ export interface Product {
   label?: string;
   /** Template del storefront configurado en el admin (Canvas, Poster, PBN…). */
   template?: string | null;
+  /** Marca los kits Paint-by-Numbers; habilita mostrar la dificultad en la card. */
+  isPaintByNumbers?: boolean;
+  /** Dificultad del estilo (easy/medium/challenging); solo se muestra en PBN. */
+  difficulty?: string;
 }

@@ -3,6 +3,10 @@ import Link from "next/link";
 import { Card } from "@/shared/ui/Card";
 import { ImageZoom } from "@/shared/ui/ImageZoom";
 import { Product } from "@/entities/pet-product/model/types";
+import {
+  DIFFICULTY_LABELS,
+  StyleDifficulty,
+} from "@/entities/art-style/model/difficulty";
 
 // Aspecto de "poster flotando": ligera elevación y sombra teñida en teal al hover.
 export const posterClasses =
@@ -44,6 +48,12 @@ export function ProductCard({
   onImageError,
 }: ProductCardProps) {
   const badge = label ?? product.label;
+  // En los kits Paint-by-Numbers mostramos qué tan difícil es pintarlos. El kit es
+  // agnóstico al estilo, así que si no tiene una dificultad concreta asignada
+  // mostramos "All levels" en su lugar.
+  const difficultyLabel = product.isPaintByNumbers
+    ? (DIFFICULTY_LABELS[product.difficulty as StyleDifficulty] ?? "All levels")
+    : null;
   // Sin href explícito ni handle de Shopify (p. ej. items de una orden) la card no
   // enlaza a ningún sitio: se renderiza sin `<Link>` en vez de a `/product/undefined`.
   const linkHref =
@@ -58,10 +68,17 @@ export function ProductCard({
       onImageError={onImageError}
       className={posterClasses}
     >
-      {showBadge && badge && (
-        <span className="absolute top-3 left-3 bg-primary text-white text-[10px] font-bold uppercase px-2 py-1 rounded-full tracking-wider">
-          {badge}
+      {difficultyLabel ? (
+        <span className="absolute top-3 left-3 flex items-center gap-1 bg-primary text-white text-[10px] font-bold uppercase px-2 py-1 rounded-full tracking-wider">
+          {difficultyLabel}
         </span>
+      ) : (
+        showBadge &&
+        badge && (
+          <span className="absolute top-3 left-3 bg-primary text-white text-[10px] font-bold uppercase px-2 py-1 rounded-full tracking-wider">
+            {badge}
+          </span>
+        )
       )}
     </Card>
   );

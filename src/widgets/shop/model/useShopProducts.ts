@@ -46,6 +46,7 @@ function toShopProduct(
     productType: node.productType?.trim() ?? "",
     style: styleData.byHandle.get(node.handle) ?? "",
     difficulty: styleData.difficultyByHandle.get(node.handle) ?? "",
+    isPaintByNumbers: styleData.pbnHandles.has(node.handle),
     priceAmount,
     onSale,
   };

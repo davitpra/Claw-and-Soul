@@ -16,6 +16,10 @@ export type ShopProduct = Product & {
 // Producto del backend, del que solo nos interesa su handle de Shopify y su estilo.
 export interface BackendProductLite {
   shopifyHandle: string | null;
+  /** Kit PBN dedicado (el genérico "custom paint by numbers"). */
+  isPaintByNumbers?: boolean;
+  /** Template del storefront; "PBN" marca los kits Paint-by-Numbers por estilo. */
+  template?: string | null;
   style?: {
     id: string;
     displayName: string;
@@ -30,6 +34,8 @@ export interface StyleData {
   byHandle: Map<string, string>;
   /** handle de Shopify → dificultad del estilo del producto. */
   difficultyByHandle: Map<string, string>;
+  /** handles de Shopify que corresponden a kits Paint-by-Numbers. */
+  pbnHandles: Set<string>;
   /** nombre del estilo → categoría a la que pertenece. */
   categoryByStyle: Map<string, string>;
 }
