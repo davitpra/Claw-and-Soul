@@ -5,9 +5,7 @@ import { useRouter } from "next/navigation";
 import {
   Page,
   Card,
-  IndexTable,
   Badge,
-  Button,
   Banner,
   Spinner,
   Text,
@@ -15,9 +13,8 @@ import {
   BlockStack,
   Modal,
   Select,
-  Thumbnail,
 } from "@shopify/polaris";
-import { RefreshIcon, DeleteIcon, ImageIcon } from "@shopify/polaris-icons";
+import { RefreshIcon } from "@shopify/polaris-icons";
 import {
   adminApi,
   AdminProduct,
@@ -26,6 +23,7 @@ import {
 } from "@/entities/admin/api";
 import { shopifyFetch } from "@/lib/shopify/client";
 import { SelectedProductTable } from "./_components/SelectedProductTable";
+import { ProductsTable, ACCESSORY_TEMPLATE } from "./_components/ProductsTable";
 
 const GET_PRODUCTS_IMAGES = `
   query getProductsImages($first: Int!) {
@@ -62,7 +60,6 @@ export default function AdminProductsPage() {
     null,
   );
   const [savingTemplate, setSavingTemplate] = useState<string | null>(null);
-  const [savingAccessory, setSavingAccessory] = useState<string | null>(null);
   const [savingPbn, setSavingPbn] = useState(false);
   const [savingCreditPack, setSavingCreditPack] = useState(false);
   const [imageMap, setImageMap] = useState<Record<string, string>>({});
@@ -181,21 +178,6 @@ export default function AdminProductsPage() {
     }
   };
 
-  const handleAccessoryToggle = async (productId: string, next: boolean) => {
-    setSavingAccessory(productId);
-    setProducts((prev) =>
-      prev.map((p) => (p.id === productId ? { ...p, isAccessory: next } : p)),
-    );
-    try {
-      await adminApi.products.setAccessory(productId, next);
-    } catch (e: unknown) {
-      setError((e as Error).message);
-      loadProducts();
-    } finally {
-      setSavingAccessory(null);
-    }
-  };
-
   const handleTemplateChange = async (productId: string, value: string) => {
     const template = value || null;
     setSavingTemplate(productId);
@@ -288,6 +270,14 @@ export default function AdminProductsPage() {
     [pbnProduct?.id, creditPackProduct?.id].filter(Boolean),
   );
   const listProducts = products.filter((p) => !specialIds.has(p.id));
+  // Un producto es accesorio cuando su template es "Accessory". El resto son
+  // productos asignables a un estilo.
+  const accessoryProducts = listProducts.filter(
+    (p) => p.template === ACCESSORY_TEMPLATE,
+  );
+  const styleProducts = listProducts.filter(
+    (p) => p.template !== ACCESSORY_TEMPLATE,
+  );
 
   const syncTone =
     syncStatus?.status === "completed"
@@ -394,206 +384,54 @@ export default function AdminProductsPage() {
             </InlineStack>
           </Card>
         ) : (
-          <Card padding="0">
-            <IndexTable
-              resourceName={{ singular: "producto", plural: "productos" }}
-              itemCount={listProducts.length}
-              headings={[
-                { title: "Producto" },
-                { title: "Estilo asignado" },
-                { title: "Fulfillment" },
-                { title: "Template" },
-                { title: "Accesorio" },
-                { title: "Estado" },
-                { title: "Acciones" },
-              ]}
-              selectable={false}
-            >
-              {listProducts.map((p, index) => (
-                <IndexTable.Row
-                  id={p.id}
-                  key={p.id}
-                  position={index}
-                  tone={p.isActive ? undefined : "subdued"}
-                  onClick={() => router.push(`/admin/products/${p.id}`)}
-                >
-                  <IndexTable.Cell>
-                    <InlineStack gap="300" blockAlign="center">
-                      <Thumbnail
-                        source={
-                          (p.shopifyHandle && imageMap[p.shopifyHandle]) ||
-                          ImageIcon
-                        }
-                        alt={p.displayName}
-                        size="small"
-                      />
-                      <BlockStack gap="0">
-                        <Text variant="bodyMd" fontWeight="semibold" as="span">
-                          {p.displayName}
-                        </Text>
-                        <Text variant="bodySm" tone="subdued" as="span">
-                          {p.name}
-                        </Text>
-                      </BlockStack>
-                    </InlineStack>
-                  </IndexTable.Cell>
-                  <IndexTable.Cell>
-                    <div onClick={(e) => e.stopPropagation()}>
-                      <InlineStack gap="200" blockAlign="center">
-                        <div style={{ minWidth: 180 }}>
-                          <Select
-                            label=""
-                            labelHidden
-                            disabled={savingStyle === p.id}
-                            value={p.styleId ?? ""}
-                            onChange={(value) => handleStyleChange(p.id, value)}
-                            options={[
-                              { label: "Sin asignar", value: "" },
-                              ...styles.map((s) => ({
-                                label: s.displayName,
-                                value: s.id,
-                              })),
-                            ]}
-                          />
-                        </div>
-                        {savingStyle === p.id && <Spinner size="small" />}
-                      </InlineStack>
-                    </div>
-                  </IndexTable.Cell>
-                  <IndexTable.Cell>
-                    <div onClick={(e) => e.stopPropagation()}>
-                      <InlineStack gap="200" blockAlign="center">
-                        <div style={{ minWidth: 170 }}>
-                          <Select
-                            label=""
-                            labelHidden
-                            disabled={savingFulfillment === p.id}
-                            value={p.fulfillmentMethod ?? "in_house"}
-                            onChange={(value) =>
-                              handleFulfillmentChange(p.id, value)
-                            }
-                            options={[
-                              { label: "Taller (in-house)", value: "in_house" },
-                              { label: "POD (externo)", value: "pod" },
-                            ]}
-                          />
-                        </div>
-                        {savingFulfillment === p.id && <Spinner size="small" />}
-                      </InlineStack>
-                    </div>
-                  </IndexTable.Cell>
-                  <IndexTable.Cell>
-                    <div onClick={(e) => e.stopPropagation()}>
-                      <InlineStack gap="200" blockAlign="center">
-                        <div style={{ minWidth: 150 }}>
-                          <Select
-                            label=""
-                            labelHidden
-                            disabled={savingTemplate === p.id}
-                            value={p.template ?? ""}
-                            onChange={(value) =>
-                              handleTemplateChange(p.id, value)
-                            }
-                            options={[
-                              { label: "Por defecto", value: "" },
-                              { label: "Canvas", value: "Canvas" },
-                              { label: "Poster", value: "Poster" },
-                              { label: "Credits", value: "Credits" },
-                              { label: "Accessory", value: "Accessory" },
-                            ]}
-                          />
-                        </div>
-                        {savingTemplate === p.id && <Spinner size="small" />}
-                      </InlineStack>
-                    </div>
-                  </IndexTable.Cell>
-                  <IndexTable.Cell>
-                    <div onClick={(e) => e.stopPropagation()}>
-                      <InlineStack gap="200" blockAlign="center">
-                        <button
-                          type="button"
-                          onClick={() =>
-                            handleAccessoryToggle(p.id, !p.isAccessory)
-                          }
-                          disabled={savingAccessory === p.id}
-                          aria-label={
-                            p.isAccessory
-                              ? "Desmarcar como accesorio"
-                              : "Marcar como accesorio"
-                          }
-                          title={
-                            p.isAccessory
-                              ? "Click para desmarcar accesorio"
-                              : "Click para marcar accesorio"
-                          }
-                          style={{
-                            background: "transparent",
-                            border: "none",
-                            padding: 0,
-                            cursor:
-                              savingAccessory === p.id ? "wait" : "pointer",
-                            opacity: savingAccessory === p.id ? 0.6 : 1,
-                          }}
-                        >
-                          <Badge tone={p.isAccessory ? "info" : undefined}>
-                            {p.isAccessory ? "Accesorio" : "No"}
-                          </Badge>
-                        </button>
-                        {savingAccessory === p.id && <Spinner size="small" />}
-                      </InlineStack>
-                    </div>
-                  </IndexTable.Cell>
-                  <IndexTable.Cell>
-                    <div onClick={(e) => e.stopPropagation()}>
-                      <InlineStack gap="200" blockAlign="center">
-                        <button
-                          type="button"
-                          onClick={() => handleToggle(p)}
-                          disabled={toggling === p.id}
-                          aria-label={
-                            p.isActive
-                              ? "Desactivar producto"
-                              : "Activar producto"
-                          }
-                          title={
-                            p.isActive
-                              ? "Click para desactivar"
-                              : "Click para activar"
-                          }
-                          style={{
-                            background: "transparent",
-                            border: "none",
-                            padding: 0,
-                            cursor: toggling === p.id ? "wait" : "pointer",
-                            opacity: toggling === p.id ? 0.6 : 1,
-                          }}
-                        >
-                          <Badge tone={p.isActive ? "success" : "enabled"}>
-                            {p.isActive ? "Activo" : "Inactivo"}
-                          </Badge>
-                        </button>
-                        {toggling === p.id && <Spinner size="small" />}
-                      </InlineStack>
-                    </div>
-                  </IndexTable.Cell>
-                  <IndexTable.Cell>
-                    <div onClick={(e) => e.stopPropagation()}>
-                      <InlineStack gap="200" blockAlign="center">
-                        <Button
-                          variant="plain"
-                          tone="critical"
-                          size="slim"
-                          icon={DeleteIcon}
-                          accessibilityLabel={`Eliminar ${p.displayName}`}
-                          onClick={() => setDeletingTarget(p)}
-                        />
-                      </InlineStack>
-                    </div>
-                  </IndexTable.Cell>
-                </IndexTable.Row>
-              ))}
-            </IndexTable>
-          </Card>
+          <>
+            <Card padding="0">
+              <div style={{ padding: "var(--p-space-400)" }}>
+                <Text variant="headingSm" as="h2">
+                  Productos
+                </Text>
+              </div>
+              <ProductsTable
+                products={styleProducts}
+                styles={styles}
+                imageMap={imageMap}
+                showStyleColumn
+                savingStyle={savingStyle}
+                savingFulfillment={savingFulfillment}
+                savingTemplate={savingTemplate}
+                toggling={toggling}
+                onRowClick={(id) => router.push(`/admin/products/${id}`)}
+                onStyleChange={handleStyleChange}
+                onFulfillmentChange={handleFulfillmentChange}
+                onTemplateChange={handleTemplateChange}
+                onToggleActive={handleToggle}
+                onDelete={setDeletingTarget}
+              />
+            </Card>
+
+            <Card padding="0">
+              <div style={{ padding: "var(--p-space-400)" }}>
+                <Text variant="headingSm" as="h2">
+                  Accesorios
+                </Text>
+              </div>
+              <ProductsTable
+                products={accessoryProducts}
+                styles={styles}
+                imageMap={imageMap}
+                savingStyle={savingStyle}
+                savingFulfillment={savingFulfillment}
+                savingTemplate={savingTemplate}
+                toggling={toggling}
+                onRowClick={(id) => router.push(`/admin/products/${id}`)}
+                onStyleChange={handleStyleChange}
+                onFulfillmentChange={handleFulfillmentChange}
+                onTemplateChange={handleTemplateChange}
+                onToggleActive={handleToggle}
+                onDelete={setDeletingTarget}
+              />
+            </Card>
+          </>
         )}
         {syncStatus && (
           <Card>
