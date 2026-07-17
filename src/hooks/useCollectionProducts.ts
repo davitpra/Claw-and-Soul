@@ -1,6 +1,10 @@
 import { useEffect, useState } from "react";
 import { getCollectionProducts } from "@/lib/shopify/actions/collections";
 import { Product } from "@/entities/pet-product/model/types";
+import {
+  DIFFICULTY_LABELS,
+  StyleDifficulty,
+} from "@/entities/art-style/model/difficulty";
 
 // URL base de la API del backend
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001/api";
@@ -13,6 +17,7 @@ interface BackendProduct {
   name: string;
   displayName: string;
   description: string | null;
+  style: { difficulty: StyleDifficulty | null } | null;
 }
 
 // Interfaz que define la estructura del nodo de un producto desde GraphQL de Shopify
@@ -22,6 +27,9 @@ interface ShopifyProductNode {
   handle: string;
   description: string;
   priceRange: {
+    minVariantPrice: { amount: string; currencyCode: string };
+  };
+  compareAtPriceRange?: {
     minVariantPrice: { amount: string; currencyCode: string };
   };
   images: { edges: { node: { url: string; altText: string | null } }[] };
@@ -102,19 +110,38 @@ export function useCollectionProducts(
             const minPrice = shopify.priceRange.minVariantPrice;
             const firstImage = shopify.images.edges[0]?.node.url;
 
+            const formatMoney = (amount: string, currencyCode: string) =>
+              new Intl.NumberFormat("en-US", {
+                style: "currency",
+                currency: currencyCode,
+              }).format(parseFloat(amount));
+
+            // Precio comparativo (de lista): solo es oferta si supera al precio actual.
+            const compareAt = shopify.compareAtPriceRange?.minVariantPrice;
+            const priceAmount = minPrice ? parseFloat(minPrice.amount) : 0;
+            const compareAmount = compareAt ? parseFloat(compareAt.amount) : 0;
+            const onSale = compareAmount > priceAmount;
+
             // Retornar un objeto de Producto formateado para los componentes de UI
             return {
               name: bp.displayName,
               desc: bp.description ?? "",
               price: minPrice
-                ? new Intl.NumberFormat("en-US", {
-                    style: "currency",
-                    currency: minPrice.currencyCode,
-                  }).format(parseFloat(minPrice.amount))
+                ? formatMoney(minPrice.amount, minPrice.currencyCode)
                 : "",
+              compareAtPrice: onSale
+                ? formatMoney(compareAt!.amount, compareAt!.currencyCode)
+                : undefined,
+              discountPercent: onSale
+                ? Math.round((1 - priceAmount / compareAmount) * 100)
+                : undefined,
               img: firstImage ?? "https://placehold.co/400x300?text=Product",
               shopifyHandle: bp.shopifyHandle!,
               productRefId: bp.id,
+              // Badge de la tarjeta: dificultad del estilo asociado al producto.
+              label: bp.style?.difficulty
+                ? DIFFICULTY_LABELS[bp.style.difficulty]
+                : undefined,
             };
           });
 

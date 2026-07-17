@@ -16,7 +16,7 @@ interface ProductShowcaseProps {
   isLoading?: boolean;
   /** Mensaje de error; si existe, reemplaza a las tarjetas. */
   error?: string | null;
-  /** Texto del badge de cada tarjeta. */
+  /** Texto del badge de cada tarjeta. Si se omite, cada tarjeta usa su `product.label`. */
   label?: string;
 }
 
@@ -43,9 +43,9 @@ export default function ProductShowcase({
     products.map((product) => (
       <div
         key={product.productRefId ?? product.shopifyHandle}
-        className={`min-w-0 self-center ${className}`}
+        className={`min-w-0 self-end ${className}`}
       >
-        <ProductCard product={product} label={label ?? "New"} />
+        <ProductCard product={product} label={label} showPrice />
       </div>
     ));
 

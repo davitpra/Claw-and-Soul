@@ -4,14 +4,9 @@ import { useCollectionProducts } from "@/hooks/useCollectionProducts";
 import { useProductStyle } from "@/hooks/useProductStyle";
 import { useStyleImages } from "@/hooks/useStyleImages";
 import CollectionSection from "./CollectionSection";
+import { DIFFICULTY_LABELS } from "@/entities/art-style/model/difficulty";
 
 const COLLECTION_HANDLE = "new-collection";
-
-const DIFFICULTY_LABELS: Record<string, string> = {
-  easy: "Easy",
-  medium: "Medium",
-  challenging: "Challenging",
-};
 
 export default function NewCollection() {
   // 1. Producto(s) dentro de la colección Shopify "new-collection".

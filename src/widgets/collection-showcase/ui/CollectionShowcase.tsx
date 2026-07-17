@@ -8,7 +8,10 @@ interface CollectionShowcaseProps {
   handle?: string;
   /** Título a mostrar mientras la colección carga o si no tiene título. */
   fallbackTitle?: string;
-  /** Texto del badge de cada tarjeta. Por defecto usa el título de la colección. */
+  /**
+   * Texto del badge de cada tarjeta. Por defecto cada tarjeta muestra la
+   * dificultad del estilo asociado al producto.
+   */
   label?: string;
 }
 
@@ -34,7 +37,7 @@ export default function CollectionShowcase({
       description={description}
       isLoading={isLoading}
       error={error}
-      label={label ?? title ?? undefined}
+      label={label}
     />
   );
 }
