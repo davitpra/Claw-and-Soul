@@ -2,7 +2,7 @@
 
 import { Navbar } from "@/widgets/navbar";
 import { Footer } from "@/widgets/footer";
-import { Suspense, useState } from "react";
+import { Suspense, useEffect, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { ProductCard } from "@/entities/pet-product/ui/ProductCard";
 import { ShopFilters, useShopFilters, useShopProducts } from "@/widgets/shop";
@@ -23,6 +23,40 @@ function ShopContent() {
 
   // En móvil el sidebar vive detrás de un toggle "Filters".
   const [filtersOpen, setFiltersOpen] = useState(false);
+
+  // Scroll infinito: mostramos los productos de a tandas y cargamos más al
+  // acercarnos al final de la grilla.
+  const PAGE_SIZE = 12;
+  const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
+  const sentinelRef = useRef<HTMLDivElement | null>(null);
+
+  // Al cambiar el conjunto filtrado, volvemos a empezar desde la primera tanda
+  // (reset durante render, el patrón recomendado por React para estado derivado).
+  const [prevFiltered, setPrevFiltered] = useState(filteredProducts);
+  if (filteredProducts !== prevFiltered) {
+    setPrevFiltered(filteredProducts);
+    setVisibleCount(PAGE_SIZE);
+  }
+
+  const visibleProducts = filteredProducts.slice(0, visibleCount);
+  const hasMore = visibleCount < filteredProducts.length;
+
+  useEffect(() => {
+    if (!hasMore) return;
+    const sentinel = sentinelRef.current;
+    if (!sentinel) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting) {
+          setVisibleCount((count) => count + PAGE_SIZE);
+        }
+      },
+      { rootMargin: "300px" },
+    );
+    observer.observe(sentinel);
+    return () => observer.disconnect();
+  }, [hasMore]);
 
   return (
     <div className="relative flex min-h-screen w-full flex-col overflow-x-clip bg-cream">
@@ -148,7 +182,7 @@ function ShopContent() {
                   </div>
                 ) : (
                   <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-8">
-                    {filteredProducts.map((product) => (
+                    {visibleProducts.map((product) => (
                       <ProductCard
                         key={product.shopifyHandle}
                         product={product}
@@ -159,12 +193,14 @@ function ShopContent() {
                   </div>
                 )}
 
-                {/* Load More */}
-                {filteredProducts.length > 0 && (
-                  <div className="mt-16 text-center">
-                    <button className="px-8 py-3 bg-transparent border-b-2 border-secondary text-secondary font-bold hover:text-primary hover:border-primary transition-colors text-sm uppercase tracking-widest">
-                      Load More Products
-                    </button>
+                {/* Infinite scroll sentinel */}
+                {hasMore && (
+                  <div
+                    ref={sentinelRef}
+                    className="mt-16 flex justify-center"
+                    aria-hidden="true"
+                  >
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
                   </div>
                 )}
               </div>
