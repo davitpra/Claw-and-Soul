@@ -2,11 +2,12 @@
 
 import { Navbar } from "@/widgets/navbar";
 import { Footer } from "@/widgets/footer";
-import { Suspense, useEffect, useRef, useState } from "react";
+import { Suspense, useState } from "react";
 import { useSearchParams } from "next/navigation";
-import { ProductCard } from "@/entities/pet-product/ui/ProductCard";
 import {
   ShopFilters,
+  ShopSection,
+  groupIntoSections,
   useShopFilters,
   useShopProducts,
 } from "@/widgets/shop";
@@ -38,39 +39,9 @@ function ShopContent() {
   // En móvil el sidebar vive detrás de un toggle "Filters".
   const [filtersOpen, setFiltersOpen] = useState(false);
 
-  // Scroll infinito: mostramos los productos de a tandas y cargamos más al
-  // acercarnos al final de la grilla.
-  const PAGE_SIZE = 12;
-  const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
-  const sentinelRef = useRef<HTMLDivElement | null>(null);
-
-  // Al cambiar el conjunto filtrado, volvemos a empezar desde la primera tanda
-  // (reset durante render, el patrón recomendado por React para estado derivado).
-  const [prevFiltered, setPrevFiltered] = useState(filteredProducts);
-  if (filteredProducts !== prevFiltered) {
-    setPrevFiltered(filteredProducts);
-    setVisibleCount(PAGE_SIZE);
-  }
-
-  const visibleProducts = filteredProducts.slice(0, visibleCount);
-  const hasMore = visibleCount < filteredProducts.length;
-
-  useEffect(() => {
-    if (!hasMore) return;
-    const sentinel = sentinelRef.current;
-    if (!sentinel) return;
-
-    const observer = new IntersectionObserver(
-      (entries) => {
-        if (entries[0].isIntersecting) {
-          setVisibleCount((count) => count + PAGE_SIZE);
-        }
-      },
-      { rootMargin: "300px" },
-    );
-    observer.observe(sentinel);
-    return () => observer.disconnect();
-  }, [hasMore]);
+  // Los productos filtrados se agrupan por tipo en secciones ordenadas
+  // (PBN → Canvas → Poster → Accessories → Credits → Other).
+  const sections = groupIntoSections(filteredProducts);
 
   return (
     <div className="relative flex min-h-screen w-full flex-col overflow-x-clip bg-cream">
@@ -80,7 +51,7 @@ function ShopContent() {
         <div className="container-site">
           {/* Hero Section */}
           <div className="text-center mb-10 md:mb-14 max-w-2xl mx-auto">
-            {searchQuery ? (
+            {searchQuery && (
               <>
                 <span className="text-primary font-bold tracking-widest text-xs uppercase mb-3 block">
                   Search Results
@@ -92,19 +63,6 @@ function ShopContent() {
                   {loading
                     ? "Searching our collection..."
                     : `${products.length} ${products.length === 1 ? "result" : "results"} found.`}
-                </p>
-              </>
-            ) : (
-              <>
-                <span className="text-primary font-bold tracking-widest text-xs uppercase mb-3 block">
-                  Handcrafted for Happiness
-                </span>
-                <h1 className="font-display text-4xl md:text-5xl font-black text-secondary mb-4 leading-tight">
-                  Our Soulful Collection
-                </h1>
-                <p className="text-secondary/70 text-lg leading-relaxed">
-                  Discover personalized treasures designed to celebrate the
-                  unconditional love of your furry companions.
                 </p>
               </>
             )}
@@ -195,27 +153,15 @@ function ShopContent() {
                     </button>
                   </div>
                 ) : (
-                  <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-8">
-                    {visibleProducts.map((product) => (
-                      <ProductCard
-                        key={product.shopifyHandle}
-                        product={product}
-                        href={productHref(product)}
-                        showPrice={true}
-                        showBadge={false}
+                  <div>
+                    {sections.map((section) => (
+                      <ShopSection
+                        key={section.key}
+                        title={section.title}
+                        products={section.products}
+                        productHref={productHref}
                       />
                     ))}
-                  </div>
-                )}
-
-                {/* Infinite scroll sentinel */}
-                {hasMore && (
-                  <div
-                    ref={sentinelRef}
-                    className="mt-16 flex justify-center"
-                    aria-hidden="true"
-                  >
-                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
                   </div>
                 )}
               </div>

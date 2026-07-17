@@ -119,8 +119,10 @@ export function useShopFilters(
     }));
   }, [styles, styleCategories]);
 
+  // La dificultad solo tiene sentido en los kits PBN, así que los conteos y las
+  // opciones disponibles se calculan únicamente sobre esos productos.
   const difficultyCounts = useMemo(
-    () => countBy(products, "difficulty"),
+    () => countBy(products.filter((p) => p.isPaintByNumbers), "difficulty"),
     [products],
   );
   const difficulties = useMemo(
@@ -163,9 +165,10 @@ export function useShopFilters(
         if (selectedStyles.length > 0 && !selectedStyles.includes(p.style)) {
           return false;
         }
+        // Filtrar por dificultad restringe a PBN: es el único tipo donde aplica.
         if (
           selectedDifficulties.length > 0 &&
-          !selectedDifficulties.includes(p.difficulty)
+          (!p.isPaintByNumbers || !selectedDifficulties.includes(p.difficulty))
         ) {
           return false;
         }
