@@ -26,10 +26,33 @@ export const TEMPLATE_OPTIONS = [
 /** Un producto es accesorio cuando su template es "Accessory". */
 export const ACCESSORY_TEMPLATE = "Accessory";
 
+/** Valores de template que el Select acepta (sin la opción vacía "Por defecto"). */
+const VALID_TEMPLATES = new Set(
+  TEMPLATE_OPTIONS.map((o) => o.value).filter(Boolean),
+);
+
+/**
+ * Template efectivo de un producto: el guardado manda; si no hay, cae al
+ * `productType` de Shopify (solo si es una opción válida); si no, "".
+ * Compartido entre la partición de la página y el default del Select.
+ */
+export function resolveTemplate(
+  p: Pick<AdminProduct, "template" | "shopifyHandle">,
+  productTypeMap: Record<string, string>,
+): string {
+  if (p.template) return p.template;
+  const shopifyType = p.shopifyHandle
+    ? productTypeMap[p.shopifyHandle]
+    : undefined;
+  return shopifyType && VALID_TEMPLATES.has(shopifyType) ? shopifyType : "";
+}
+
 interface ProductsTableProps {
   products: AdminProduct[];
   styles: AdminStyle[];
   imageMap: Record<string, string>;
+  /** Mapa handle → productType de Shopify, usado como default del template. */
+  productTypeMap: Record<string, string>;
   /** La tabla de accesorios no asigna estilo, así que oculta esa columna. */
   showStyleColumn?: boolean;
   savingStyle: string | null;
@@ -52,6 +75,7 @@ export function ProductsTable({
   products,
   styles,
   imageMap,
+  productTypeMap,
   showStyleColumn = false,
   savingStyle,
   savingFulfillment,
@@ -161,8 +185,15 @@ export function ProductsTable({
                     label=""
                     labelHidden
                     disabled={savingTemplate === p.id}
-                    value={p.template ?? ""}
+                    value={resolveTemplate(p, productTypeMap)}
                     onChange={(value) => onTemplateChange(p.id, value)}
+                    helpText={
+                      // El valor mostrado viene del productType de Shopify, no de
+                      // un template guardado: avisamos que es heredado.
+                      !p.template && resolveTemplate(p, productTypeMap)
+                        ? "Heredado de Shopify"
+                        : undefined
+                    }
                     options={TEMPLATE_OPTIONS}
                   />
                 </div>
