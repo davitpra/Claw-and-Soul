@@ -7,6 +7,7 @@ export const GET_PRODUCTS = `
           title
           handle
           description
+          productType
           priceRange {
             minVariantPrice {
               amount

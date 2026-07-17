@@ -2,100 +2,36 @@
 
 import { Navbar } from "@/widgets/navbar";
 import { Footer } from "@/widgets/footer";
-import { Suspense, useState, useEffect } from "react";
+import { Suspense, useState } from "react";
 import { useSearchParams } from "next/navigation";
-import { getProducts } from "@/lib/shopify";
-import { Product } from "@/entities/pet-product/model/types";
 import { ProductCard } from "@/entities/pet-product/ui/ProductCard";
-
-// Producto de entidad + la categoría usada por el filtro del shop.
-type ShopProduct = Product & { category: string };
+import { ShopFilters, useShopFilters, useShopProducts } from "@/widgets/shop";
 
 function ShopContent() {
   const searchParams = useSearchParams();
   const searchQuery = searchParams.get("q")?.trim() ?? "";
 
-  const [activeCategory, setActiveCategory] = useState("All Products");
-  const [products, setProducts] = useState<ShopProduct[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [categories, setCategories] = useState<string[]>(["All Products"]);
+  const { products, loading, collections, styleCategories } =
+    useShopProducts(searchQuery);
+  const filters = useShopFilters(
+    products,
+    collections,
+    styleCategories,
+    searchQuery,
+  );
+  const { filteredProducts, activeFilterCount, clearFilters } = filters;
 
-  // Fetch products from Shopify (filtrados por la búsqueda si la hay)
-  useEffect(() => {
-    setLoading(true);
-    setActiveCategory("All Products");
-
-    async function fetchProducts() {
-      try {
-        const fetchedData = await getProducts(20, searchQuery || undefined);
-
-        console.log("Fetched products from Shopify:", fetchedData);
-        console.log("Total products fetched:", fetchedData.length);
-
-        const mappedProducts = fetchedData.map((node) => {
-          const price = node.priceRange?.minVariantPrice || {
-            amount: "0.00",
-            currencyCode: "USD",
-          };
-          const category = node.collections?.edges?.[0]?.node.title || "Other";
-
-          // Formatea un monto como moneda (p. ej. "$42.00").
-          const formatMoney = (amount: string, currencyCode: string) =>
-            new Intl.NumberFormat("en-US", {
-              style: "currency",
-              currency: currencyCode,
-              currencyDisplay: "narrowSymbol",
-            }).format(parseFloat(amount));
-
-          // Precio comparativo (de lista): solo es oferta si supera al precio actual.
-          const compareAt = node.compareAtPriceRange?.minVariantPrice;
-          const priceAmount = parseFloat(price.amount);
-          const compareAmount = compareAt ? parseFloat(compareAt.amount) : 0;
-          const onSale = compareAmount > priceAmount;
-
-          return {
-            name: node.title,
-            desc: node.description || "AI Personalized Pet Art",
-            price: `${formatMoney(price.amount, price.currencyCode)} ${price.currencyCode}`,
-            compareAtPrice: onSale
-              ? formatMoney(compareAt!.amount, compareAt!.currencyCode)
-              : undefined,
-            discountPercent: onSale
-              ? Math.round((1 - priceAmount / compareAmount) * 100)
-              : undefined,
-            img: node.images.edges[0]?.node.url || "/placeholder-image.jpg",
-            shopifyHandle: node.handle,
-            label: category,
-            category,
-          };
-        });
-
-        setProducts(mappedProducts);
-
-        // Extract unique categories from products
-        const uniqueCategories = [
-          "All Products",
-          ...Array.from(new Set(mappedProducts.map((p) => p.category))),
-        ];
-        setCategories(uniqueCategories);
-      } catch (error) {
-        console.error("Failed to fetch products:", error);
-      } finally {
-        setLoading(false);
-      }
-    }
-
-    fetchProducts();
-  }, [searchQuery]);
+  // En móvil el sidebar vive detrás de un toggle "Filters".
+  const [filtersOpen, setFiltersOpen] = useState(false);
 
   return (
-    <div className="relative flex min-h-screen w-full flex-col overflow-x-clip bg-white">
+    <div className="relative flex min-h-screen w-full flex-col overflow-x-clip bg-cream">
       <Navbar />
 
       <main className="grow w-full px-4 md:px-10 py-10 md:py-16">
-        <div className="container-site flex flex-col items-center">
+        <div className="container-site">
           {/* Hero Section */}
-          <div className="text-center mb-10 md:mb-14 max-w-2xl">
+          <div className="text-center mb-10 md:mb-14 max-w-2xl mx-auto">
             {searchQuery ? (
               <>
                 <span className="text-primary font-bold tracking-widest text-xs uppercase mb-3 block">
@@ -126,66 +62,93 @@ function ShopContent() {
             )}
           </div>
 
-          {/* Categories */}
-          <div className="w-full flex justify-center mb-12 overflow-x-auto pb-4 scrollbar-hide">
-            <div className="flex gap-3 px-2">
-              {categories.map((category) => (
-                <button
-                  key={category}
-                  onClick={() => setActiveCategory(category)}
-                  className={`flex h-12 shrink-0 items-center justify-center rounded-full px-6 transition-all ${
-                    activeCategory === category
-                      ? "bg-primary text-white shadow-lg shadow-primary/20 hover:scale-105"
-                      : "bg-white text-secondary border border-[#E0DED9] hover:border-primary hover:text-primary"
-                  }`}
-                >
-                  <span className="text-sm font-bold tracking-wide">
-                    {category}
-                  </span>
-                </button>
-              ))}
-            </div>
-          </div>
-
           {/* Loading State */}
           {loading ? (
             <div className="flex justify-center items-center h-64">
               <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
             </div>
           ) : (
-            <>
-              {/* Product Grid */}
-              {products.length === 0 ? (
-                <div className="text-center py-20">
-                  {searchQuery ? (
-                    <>
-                      <p className="text-secondary/60 text-xl">
-                        No products match &ldquo;{searchQuery}&rdquo;.
-                      </p>
-                      <p className="text-secondary/40 mt-2">
-                        Try a different search term.
-                      </p>
-                    </>
-                  ) : (
-                    <>
-                      <p className="text-secondary/60 text-xl">
-                        No products found in your Shopify store.
-                      </p>
-                      <p className="text-secondary/40 mt-2">
-                        Add some products in your Shopify Admin to see them here.
-                      </p>
-                    </>
-                  )}
+            <div className="flex flex-col lg:flex-row gap-8 lg:gap-12 items-start">
+              {/* Filters rail (desktop) */}
+              <aside className="hidden lg:block w-64 shrink-0 sticky top-24">
+                <ShopFilters filters={filters} />
+              </aside>
+
+              {/* Results */}
+              <div className="flex-1 w-full min-w-0">
+                {/* Toolbar: toggle móvil + conteo de resultados */}
+                <div className="flex items-center justify-between mb-6">
+                  <button
+                    onClick={() => setFiltersOpen((prev) => !prev)}
+                    className="lg:hidden flex items-center gap-2 h-10 px-5 rounded-xl bg-white text-slate-dark text-sm font-bold shadow-sm hover:shadow-md transition-all"
+                  >
+                    <span className="material-symbols-outlined text-[20px]">
+                      tune
+                    </span>
+                    Filters
+                    {activeFilterCount > 0 && (
+                      <span className="flex items-center justify-center h-5 min-w-5 px-1.5 rounded-full bg-primary text-white text-[10px] font-bold">
+                        {activeFilterCount}
+                      </span>
+                    )}
+                  </button>
+
+                  <p className="text-sm text-text-muted ml-auto">
+                    Showing{" "}
+                    <span className="font-bold text-slate-dark">
+                      {filteredProducts.length}
+                    </span>{" "}
+                    of {products.length}{" "}
+                    {products.length === 1 ? "product" : "products"}
+                  </p>
                 </div>
-              ) : (
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 w-full items-center">
-                  {products
-                    .filter(
-                      (p) =>
-                        activeCategory === "All Products" ||
-                        p.category === activeCategory,
-                    )
-                    .map((product) => (
+
+                {/* Filters panel (mobile) */}
+                {filtersOpen && (
+                  <div className="lg:hidden mb-6">
+                    <ShopFilters filters={filters} />
+                  </div>
+                )}
+
+                {/* Product Grid */}
+                {products.length === 0 ? (
+                  <div className="text-center py-20">
+                    {searchQuery ? (
+                      <>
+                        <p className="text-secondary/60 text-xl">
+                          No products match &ldquo;{searchQuery}&rdquo;.
+                        </p>
+                        <p className="text-secondary/40 mt-2">
+                          Try a different search term.
+                        </p>
+                      </>
+                    ) : (
+                      <>
+                        <p className="text-secondary/60 text-xl">
+                          No products found in your Shopify store.
+                        </p>
+                        <p className="text-secondary/40 mt-2">
+                          Add some products in your Shopify Admin to see them
+                          here.
+                        </p>
+                      </>
+                    )}
+                  </div>
+                ) : filteredProducts.length === 0 ? (
+                  <div className="text-center py-20">
+                    <p className="text-secondary/60 text-xl">
+                      No products match your filters.
+                    </p>
+                    <button
+                      onClick={clearFilters}
+                      className="mt-4 text-primary font-bold hover:text-primary-dark transition-all text-sm uppercase tracking-widest"
+                    >
+                      Clear all filters
+                    </button>
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-8">
+                    {filteredProducts.map((product) => (
                       <ProductCard
                         key={product.shopifyHandle}
                         product={product}
@@ -193,17 +156,18 @@ function ShopContent() {
                         showBadge={false}
                       />
                     ))}
-                </div>
-              )}
-            </>
-          )}
+                  </div>
+                )}
 
-          {/* Load More */}
-          {!loading && products.length > 0 && (
-            <div className="mt-16 text-center">
-              <button className="px-8 py-3 bg-transparent border-b-2 border-secondary text-secondary font-bold hover:text-primary hover:border-primary transition-colors text-sm uppercase tracking-widest">
-                Load More Products
-              </button>
+                {/* Load More */}
+                {filteredProducts.length > 0 && (
+                  <div className="mt-16 text-center">
+                    <button className="px-8 py-3 bg-transparent border-b-2 border-secondary text-secondary font-bold hover:text-primary hover:border-primary transition-colors text-sm uppercase tracking-widest">
+                      Load More Products
+                    </button>
+                  </div>
+                )}
+              </div>
             </div>
           )}
         </div>
@@ -218,7 +182,7 @@ export default function ShopPage() {
   return (
     <Suspense
       fallback={
-        <div className="relative flex min-h-screen w-full flex-col overflow-x-clip bg-white">
+        <div className="relative flex min-h-screen w-full flex-col overflow-x-clip bg-cream">
           <Navbar />
           <main className="grow w-full flex justify-center items-center py-32">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>

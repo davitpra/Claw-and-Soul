@@ -59,6 +59,8 @@ export interface ShopifyProduct {
   title: string;
   handle: string;
   description: string;
+  /** Tipo de producto de Shopify (Canvas, Poster…). Solo lo pide GET_PRODUCTS. */
+  productType?: string;
   /** Rich HTML body from the Shopify admin (sanitized by Shopify). */
   descriptionHtml?: string;
   thankYouImage?: {
