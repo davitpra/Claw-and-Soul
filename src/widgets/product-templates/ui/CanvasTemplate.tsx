@@ -6,13 +6,13 @@ import ProductFAQ from "@/widgets/product-faq/ui/ProductFAQ";
 import { ProductTemplateProps } from "./ProductPageTemplate";
 import { RoomView } from "@/widgets/room-view";
 import { Reviews } from "@/widgets/reviews";
-import { SimilarProductsDeck } from "@/widgets/similar-gallery";
 import {
   RelatedProducts,
   getRelatedAccessories,
 } from "@/widgets/related-products";
 import { getSimilarProducts } from "@/entities/product/lib/getSimilarProducts";
 import { SameStyleGallery } from "@/widgets/expanding-gallery";
+import { ProductShowcase } from "@/widgets/collection-showcase";
 
 export default function CanvasTemplate({
   product,
@@ -47,10 +47,7 @@ export default function CanvasTemplate({
       )}
 
       {similarProducts.length > 0 && (
-        <SimilarProductsDeck
-          products={similarProducts}
-          heading="Similar Souls"
-        />
+        <ProductShowcase products={similarProducts} heading="Similar Souls" />
       )}
       <RoomView product={product} selectedVariantId={selectedVariantId} />
 

@@ -1,7 +1,6 @@
 import { Navbar } from "@/widgets/navbar";
 import { Footer } from "@/widgets/footer";
 import { Hero } from "@/widgets/home-hero";
-import { CollectionShowcase } from "@/widgets/collection-showcase";
 import { Reviews } from "@/widgets/reviews";
 import { NewCollection } from "@/widgets/collection";
 import { AIProcess } from "@/widgets/ai-process";
@@ -16,7 +15,8 @@ import {
 const HOME_GALLERY_ITEMS: ExpandingGalleryItem[] = [
   {
     title: "Classic Linocut",
-    description: "Bold hand-carved lines that turn your pet into timeless wall art.",
+    description:
+      "Bold hand-carved lines that turn your pet into timeless wall art.",
     cta: "Shop now",
     href: "/shop",
     imageUrl:
@@ -34,7 +34,8 @@ const HOME_GALLERY_ITEMS: ExpandingGalleryItem[] = [
   },
   {
     title: "Royal Pet",
-    description: "Regal, museum-style portraits fit for your four-legged royalty.",
+    description:
+      "Regal, museum-style portraits fit for your four-legged royalty.",
     cta: "Shop now",
     href: "/shop",
     imageUrl:
@@ -52,7 +53,6 @@ export default async function Home() {
         <Hero />
         <NewCollection />
         <HomeStyleGallery />
-        <CollectionShowcase handle="feature-collection" />
         <ExpandingGallery
           eyebrow="Featured work"
           title="Stories on canvas"
