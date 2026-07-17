@@ -40,7 +40,7 @@ export default function Navbar() {
 
   const navLinks = [
     { name: "Studio", href: "/paint-by-numbers" },
-    { name: "Shop", href: "/shop" },
+    { name: "Catalog", href: "/shop" },
     { name: "Contact", href: "/contact" },
   ];
 

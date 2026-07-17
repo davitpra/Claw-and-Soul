@@ -50,20 +50,6 @@ export function ShopFilters({ filters }: { filters: ShopFiltersState }) {
         )}
       </div>
 
-      {collections.length > 0 && (
-        <FilterGroup title="Collection">
-          {collections.map((collection) => (
-            <FilterOption
-              key={collection}
-              label={collection}
-              count={collectionCounts.get(collection) ?? 0}
-              checked={selectedCollections.includes(collection)}
-              onChange={() => toggleCollection(collection)}
-            />
-          ))}
-        </FilterGroup>
-      )}
-
       {productTypes.length > 0 && (
         <FilterGroup title="Product Type">
           {productTypes.map((type) => (
@@ -95,6 +81,20 @@ export function ShopFilters({ filters }: { filters: ShopFiltersState }) {
                 />
               ))}
             </div>
+          ))}
+        </FilterGroup>
+      )}
+
+      {collections.length > 0 && (
+        <FilterGroup title="Collection">
+          {collections.map((collection) => (
+            <FilterOption
+              key={collection}
+              label={collection}
+              count={collectionCounts.get(collection) ?? 0}
+              checked={selectedCollections.includes(collection)}
+              onChange={() => toggleCollection(collection)}
+            />
           ))}
         </FilterGroup>
       )}

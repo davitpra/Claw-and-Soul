@@ -43,10 +43,15 @@ function toShopProduct(
     shopifyHandle: node.handle,
     label: collection,
     collection,
-    productType: node.productType?.trim() ?? "",
+    productType:
+      styleData.templateByHandle.get(node.handle) ??
+      node.productType?.trim() ??
+      "",
     style: styleData.byHandle.get(node.handle) ?? "",
     difficulty: styleData.difficultyByHandle.get(node.handle) ?? "",
     isPaintByNumbers: styleData.pbnHandles.has(node.handle),
+    isPbnKit: node.handle === styleData.pbnKitHandle,
+    isCreditPack: node.handle === styleData.creditPackHandle,
     priceAmount,
     onSale,
   };

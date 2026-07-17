@@ -10,10 +10,19 @@ const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001/api";
  */
 export async function fetchStyles(): Promise<StyleData> {
   const byHandle = new Map<string, string>();
+  const templateByHandle = new Map<string, string>();
   const difficultyByHandle = new Map<string, string>();
   const pbnHandles = new Set<string>();
   const categoryByStyle = new Map<string, string>();
-  const result = { byHandle, difficultyByHandle, pbnHandles, categoryByStyle };
+  const result: StyleData = {
+    byHandle,
+    templateByHandle,
+    difficultyByHandle,
+    pbnHandles,
+    pbnKitHandle: null,
+    creditPackHandle: null,
+    categoryByStyle,
+  };
   try {
     const res = await fetch(`${API_URL}/products`, { credentials: "include" });
     if (!res.ok) return result;
@@ -23,9 +32,15 @@ export async function fetchStyles(): Promise<StyleData> {
     const list = Array.isArray(json) ? json : json.data;
     for (const bp of list) {
       if (!bp.shopifyHandle) continue;
+      // El template del backend es el tipo de producto canónico del storefront.
+      if (bp.template) templateByHandle.set(bp.shopifyHandle, bp.template);
       // Un producto es PBN si es el kit dedicado o si usa el template "PBN".
       if (bp.isPaintByNumbers || bp.template === "PBN")
         pbnHandles.add(bp.shopifyHandle);
+      // Los roles dedicados (marcados en el admin) son únicos y tienen su propia
+      // landing: el kit PBN → /paint-by-numbers, el Credit Pack → /credits.
+      if (bp.isPaintByNumbers) result.pbnKitHandle = bp.shopifyHandle;
+      if (bp.isCreditPack) result.creditPackHandle = bp.shopifyHandle;
       const name = bp.style?.displayName;
       if (!name) continue;
       byHandle.set(bp.shopifyHandle, name);

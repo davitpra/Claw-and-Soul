@@ -5,7 +5,21 @@ import { Footer } from "@/widgets/footer";
 import { Suspense, useEffect, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { ProductCard } from "@/entities/pet-product/ui/ProductCard";
-import { ShopFilters, useShopFilters, useShopProducts } from "@/widgets/shop";
+import {
+  ShopFilters,
+  useShopFilters,
+  useShopProducts,
+} from "@/widgets/shop";
+import type { ShopProduct } from "@/widgets/shop";
+
+// Solo los productos con rol dedicado en el admin ("Producto Paint by Numbers" y
+// "Producto Credit Pack") tienen su propia landing en vez de la página genérica
+// /product/{handle}. El resto de los PBN por estilo mantienen su página normal.
+function productHref(product: ShopProduct): string | undefined {
+  if (product.isPbnKit) return "/paint-by-numbers";
+  if (product.isCreditPack) return "/credits";
+  return undefined;
+}
 
 function ShopContent() {
   const searchParams = useSearchParams();
@@ -186,6 +200,7 @@ function ShopContent() {
                       <ProductCard
                         key={product.shopifyHandle}
                         product={product}
+                        href={productHref(product)}
                         showPrice={true}
                         showBadge={false}
                       />
