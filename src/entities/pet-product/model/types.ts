@@ -13,4 +13,6 @@ export interface Product {
   shopifyHandle?: string;
   productRefId?: string;
   label?: string;
+  /** Template del storefront configurado en el admin (Canvas, Poster, PBN…). */
+  template?: string | null;
 }

@@ -1,20 +1,22 @@
 "use client";
 
-import ProductDetails from "@/widgets/product-details/ui/ProductDetails";
 import { StyleCollection } from "@/widgets/collection";
-import ProductFAQ from "@/widgets/product-faq/ui/ProductFAQ";
-import { ProductTemplateProps } from "./ProductPageTemplate";
-import { RoomView } from "@/widgets/room-view";
-import { Reviews } from "@/widgets/reviews";
-import { SimilarProductsDeck } from "@/widgets/similar-gallery";
+import { SameStyleGallery } from "@/widgets/expanding-gallery";
 import {
   RelatedProducts,
   getRelatedAccessories,
 } from "@/widgets/related-products";
-import { getSimilarProducts } from "@/entities/product/lib/getSimilarProducts";
-import { SameStyleGallery } from "@/widgets/expanding-gallery";
+import { RoomView } from "@/widgets/room-view";
+import { Reviews } from "@/widgets/reviews";
+import ProductFAQ from "@/widgets/product-faq/ui/ProductFAQ";
+import { ProductTemplateProps } from "./ProductPageTemplate";
+import ProductDetails from "@/widgets/product-details/ui/ProductDetails";
 
-export default function CanvasTemplate({
+/**
+ * Storefront template for the Paint-by-Numbers kit: same shape as Canvas, plus
+ * the PBN accessories upsell (paints, brushes…) from getRelatedAccessories.
+ */
+export default function PBNTemplate({
   product,
   selectedVariantId,
   setSelectedVariantId,
@@ -23,7 +25,6 @@ export default function CanvasTemplate({
   handle,
   faqs,
 }: ProductTemplateProps) {
-  const similarProducts = getSimilarProducts(product);
   const relatedAccessories = getRelatedAccessories(product);
 
   return (
@@ -42,18 +43,12 @@ export default function CanvasTemplate({
 
       <StyleCollection handle={handle} />
       <SameStyleGallery handle={handle} />
+
       {relatedAccessories.length > 0 && (
         <RelatedProducts accessories={relatedAccessories} />
       )}
 
-      {similarProducts.length > 0 && (
-        <SimilarProductsDeck
-          products={similarProducts}
-          heading="Similar Souls"
-        />
-      )}
       <RoomView product={product} selectedVariantId={selectedVariantId} />
-
       <Reviews />
       <ProductFAQ faqs={faqs} />
     </>

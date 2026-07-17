@@ -6,6 +6,7 @@ import CanvasTemplate from "./CanvasTemplate";
 import PosterTemplate from "./PosterTemplate";
 import CreditsTemplate from "./CreditsTemplate";
 import AccessoryTemplate from "./AccessoryTemplate";
+import PBNTemplate from "./PBNTemplate";
 
 export interface ProductTemplateProps {
   product: ShopifyProduct;
@@ -22,6 +23,7 @@ const TEMPLATE_MAP: Record<string, ComponentType<ProductTemplateProps>> = {
   Poster: PosterTemplate,
   Credits: CreditsTemplate,
   Accessory: AccessoryTemplate,
+  PBN: PBNTemplate,
 };
 
 export default function ProductPageTemplate({
