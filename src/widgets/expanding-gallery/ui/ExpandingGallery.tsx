@@ -63,7 +63,7 @@ export default function ExpandingGallery({
         {hasHeader && (
           <div className="flex flex-col items-center gap-5 mb-12">
             {eyebrow && (
-              <span className="inline-flex items-center gap-2 rounded-full border border-[#E0DED9] bg-white px-4 py-1.5 text-primary">
+              <span className="inline-flex items-center gap-2 rounded-full border border-cream bg-white px-4 py-1.5 text-primary">
                 <span className="material-symbols-outlined text-[16px]">
                   pets
                 </span>
@@ -99,7 +99,7 @@ export default function ExpandingGallery({
             >
               <Link
                 href={item.href}
-                className="relative block h-full w-full overflow-hidden rounded-xl bg-cream text-primary"
+                className="relative block h-full w-full overflow-hidden rounded-xl bg-cream text-slate-dark"
               >
                 {/* Lienzo 2× centrado en la card: su alto (constante) dimensiona la
                     imagen, así el ancho animado solo revela/oculta sin reescalar. */}
@@ -157,11 +157,11 @@ export default function ExpandingGallery({
                         />
                       </div>
                     )}
-                    <h3 className="font-display text-xl font-black leading-tight text-primary lg:text-2xl">
+                    <h3 className="font-display text-xl font-black leading-tight text-slate-dark lg:text-2xl">
                       {item.title}
                     </h3>
                     {item.description && (
-                      <p className="text-sm leading-relaxed text-primary line-clamp-2">
+                      <p className="text-sm leading-relaxed text-slate-dark line-clamp-2">
                         {item.description}
                       </p>
                     )}

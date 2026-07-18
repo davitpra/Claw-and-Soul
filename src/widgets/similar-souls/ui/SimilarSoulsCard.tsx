@@ -19,11 +19,11 @@ export function SimilarSoulsCard({ product }: SimilarSoulsCardProps) {
     : undefined;
 
   return (
-    <div className="group flex h-full w-full flex-col gap-4 rounded-2xl border-2 border-primary bg-white p-4 shadow-sm ease-out hover:-translate-y-1 hover:shadow-[0_22px_40px_-14px_rgba(16,54,66,0.35)]">
+    <div className="group flex h-full w-full flex-col gap-4 rounded-2xl border-2 border-cream bg-white p-4 shadow-sm ease-out hover:-translate-y-1 hover:shadow-[0_22px_40px_-14px_rgba(16,54,66,0.35)]">
       {href ? (
         <Link
           href={href}
-          className="block overflow-hidden rounded-xl"
+          className="block overflow-hidden"
           aria-label={product.name}
         >
           {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -36,7 +36,7 @@ export function SimilarSoulsCard({ product }: SimilarSoulsCardProps) {
           />
         </Link>
       ) : (
-        <div className="overflow-hidden rounded-xl">
+        <div className="overflow-hidden">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src={product.img}

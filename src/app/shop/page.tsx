@@ -47,7 +47,7 @@ function ShopContent() {
     <div className="relative flex min-h-screen w-full flex-col overflow-x-clip bg-cream">
       <Navbar />
 
-      <main className="grow w-full px-4 md:px-10 py-10 md:py-16">
+      <main className="grow w-full px-4 md:px-10 ">
         <div className="container-site">
           {/* Hero Section */}
           <div className="text-center mb-10 md:mb-14 max-w-2xl mx-auto">

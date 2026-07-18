@@ -1,5 +1,4 @@
 import Image from "next/image";
-import Link from "next/link";
 import { Container } from "@/shared/ui/Container";
 
 export default function AIProcess() {
@@ -9,13 +8,13 @@ export default function AIProcess() {
         {/* ── Header ── */}
         <div className="mb-14 text-center">
           <span className="inline-flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-[0.18em] text-[#448da6] mb-5">
-            AI Art Preview
+            HOW TO USE
           </span>
-          <h2 className="font-display text-4xl font-black text-[#103642] md:text-5xl leading-[1.1] tracking-tight">
-            See the Transformation
+          <h2 className="font-display text-4xl font-black text-slate-dark md:text-5xl leading-[1.1] tracking-tight">
+            Get your custom pet portrait in 3 easy steps
           </h2>
-          <p className="mt-4 max-w-lg mx-auto text-base text-[#103642]/55 leading-relaxed">
-            Watch your pet become a Renaissance masterpiece in seconds.
+          <p className="mt-4 max-w-lg mx-auto text-base text-slate-dark/55 leading-relaxed">
+            Watch your pet become a masterpiece in seconds.
             <br />
             Try it free before you buy.
           </p>
@@ -25,22 +24,22 @@ export default function AIProcess() {
         <div className="flex flex-col lg:flex-row items-stretch gap-0">
           {/* Step 1 — Choose Style */}
           <div className="relative flex-1">
-            <StepBadge number="01" variant="light" />
-            <div className="flex flex-col items-center gap-5 rounded-3xl border border-slate-100 bg-white p-8 h-full min-h-[320px] shadow-sm">
-              <div className="flex-1 flex items-center justify-center">
+            <div className="flex flex-col items-center gap-5 h-full">
+              <div className="flex-1 flex items-center justify-center bg-white rounded-full">
                 <Image
                   src="/process/2 approve.png"
                   alt="Choose Style Illustration"
-                  width={150}
-                  height={110}
+                  width={200}
+                  height={150}
                 />
               </div>
               <div className="text-center">
-                <p className="text-lg font-black text-[#103642] tracking-tight">
-                  Choose Your Style
+                <p className="text-2xl font-black text-slate-dark tracking-tight">
+                  1. Choose Your Style
                 </p>
-                <p className="mt-2 text-sm text-[#103642]/50 leading-relaxed max-w-[200px] mx-auto">
-                  Pick an art style for your pet and let our AI work its magic.
+                <p className="mt-2 text-sm text-slate-dark/50 leading-relaxed max-w-50 mx-auto">
+                  Pick an art style for your pet, select size and click
+                  Personalize.
                 </p>
               </div>
             </div>
@@ -49,34 +48,23 @@ export default function AIProcess() {
           <DottedArrow />
           {/* Step 2 — Upload */}
           <div className="relative flex-1">
-            <StepBadge number="02" variant="light" />
-            <div className="flex flex-col items-center gap-5 rounded-3xl border-2 border-slate-200 bg-white p-8 h-full min-h-80">
+            <div className="flex flex-col items-center gap-5 h-full">
               {/* Dog illustration */}
-              <div className="flex-1 flex items-center justify-center">
+              <div className="flex-1 flex items-center justify-center bg-white rounded-full">
                 <Image
                   src="/process/1. Upload Picture.png"
                   alt="Upload Illustration"
-                  width={150}
-                  height={110}
+                  width={200}
+                  height={150}
                 />
               </div>
               <div className="text-center">
-                <p className="text-lg font-black text-[#103642] tracking-tight">
+                <p className="text-2xl font-black text-slate-dark tracking-tight">
                   Upload Pet Photo
                 </p>
-                <p className="mt-2 text-sm text-[#103642]/50 leading-relaxed max-w-[200px] mx-auto">
+                <p className="mt-2 text-sm text-slate-dark/50 leading-relaxed max-w-50 mx-auto">
                   Add a clear photo of your pet in JPG, PNG or WEBP format.
                 </p>
-              </div>
-              <div className="flex gap-2">
-                {["JPG", "PNG", "WEBP"].map((fmt) => (
-                  <span
-                    key={fmt}
-                    className="rounded-md border border-slate-200 bg-slate-50 px-2.5 py-1 text-[10px] font-bold text-slate-400 tracking-wider"
-                  >
-                    {fmt}
-                  </span>
-                ))}
               </div>
             </div>
           </div>
@@ -85,21 +73,20 @@ export default function AIProcess() {
 
           {/* Step 3 — Result */}
           <div className="relative flex-1">
-            <StepBadge number="03" variant="light" />
-            <div className="flex flex-col items-center gap-5 rounded-3xl border border-slate-100 bg-white p-8 h-full min-h-80 shadow-sm overflow-hidden">
-              <div className="flex-1 flex items-center justify-center">
+            <div className="flex flex-col items-center gap-5 h-full">
+              <div className="flex-1 flex items-center justify-center bg-white rounded-full">
                 <Image
                   src="/process/3. Final Art.png"
                   alt="Result Illustration"
-                  width={150}
-                  height={110}
+                  width={200}
+                  height={150}
                 />
               </div>
               <div className="text-center">
-                <p className="text-lg font-black text-[#103642] tracking-tight">
+                <p className="text-2xl font-black text-slate-dark tracking-tight">
                   Get Your Masterpiece
                 </p>
-                <p className="mt-2 text-sm text-[#103642]/50 leading-relaxed max-w-[200px] mx-auto">
+                <p className="mt-2 text-sm text-slate-dark/50 leading-relaxed max-w-50 mx-auto">
                   Preview your masterpiece in seconds.
                 </p>
               </div>
@@ -109,28 +96,6 @@ export default function AIProcess() {
       </Container>
     </section>
   );
-}
-
-/* ── Sub-components ── */
-
-function StepBadge({
-  number,
-  variant = "dark",
-  side = "left",
-}: {
-  number: string;
-  variant?: "dark" | "light";
-  side?: "left" | "right";
-}) {
-  const base =
-    "absolute -top-3.5 z-10 flex size-8 items-center justify-center rounded-full text-[11px] font-black tracking-wider shadow-md";
-  const color =
-    variant === "dark"
-      ? "bg-[#103642] text-white"
-      : "bg-white border-2 border-[#448da6]/30 text-[#448da6]";
-  const pos = side === "right" ? "right-5" : "left-5";
-
-  return <div className={`${base} ${color} ${pos}`}>{number}</div>;
 }
 
 function DottedArrow() {

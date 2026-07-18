@@ -1,9 +1,7 @@
 import { Navbar } from "@/widgets/navbar";
 import { Footer } from "@/widgets/footer";
 import { Hero } from "@/widgets/home-hero";
-import { Reviews } from "@/widgets/reviews";
 import { NewCollection } from "@/widgets/collection";
-import { AIProcess } from "@/widgets/ai-process";
 import { HomeStyleGallery } from "@/widgets/style-gallery";
 import { StudioShowcase } from "@/widgets/studio-showcase";
 import {
@@ -58,9 +56,7 @@ export default async function Home() {
           title="Stories on canvas"
           items={HOME_GALLERY_ITEMS}
         />
-        <AIProcess />
         <StudioShowcase />
-        <Reviews />
       </main>
 
       <Footer />

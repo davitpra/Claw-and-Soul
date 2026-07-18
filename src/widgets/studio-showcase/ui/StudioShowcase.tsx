@@ -4,19 +4,18 @@ import CompareSlider from "./CompareSlider";
 
 export default function StudioShowcase() {
   return (
-    <section className="w-full bg-[#103642] py-20 md:py-28">
+    <section className="w-full bg-cream py-20 md:py-28">
       <Container>
         <div className="grid items-center gap-12 lg:grid-cols-2 lg:gap-16">
           {/* ── Copy ── */}
-          <div className="order-2 lg:order-1">
+          <div className="order-2 lg:order-1 items-center flex flex-col gap-4 text-center lg:items-start lg:text-left">
             <span className="inline-flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-[0.18em] text-[#7ec6db]">
               Claw &amp; Soul Studio
             </span>
-            <h2 className="mt-5 font-display text-4xl font-black leading-[1.1] tracking-tight text-white md:text-5xl">
-              Turn your pet into a<br className="hidden sm:block" />{" "}
-              paint-by-numbers
+            <h2 className="mt-5 font-display text-4xl font-black leading-[1.1] tracking-tight text-slate-dark md:text-5xl">
+              Turn your pet into a<br /> paint-by-numbers
             </h2>
-            <p className="mt-5 max-w-md text-base leading-relaxed text-white/60">
+            <p className="mt-5 max-w-md text-sm leading-relaxed text-slate-dark">
               Upload one photo and the Studio vectorizes it into a
               hand-paintable, numbered SVG — every region mapped to a color,
               ready to print and paint. No skills required, just a clear picture
@@ -32,7 +31,7 @@ export default function StudioShowcase() {
               ].map((item) => (
                 <li
                   key={item}
-                  className="flex items-center gap-3 text-sm text-white/75"
+                  className="flex items-center gap-3 text-sm text-slate-dark/75"
                 >
                   <span className="flex size-5 shrink-0 items-center justify-center rounded-full bg-[#448da6]/25 text-[#7ec6db]">
                     <svg width="11" height="11" viewBox="0 0 12 12" fill="none">
@@ -59,7 +58,7 @@ export default function StudioShowcase() {
               </Link>
               <Link
                 href="/shop"
-                className="text-sm font-bold text-white/70 underline-offset-4 transition-colors hover:text-white hover:underline"
+                className="text-sm font-bold text-slate-dark/70 underline-offset-4 transition-colors hover:text-primary hover:underline"
               >
                 Browse finished pieces
               </Link>
@@ -68,7 +67,7 @@ export default function StudioShowcase() {
 
           {/* ── Image ── */}
           <div className="order-1 lg:order-2">
-            <div className="relative mx-auto max-w-sm lg:max-w-md">
+            <div className="relative mx-auto max-w-md lg:max-w-lg">
               {/* Glow */}
               <div className="absolute -inset-4 -z-10 rounded-4xl bg-[#448da6]/20 blur-2xl" />
               <div className="overflow-hidden rounded-3xl border border-white/10 bg-white/5 shadow-2xl">

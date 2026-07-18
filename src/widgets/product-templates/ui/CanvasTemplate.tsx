@@ -13,6 +13,7 @@ import {
 import { getSimilarProducts } from "@/entities/product/lib/getSimilarProducts";
 import { SameStyleGallery } from "@/widgets/expanding-gallery";
 import { SimilarSouls } from "@/widgets/similar-souls";
+import { AIProcess } from "@/widgets/ai-process";
 
 export default function CanvasTemplate({
   product,
@@ -41,14 +42,15 @@ export default function CanvasTemplate({
       </div>
 
       <StyleCollection handle={handle} />
-      <SameStyleGallery handle={handle} />
-      {relatedAccessories.length > 0 && (
-        <RelatedProducts accessories={relatedAccessories} />
-      )}
+      <AIProcess />
 
       {similarProducts.length > 0 && (
         <SimilarSouls products={similarProducts} />
       )}
+      {relatedAccessories.length > 0 && (
+        <RelatedProducts accessories={relatedAccessories} />
+      )}
+      <SameStyleGallery handle={handle} />
       <RoomView product={product} selectedVariantId={selectedVariantId} />
 
       <Reviews />
