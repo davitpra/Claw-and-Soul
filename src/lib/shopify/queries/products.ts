@@ -109,6 +109,7 @@ export const GET_PRODUCT = `
               id
               title
               handle
+              description
               images(first: 1) {
                 edges {
                   node {

@@ -12,7 +12,7 @@ import {
 } from "@/widgets/related-products";
 import { getSimilarProducts } from "@/entities/product/lib/getSimilarProducts";
 import { SameStyleGallery } from "@/widgets/expanding-gallery";
-import { ProductShowcase } from "@/widgets/collection-showcase";
+import { SimilarSouls } from "@/widgets/similar-souls";
 
 export default function CanvasTemplate({
   product,
@@ -47,7 +47,7 @@ export default function CanvasTemplate({
       )}
 
       {similarProducts.length > 0 && (
-        <ProductShowcase products={similarProducts} heading="Similar Souls" />
+        <SimilarSouls products={similarProducts} />
       )}
       <RoomView product={product} selectedVariantId={selectedVariantId} />
 

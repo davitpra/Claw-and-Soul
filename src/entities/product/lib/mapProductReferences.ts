@@ -19,7 +19,7 @@ export function mapProductReferences(
 
       return {
         name: node.title,
-        desc: "",
+        desc: node.description ?? "",
         price: price
           ? new Intl.NumberFormat("en-US", {
               style: "currency",
