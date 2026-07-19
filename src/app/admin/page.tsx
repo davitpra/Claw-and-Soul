@@ -20,7 +20,6 @@ import {
   Page,
   Layout,
   Card,
-  Grid,
   Text,
   InlineStack,
   BlockStack,

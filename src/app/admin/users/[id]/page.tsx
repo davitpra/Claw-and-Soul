@@ -102,7 +102,10 @@ export default function AdminUserDetailPage() {
   const [gens, setGens] = useState<Paginated<AdminUserGeneration> | null>(null);
   const [genPage, setGenPage] = useState(1);
   const [loading, setLoading] = useState(true);
-  const [gensLoading, setGensLoading] = useState(true);
+  // `gensLoading` derivado: evita el setState síncrono dentro del efecto.
+  const gensKey = `${id}|${genPage}`;
+  const [gensLoadedKey, setGensLoadedKey] = useState<string | null>(null);
+  const gensLoading = gensLoadedKey !== gensKey;
   const [error, setError] = useState<string | null>(null);
   const [selectedTab, setSelectedTab] = useState(0);
   const [expenses, setExpenses] = useState<CustomerExpenses | null>(null);
@@ -126,13 +129,20 @@ export default function AdminUserDetailPage() {
   }, [id]);
 
   useEffect(() => {
-    setGensLoading(true);
+    let alive = true;
     adminApi.users
       .generations(id, genPage)
-      .then(setGens)
+      .then((data) => {
+        if (alive) setGens(data);
+      })
       .catch(() => {})
-      .finally(() => setGensLoading(false));
-  }, [id, genPage]);
+      .finally(() => {
+        if (alive) setGensLoadedKey(gensKey);
+      });
+    return () => {
+      alive = false;
+    };
+  }, [id, genPage, gensKey]);
 
   if (loading) {
     return (
@@ -683,16 +693,27 @@ function GenerationsGrid({
 
 function UserOrdersList({ userId }: { userId: string }) {
   const [orders, setOrders] = useState<Paginated<AdminUserOrderListItem> | null>(null);
-  const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
 
+  // `loading` derivado: evita el setState síncrono dentro del efecto.
+  const requestKey = `${userId}|${page}`;
+  const [loadedKey, setLoadedKey] = useState<string | null>(null);
+  const loading = loadedKey !== requestKey;
+
   useEffect(() => {
-    setLoading(true);
+    let alive = true;
     adminApi.users
       .orders(userId, page)
-      .then(setOrders)
-      .finally(() => setLoading(false));
-  }, [userId, page]);
+      .then((data) => {
+        if (alive) setOrders(data);
+      })
+      .finally(() => {
+        if (alive) setLoadedKey(requestKey);
+      });
+    return () => {
+      alive = false;
+    };
+  }, [userId, page, requestKey]);
 
   if (loading) {
     return (

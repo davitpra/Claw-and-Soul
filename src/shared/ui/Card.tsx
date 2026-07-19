@@ -24,7 +24,14 @@ interface CardProps {
  * Con `naturalAspect` el alto se adapta a la proporción real de la imagen.
  * Los `children` se posicionan con `absolute` sobre la imagen.
  */
-export function Card({ imageUrl, imageAlt, className = "", children, naturalAspect = false, onImageError }: CardProps) {
+export function Card({
+  imageUrl,
+  imageAlt,
+  className = "",
+  children,
+  naturalAspect = false,
+  onImageError,
+}: CardProps) {
   return (
     <div className={`relative overflow-hidden bg-white shadow-sm ${className}`}>
       {naturalAspect ? (
@@ -39,7 +46,7 @@ export function Card({ imageUrl, imageAlt, className = "", children, naturalAspe
         />
       ) : (
         <div
-          className="aspect-4/5 w-full bg-cover bg-center"
+          className="aspect-2/3 w-full bg-cover bg-center"
           style={{ backgroundImage: `url('${imageUrl}')` }}
           role={imageAlt ? "img" : undefined}
           aria-label={imageAlt || undefined}

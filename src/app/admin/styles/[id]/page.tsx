@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import {
   Page,
@@ -159,7 +159,7 @@ export default function AdminStyleDetailPage() {
     }),
   );
 
-  const hydrateForm = (s: AdminStyle) => {
+  const hydrateForm = useCallback((s: AdminStyle) => {
     setName(s.name);
     setNameError(null);
     setDisplayName(s.displayName);
@@ -174,13 +174,13 @@ export default function AdminStyleDetailPage() {
     setTemplateVarOptionsText(
       s.templateVarOptions ? JSON.stringify(s.templateVarOptions, null, 2) : "",
     );
-  };
+  }, []);
 
-  const reload = async () => {
+  const reload = useCallback(async () => {
     const s = await adminApi.styles.getById(id);
     setStyle(s);
     hydrateForm(s);
-  };
+  }, [id, hydrateForm]);
 
   useEffect(() => {
     Promise.all([
@@ -198,7 +198,7 @@ export default function AdminStyleDetailPage() {
       })
       .catch((e: Error) => setError(e.message))
       .finally(() => setLoading(false));
-  }, [id]);
+  }, [id, hydrateForm]);
 
   const loadPets = async () => {
     setPetsLoading(true);
@@ -253,7 +253,7 @@ export default function AdminStyleDetailPage() {
         testGenStatus.errorMessage ?? "La generación falló. Revisá los logs.",
       );
     }
-  }, [testGenStatus.status]);
+  }, [testGenStatus.status, testGenStatus.errorMessage, reload]);
 
   const updateSelection = (key: string, value: string | number) =>
     setUserSelections((prev) => ({ ...prev, [key]: value }));

@@ -7,7 +7,6 @@ import {
   Card,
   IndexTable,
   Badge,
-  Button,
   Banner,
   Spinner,
   Text,

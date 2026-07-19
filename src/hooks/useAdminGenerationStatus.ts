@@ -9,27 +9,34 @@ interface AdminGenerationState {
   errorMessage: string | null;
 }
 
+const EMPTY_STATE: AdminGenerationState = {
+  status: null,
+  progress: null,
+  errorMessage: null,
+};
+
 export function useAdminGenerationStatus(generationId: string | null) {
-  const [state, setState] = useState<AdminGenerationState>({
-    status: null,
-    progress: null,
-    errorMessage: null,
-  });
+  // Guardamos el estado junto al id que lo produjo: así al cambiar (o limpiar)
+  // el generationId el reset es derivado y no hace falta un setState en el efecto.
+  const [entry, setEntry] = useState<{
+    id: string;
+    state: AdminGenerationState;
+  } | null>(null);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   useEffect(() => {
-    if (!generationId) {
-      setState({ status: null, progress: null, errorMessage: null });
-      return;
-    }
+    if (!generationId) return;
 
     const poll = async () => {
       try {
         const data = await adminApi.styles.testGenerationStatus(generationId);
-        setState({
-          status: data.status as GenerationStatus,
-          progress: data.progress,
-          errorMessage: data.errorMessage,
+        setEntry({
+          id: generationId,
+          state: {
+            status: data.status as GenerationStatus,
+            progress: data.progress,
+            errorMessage: data.errorMessage,
+          },
         });
         if (data.status === 'completed' || data.status === 'failed') {
           if (intervalRef.current) clearInterval(intervalRef.current);
@@ -47,5 +54,5 @@ export function useAdminGenerationStatus(generationId: string | null) {
     };
   }, [generationId]);
 
-  return state;
+  return entry?.id === generationId ? entry.state : EMPTY_STATE;
 }

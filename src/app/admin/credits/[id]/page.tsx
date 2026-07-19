@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import {
   Page,
@@ -57,40 +57,45 @@ export default function AdminUserCreditsPage() {
   const [result, setResult] =
     useState<Paginated<AdminCreditTransaction> | null>(null);
   const [page, setPage] = useState(1);
-  const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [grantOpen, setGrantOpen] = useState(false);
 
-  const load = useCallback(
-    (p: number) => {
-      setLoading(true);
-      Promise.all([
-        adminApi.users.detail(userId),
-        adminApi.users.creditTransactions(userId, p),
-      ])
-        .then(([d, txns]) => {
-          setDetail(d);
-          setResult(txns);
-          setLoading(false);
-        })
-        .catch((e: Error) => {
-          setError(e.message);
-          setLoading(false);
-        });
-    },
-    [userId]
-  );
+  // `loading` derivado: hay carga en curso mientras la request ya resuelta no
+  // coincida con la actual. Evita el setState síncrono dentro del efecto.
+  // `reloadToken` fuerza un refetch de la misma página tras un grant.
+  const [reloadToken, setReloadToken] = useState(0);
+  const requestKey = `${userId}|${page}|${reloadToken}`;
+  const [loadedKey, setLoadedKey] = useState<string | null>(null);
+  const loading = loadedKey !== requestKey;
 
   useEffect(() => {
-    load(page);
-  }, [page, load]);
+    let cancelled = false;
+    Promise.all([
+      adminApi.users.detail(userId),
+      adminApi.users.creditTransactions(userId, page),
+    ])
+      .then(([d, txns]) => {
+        if (cancelled) return;
+        setDetail(d);
+        setResult(txns);
+        setLoadedKey(requestKey);
+      })
+      .catch((e: Error) => {
+        if (cancelled) return;
+        setError(e.message);
+        setLoadedKey(requestKey);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [userId, page, requestKey]);
 
   const handleGranted = (newBalance: number) => {
     setDetail((prev) =>
       prev ? { ...prev, generationCredits: newBalance } : prev
     );
     // Un grant crea un nuevo movimiento admin_grant: recargar el historial.
-    if (page === 1) load(1);
+    if (page === 1) setReloadToken((t) => t + 1);
     else setPage(1);
   };
 

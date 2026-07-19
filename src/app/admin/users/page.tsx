@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import {
   Page,
@@ -66,26 +66,32 @@ export default function AdminUsersPage() {
   const [result, setResult] = useState<Paginated<AdminUserListItem> | null>(null);
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
-  const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const load = useCallback((p: number, s: string) => {
-    setLoading(true);
-    adminApi.users
-      .list(p, s || undefined)
-      .then((data) => {
-        setResult(data);
-        setLoading(false);
-      })
-      .catch((e: Error) => {
-        setError(e.message);
-        setLoading(false);
-      });
-  }, []);
+  // `loading` derivado: hay carga en curso mientras la query ya resuelta no
+  // coincida con la actual. Evita el setState síncrono dentro del efecto.
+  const queryKey = `${page}|${search}`;
+  const [loadedKey, setLoadedKey] = useState<string | null>(null);
+  const loading = loadedKey !== queryKey;
 
   useEffect(() => {
-    load(page, search);
-  }, [page, search, load]);
+    let cancelled = false;
+    adminApi.users
+      .list(page, search || undefined)
+      .then((data) => {
+        if (cancelled) return;
+        setResult(data);
+        setLoadedKey(queryKey);
+      })
+      .catch((e: Error) => {
+        if (cancelled) return;
+        setError(e.message);
+        setLoadedKey(queryKey);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [page, search, queryKey]);
 
   return (
     <Page
