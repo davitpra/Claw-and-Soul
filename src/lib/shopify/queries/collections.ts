@@ -11,6 +11,34 @@ export const GET_COLLECTIONS = `
   }
 `;
 
+export const GET_COLLECTIONS_WITH_IMAGE = `
+  query getCollectionsWithImage($first: Int!) {
+    collections(first: $first) {
+      edges {
+        node {
+          id
+          handle
+          title
+          image {
+            url
+            altText
+          }
+          products(first: 1) {
+            edges {
+              node {
+                featuredImage {
+                  url
+                  altText
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+`;
+
 export const GET_COLLECTION = `
   query getCollection($handle: String!, $first: Int!) {
     collection(handle: $handle) {

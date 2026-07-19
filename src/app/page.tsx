@@ -2,6 +2,7 @@ import { Navbar } from "@/widgets/navbar";
 import { Footer } from "@/widgets/footer";
 import { Hero } from "@/widgets/home-hero";
 import { NewCollection } from "@/widgets/collection";
+import { CategoryGrid } from "@/widgets/category-grid";
 import { HomeStyleGallery } from "@/widgets/style-gallery";
 import { StudioShowcase } from "@/widgets/studio-showcase";
 import {
@@ -56,6 +57,7 @@ export default async function Home() {
           title="Stories on canvas"
           items={HOME_GALLERY_ITEMS}
         />
+        <CategoryGrid />
         <StudioShowcase />
       </main>
 

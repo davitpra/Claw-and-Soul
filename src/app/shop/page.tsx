@@ -25,6 +25,8 @@ function productHref(product: ShopProduct): string | undefined {
 function ShopContent() {
   const searchParams = useSearchParams();
   const searchQuery = searchParams.get("q")?.trim() ?? "";
+  // Título de colección que llega del grid de categorías del home.
+  const collectionQuery = searchParams.get("collection")?.trim() ?? "";
 
   const { products, loading, collections, styleCategories } =
     useShopProducts(searchQuery);
@@ -33,6 +35,7 @@ function ShopContent() {
     collections,
     styleCategories,
     searchQuery,
+    collectionQuery,
   );
   const { filteredProducts, activeFilterCount, clearFilters } = filters;
 
@@ -47,7 +50,7 @@ function ShopContent() {
     <div className="relative flex min-h-screen w-full flex-col overflow-x-clip bg-cream">
       <Navbar />
 
-      <main className="grow w-full px-4 md:px-10 ">
+      <main className="grow w-full px-4 md:px-10 py-4">
         <div className="container-site">
           {/* Hero Section */}
           <div className="text-center mb-10 md:mb-14 max-w-2xl mx-auto">
@@ -64,6 +67,16 @@ function ShopContent() {
                     ? "Searching our collection..."
                     : `${products.length} ${products.length === 1 ? "result" : "results"} found.`}
                 </p>
+              </>
+            )}
+            {!searchQuery && collectionQuery && (
+              <>
+                <span className="text-primary font-bold tracking-widest text-xs uppercase mb-3 block">
+                  Collection
+                </span>
+                <h1 className="font-display text-4xl md:text-5xl font-black text-secondary mb-4 leading-tight">
+                  {collectionQuery}
+                </h1>
               </>
             )}
           </div>

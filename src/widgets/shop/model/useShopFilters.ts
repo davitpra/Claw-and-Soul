@@ -52,14 +52,20 @@ export interface ShopFilters {
  * Estado y derivaciones de los filtros del sidebar del shop. Cada grupo hace
  * OR interno; entre grupos se hace AND. Las selecciones se reinician cuando
  * cambia la búsqueda.
+ *
+ * `initialCollection` es el título de colección que llega por `?collection=`
+ * (p. ej. desde el grid de categorías del home) y preselecciona ese filtro.
  */
 export function useShopFilters(
   products: ShopProduct[],
   collections: string[],
   styleCategories: Map<string, string>,
   searchQuery: string,
+  initialCollection: string = "",
 ): ShopFilters {
-  const [selectedCollections, setSelectedCollections] = useState<string[]>([]);
+  const [selectedCollections, setSelectedCollections] = useState<string[]>(
+    initialCollection ? [initialCollection] : [],
+  );
   const [selectedProductTypes, setSelectedProductTypes] = useState<string[]>(
     [],
   );
@@ -85,6 +91,15 @@ export function useShopFilters(
   if (searchQuery !== prevSearchQuery) {
     setPrevSearchQuery(searchQuery);
     clearFilters();
+  }
+
+  // Igual que arriba, pero para `?collection=`: navegar de una categoría a otra
+  // reemplaza la selección en vez de acumularla.
+  const [prevInitialCollection, setPrevInitialCollection] =
+    useState(initialCollection);
+  if (initialCollection !== prevInitialCollection) {
+    setPrevInitialCollection(initialCollection);
+    setSelectedCollections(initialCollection ? [initialCollection] : []);
   }
 
   const collectionCounts = useMemo(

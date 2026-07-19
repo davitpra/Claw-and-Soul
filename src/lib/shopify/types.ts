@@ -89,6 +89,16 @@ export interface ShopifyProduct {
   };
 }
 
+/** Colección sin productos: lo justo para pintar una card de categoría. */
+export interface ShopifyCollectionSummary {
+  id: string;
+  handle: string;
+  title: string;
+  /** Portada ya resuelta: imagen de la colección o, si no tiene, la del primer producto. */
+  imageUrl: string;
+  imageAlt: string | null;
+}
+
 export interface ShopifyCollection {
   id: string;
   title: string;
