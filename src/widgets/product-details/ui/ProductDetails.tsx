@@ -12,6 +12,7 @@ import { useStyle } from "@/hooks/useStyle";
 import { StyleOptionsForm } from "@/entities/art-style/ui/StyleOptionsForm";
 import { getLifestyleImage } from "@/entities/product/lib/getLifestyleImage";
 import { getSizeScale } from "@/entities/product/lib/getSizeScale";
+import type { FrameStyle } from "@/widgets/product-templates/ui/ProductPageTemplate";
 
 interface ProductDetailsProps {
   product: ShopifyProduct;
@@ -19,6 +20,7 @@ interface ProductDetailsProps {
   setSelectedVariantId: (id: string) => void;
   mainImage: string;
   setMainImage: (url: string) => void;
+  frameStyle?: FrameStyle;
 }
 
 export default function ProductDetails({
@@ -27,6 +29,7 @@ export default function ProductDetails({
   setSelectedVariantId,
   mainImage,
   setMainImage,
+  frameStyle = "art",
 }: ProductDetailsProps) {
   const selectedVariant = product.variants.edges.find(
     (v) => v.node.id === selectedVariantId,
@@ -108,6 +111,7 @@ export default function ProductDetails({
         otherSetImage={lifestyleImage}
         variantImage={selectedVariant?.image?.url}
         firstImageScale={firstImageScale}
+        frameStyle={frameStyle}
       />
 
       <div className="lg:col-span-5 flex flex-col h-full">

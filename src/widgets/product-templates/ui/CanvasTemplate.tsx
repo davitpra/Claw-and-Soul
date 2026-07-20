@@ -23,6 +23,7 @@ export default function CanvasTemplate({
   setMainImage,
   handle,
   faqs,
+  frameStyle,
 }: ProductTemplateProps) {
   const similarProducts = getSimilarProducts(product);
   const relatedAccessories = getRelatedAccessories(product);
@@ -37,6 +38,7 @@ export default function CanvasTemplate({
             setSelectedVariantId={setSelectedVariantId}
             mainImage={mainImage}
             setMainImage={setMainImage}
+            frameStyle={frameStyle}
           />
         </div>
       </div>

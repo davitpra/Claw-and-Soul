@@ -1,9 +1,11 @@
 "use client";
 
+import { CSSProperties } from "react";
 import { ShopifyProduct } from "@/lib/shopify";
 import Image from "next/image";
 import { Carousel } from "@/shared/ui/Carousel";
 import { ImageZoom } from "@/shared/ui/ImageZoom";
+import type { FrameStyle } from "@/widgets/product-templates/ui/ProductPageTemplate";
 
 interface ProductGalleryProps {
   product: ShopifyProduct;
@@ -11,7 +13,30 @@ interface ProductGalleryProps {
   otherSetImage?: string | null;
   variantImage?: string | null;
   firstImageScale?: number;
+  frameStyle?: FrameStyle;
 }
+
+// Per-type presentation for the product image. "art" keeps the original flat
+// float; "canvas" adds a directional float + an inner darkening overlay on the
+// left/right/bottom edges (the wrapped canvas sides in shadow, top stays lit);
+// "poster" adds a hairline paper edge with ~2px of air and a flatter shadow.
+const FRAME_SHADOWS: Record<FrameStyle, string> = {
+  art: "shadow-[0_14px_32px_-12px_rgba(16,54,66,0.40)]",
+  canvas: "shadow-[8px_10px_22px_-8px_rgba(16,54,66,0.45)]",
+  poster:
+    "bg-white border border-black/10 p-2 shadow-[0_8px_20px_-12px_rgba(16,54,66,0.30)]",
+};
+
+// The canvas "wrap" darkening. Box-shadow insets don't render over an <img>
+// (the image content paints on top), so we overlay gradients and multiply them
+// onto the artwork: darker toward the left, right and bottom edges, none at top.
+const canvasEdgeStyle: CSSProperties = {
+  background: [
+    "linear-gradient(to right, rgba(0,0,0,0.34), rgba(0,0,0,0) 2%, rgba(0,0,0,0) 98%, rgba(0,0,0,0.34))",
+    "linear-gradient(to top, rgba(0,0,0,0.38), rgba(0,0,0,0) 1%)",
+  ].join(", "),
+  mixBlendMode: "multiply",
+};
 
 export default function ProductGallery({
   product,
@@ -19,6 +44,7 @@ export default function ProductGallery({
   otherSetImage,
   variantImage,
   firstImageScale = 1,
+  frameStyle = "art",
 }: ProductGalleryProps) {
   const primaryImage = variantImage || mainImage;
   const images = [primaryImage, otherSetImage].filter((src): src is string =>
@@ -26,15 +52,52 @@ export default function ProductGallery({
   );
   const uniqueImages = Array.from(new Set(images));
 
-  const imageClassName =
-    "w-full h-auto bg-white shadow-[0_14px_32px_-12px_rgba(16,54,66,0.40)] transition-all duration-300 ease-out";
-  const hoverClassName =
-    "hover:-translate-y-1.5 hover:shadow-[0_22px_40px_-14px_rgba(16,54,66,0.50)]";
+  const baseImageClassName =
+    "w-full h-auto bg-white transition-all duration-300 ease-out";
+  // The frame effect (canvas/poster/art) only applies to the primary product
+  // image; secondary images (e.g. lifestyle) stay neutral with the art float.
+  const primaryImageClassName = `${baseImageClassName} ${FRAME_SHADOWS[frameStyle]}`;
+  const secondaryImageClassName = `${baseImageClassName} ${FRAME_SHADOWS.art}`;
+  // Only "art" deepens its shadow on hover; canvas/poster keep their base shadow
+  // so the edge effect survives the hover state. The lift is on the wrapper so
+  // the canvas darkening overlay travels together with the image.
+  const hoverShadowClass =
+    frameStyle === "art"
+      ? "hover:shadow-[0_22px_40px_-14px_rgba(16,54,66,0.50)]"
+      : "";
   const sizes = "(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 600px";
 
   const firstImageStyle = { width: `${firstImageScale * 100}%` };
 
   const isCarousel = uniqueImages.length > 1;
+
+  // The primary image: width-scaled wrapper that lifts on hover and carries the
+  // optional canvas darkening overlay on top of the image.
+  const renderPrimary = (src: string) => (
+    <div
+      className="relative transition-transform duration-300 ease-out hover:-translate-y-1.5"
+      style={firstImageStyle}
+    >
+      <ImageZoom zoomSrc={src} alt={product.title}>
+        <Image
+          src={src}
+          alt={product.title}
+          width={0}
+          height={0}
+          sizes={sizes}
+          className={`${primaryImageClassName} ${hoverShadowClass}`}
+          priority
+        />
+      </ImageZoom>
+      {frameStyle === "canvas" && (
+        <div
+          aria-hidden
+          className="pointer-events-none absolute inset-0"
+          style={canvasEdgeStyle}
+        />
+      )}
+    </div>
+  );
 
   return (
     <div className="lg:col-span-7 flex flex-col gap-8">
@@ -46,41 +109,26 @@ export default function ProductGallery({
                 key={src}
                 className="flex-[0_0_100%] min-w-0 flex items-center justify-center px-6 md:px-10 pt-6 pb-12"
               >
-                <ImageZoom
-                  zoomSrc={src}
-                  alt={product.title}
-                  style={i === 0 ? firstImageStyle : undefined}
-                >
-                  <Image
-                    src={src}
-                    alt={product.title}
-                    width={0}
-                    height={0}
-                    sizes={sizes}
-                    className={`${imageClassName} ${i === 0 ? hoverClassName : ""}`}
-                    priority={i === 0}
-                  />
-                </ImageZoom>
+                {i === 0 ? (
+                  renderPrimary(src)
+                ) : (
+                  <ImageZoom zoomSrc={src} alt={product.title}>
+                    <Image
+                      src={src}
+                      alt={product.title}
+                      width={0}
+                      height={0}
+                      sizes={sizes}
+                      className={secondaryImageClassName}
+                    />
+                  </ImageZoom>
+                )}
               </div>
             ))}
           </Carousel>
         ) : (
           <div className="flex-[0_0_100%] min-w-0 flex items-center justify-center px-6 md:px-10 pt-6 pb-12">
-            <ImageZoom
-              zoomSrc={primaryImage}
-              alt={product.title}
-              style={firstImageStyle}
-            >
-              <Image
-                src={primaryImage}
-                alt={product.title}
-                width={0}
-                height={0}
-                sizes={sizes}
-                className={`${imageClassName} ${hoverClassName}`}
-                priority
-              />
-            </ImageZoom>
+            {renderPrimary(primaryImage)}
           </div>
         )}
       </div>

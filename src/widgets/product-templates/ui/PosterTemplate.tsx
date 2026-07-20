@@ -15,6 +15,7 @@ export default function PosterTemplate({
   setMainImage,
   faqs,
   handle,
+  frameStyle,
 }: ProductTemplateProps) {
   return (
     <>
@@ -26,6 +27,7 @@ export default function PosterTemplate({
             setSelectedVariantId={setSelectedVariantId}
             mainImage={mainImage}
             setMainImage={setMainImage}
+            frameStyle={frameStyle}
           />
         </div>
       </div>
