@@ -22,13 +22,22 @@ export default function Navbar() {
   const [hidden, setHidden] = useState(false);
   const lastScrollY = useRef(0);
 
-  // Navega a la página de tienda con el término de búsqueda como query param.
+  // Navega a la tienda con el término como query param. Si está vacío, va a
+  // /shop sin filtro, para que enviar el buscador vacío también quite la búsqueda.
   const handleSearch = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     const term = searchTerm.trim();
-    if (!term) return;
-    router.push(`/shop?q=${encodeURIComponent(term)}`);
+    router.push(term ? `/shop?q=${encodeURIComponent(term)}` : "/shop");
     setMobileMenuOpen(false);
+  };
+
+  // Vaciar el input (incluida la "X" nativa de type="search") limpia el filtro
+  // al instante cuando ya estamos en la página de resultados.
+  const handleSearchChange = (value: string) => {
+    setSearchTerm(value);
+    if (value.trim() === "" && pathname === "/shop") {
+      router.push("/shop");
+    }
   };
 
   // Cierra el menú móvil al cambiar de ruta sin un effect (patrón "setState during render").
@@ -142,7 +151,7 @@ export default function Navbar() {
                   <input
                     type="search"
                     value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
+                    onChange={(e) => handleSearchChange(e.target.value)}
                     className="w-48 xl:w-64 h-10 pl-10 pr-4 rounded-xl border border-[#E0DED9] bg-white/50 focus:bg-white text-sm text-text-main placeholder:text-text-muted focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all"
                     placeholder="Search gifts..."
                   />

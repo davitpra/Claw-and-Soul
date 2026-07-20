@@ -53,8 +53,8 @@ export default async function CategoryGrid({
           {categories.map((category) => (
             <li key={category.id}>
               <Link
-                // /shop filtra por título de colección, no por handle.
-                href={`/shop?collection=${encodeURIComponent(category.title)}`}
+                // /shop pide la colección a Shopify por handle.
+                href={`/shop?collection=${encodeURIComponent(category.handle)}`}
                 className="group block focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-primary"
               >
                 <Card

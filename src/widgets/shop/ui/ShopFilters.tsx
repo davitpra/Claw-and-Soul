@@ -4,13 +4,10 @@ import { ShopFilters as ShopFiltersState } from "../model/useShopFilters";
 import { FilterGroup } from "./FilterGroup";
 import { FilterOption } from "./FilterOption";
 
-// Sidebar de filtros del shop, compartido entre el rail de desktop y el panel móvil.
+// Sidebar de filtros del shop, compartido entre el rail de desktop y el panel
+// móvil. La colección no vive aquí: la elige el carrusel CircularCategory.
 export function ShopFilters({ filters }: { filters: ShopFiltersState }) {
   const {
-    collections,
-    collectionCounts,
-    selectedCollections,
-    toggleCollection,
     productTypes,
     productTypeCounts,
     selectedProductTypes,
@@ -81,20 +78,6 @@ export function ShopFilters({ filters }: { filters: ShopFiltersState }) {
                 />
               ))}
             </div>
-          ))}
-        </FilterGroup>
-      )}
-
-      {collections.length > 0 && (
-        <FilterGroup title="Collection">
-          {collections.map((collection) => (
-            <FilterOption
-              key={collection}
-              label={collection}
-              count={collectionCounts.get(collection) ?? 0}
-              checked={selectedCollections.includes(collection)}
-              onChange={() => toggleCollection(collection)}
-            />
           ))}
         </FilterGroup>
       )}

@@ -1,5 +1,7 @@
 import { useEffect, useState } from "react";
 import { getProducts } from "@/lib/shopify";
+import { getCollectionProducts } from "@/lib/shopify/actions/collections";
+import { ShopifyProduct } from "@/lib/shopify/types";
 import { fetchStyles } from "./fetchStyles";
 import { ShopProduct, StyleData } from "./types";
 
@@ -13,15 +15,21 @@ function formatMoney(amount: string, currencyCode: string) {
 }
 
 // Convierte un nodo de Shopify (+ estilos del backend) en un ShopProduct.
+// `collectionTitle` es la colección que se está navegando: cuando la hay, es la
+// etiqueta correcta para la card. Sin ella (catálogo completo o búsqueda) no
+// existe una "colección principal", así que se cae a la primera que devuelva
+// Shopify, que es arbitraria.
 function toShopProduct(
-  node: Awaited<ReturnType<typeof getProducts>>[number],
+  node: ShopifyProduct,
   styleData: StyleData,
+  collectionTitle?: string,
 ): ShopProduct {
   const price = node.priceRange?.minVariantPrice || {
     amount: "0.00",
     currencyCode: "USD",
   };
-  const collection = node.collections?.edges?.[0]?.node.title || "Other";
+  const collection =
+    collectionTitle || node.collections?.edges?.[0]?.node.title || "Other";
 
   // Precio comparativo (de lista): solo es oferta si supera al precio actual.
   const compareAt = node.compareAtPriceRange?.minVariantPrice;
@@ -60,52 +68,90 @@ function toShopProduct(
 export interface ShopProductsState {
   products: ShopProduct[];
   loading: boolean;
-  /** Colecciones únicas presentes en el catálogo. */
-  collections: string[];
+  /** Título de la colección navegada; null en el catálogo completo o si el handle no existe. */
+  collectionTitle: string | null;
   /** nombre del estilo → categoría a la que pertenece. */
   styleCategories: Map<string, string>;
 }
 
+// Cuántos productos pedir por vista.
+const PAGE_SIZE = 20;
+const COLLECTION_PAGE_SIZE = 100;
+
 /**
  * Carga el catálogo del shop: Shopify da los productos y el backend el estilo
- * de arte de cada uno. Se recarga cuando cambia la búsqueda.
+ * de arte de cada uno. Se recarga cuando cambia la búsqueda o la colección.
+ *
+ * La colección se resuelve en el servidor (`collection(handle:)`), no filtrando
+ * en cliente: es Shopify quien decide la pertenencia, así que un producto en
+ * varias colecciones aparece en todas. `collectionHandle` vacío trae el catálogo
+ * completo. La búsqueda tiene prioridad: la Storefront API no admite buscar
+ * texto dentro de una colección, y `?q=` siempre llega desde el navbar, que no
+ * arrastra la categoría.
  */
-export function useShopProducts(searchQuery: string): ShopProductsState {
+export function useShopProducts(
+  searchQuery: string,
+  collectionHandle: string = "",
+): ShopProductsState {
   const [products, setProducts] = useState<ShopProduct[]>([]);
   const [loading, setLoading] = useState(true);
-  const [collections, setCollections] = useState<string[]>([]);
+  const [collectionTitle, setCollectionTitle] = useState<string | null>(null);
   const [styleCategories, setStyleCategories] = useState<Map<string, string>>(
     new Map(),
   );
 
   useEffect(() => {
+    let cancelled = false;
     setLoading(true);
+
+    // Trae los productos de la colección o los del catálogo/búsqueda, según el
+    // caso. Un handle inexistente devuelve null y se trata como colección vacía
+    // en vez de caer al catálogo completo, para no mostrar lo que nadie pidió.
+    async function loadNodes(): Promise<{
+      nodes: ShopifyProduct[];
+      title: string | null;
+    }> {
+      if (!searchQuery && collectionHandle) {
+        const collection = await getCollectionProducts(
+          collectionHandle,
+          COLLECTION_PAGE_SIZE,
+        );
+        return {
+          nodes: collection?.products.edges.map((edge) => edge.node) ?? [],
+          title: collection?.title ?? null,
+        };
+      }
+      return {
+        nodes: await getProducts(PAGE_SIZE, searchQuery || undefined),
+        title: null,
+      };
+    }
 
     async function fetchProducts() {
       try {
-        const [fetchedData, styleData] = await Promise.all([
-          getProducts(20, searchQuery || undefined),
+        const [{ nodes, title }, styleData] = await Promise.all([
+          loadNodes(),
           fetchStyles(),
         ]);
+        if (cancelled) return;
 
-        const mappedProducts = fetchedData.map((node) =>
-          toShopProduct(node, styleData),
+        setProducts(
+          nodes.map((node) => toShopProduct(node, styleData, title ?? undefined)),
         );
-
-        setProducts(mappedProducts);
+        setCollectionTitle(title);
         setStyleCategories(styleData.categoryByStyle);
-        setCollections(
-          Array.from(new Set(mappedProducts.map((p) => p.collection))),
-        );
       } catch (error) {
         console.error("Failed to fetch products:", error);
       } finally {
-        setLoading(false);
+        if (!cancelled) setLoading(false);
       }
     }
 
     fetchProducts();
-  }, [searchQuery]);
+    return () => {
+      cancelled = true;
+    };
+  }, [searchQuery, collectionHandle]);
 
-  return { products, loading, collections, styleCategories };
+  return { products, loading, collectionTitle, styleCategories };
 }

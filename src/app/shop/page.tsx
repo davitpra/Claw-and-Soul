@@ -3,7 +3,7 @@
 import { Navbar } from "@/widgets/navbar";
 import { Footer } from "@/widgets/footer";
 import { Suspense, useState } from "react";
-import { useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import {
   ShopFilters,
   ShopSection,
@@ -12,6 +12,8 @@ import {
   useShopProducts,
 } from "@/widgets/shop";
 import type { ShopProduct } from "@/widgets/shop";
+import { CircularCategory } from "@/widgets/circular-category";
+import { Container } from "@/shared/ui/Container";
 
 // Solo los productos con rol dedicado en el admin ("Producto Paint by Numbers" y
 // "Producto Credit Pack") tienen su propia landing en vez de la página genérica
@@ -23,21 +25,33 @@ function productHref(product: ShopProduct): string | undefined {
 }
 
 function ShopContent() {
+  const router = useRouter();
   const searchParams = useSearchParams();
   const searchQuery = searchParams.get("q")?.trim() ?? "";
-  // Título de colección que llega del grid de categorías del home.
-  const collectionQuery = searchParams.get("collection")?.trim() ?? "";
+  // Handle de colección: lo pone el grid de categorías del home o el carrusel.
+  // Vive en la URL, no en estado local, porque decide qué se le pide a Shopify.
+  const collectionHandle = searchParams.get("collection")?.trim() ?? "";
 
-  const { products, loading, collections, styleCategories } =
-    useShopProducts(searchQuery);
+  const { products, loading, collectionTitle, styleCategories } =
+    useShopProducts(searchQuery, collectionHandle);
   const filters = useShopFilters(
     products,
-    collections,
     styleCategories,
     searchQuery,
-    collectionQuery,
+    collectionHandle,
   );
   const { filteredProducts, activeFilterCount, clearFilters } = filters;
+
+  // Elegir categoría reemplaza la búsqueda: son dos formas de acotar el catálogo
+  // y la Storefront API no permite combinarlas en una sola consulta.
+  const selectCollection = (handle: string) => {
+    const params = new URLSearchParams(searchParams);
+    params.delete("q");
+    if (handle) params.set("collection", handle);
+    else params.delete("collection");
+    const query = params.toString();
+    router.replace(query ? `/shop?${query}` : "/shop", { scroll: false });
+  };
 
   // En móvil el sidebar vive detrás de un toggle "Filters".
   const [filtersOpen, setFiltersOpen] = useState(false);
@@ -50,17 +64,17 @@ function ShopContent() {
     <div className="relative flex min-h-screen w-full flex-col overflow-x-clip bg-cream">
       <Navbar />
 
-      <main className="grow w-full px-4 md:px-10 py-4">
-        <div className="container-site">
+      <main className="grow w-full px-4 py-4">
+        <Container>
           {/* Hero Section */}
-          <div className="text-center mb-10 md:mb-14 max-w-2xl mx-auto">
+          <div className="text-start mb-4">
             {searchQuery && (
               <>
-                <span className="text-primary font-bold tracking-widest text-xs uppercase mb-3 block">
-                  Search Results
-                </span>
                 <h1 className="font-display text-4xl md:text-5xl font-black text-secondary mb-4 leading-tight">
-                  &ldquo;{searchQuery}&rdquo;
+                  Results for{" "}
+                  <span className="text-primary font-bold">
+                    &ldquo;{searchQuery}&rdquo;
+                  </span>
                 </h1>
                 <p className="text-secondary/70 text-lg leading-relaxed">
                   {loading
@@ -69,16 +83,15 @@ function ShopContent() {
                 </p>
               </>
             )}
-            {!searchQuery && collectionQuery && (
-              <>
-                <span className="text-primary font-bold tracking-widest text-xs uppercase mb-3 block">
-                  Collection
-                </span>
-                <h1 className="font-display text-4xl md:text-5xl font-black text-secondary mb-4 leading-tight">
-                  {collectionQuery}
-                </h1>
-              </>
-            )}
+          </div>
+
+          {/* Carrusel de categorías: tiene su propio fetch y skeleton, así que
+              se muestra sin esperar a los productos. */}
+          <div className="mb-8">
+            <CircularCategory
+              selected={collectionHandle}
+              onSelect={selectCollection}
+            />
           </div>
 
           {/* Loading State */}
@@ -141,6 +154,18 @@ function ShopContent() {
                           Try a different search term.
                         </p>
                       </>
+                    ) : collectionHandle ? (
+                      <>
+                        <p className="text-secondary/60 text-xl">
+                          This collection has no products yet.
+                        </p>
+                        <button
+                          onClick={() => selectCollection("")}
+                          className="mt-4 text-primary font-bold hover:text-primary-dark transition-all text-sm uppercase tracking-widest"
+                        >
+                          Browse all products
+                        </button>
+                      </>
                     ) : (
                       <>
                         <p className="text-secondary/60 text-xl">
@@ -180,7 +205,7 @@ function ShopContent() {
               </div>
             </div>
           )}
-        </div>
+        </Container>
       </main>
 
       <Footer />

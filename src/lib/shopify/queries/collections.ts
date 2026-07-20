@@ -53,6 +53,15 @@ export const GET_COLLECTION = `
             title
             handle
             description
+            productType
+            collections(first: 5) {
+              edges {
+                node {
+                  title
+                  handle
+                }
+              }
+            }
             priceRange {
               minVariantPrice {
                 amount
