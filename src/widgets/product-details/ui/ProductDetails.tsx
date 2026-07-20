@@ -12,7 +12,7 @@ import { useStyle } from "@/hooks/useStyle";
 import { StyleOptionsForm } from "@/entities/art-style/ui/StyleOptionsForm";
 import { getLifestyleImage } from "@/entities/product/lib/getLifestyleImage";
 import { getSizeScale } from "@/entities/product/lib/getSizeScale";
-import type { FrameStyle } from "@/widgets/product-templates/ui/ProductPageTemplate";
+import type { FrameStyle } from "@/entities/product/lib/frameStyle";
 
 interface ProductDetailsProps {
   product: ShopifyProduct;

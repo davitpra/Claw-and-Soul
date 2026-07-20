@@ -7,9 +7,8 @@ import PosterTemplate from "./PosterTemplate";
 import CreditsTemplate from "./CreditsTemplate";
 import AccessoryTemplate from "./AccessoryTemplate";
 import PBNTemplate from "./PBNTemplate";
-
-/** Presentation applied to the product image based on the product type. */
-export type FrameStyle = "canvas" | "poster" | "art";
+import { toFrameStyle } from "@/entities/product/lib/frameStyle";
+import type { FrameStyle } from "@/entities/product/lib/frameStyle";
 
 export interface ProductTemplateProps {
   product: ShopifyProduct;
@@ -29,14 +28,6 @@ const TEMPLATE_MAP: Record<string, ComponentType<ProductTemplateProps>> = {
   Accessory: AccessoryTemplate,
   PBN: PBNTemplate,
 };
-
-// Only an explicit "Canvas"/"Poster" template gets a framed presentation; any
-// other value (or an unknown one that falls back to CanvasTemplate) stays flat.
-function toFrameStyle(template?: string | null): FrameStyle {
-  if (template === "Canvas") return "canvas";
-  if (template === "Poster") return "poster";
-  return "art";
-}
 
 export default function ProductPageTemplate({
   templateOverride,

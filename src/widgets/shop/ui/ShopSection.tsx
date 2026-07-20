@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { ProductCard } from "@/entities/pet-product/ui/ProductCard";
+import { toFrameStyle } from "@/entities/product/lib/frameStyle";
 import { ShopProduct } from "../model/types";
 
 // Cuántos productos muestra una sección al inicio y cuántos añade cada "Show more".
@@ -42,6 +43,7 @@ export function ShopSection({ title, products, productHref }: ShopSectionProps) 
             key={product.shopifyHandle}
             product={product}
             href={productHref(product)}
+            frameStyle={toFrameStyle(product.productType)}
             showPrice={true}
             showBadge={false}
           />

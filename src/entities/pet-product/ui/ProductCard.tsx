@@ -7,10 +7,21 @@ import {
   DIFFICULTY_LABELS,
   StyleDifficulty,
 } from "@/entities/art-style/model/difficulty";
+import { canvasEdgeStyle } from "@/entities/product/lib/frameStyle";
+import type { FrameStyle } from "@/entities/product/lib/frameStyle";
 
 // Aspecto de "poster flotando": ligera elevación y sombra teñida en teal al hover.
 export const posterClasses =
   "transition-all duration-300 ease-out hover:-translate-y-1.5 hover:shadow-[0_22px_40px_-14px_rgba(16,54,66,0.50)]";
+
+// Efecto por tipo de producto en la card (mismo lenguaje visual que la galería
+// del producto): "canvas" con sombra de canto + oscurecido interior de bordes;
+// "poster" con margen de papel blanco y línea hairline; "art" queda plano.
+const FRAME_CLASS: Record<FrameStyle, string> = {
+  art: "",
+  canvas: "shadow-[6px_8px_16px_-8px_rgba(16,54,66,0.42)]",
+  poster: "border border-black/10 p-2",
+};
 
 interface ProductCardProps {
   product: Product;
@@ -21,6 +32,8 @@ interface ProductCardProps {
   /** CTA opcional renderizado bajo el precio (p. ej. "Personalize with AI"). */
   cta?: ReactNode;
   showBadge?: boolean;
+  /** Efecto de marco según el tipo de producto (canvas/poster). Por defecto "art" (plano). */
+  frameStyle?: FrameStyle;
   /** Sobreescribe el href del link de la imagen. Por defecto: /product/{shopifyHandle}. */
   href?: string;
   /** Permite ampliar la imagen al hacer click. Se ignora si la card enlaza a un producto. */
@@ -42,6 +55,7 @@ export function ProductCard({
   showPrice,
   cta,
   showBadge = true,
+  frameStyle = "art",
   href,
   zoomable = false,
   zoomSrc,
@@ -66,8 +80,17 @@ export function ProductCard({
       imageAlt={product.name}
       naturalAspect
       onImageError={onImageError}
-      className={posterClasses}
+      className={`${posterClasses} ${FRAME_CLASS[frameStyle]}`}
     >
+      {/* Oscurecido interior de bordes del canvas (va primero para no teñir el
+          badge, que se pinta encima). */}
+      {frameStyle === "canvas" && (
+        <div
+          aria-hidden
+          className="pointer-events-none absolute inset-0"
+          style={canvasEdgeStyle}
+        />
+      )}
       {difficultyLabel ? (
         <span className="absolute top-3 left-3 flex items-center gap-1 bg-primary text-white text-[10px] font-bold uppercase px-4 py-1 rounded-full tracking-wider">
           <span className="material-symbols-outlined text-[14px]">brush</span>
