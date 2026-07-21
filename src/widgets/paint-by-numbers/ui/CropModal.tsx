@@ -8,7 +8,7 @@ import {
   useState,
 } from "react";
 import type { CropRect } from "@/lib/pbn/svgExport";
-import { btnPrimary, btnSecondary } from "./pbnStyles";
+import { btnPrimary, btnSecondary } from "@/features/pbn-studio/ui/pbnStyles";
 
 interface CropModalProps {
   imageSrc: string;

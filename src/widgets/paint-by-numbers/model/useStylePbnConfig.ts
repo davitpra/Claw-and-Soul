@@ -1,8 +1,10 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import type { InputOptionsInit } from "./useInputOptions";
-import type { RenderOptionsInit } from "./useRenderOptions";
+import type {
+  InputOptionsInit,
+  RenderOptionsInit,
+} from "@/features/pbn-studio";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001/api";
 

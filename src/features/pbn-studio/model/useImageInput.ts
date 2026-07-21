@@ -8,9 +8,20 @@ import { EXAMPLE_IMAGE } from "./constants";
  * the processing pipeline (k-means) and the before/after comparator needs the
  * untouched original.
  */
+export interface ImageInputOptions {
+  /**
+   * When `initialUrl` fails to load, fall back to the built-in example so the
+   * studio is never empty. The admin opts out: silently swapping an order's
+   * artwork for the sample cat would be worse than an empty canvas, because the
+   * result gets saved back onto the order item.
+   */
+  fallbackToExample?: boolean;
+}
+
 export function useImageInput(
   log: (msg: string) => void,
   initialUrl?: string | null,
+  { fallbackToExample = true }: ImageInputOptions = {},
 ) {
   const inputCanvasRef = useRef<HTMLCanvasElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -49,12 +60,16 @@ export function useImageInput(
       img.crossOrigin = "anonymous";
       img.onload = () => drawImageToInput(img);
       img.onerror = () => {
-        log("Unable to load image, using example instead");
-        loadExample();
+        if (fallbackToExample) {
+          log("Unable to load image, using example instead");
+          loadExample();
+        } else {
+          log("Unable to load image");
+        }
       };
       img.src = url;
     },
-    [drawImageToInput, log, loadExample],
+    [drawImageToInput, log, loadExample, fallbackToExample],
   );
 
   // load the initial image (remote URL if provided, else the example) & wire up

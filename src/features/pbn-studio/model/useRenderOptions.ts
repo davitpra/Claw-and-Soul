@@ -1,17 +1,22 @@
 import { useState } from "react";
 
-/** Optional saved values to seed the render options (rehydration on reopen). */
+/** Optional values to seed the render options (e.g. a style's PBN default). */
 export interface RenderOptionsInit {
   showLabels?: boolean;
   fillFacets?: boolean;
   showBorders?: boolean;
+  /** Scale factor applied to the generated SVG. Only the admin exposes a control. */
   sizeMultiplier?: number;
   labelFontSize?: number;
   labelFontColor?: string;
   fillOpacity?: number;
 }
 
-/** Owns the SVG render options that re-generate the output without re-processing. */
+/**
+ * Owns the SVG render options that re-generate the output without re-processing.
+ * `initial` only seeds the first render (no re-sync): mount the studio after
+ * the init is resolved.
+ */
 export function useRenderOptions(initial?: RenderOptionsInit) {
   const [showLabels, setShowLabels] = useState(initial?.showLabels ?? true);
   const [fillFacets, setFillFacets] = useState(initial?.fillFacets ?? true);
@@ -25,7 +30,7 @@ export function useRenderOptions(initial?: RenderOptionsInit) {
   const [labelFontColor, setLabelFontColor] = useState(
     initial?.labelFontColor ?? "#000",
   );
-  const [fillOpacity, setFillOpacity] = useState(initial?.fillOpacity ?? 1);
+  const [fillOpacity, setFillOpacity] = useState(initial?.fillOpacity ?? 0.3);
 
   return {
     showLabels,

@@ -1,9 +1,11 @@
 "use client";
 
-import type { useImageInput } from "../model/useImageInput";
-import type { InputOptions } from "../model/useInputOptions";
-import type { ExportControls as ExportControlsState } from "../model/useExport";
-import { card, stepTitle } from "./pbnStyles";
+import type {
+  useImageInput,
+  InputOptions,
+  ExportControls as ExportControlsState,
+} from "@/features/pbn-studio";
+import { card, stepTitle } from "@/features/pbn-studio/ui/pbnStyles";
 import InputOptionsPane from "./InputOptionsPane";
 import ProcessButtons from "./ProcessButtons";
 import PbnImageStep from "./PbnImageStep";

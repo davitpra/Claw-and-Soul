@@ -1,10 +1,14 @@
 import { useState } from "react";
 import { ClusteringColorSpace } from "@/lib/pbn/settings";
-import { PRESETS } from "../model/constants";
-import { InputOptions } from "../model/useInputOptions";
-import { HelpTip, Segmented, Toggle } from "./controls";
+import {
+  PRESETS,
+  InputOptions,
+  HelpTip,
+  Segmented,
+  Toggle,
+} from "@/features/pbn-studio";
 import PalettePicker from "./PalettePicker";
-import { fieldInput, fieldLabel } from "./pbnStyles";
+import { fieldInput, fieldLabel } from "@/features/pbn-studio/ui/pbnStyles";
 
 const COLOR_SPACES: { value: ClusteringColorSpace; label: string }[] = [
   { value: ClusteringColorSpace.RGB, label: "RGB" },
@@ -79,7 +83,9 @@ export default function InputOptionsPane({
               min={1}
               disabled={!opts.resizeImage}
               value={opts.resizeWidth}
-              onChange={(e) => opts.setResizeWidth(parseInt(e.target.value) || 0)}
+              onChange={(e) =>
+                opts.setResizeWidth(parseInt(e.target.value) || 0)
+              }
             />
           </label>
           <label
@@ -97,7 +103,9 @@ export default function InputOptionsPane({
               min={1}
               disabled={!opts.resizeImage}
               value={opts.resizeHeight}
-              onChange={(e) => opts.setResizeHeight(parseInt(e.target.value) || 0)}
+              onChange={(e) =>
+                opts.setResizeHeight(parseInt(e.target.value) || 0)
+              }
             />
           </label>
           <label
@@ -120,8 +128,12 @@ export default function InputOptionsPane({
               className={fieldInput}
               min={1}
               disabled={colorCountLocked}
-              value={colorCountLocked ? opts.pickedColors.length : opts.nrOfClusters}
-              onChange={(e) => opts.setNrOfClusters(parseInt(e.target.value) || 1)}
+              value={
+                colorCountLocked ? opts.pickedColors.length : opts.nrOfClusters
+              }
+              onChange={(e) =>
+                opts.setNrOfClusters(parseInt(e.target.value) || 1)
+              }
             />
           </label>
           <label className="flex flex-col gap-1.5">
@@ -186,7 +198,9 @@ export default function InputOptionsPane({
                   min={0}
                   step={1}
                   value={opts.randomSeed}
-                  onChange={(e) => opts.setRandomSeed(parseInt(e.target.value) || 0)}
+                  onChange={(e) =>
+                    opts.setRandomSeed(parseInt(e.target.value) || 0)
+                  }
                 />
               </label>
             </div>
@@ -231,7 +245,9 @@ export default function InputOptionsPane({
                   min={0}
                   value={opts.narrowPixelCleanupRuns}
                   onChange={(e) =>
-                    opts.setNarrowPixelCleanupRuns(parseInt(e.target.value) || 0)
+                    opts.setNarrowPixelCleanupRuns(
+                      parseInt(e.target.value) || 0,
+                    )
                   }
                 />
               </label>

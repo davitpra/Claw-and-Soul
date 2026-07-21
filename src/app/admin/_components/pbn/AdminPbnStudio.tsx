@@ -4,27 +4,33 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { RGB } from "@/lib/pbn/common";
 import { buildHighlightOverlayDataUrl } from "@/lib/pbn/highlight";
 import { getPaperAspect } from "@/lib/pbn/svgExport";
-import { PAPER_LABELS, ENABLE_MIXING_GUIDE } from "./model/constants";
+import {
+  PAPER_LABELS,
+  ENABLE_MIXING_GUIDE,
+  ProgressBar,
+  useLog,
+  useImageInput,
+  useInputOptions,
+  useRenderOptions,
+  usePaintMixing,
+  useProcessing,
+  useExport,
+  type InputOptionsInit,
+  type RenderOptionsInit,
+} from "@/features/pbn-studio";
 import { adminApi, type PbnConfig } from "@/entities/admin/api";
-import { useLog } from "./model/useLog";
-import { useImageInput } from "./model/useImageInput";
-import { useInputOptions, InputOptionsInit } from "./model/useInputOptions";
-import { useRenderOptions, RenderOptionsInit } from "./model/useRenderOptions";
-import { usePaintMixing } from "./model/usePaintMixing";
-import { useProcessing } from "./model/useProcessing";
-import { useExport } from "./model/useExport";
 import { useSaveToOrder } from "./model/useSaveToOrder";
+import { ADMIN_INPUT_DEFAULTS, ADMIN_RENDER_DEFAULTS } from "./model/defaults";
 import {
   btnPrimary,
   btnSecondary,
   card,
   stepNum,
   stepTitle,
-} from "./ui/pbnStyles";
+} from "@/features/pbn-studio/ui/pbnStyles";
 import CropModal from "./ui/CropModal";
 import ImageCompareSlider from "./ui/ImageCompareSlider";
 import InputOptionsPane from "./ui/InputOptionsPane";
-import ProgressBar from "./ui/ProgressBar";
 import RenderOptionsPane from "./ui/RenderOptionsPane";
 import MixingGuide from "./ui/MixingGuide";
 import ExportControls from "./ui/ExportControls";
@@ -54,11 +60,12 @@ type AdminPbnStudioProps = {
   };
 };
 
-// Versión ADMIN, autónoma y editable, del flujo Paint by Numbers. Toda la capa
-// (hooks del pipeline en ./model y paneles de UI en ./ui) vive aquí dentro, copiada
-// del widget del storefront, para poder añadir o quitar pasos del PBN sin tocar la
-// página pública. La única dependencia compartida son los algoritmos de `@/lib/pbn`.
-// La salida es solo descarga (no persiste en el pedido).
+// Versión ADMIN del flujo Paint by Numbers. El pipeline (hooks + primitivas de
+// control) es el compartido de `@/features/pbn-studio`, el mismo que usa el
+// estudio público: no lo dupliques aquí. Lo que sí vive en `./ui` es el layout
+// propio del admin (tarjetas numeradas, controles avanzados como el
+// `sizeMultiplier`) y en `./model` lo que solo existe en esta superficie:
+// guardar en el pedido y los defaults de arranque.
 export default function AdminPbnStudio({
   initialImageSrc,
   orderId,
@@ -81,18 +88,24 @@ export default function AdminPbnStudio({
     onDragOver,
     onDragLeave,
     onDrop,
-  } = useImageInput(log, savedPbn?.sourceImageUrl ?? initialImageSrc);
+  } = useImageInput(log, savedPbn?.sourceImageUrl ?? initialImageSrc, {
+    // Nunca sustituir la imagen del pedido por el ejemplo: el resultado se
+    // guarda de vuelta en el OrderItem.
+    fallbackToExample: false,
+  });
 
-  const inputOptions = useInputOptions(
-    (savedPbn?.config?.input ?? configInit?.input) as
-      | InputOptionsInit
-      | undefined,
-  );
-  const renderOptions = useRenderOptions(
-    (savedPbn?.config?.render ?? configInit?.render) as
-      | RenderOptionsInit
-      | undefined,
-  );
+  // La config guardada (JSON, nunca trae undefined explícito) pisa campo a campo
+  // los defaults de esta superficie.
+  const inputOptions = useInputOptions({
+    ...ADMIN_INPUT_DEFAULTS,
+    ...((savedPbn?.config?.input ?? configInit?.input) as
+      InputOptionsInit | undefined),
+  });
+  const renderOptions = useRenderOptions({
+    ...ADMIN_RENDER_DEFAULTS,
+    ...((savedPbn?.config?.render ?? configInit?.render) as
+      RenderOptionsInit | undefined),
+  });
   const { recipes, setRecipes, computeRecipes } = usePaintMixing();
   const guideRef = useRef<HTMLDivElement>(null);
   const [showGuide, setShowGuide] = useState(false);
@@ -332,7 +345,9 @@ export default function AdminPbnStudio({
       .then(() => setStyleDefaultOk(true))
       .catch((e: unknown) =>
         setStyleDefaultError(
-          e instanceof Error ? e.message : "No se pudo guardar la configuración",
+          e instanceof Error
+            ? e.message
+            : "No se pudo guardar la configuración",
         ),
       )
       .finally(() => setSavingStyleDefault(false));
@@ -571,30 +586,30 @@ export default function AdminPbnStudio({
                     )}
                   </button>
                 )}
-              {canSaveToOrder && hasOutput && (
-                <button
-                  type="button"
-                  className={btnPrimary}
-                  onClick={handleSaveToOrder}
-                  disabled={saving}
-                >
-                  {saving ? (
-                    <>
-                      <span className="material-symbols-outlined animate-spin text-[18px]">
-                        progress_activity
-                      </span>
-                      Guardando...
-                    </>
-                  ) : (
-                    <>
-                      <span className="material-symbols-outlined text-[18px]">
-                        {savedOk ? "check_circle" : "save"}
-                      </span>
-                      {savedOk ? "Guardado" : "Guardar en el pedido"}
-                    </>
-                  )}
-                </button>
-              )}
+                {canSaveToOrder && hasOutput && (
+                  <button
+                    type="button"
+                    className={btnPrimary}
+                    onClick={handleSaveToOrder}
+                    disabled={saving}
+                  >
+                    {saving ? (
+                      <>
+                        <span className="material-symbols-outlined animate-spin text-[18px]">
+                          progress_activity
+                        </span>
+                        Guardando...
+                      </>
+                    ) : (
+                      <>
+                        <span className="material-symbols-outlined text-[18px]">
+                          {savedOk ? "check_circle" : "save"}
+                        </span>
+                        {savedOk ? "Guardado" : "Guardar en el pedido"}
+                      </>
+                    )}
+                  </button>
+                )}
               </div>
             </div>
             {styleDefaultOk && styleTarget && (

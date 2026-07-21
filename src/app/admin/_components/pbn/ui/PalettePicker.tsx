@@ -3,9 +3,8 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { RGB } from "@/lib/pbn/common";
 import { extractDominantColors, sampleColorAt } from "@/lib/pbn/palettePicker";
-import { InputOptions } from "../model/useInputOptions";
-import { Segmented } from "./controls";
-import { btnSecondary, fieldLabel } from "./pbnStyles";
+import { InputOptions, Segmented } from "@/features/pbn-studio";
+import { btnSecondary, fieldLabel } from "@/features/pbn-studio/ui/pbnStyles";
 
 const rgbCss = (c: RGB) => `rgb(${c[0]}, ${c[1]}, ${c[2]})`;
 const rgbKey = (c: RGB) => `${c[0]},${c[1]},${c[2]}`;
@@ -104,8 +103,8 @@ export default function PalettePicker({
       <div className="flex flex-col gap-1">
         <span className={groupTitle}>Palette</span>
         <span className="text-xs text-text-muted">
-          Pick the colors your paint-by-number should use. Leave empty to let the
-          app choose them automatically.
+          Pick the colors your paint-by-number should use. Leave empty to let
+          the app choose them automatically.
         </span>
       </div>
 
@@ -274,7 +273,12 @@ function EyedropperModal({
         lctx.lineWidth = 1;
         lctx.strokeRect(px - cell / 2, px - cell / 2, cell, cell);
         lctx.strokeStyle = "rgba(255,255,255,0.9)";
-        lctx.strokeRect(px - cell / 2 - 1, px - cell / 2 - 1, cell + 2, cell + 2);
+        lctx.strokeRect(
+          px - cell / 2 - 1,
+          px - cell / 2 - 1,
+          cell + 2,
+          cell + 2,
+        );
       }
     }
   };

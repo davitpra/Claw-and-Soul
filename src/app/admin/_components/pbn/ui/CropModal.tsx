@@ -1,8 +1,14 @@
 "use client";
 
-import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useState,
+} from "react";
 import type { CropRect } from "@/lib/pbn/svgExport";
-import { btnPrimary, btnSecondary } from "./pbnStyles";
+import { btnPrimary, btnSecondary } from "@/features/pbn-studio/ui/pbnStyles";
 
 interface CropModalProps {
   imageSrc: string;
@@ -39,7 +45,9 @@ export default function CropModal({
   onCancel,
   onConfirm,
 }: CropModalProps) {
-  const [crop, setCrop] = useState<CropRect>(() => initialCrop(imageWidth, imageHeight, aspect));
+  const [crop, setCrop] = useState<CropRect>(() =>
+    initialCrop(imageWidth, imageHeight, aspect),
+  );
   const [displayScale, setDisplayScale] = useState(1);
   const imgRef = useRef<HTMLImageElement>(null);
   // Drag state kept in a ref so window listeners always read the latest values.
@@ -87,8 +95,10 @@ export default function CropModal({
   const resizeFrom = useCallback(
     (corner: Corner, orig: CropRect, natX: number, natY: number): CropRect => {
       // The opposite corner stays fixed; signs say which way the box grows.
-      const anchorX = corner === "nw" || corner === "sw" ? orig.x + orig.w : orig.x;
-      const anchorY = corner === "nw" || corner === "ne" ? orig.y + orig.h : orig.y;
+      const anchorX =
+        corner === "nw" || corner === "sw" ? orig.x + orig.w : orig.x;
+      const anchorY =
+        corner === "nw" || corner === "ne" ? orig.y + orig.h : orig.y;
       const signX = corner === "ne" || corner === "se" ? 1 : -1;
       const signY = corner === "sw" || corner === "se" ? 1 : -1;
 
@@ -123,7 +133,14 @@ export default function CropModal({
       if (drag.mode === "move") {
         const dx = (e.clientX - drag.startX) / scale;
         const dy = (e.clientY - drag.startY) / scale;
-        setCrop(clampMove(drag.orig.x + dx, drag.orig.y + dy, drag.orig.w, drag.orig.h));
+        setCrop(
+          clampMove(
+            drag.orig.x + dx,
+            drag.orig.y + dy,
+            drag.orig.w,
+            drag.orig.h,
+          ),
+        );
       } else {
         const natX = (e.clientX - rect.left) / scale;
         const natY = (e.clientY - rect.top) / scale;
@@ -143,7 +160,12 @@ export default function CropModal({
 
   const startMove = (e: React.PointerEvent) => {
     e.preventDefault();
-    dragRef.current = { mode: "move", startX: e.clientX, startY: e.clientY, orig: crop };
+    dragRef.current = {
+      mode: "move",
+      startX: e.clientX,
+      startY: e.clientY,
+      orig: crop,
+    };
   };
 
   const startResize = (corner: Corner) => (e: React.PointerEvent) => {
@@ -184,8 +206,8 @@ export default function CropModal({
           </button>
         </div>
         <p className="px-6 pt-4 font-body text-sm text-text-muted">
-          Drag the box to move it, or drag a corner to resize. The selection keeps the
-          aspect ratio of the chosen paper.
+          Drag the box to move it, or drag a corner to resize. The selection
+          keeps the aspect ratio of the chosen paper.
         </p>
         <div className="flex flex-1 items-center justify-center overflow-auto p-6">
           <div className="relative inline-block select-none">
@@ -203,10 +225,22 @@ export default function CropModal({
               style={box}
               onPointerDown={startMove}
             >
-              <span className={`${handle} -left-2 -top-2 cursor-nwse-resize`} onPointerDown={startResize("nw")} />
-              <span className={`${handle} -right-2 -top-2 cursor-nesw-resize`} onPointerDown={startResize("ne")} />
-              <span className={`${handle} -bottom-2 -left-2 cursor-nesw-resize`} onPointerDown={startResize("sw")} />
-              <span className={`${handle} -bottom-2 -right-2 cursor-nwse-resize`} onPointerDown={startResize("se")} />
+              <span
+                className={`${handle} -left-2 -top-2 cursor-nwse-resize`}
+                onPointerDown={startResize("nw")}
+              />
+              <span
+                className={`${handle} -right-2 -top-2 cursor-nesw-resize`}
+                onPointerDown={startResize("ne")}
+              />
+              <span
+                className={`${handle} -bottom-2 -left-2 cursor-nesw-resize`}
+                onPointerDown={startResize("sw")}
+              />
+              <span
+                className={`${handle} -bottom-2 -right-2 cursor-nwse-resize`}
+                onPointerDown={startResize("se")}
+              />
             </div>
           </div>
         </div>

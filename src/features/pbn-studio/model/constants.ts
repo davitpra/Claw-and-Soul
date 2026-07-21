@@ -57,41 +57,59 @@ export interface PresetValues {
   halveBorderSegments: number;
 }
 
-export const PRESETS: { key: string; label: string; apply: PresetValues }[] = [
-  {
-    key: "photo",
-    label: "Fast",
-    apply: {
-      resizeWidth: 600,
-      resizeHeight: 600,
-      nrOfClusters: 12,
-      removeFacetsSmallerThan: 60,
-      narrowPixelCleanupRuns: 1,
-      halveBorderSegments: 2,
+export type PresetKey = "photo" | "illustration" | "detailed";
+
+export const PRESETS: { key: PresetKey; label: string; apply: PresetValues }[] =
+  [
+    {
+      key: "photo",
+      label: "Fast",
+      apply: {
+        resizeWidth: 600,
+        resizeHeight: 600,
+        nrOfClusters: 12,
+        removeFacetsSmallerThan: 60,
+        narrowPixelCleanupRuns: 1,
+        halveBorderSegments: 2,
+      },
     },
-  },
-  {
-    key: "illustration",
-    label: "Balanced",
-    apply: {
-      resizeWidth: 1024,
-      resizeHeight: 1024,
-      nrOfClusters: 16,
-      removeFacetsSmallerThan: 20,
-      narrowPixelCleanupRuns: 3,
-      halveBorderSegments: 2,
+    {
+      key: "illustration",
+      label: "Balanced",
+      apply: {
+        resizeWidth: 1024,
+        resizeHeight: 1024,
+        nrOfClusters: 16,
+        removeFacetsSmallerThan: 20,
+        narrowPixelCleanupRuns: 3,
+        halveBorderSegments: 2,
+      },
     },
-  },
-  {
-    key: "detailed",
-    label: "Detailed",
-    apply: {
-      resizeWidth: 1280,
-      resizeHeight: 1280,
-      nrOfClusters: 24,
-      removeFacetsSmallerThan: 12,
-      narrowPixelCleanupRuns: 3,
-      halveBorderSegments: 1,
+    {
+      key: "detailed",
+      label: "Detailed",
+      apply: {
+        resizeWidth: 1280,
+        resizeHeight: 1280,
+        nrOfClusters: 24,
+        removeFacetsSmallerThan: 12,
+        narrowPixelCleanupRuns: 3,
+        halveBorderSegments: 1,
+      },
     },
-  },
-];
+  ];
+
+/**
+ * Preset lookup used to seed each surface's default options.
+ *
+ * Storefront and admin deliberately start on *different* presets — the public
+ * studio runs in the visitor's browser and favours speed (`photo`), while the
+ * admin studio favours quality (`illustration`). Deriving both from `PRESETS`
+ * instead of hardcoding the numbers keeps `isPresetActive` honest: whatever a
+ * surface starts on shows up as the selected preset chip.
+ */
+export function getPreset(key: PresetKey): PresetValues {
+  const preset = PRESETS.find((p) => p.key === key);
+  if (!preset) throw new Error(`Unknown PBN preset: ${key}`);
+  return preset.apply;
+}

@@ -3,9 +3,8 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { RGB } from "@/lib/pbn/common";
 import { extractDominantColors, sampleColorAt } from "@/lib/pbn/palettePicker";
-import { InputOptions } from "../model/useInputOptions";
-import { Segmented } from "./controls";
-import { btnSecondary, fieldLabel } from "./pbnStyles";
+import { InputOptions, Segmented } from "@/features/pbn-studio";
+import { btnSecondary, fieldLabel } from "@/features/pbn-studio/ui/pbnStyles";
 
 const rgbCss = (c: RGB) => `rgb(${c[0]}, ${c[1]}, ${c[2]})`;
 const rgbKey = (c: RGB) => `${c[0]},${c[1]},${c[2]}`;
@@ -168,6 +167,7 @@ export default function PalettePicker({
         <div className="flex flex-col gap-1.5">
           <span className={fieldLabel}>How to use them</span>
           <Segmented
+            fullWidth
             name="palettemode"
             options={[
               { value: "exact", label: "Only my colors" },

@@ -1,10 +1,14 @@
 import { useState } from "react";
 import { ClusteringColorSpace } from "@/lib/pbn/settings";
-import { PRESETS } from "../model/constants";
-import { InputOptions } from "../model/useInputOptions";
-import { HelpTip, Segmented, Toggle } from "./controls";
+import {
+  PRESETS,
+  InputOptions,
+  HelpTip,
+  Segmented,
+  Toggle,
+} from "@/features/pbn-studio";
 import PalettePicker from "./PalettePicker";
-import { fieldInput, fieldLabel } from "./pbnStyles";
+import { fieldInput, fieldLabel } from "@/features/pbn-studio/ui/pbnStyles";
 
 const COLOR_SPACES: { value: ClusteringColorSpace; label: string }[] = [
   { value: ClusteringColorSpace.RGB, label: "RGB" },
@@ -109,198 +113,204 @@ export default function InputOptionsPane({
 
       {/* Advanced settings */}
       {showAdvanced && (
-      <div className="flex flex-col gap-4">
-        <button
-          type="button"
-          className="inline-flex items-center gap-2 self-start font-semibold text-primary transition-colors hover:text-primary-dark"
-          aria-expanded={advancedOpen}
-          onClick={() => setAdvancedOpen((v) => !v)}
-        >
-          <span className="material-symbols-outlined text-[20px]">
-            {advancedOpen ? "expand_more" : "chevron_right"}
-          </span>
-          Advanced settings
-        </button>
+        <div className="flex flex-col gap-4">
+          <button
+            type="button"
+            className="inline-flex items-center gap-2 self-start font-semibold text-primary transition-colors hover:text-primary-dark"
+            aria-expanded={advancedOpen}
+            onClick={() => setAdvancedOpen((v) => !v)}
+          >
+            <span className="material-symbols-outlined text-[20px]">
+              {advancedOpen ? "expand_more" : "chevron_right"}
+            </span>
+            Advanced settings
+          </button>
 
-        {advancedOpen && (
-          <>
-            {/* Image — resize / max dimensions */}
-            <div className="flex flex-col gap-4">
-              <span className={groupTitle}>Image</span>
-              <Toggle
-                checked={opts.resizeImage}
-                onChange={opts.setResizeImage}
-                label="Resize large images"
-              />
-              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                <label
-                  className="flex flex-col gap-1.5"
-                  style={{ opacity: opts.resizeImage ? 1 : 0.5 }}
-                  aria-disabled={!opts.resizeImage}
-                >
-                  <span className={fieldLabel}>
-                    Max width (px)
-                    <HelpTip text="Large images are scaled down so their width doesn't exceed this, which speeds up processing." />
-                  </span>
-                  <input
-                    type="number"
-                    className={fieldInput}
-                    min={1}
-                    disabled={!opts.resizeImage}
-                    value={opts.resizeWidth}
-                    onChange={(e) =>
-                      opts.setResizeWidth(parseInt(e.target.value) || 0)
-                    }
-                  />
-                </label>
-                <label
-                  className="flex flex-col gap-1.5"
-                  style={{ opacity: opts.resizeImage ? 1 : 0.5 }}
-                  aria-disabled={!opts.resizeImage}
-                >
-                  <span className={fieldLabel}>
-                    Max height (px)
-                    <HelpTip text="Large images are scaled down so their height doesn't exceed this, which speeds up processing." />
-                  </span>
-                  <input
-                    type="number"
-                    className={fieldInput}
-                    min={1}
-                    disabled={!opts.resizeImage}
-                    value={opts.resizeHeight}
-                    onChange={(e) =>
-                      opts.setResizeHeight(parseInt(e.target.value) || 0)
-                    }
-                  />
-                </label>
-              </div>
-            </div>
-            {/* Advanced · Colors */}
-            <div className="flex flex-col gap-4">
-              <span className={fieldLabel}>Colors</span>
-              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                <label className="flex flex-col gap-1.5">
-                  <span className={fieldLabel}>
-                    Grouping precision
-                    <HelpTip text="How tightly colors are grouped before the algorithm stops. Lower values are more precise but slower." />
-                  </span>
-                  <input
-                    type="number"
-                    className={fieldInput}
-                    min={1}
-                    step={0.05}
-                    value={opts.clusterPrecision}
-                    onChange={(e) =>
-                      opts.setClusterPrecision(parseFloat(e.target.value) || 1)
-                    }
-                  />
-                </label>
-                <label className="flex flex-col gap-1.5">
-                  <span className={fieldLabel}>
-                    Random seed
-                    <HelpTip text="Starting value for the random initialization. The same seed always produces the same result." />
-                  </span>
-                  <input
-                    type="number"
-                    className={fieldInput}
-                    min={0}
-                    step={1}
-                    value={opts.randomSeed}
-                    onChange={(e) =>
-                      opts.setRandomSeed(parseInt(e.target.value) || 0)
-                    }
-                  />
-                </label>
-              </div>
-
-              <div className="flex flex-col gap-1.5">
-                <span className={fieldLabel}>
-                  Color comparison model
-                  <HelpTip text="Color space used to measure how similar two colors are: RGB, HSL or Lab (Lab matches human perception best)." />
-                </span>
-                <Segmented
-                  name="colorspace"
-                  options={COLOR_SPACES}
-                  value={opts.colorSpace}
-                  onChange={opts.setColorSpace}
+          {advancedOpen && (
+            <>
+              {/* Image — resize / max dimensions */}
+              <div className="flex flex-col gap-4">
+                <span className={groupTitle}>Image</span>
+                <Toggle
+                  checked={opts.resizeImage}
+                  onChange={opts.setResizeImage}
+                  label="Resize large images"
                 />
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                  <label
+                    className="flex flex-col gap-1.5"
+                    style={{ opacity: opts.resizeImage ? 1 : 0.5 }}
+                    aria-disabled={!opts.resizeImage}
+                  >
+                    <span className={fieldLabel}>
+                      Max width (px)
+                      <HelpTip text="Large images are scaled down so their width doesn't exceed this, which speeds up processing." />
+                    </span>
+                    <input
+                      type="number"
+                      className={fieldInput}
+                      min={1}
+                      disabled={!opts.resizeImage}
+                      value={opts.resizeWidth}
+                      onChange={(e) =>
+                        opts.setResizeWidth(parseInt(e.target.value) || 0)
+                      }
+                    />
+                  </label>
+                  <label
+                    className="flex flex-col gap-1.5"
+                    style={{ opacity: opts.resizeImage ? 1 : 0.5 }}
+                    aria-disabled={!opts.resizeImage}
+                  >
+                    <span className={fieldLabel}>
+                      Max height (px)
+                      <HelpTip text="Large images are scaled down so their height doesn't exceed this, which speeds up processing." />
+                    </span>
+                    <input
+                      type="number"
+                      className={fieldInput}
+                      min={1}
+                      disabled={!opts.resizeImage}
+                      value={opts.resizeHeight}
+                      onChange={(e) =>
+                        opts.setResizeHeight(parseInt(e.target.value) || 0)
+                      }
+                    />
+                  </label>
+                </div>
               </div>
-            </div>
+              {/* Advanced · Colors */}
+              <div className="flex flex-col gap-4">
+                <span className={fieldLabel}>Colors</span>
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                  <label className="flex flex-col gap-1.5">
+                    <span className={fieldLabel}>
+                      Grouping precision
+                      <HelpTip text="How tightly colors are grouped before the algorithm stops. Lower values are more precise but slower." />
+                    </span>
+                    <input
+                      type="number"
+                      className={fieldInput}
+                      min={1}
+                      step={0.05}
+                      value={opts.clusterPrecision}
+                      onChange={(e) =>
+                        opts.setClusterPrecision(
+                          parseFloat(e.target.value) || 1,
+                        )
+                      }
+                    />
+                  </label>
+                  <label className="flex flex-col gap-1.5">
+                    <span className={fieldLabel}>
+                      Random seed
+                      <HelpTip text="Starting value for the random initialization. The same seed always produces the same result." />
+                    </span>
+                    <input
+                      type="number"
+                      className={fieldInput}
+                      min={0}
+                      step={1}
+                      value={opts.randomSeed}
+                      onChange={(e) =>
+                        opts.setRandomSeed(parseInt(e.target.value) || 0)
+                      }
+                    />
+                  </label>
+                </div>
 
-            {/* Advanced · Shapes */}
-            <div className="flex flex-col gap-4">
-              <span className={fieldLabel}>Shapes</span>
-              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                <label className="flex flex-col gap-1.5">
+                <div className="flex flex-col gap-1.5">
                   <span className={fieldLabel}>
-                    Cleanup passes
-                    <HelpTip text="How many times the cleanup runs. Each pass removes thin one-pixel strips between areas for cleaner, more consistent borders." />
+                    Color comparison model
+                    <HelpTip text="Color space used to measure how similar two colors are: RGB, HSL or Lab (Lab matches human perception best)." />
                   </span>
-                  <input
-                    type="number"
-                    className={fieldInput}
-                    min={0}
-                    value={opts.narrowPixelCleanupRuns}
-                    onChange={(e) =>
-                      opts.setNarrowPixelCleanupRuns(
-                        parseInt(e.target.value) || 0,
-                      )
-                    }
+                  <Segmented
+                    fullWidth
+                    name="colorspace"
+                    options={COLOR_SPACES}
+                    value={opts.colorSpace}
+                    onChange={opts.setColorSpace}
                   />
-                </label>
-                <label className="flex flex-col gap-1.5">
-                  <span className={fieldLabel}>
-                    Max # of areas
-                    <HelpTip text="Upper limit on how many separate regions are generated." />
-                  </span>
-                  <input
-                    type="number"
-                    className={fieldInput}
-                    min={1}
-                    value={opts.maximumNumberOfFacets}
-                    onChange={(e) =>
-                      opts.setMaximumNumberOfFacets(
-                        parseInt(e.target.value) || 1,
-                      )
-                    }
-                  />
-                </label>
-                <label className="flex flex-col gap-1.5">
-                  <span className={fieldLabel}>
-                    Border smoothing
-                    <HelpTip text="How many times each region border is simplified. More passes give smoother, less jagged edges." />
-                  </span>
-                  <input
-                    type="number"
-                    className={fieldInput}
-                    min={0}
-                    value={opts.halveBorderSegments}
-                    onChange={(e) =>
-                      opts.setHalveBorderSegments(parseInt(e.target.value) || 0)
-                    }
-                  />
-                </label>
+                </div>
               </div>
 
-              <div className="flex flex-col gap-1.5">
-                <span className={fieldLabel}>
-                  Area removal order
-                  <HelpTip text="Whether small-region removal starts from the largest regions or the smallest first." />
-                </span>
-                <Segmented
-                  name="facetremovalorder"
-                  options={[
-                    { value: "large", label: "Largest first" },
-                    { value: "small", label: "Smallest first" },
-                  ]}
-                  value={opts.largeToSmall ? "large" : "small"}
-                  onChange={(v) => opts.setLargeToSmall(v === "large")}
-                />
+              {/* Advanced · Shapes */}
+              <div className="flex flex-col gap-4">
+                <span className={fieldLabel}>Shapes</span>
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                  <label className="flex flex-col gap-1.5">
+                    <span className={fieldLabel}>
+                      Cleanup passes
+                      <HelpTip text="How many times the cleanup runs. Each pass removes thin one-pixel strips between areas for cleaner, more consistent borders." />
+                    </span>
+                    <input
+                      type="number"
+                      className={fieldInput}
+                      min={0}
+                      value={opts.narrowPixelCleanupRuns}
+                      onChange={(e) =>
+                        opts.setNarrowPixelCleanupRuns(
+                          parseInt(e.target.value) || 0,
+                        )
+                      }
+                    />
+                  </label>
+                  <label className="flex flex-col gap-1.5">
+                    <span className={fieldLabel}>
+                      Max # of areas
+                      <HelpTip text="Upper limit on how many separate regions are generated." />
+                    </span>
+                    <input
+                      type="number"
+                      className={fieldInput}
+                      min={1}
+                      value={opts.maximumNumberOfFacets}
+                      onChange={(e) =>
+                        opts.setMaximumNumberOfFacets(
+                          parseInt(e.target.value) || 1,
+                        )
+                      }
+                    />
+                  </label>
+                  <label className="flex flex-col gap-1.5">
+                    <span className={fieldLabel}>
+                      Border smoothing
+                      <HelpTip text="How many times each region border is simplified. More passes give smoother, less jagged edges." />
+                    </span>
+                    <input
+                      type="number"
+                      className={fieldInput}
+                      min={0}
+                      value={opts.halveBorderSegments}
+                      onChange={(e) =>
+                        opts.setHalveBorderSegments(
+                          parseInt(e.target.value) || 0,
+                        )
+                      }
+                    />
+                  </label>
+                </div>
+
+                <div className="flex flex-col gap-1.5">
+                  <span className={fieldLabel}>
+                    Area removal order
+                    <HelpTip text="Whether small-region removal starts from the largest regions or the smallest first." />
+                  </span>
+                  <Segmented
+                    fullWidth
+                    name="facetremovalorder"
+                    options={[
+                      { value: "large", label: "Largest first" },
+                      { value: "small", label: "Smallest first" },
+                    ]}
+                    value={opts.largeToSmall ? "large" : "small"}
+                    onChange={(v) => opts.setLargeToSmall(v === "large")}
+                  />
+                </div>
               </div>
-            </div>
-          </>
-        )}
-      </div>
+            </>
+          )}
+        </div>
       )}
     </div>
   );

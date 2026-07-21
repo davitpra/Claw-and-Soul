@@ -55,11 +55,15 @@ export function Segmented<T extends string | number>({
   value,
   onChange,
   name,
+  fullWidth = false,
 }: {
   options: { value: T; label: string }[];
   value: T;
   onChange: (v: T) => void;
   name: string;
+  /** Stretch the options to fill the row (storefront, where it sits in a
+   * narrow sidebar) instead of hugging their labels (admin). */
+  fullWidth?: boolean;
 }) {
   return (
     <div
@@ -71,7 +75,9 @@ export function Segmented<T extends string | number>({
         return (
           <label
             key={o.label}
-            className={`cursor-pointer px-4 py-2 text-sm font-semibold transition-colors w-full text-center ${
+            className={`cursor-pointer px-4 py-2 text-sm font-semibold transition-colors ${
+              fullWidth ? "w-full text-center" : ""
+            } ${
               active
                 ? "bg-primary text-white"
                 : "bg-white text-slate-dark hover:bg-primary/5"

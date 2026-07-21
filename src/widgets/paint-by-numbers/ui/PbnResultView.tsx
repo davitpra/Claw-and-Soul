@@ -8,7 +8,7 @@ import {
   usePbnAccessories,
 } from "@/features/pbn-purchase";
 import { Carousel } from "@/shared/ui/Carousel";
-import { ENABLE_MIXING_GUIDE } from "../model/constants";
+import { ENABLE_MIXING_GUIDE } from "@/features/pbn-studio";
 import type { SavedPbnRef } from "../model/useSavePbnFlow";
 import ImageCompareSlider from "./ImageCompareSlider";
 import PbnPostHeader from "./PbnPostHeader";

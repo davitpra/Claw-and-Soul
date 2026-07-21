@@ -1,6 +1,6 @@
 "use client";
 
-import { btnPrimary, btnSecondary } from "./pbnStyles";
+import { btnPrimary, btnSecondary } from "@/features/pbn-studio/ui/pbnStyles";
 
 interface ProcessButtonsProps {
   isProcessing: boolean;

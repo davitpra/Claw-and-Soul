@@ -1,7 +1,7 @@
 "use client";
 
-import type { useImageInput } from "../model/useImageInput";
-import { card, btnSecondary } from "./pbnStyles";
+import type { useImageInput } from "@/features/pbn-studio";
+import { card, btnSecondary } from "@/features/pbn-studio/ui/pbnStyles";
 
 interface PbnImageStepProps {
   imageInput: ReturnType<typeof useImageInput>;

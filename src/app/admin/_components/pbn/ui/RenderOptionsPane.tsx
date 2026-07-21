@@ -1,8 +1,7 @@
 import { RGB } from "@/lib/pbn/common";
 import type { MixRecipe } from "@/lib/pbn/paintMixing";
-import { RenderOptions } from "../model/useRenderOptions";
-import { Toggle } from "./controls";
-import { fieldInput, fieldLabel } from "./pbnStyles";
+import { RenderOptions, Toggle } from "@/features/pbn-studio";
+import { fieldInput, fieldLabel } from "@/features/pbn-studio/ui/pbnStyles";
 
 interface RenderOptionsPaneProps {
   opts: RenderOptions;
@@ -45,9 +44,21 @@ export default function RenderOptionsPane({
     checked: boolean;
     onChange: (v: boolean) => void;
   }[] = [
-    { label: "Show labels", checked: opts.showLabels, onChange: opts.setShowLabels },
-    { label: "Fill facets", checked: opts.fillFacets, onChange: opts.setFillFacets },
-    { label: "Show borders", checked: opts.showBorders, onChange: opts.setShowBorders },
+    {
+      label: "Show labels",
+      checked: opts.showLabels,
+      onChange: opts.setShowLabels,
+    },
+    {
+      label: "Fill facets",
+      checked: opts.fillFacets,
+      onChange: opts.setFillFacets,
+    },
+    {
+      label: "Show borders",
+      checked: opts.showBorders,
+      onChange: opts.setShowBorders,
+    },
   ];
 
   return (

@@ -6,20 +6,29 @@ import { RGB } from "@/lib/pbn/common";
 import { buildHighlightOverlayDataUrl } from "@/lib/pbn/highlight";
 import { getPaperAspect } from "@/lib/pbn/svgExport";
 import { useIsMobile } from "@/hooks/useMediaQuery";
+import {
+  PAPER_LABELS,
+  ENABLE_MIXING_GUIDE,
+  ProgressBar,
+  useLog,
+  useImageInput,
+  useInputOptions,
+  useRenderOptions,
+  usePaintMixing,
+  useProcessing,
+  useExport,
+  type InputOptionsInit,
+  type RenderOptionsInit,
+} from "@/features/pbn-studio";
 import { useSavePbnFlow } from "../model/useSavePbnFlow";
-import { PAPER_LABELS, ENABLE_MIXING_GUIDE } from "../model/constants";
-import { useLog } from "../model/useLog";
-import { useImageInput } from "../model/useImageInput";
-import { useInputOptions, InputOptionsInit } from "../model/useInputOptions";
-import { useRenderOptions, RenderOptionsInit } from "../model/useRenderOptions";
 import { useStylePbnConfig } from "../model/useStylePbnConfig";
-import { usePaintMixing } from "../model/usePaintMixing";
-import { useProcessing } from "../model/useProcessing";
-import { useExport } from "../model/useExport";
+import {
+  STOREFRONT_INPUT_DEFAULTS,
+  STOREFRONT_RENDER_DEFAULTS,
+} from "../model/defaults";
 import DropZone from "./DropZone";
 import CropModal from "./CropModal";
 import Modal from "./Modal";
-import ProgressBar from "./ProgressBar";
 import RenderOptionsPane from "./RenderOptionsPane";
 import { PbnPostMenuItem } from "./PbnPostMenu";
 import MixingGuide from "./MixingGuide";
@@ -29,7 +38,7 @@ import PbnSidebar from "./PbnSidebar";
 import PbnSettingsDrawer from "./PbnSettingsDrawer";
 import ExportControls from "./ExportControls";
 import PbnResultView from "./PbnResultView";
-import { card, stepTitle } from "./pbnStyles";
+import { card, stepTitle } from "@/features/pbn-studio/ui/pbnStyles";
 
 // Al llegar desde "Enviar a PBN" (detalle de generación) traemos la imagen del
 // artwork por query param para precargarla en el canvas; generationId liga el
@@ -83,8 +92,16 @@ function PaintByNumbersStudio({
     onDrop,
   } = imageInput;
 
-  const inputOptions = useInputOptions(inputInit);
-  const renderOptions = useRenderOptions(renderInit);
+  // A style's saved pbnConfig (JSON, so never carries explicit undefined) wins
+  // over the surface defaults field by field.
+  const inputOptions = useInputOptions({
+    ...STOREFRONT_INPUT_DEFAULTS,
+    ...inputInit,
+  });
+  const renderOptions = useRenderOptions({
+    ...STOREFRONT_RENDER_DEFAULTS,
+    ...renderInit,
+  });
   const { recipes, setRecipes, computeRecipes } = usePaintMixing();
   const guideRef = useRef<HTMLDivElement>(null);
   const [showGuide, setShowGuide] = useState(false);
@@ -165,7 +182,8 @@ function PaintByNumbersStudio({
         showLabels: renderOptions.showLabels,
         fontSize: renderOptions.labelFontSize,
         fontColor: renderOptions.labelFontColor,
-        strokeWidth: 1 / 3, // match the base image's 1px stroke at 3× multiplier
+        // match the base image's 1px stroke at the SVG's scale factor
+        strokeWidth: 1 / renderOptions.sizeMultiplier,
       },
     );
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -176,6 +194,7 @@ function PaintByNumbersStudio({
     renderOptions.showLabels,
     renderOptions.labelFontSize,
     renderOptions.labelFontColor,
+    renderOptions.sizeMultiplier,
   ]);
 
   // ---- Save to account ----

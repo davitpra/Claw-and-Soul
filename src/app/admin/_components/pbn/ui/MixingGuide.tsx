@@ -38,21 +38,23 @@ export default function MixingGuide({
         </p>
 
         <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4">
-          {(usedPaints.length > 0 ? usedPaints : DEFAULT_BASE_PAINTS).map((p) => (
-            <div key={p.id} className="flex items-center gap-2">
-              <span
-                className="size-7 shrink-0 rounded-md border border-black/10"
-                style={{
-                  backgroundColor: `rgb(${p.rgb[0]},${p.rgb[1]},${p.rgb[2]})`,
-                }}
-                title={`${p.nameEn} — nº ${p.codigo} (${p.pigmento}) — ${p.rgb[0]},${p.rgb[1]},${p.rgb[2]}`}
-              />
-              <span className="flex flex-col text-xs leading-tight text-slate-dark">
-                {p.nameEn}
-                <span className="text-text-muted">no. {p.codigo}</span>
-              </span>
-            </div>
-          ))}
+          {(usedPaints.length > 0 ? usedPaints : DEFAULT_BASE_PAINTS).map(
+            (p) => (
+              <div key={p.id} className="flex items-center gap-2">
+                <span
+                  className="size-7 shrink-0 rounded-md border border-black/10"
+                  style={{
+                    backgroundColor: `rgb(${p.rgb[0]},${p.rgb[1]},${p.rgb[2]})`,
+                  }}
+                  title={`${p.nameEn} — nº ${p.codigo} (${p.pigmento}) — ${p.rgb[0]},${p.rgb[1]},${p.rgb[2]}`}
+                />
+                <span className="flex flex-col text-xs leading-tight text-slate-dark">
+                  {p.nameEn}
+                  <span className="text-text-muted">no. {p.codigo}</span>
+                </span>
+              </div>
+            ),
+          )}
         </div>
       </div>
 

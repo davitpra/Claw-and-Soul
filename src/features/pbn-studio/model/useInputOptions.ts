@@ -19,6 +19,12 @@ export interface InputOptionsInit {
   randomSeed?: number;
   colorSpace?: ClusteringColorSpace;
   colorRestrictions?: string;
+  /**
+   * Only seeded when rehydrating a PBN that was already saved against *this*
+   * image (the admin reopening an order item). A style's default config must
+   * never carry it: picked colors are image-specific, not style-specific.
+   */
+  pickedColors?: RGB[];
   paletteMode?: PaletteMode;
   narrowPixelCleanupRuns?: number;
   removeFacetsSmallerThan?: number;
@@ -33,7 +39,7 @@ export interface InputOptionsInit {
  * is currently active and building the `Settings` object the pipeline consumes.
  *
  * `initial` only seeds the first render (no re-sync): mount the studio after
- * the init is resolved. pickedColors never seeds — it's image-specific.
+ * the init is resolved.
  */
 export function useInputOptions(initial?: InputOptionsInit) {
   const [resizeImage, setResizeImage] = useState(initial?.resizeImage ?? true);
@@ -53,7 +59,9 @@ export function useInputOptions(initial?: InputOptionsInit) {
     initial?.colorRestrictions ?? "//0,0,0\n//255,255,255\n",
   );
   // Colors the user picked from the photo (eyedropper / suggested swatches).
-  const [pickedColors, setPickedColors] = useState<RGB[]>([]);
+  const [pickedColors, setPickedColors] = useState<RGB[]>(
+    initial?.pickedColors ?? [],
+  );
   // How those colors drive the palette: "exact" = only these, "complement" =
   // these guaranteed plus automatic colors to fill up to nrOfClusters.
   const [paletteMode, setPaletteMode] = useState<PaletteMode>(

@@ -4,9 +4,11 @@ import { RGB } from "@/lib/pbn/common";
 import type { MixRecipe } from "@/lib/pbn/paintMixing";
 import { useAuth } from "@/context/AuthContext";
 import { useSavePbn } from "./useSavePbn";
-import type { InputOptions } from "./useInputOptions";
-import type { RenderOptions } from "./useRenderOptions";
-import type { ExportControls } from "./useExport";
+import type {
+  InputOptions,
+  RenderOptions,
+  ExportControls,
+} from "@/features/pbn-studio";
 
 /** Reference to a persisted PBN, enough to reuse it in the purchase flow. */
 export interface SavedPbnRef {

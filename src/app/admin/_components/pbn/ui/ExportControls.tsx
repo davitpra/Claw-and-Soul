@@ -1,5 +1,10 @@
-import { ExportControls as ExportControlsState } from "../model/useExport";
-import { btnPrimary, btnSecondary, fieldInput, fieldLabel } from "./pbnStyles";
+import { ExportControls as ExportControlsState } from "@/features/pbn-studio";
+import {
+  btnPrimary,
+  btnSecondary,
+  fieldInput,
+  fieldLabel,
+} from "@/features/pbn-studio/ui/pbnStyles";
 
 interface ExportControlsProps {
   exp: ExportControlsState;
