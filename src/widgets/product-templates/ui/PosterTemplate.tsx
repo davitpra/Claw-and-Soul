@@ -6,6 +6,7 @@ import { ProductTemplateProps } from "./ProductPageTemplate";
 import { StyleCollection } from "@/widgets/collection";
 import { RoomView } from "@/widgets/room-view";
 import { Reviews } from "@/widgets/reviews";
+import { SameStyleGallery } from "@/widgets/expanding-gallery";
 
 export default function PosterTemplate({
   product,
@@ -32,6 +33,7 @@ export default function PosterTemplate({
         </div>
       </div>
       <StyleCollection handle={handle} frameStyle={frameStyle} />
+      <SameStyleGallery handle={handle} />
       <RoomView product={product} selectedVariantId={selectedVariantId} />
       <Reviews />
       <ProductFAQ faqs={faqs} />

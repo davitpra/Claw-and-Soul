@@ -4,15 +4,15 @@ import { ShopifyProduct } from "@/lib/shopify";
 import Image from "next/image";
 import { Carousel } from "@/shared/ui/Carousel";
 import { ImageZoom } from "@/shared/ui/ImageZoom";
-import { canvasEdgeStyle, FRAME_SHADOWS } from "@/entities/product/lib/frameStyle";
+import { FRAME_SHADOWS } from "@/entities/product/lib/frameStyle";
 import type { FrameStyle } from "@/entities/product/lib/frameStyle";
+import { CanvasEdgeOverlay } from "@/entities/product/ui/CanvasEdgeOverlay";
 
 interface ProductGalleryProps {
   product: ShopifyProduct;
   mainImage: string;
   otherSetImage?: string | null;
   variantImage?: string | null;
-  firstImageScale?: number;
   frameStyle?: FrameStyle;
 }
 
@@ -21,7 +21,6 @@ export default function ProductGallery({
   mainImage,
   otherSetImage,
   variantImage,
-  firstImageScale = 1,
   frameStyle = "art",
 }: ProductGalleryProps) {
   const primaryImage = variantImage || mainImage;
@@ -45,18 +44,13 @@ export default function ProductGallery({
       : "";
   const sizes = "(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 600px";
 
-  const firstImageStyle = { width: `${firstImageScale * 100}%` };
-
   const isCarousel = uniqueImages.length > 1;
 
   // The primary image: width-scaled wrapper that lifts on hover and carries the
   // optional canvas darkening overlay on top of the image.
   const renderPrimary = (src: string) => (
-    <div
-      className="relative transition-transform duration-300 ease-out hover:-translate-y-1.5"
-      style={firstImageStyle}
-    >
-      <ImageZoom zoomSrc={src} alt={product.title}>
+    <div className="relative transition-transform duration-300 ease-out hover:-translate-y-1.5">
+      <ImageZoom zoomSrc={src} alt={product.title} frameStyle={frameStyle}>
         <Image
           src={src}
           alt={product.title}
@@ -67,13 +61,7 @@ export default function ProductGallery({
           priority
         />
       </ImageZoom>
-      {frameStyle === "canvas" && (
-        <div
-          aria-hidden
-          className="pointer-events-none absolute inset-0"
-          style={canvasEdgeStyle}
-        />
-      )}
+      {frameStyle === "canvas" && <CanvasEdgeOverlay />}
     </div>
   );
 

@@ -45,6 +45,7 @@ export default function CanvasTemplate({
 
       <StyleCollection handle={handle} frameStyle={frameStyle} />
       <AIProcess />
+      <SameStyleGallery handle={handle} />
 
       {similarProducts.length > 0 && (
         <SimilarSouls products={similarProducts} />
@@ -52,7 +53,6 @@ export default function CanvasTemplate({
       {relatedAccessories.length > 0 && (
         <RelatedProducts accessories={relatedAccessories} />
       )}
-      <SameStyleGallery handle={handle} />
       <RoomView product={product} selectedVariantId={selectedVariantId} />
 
       <Reviews />

@@ -43,7 +43,6 @@ export default function PBNTemplate({
 
       <StyleCollection handle={handle} />
       <SameStyleGallery handle={handle} />
-
       {relatedAccessories.length > 0 && (
         <RelatedProducts accessories={relatedAccessories} />
       )}
