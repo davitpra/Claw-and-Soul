@@ -43,7 +43,7 @@ export default function CanvasTemplate({
         </div>
       </div>
 
-      <StyleCollection handle={handle} />
+      <StyleCollection handle={handle} frameStyle={frameStyle} />
       <AIProcess />
 
       {similarProducts.length > 0 && (

@@ -31,6 +31,7 @@ export function mapProductReferences(
           "https://placehold.co/400x300?text=Product",
         shopifyHandle: node.handle,
         productRefId: node.id,
+        template: node.productType,
       } satisfies Product;
     });
 }

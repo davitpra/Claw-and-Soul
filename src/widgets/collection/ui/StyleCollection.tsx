@@ -2,17 +2,20 @@
 
 import { useProductStyle } from "@/hooks/useProductStyle";
 import { useStyleImages } from "@/hooks/useStyleImages";
+import type { FrameStyle } from "@/entities/product/lib/frameStyle";
 import CollectionSection from "./CollectionSection";
 
 interface StyleCollectionProps {
   handle?: string | null;
   styleId?: string | null;
   showCta?: boolean;
+  frameStyle?: FrameStyle;
 }
 
 export default function StyleCollection({
   handle,
   styleId: styleIdProp,
+  frameStyle,
 }: StyleCollectionProps) {
   const {
     styleId: derivedStyleId,
@@ -36,6 +39,7 @@ export default function StyleCollection({
       isLoading={isLoading}
       error={error}
       title={title}
+      frameStyle={frameStyle}
       eyebrow={styleName}
       description={
         styleName

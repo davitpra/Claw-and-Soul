@@ -31,7 +31,7 @@ export default function PosterTemplate({
           />
         </div>
       </div>
-      <StyleCollection handle={handle} />
+      <StyleCollection handle={handle} frameStyle={frameStyle} />
       <RoomView product={product} selectedVariantId={selectedVariantId} />
       <Reviews />
       <ProductFAQ faqs={faqs} />

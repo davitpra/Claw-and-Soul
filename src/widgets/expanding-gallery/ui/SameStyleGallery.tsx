@@ -2,6 +2,7 @@
 
 import { useProductStyle } from "@/hooks/useProductStyle";
 import { useSameStyleProducts } from "@/hooks/useSameStyleProducts";
+import { toFrameStyle } from "@/entities/product/lib/frameStyle";
 import ExpandingGallery, { ExpandingGalleryItem } from "./ExpandingGallery";
 
 interface SameStyleGalleryProps {
@@ -38,6 +39,7 @@ export default function SameStyleGallery({
     imageUrl: p.img,
     imageAlt: p.name,
     tags: [p.template].filter((tag): tag is string => Boolean(tag)),
+    frameStyle: toFrameStyle(p.template),
   }));
 
   return (

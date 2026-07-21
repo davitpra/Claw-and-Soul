@@ -33,6 +33,8 @@ export interface ShopifyProductReference {
   id: string;
   title: string;
   handle: string;
+  /** Tipo de Shopify (Canvas, Poster…); espeja el template para el frame. */
+  productType?: string;
   /** Solo lo piden los queries que muestran la referencia como card de compra. */
   description?: string;
   images: { edges: { node: ShopifyImage }[] };

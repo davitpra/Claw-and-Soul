@@ -5,6 +5,11 @@ import { StyleImage } from "@/hooks/useStyleImages";
 import { Container } from "@/shared/ui/Container";
 import { Carousel } from "@/shared/ui/Carousel";
 import { Card } from "@/shared/ui/Card";
+import {
+  canvasEdgeStyle,
+  FRAME_SHADOWS,
+  type FrameStyle,
+} from "@/entities/product/lib/frameStyle";
 
 // Aspecto de "poster flotando": ligera elevación y sombra teñida en teal al hover.
 const posterClasses =
@@ -14,17 +19,30 @@ interface StyleCardProps {
   image: StyleImage;
   badgeLabel?: string;
   altText?: boolean;
+  frameStyle?: FrameStyle;
 }
 
-function StyleCard({ image, badgeLabel, altText }: StyleCardProps) {
+function StyleCard({
+  image,
+  badgeLabel,
+  altText,
+  frameStyle = "art",
+}: StyleCardProps) {
   return (
     <div className="group flex flex-col gap-4">
       <Card
         imageUrl={image.imageUrl}
         imageAlt={image.altImage ?? undefined}
         naturalAspect
-        className={posterClasses}
+        className={`${posterClasses} ${FRAME_SHADOWS[frameStyle]}`}
       >
+        {frameStyle === "canvas" && (
+          <div
+            aria-hidden
+            className="pointer-events-none absolute inset-0"
+            style={canvasEdgeStyle}
+          />
+        )}
         {badgeLabel && (
           <span className="absolute top-3 left-3 bg-primary text-white text-[10px] font-bold uppercase px-2 py-1 rounded-full tracking-wider">
             {badgeLabel}
@@ -66,6 +84,7 @@ interface CollectionSectionProps {
   badgeLabel?: string;
   background?: string;
   altText?: boolean;
+  frameStyle?: FrameStyle;
 }
 
 export default function CollectionSection({
@@ -80,6 +99,7 @@ export default function CollectionSection({
   badgeLabel,
   background,
   altText = true,
+  frameStyle = "art",
 }: CollectionSectionProps) {
   if (!isLoading && (error || images.length === 0)) return null;
 
@@ -116,6 +136,7 @@ export default function CollectionSection({
                   image={image}
                   badgeLabel={badgeLabel}
                   altText={altText}
+                  frameStyle={frameStyle}
                 />
               ))}
         </Carousel>

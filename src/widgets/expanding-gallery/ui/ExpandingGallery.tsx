@@ -3,6 +3,11 @@
 import { CSSProperties, useState } from "react";
 import Link from "next/link";
 import { Container } from "@/shared/ui/Container";
+import {
+  canvasEdgeStyle,
+  POSTER_THUMB_FRAME,
+  type FrameStyle,
+} from "@/entities/product/lib/frameStyle";
 
 export interface ExpandingGalleryItem {
   title: string;
@@ -19,6 +24,8 @@ export interface ExpandingGalleryItem {
   logoAlt?: string;
   /** Badges superiores de la card. */
   tags?: string[];
+  /** Presentación de la miniatura según el tipo de producto (canvas/poster). */
+  frameStyle?: FrameStyle;
 }
 
 interface ExpandingGalleryProps {
@@ -105,7 +112,11 @@ export default function ExpandingGallery({
                     imagen, así el ancho animado solo revela/oculta sin reescalar. */}
                 <div className="absolute -inset-[50%] hidden h-[200%] w-[200%] md:block lg:group-data-[state=closed]:blur-sm">
                   <div className="absolute top-[calc(25%+40px)] right-[calc(50%+40px)] aspect-square h-[calc(50%+40px)]">
-                    <div className="h-full w-full overflow-clip rounded-xl">
+                    <div
+                      className={`relative h-full w-full overflow-clip rounded-xl ${
+                        item.frameStyle === "poster" ? POSTER_THUMB_FRAME : ""
+                      }`}
+                    >
                       {/* eslint-disable-next-line @next/next/no-img-element */}
                       <img
                         src={item.imageUrl}
@@ -114,6 +125,13 @@ export default function ExpandingGallery({
                         decoding="async"
                         className="h-full w-full object-cover object-top-left"
                       />
+                      {item.frameStyle === "canvas" && (
+                        <div
+                          aria-hidden
+                          className="pointer-events-none absolute inset-0"
+                          style={canvasEdgeStyle}
+                        />
+                      )}
                     </div>
                   </div>
                   {item.logoUrl && (

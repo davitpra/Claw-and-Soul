@@ -4,7 +4,7 @@ import { ShopifyProduct } from "@/lib/shopify";
 import Image from "next/image";
 import { Carousel } from "@/shared/ui/Carousel";
 import { ImageZoom } from "@/shared/ui/ImageZoom";
-import { canvasEdgeStyle } from "@/entities/product/lib/frameStyle";
+import { canvasEdgeStyle, FRAME_SHADOWS } from "@/entities/product/lib/frameStyle";
 import type { FrameStyle } from "@/entities/product/lib/frameStyle";
 
 interface ProductGalleryProps {
@@ -15,17 +15,6 @@ interface ProductGalleryProps {
   firstImageScale?: number;
   frameStyle?: FrameStyle;
 }
-
-// Per-type presentation for the product image. "art" keeps the original flat
-// float; "canvas" adds a directional float + an inner darkening overlay on the
-// left/right/bottom edges (the wrapped canvas sides in shadow, top stays lit);
-// "poster" adds a hairline paper edge with ~2px of air and a flatter shadow.
-const FRAME_SHADOWS: Record<FrameStyle, string> = {
-  art: "shadow-[0_14px_32px_-12px_rgba(16,54,66,0.40)]",
-  canvas: "shadow-[8px_10px_22px_-8px_rgba(16,54,66,0.45)]",
-  poster:
-    "bg-white border border-black/10 p-2 shadow-[0_8px_20px_-12px_rgba(16,54,66,0.30)]",
-};
 
 export default function ProductGallery({
   product,

@@ -1,5 +1,10 @@
 import Link from "next/link";
 import { Product } from "@/entities/pet-product/model/types";
+import {
+  toFrameStyle,
+  FRAME_SHADOWS,
+  canvasEdgeStyle,
+} from "@/entities/product/lib/frameStyle";
 
 interface SimilarSoulsCardProps {
   /** Producto similar ya resuelto (name, desc, price, img, shopifyHandle). */
@@ -18,34 +23,38 @@ export function SimilarSoulsCard({ product }: SimilarSoulsCardProps) {
     ? `/product/${product.shopifyHandle}`
     : undefined;
 
+  // Presentación de la imagen según el tipo (Canvas/Poster/Art), igual que en la
+  // galería del detalle. El `bg-white` de la card sirve de fondo del margen del
+  // póster. `overflow-hidden` recortaría la sombra del frame, por eso no se usa.
+  const frameStyle = toFrameStyle(product.template);
+  const framedImage = (
+    <div className="relative">
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img
+        src={product.img}
+        alt={product.name}
+        loading="lazy"
+        decoding="async"
+        className={`block w-full h-auto bg-white ${FRAME_SHADOWS[frameStyle]}`}
+      />
+      {frameStyle === "canvas" && (
+        <div
+          aria-hidden
+          className="pointer-events-none absolute inset-0"
+          style={canvasEdgeStyle}
+        />
+      )}
+    </div>
+  );
+
   return (
     <div className="group flex h-full w-full flex-col gap-4 rounded-2xl border-2 border-cream bg-white p-4 shadow-sm ease-out hover:-translate-y-1 hover:shadow-[0_22px_40px_-14px_rgba(16,54,66,0.35)]">
       {href ? (
-        <Link
-          href={href}
-          className="block overflow-hidden"
-          aria-label={product.name}
-        >
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src={product.img}
-            alt={product.name}
-            loading="lazy"
-            decoding="async"
-            className="block w-full h-auto "
-          />
+        <Link href={href} className="block" aria-label={product.name}>
+          {framedImage}
         </Link>
       ) : (
-        <div className="overflow-hidden">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src={product.img}
-            alt={product.name}
-            loading="lazy"
-            decoding="async"
-            className="block w-full h-auto"
-          />
-        </div>
+        framedImage
       )}
 
       <div className="flex min-w-0 flex-1 flex-col gap-2">
