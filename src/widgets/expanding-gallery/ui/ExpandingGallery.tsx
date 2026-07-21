@@ -4,10 +4,10 @@ import { CSSProperties, useState } from "react";
 import Link from "next/link";
 import { Container } from "@/shared/ui/Container";
 import {
-  canvasEdgeStyle,
   POSTER_THUMB_FRAME,
   type FrameStyle,
 } from "@/entities/product/lib/frameStyle";
+import { CanvasEdgeOverlay } from "@/entities/product/ui/CanvasEdgeOverlay";
 
 export interface ExpandingGalleryItem {
   title: string;
@@ -125,13 +125,7 @@ export default function ExpandingGallery({
                         decoding="async"
                         className="h-full w-full object-cover object-top-left"
                       />
-                      {item.frameStyle === "canvas" && (
-                        <div
-                          aria-hidden
-                          className="pointer-events-none absolute inset-0"
-                          style={canvasEdgeStyle}
-                        />
-                      )}
+                      {item.frameStyle === "canvas" && <CanvasEdgeOverlay />}
                     </div>
                   </div>
                   {item.logoUrl && (

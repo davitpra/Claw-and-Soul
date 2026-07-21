@@ -7,8 +7,8 @@ import {
   DIFFICULTY_LABELS,
   StyleDifficulty,
 } from "@/entities/art-style/model/difficulty";
-import { canvasEdgeStyle } from "@/entities/product/lib/frameStyle";
 import type { FrameStyle } from "@/entities/product/lib/frameStyle";
+import { CanvasEdgeOverlay } from "@/entities/product/ui/CanvasEdgeOverlay";
 
 // Aspecto de "poster flotando": ligera elevación y sombra teñida en teal al hover.
 export const posterClasses =
@@ -84,13 +84,7 @@ export function ProductCard({
     >
       {/* Oscurecido interior de bordes del canvas (va primero para no teñir el
           badge, que se pinta encima). */}
-      {frameStyle === "canvas" && (
-        <div
-          aria-hidden
-          className="pointer-events-none absolute inset-0"
-          style={canvasEdgeStyle}
-        />
-      )}
+      {frameStyle === "canvas" && <CanvasEdgeOverlay />}
       {difficultyLabel ? (
         <span className="absolute top-3 left-3 flex items-center gap-1 bg-primary text-white text-[10px] font-bold uppercase px-4 py-1 rounded-full tracking-wider">
           <span className="material-symbols-outlined text-[14px]">brush</span>

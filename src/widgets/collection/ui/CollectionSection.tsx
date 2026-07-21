@@ -6,10 +6,10 @@ import { Container } from "@/shared/ui/Container";
 import { Carousel } from "@/shared/ui/Carousel";
 import { Card } from "@/shared/ui/Card";
 import {
-  canvasEdgeStyle,
   FRAME_SHADOWS,
   type FrameStyle,
 } from "@/entities/product/lib/frameStyle";
+import { CanvasEdgeOverlay } from "@/entities/product/ui/CanvasEdgeOverlay";
 
 // Aspecto de "poster flotando": ligera elevación y sombra teñida en teal al hover.
 const posterClasses =
@@ -36,13 +36,7 @@ function StyleCard({
         naturalAspect
         className={`${posterClasses} ${FRAME_SHADOWS[frameStyle]}`}
       >
-        {frameStyle === "canvas" && (
-          <div
-            aria-hidden
-            className="pointer-events-none absolute inset-0"
-            style={canvasEdgeStyle}
-          />
-        )}
+        {frameStyle === "canvas" && <CanvasEdgeOverlay />}
         {badgeLabel && (
           <span className="absolute top-3 left-3 bg-primary text-white text-[10px] font-bold uppercase px-2 py-1 rounded-full tracking-wider">
             {badgeLabel}

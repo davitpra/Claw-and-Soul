@@ -1,10 +1,7 @@
 import Link from "next/link";
 import { Product } from "@/entities/pet-product/model/types";
-import {
-  toFrameStyle,
-  FRAME_SHADOWS,
-  canvasEdgeStyle,
-} from "@/entities/product/lib/frameStyle";
+import { toFrameStyle, FRAME_SHADOWS } from "@/entities/product/lib/frameStyle";
+import { CanvasEdgeOverlay } from "@/entities/product/ui/CanvasEdgeOverlay";
 
 interface SimilarSoulsCardProps {
   /** Producto similar ya resuelto (name, desc, price, img, shopifyHandle). */
@@ -37,13 +34,7 @@ export function SimilarSoulsCard({ product }: SimilarSoulsCardProps) {
         decoding="async"
         className={`block w-full h-auto bg-white ${FRAME_SHADOWS[frameStyle]}`}
       />
-      {frameStyle === "canvas" && (
-        <div
-          aria-hidden
-          className="pointer-events-none absolute inset-0"
-          style={canvasEdgeStyle}
-        />
-      )}
+      {frameStyle === "canvas" && <CanvasEdgeOverlay />}
     </div>
   );
 

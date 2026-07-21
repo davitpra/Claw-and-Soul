@@ -33,6 +33,15 @@ export const canvasEdgeStyle: CSSProperties = {
   mixBlendMode: "multiply",
 };
 
+// The top "lip" highlight. It can't live in `canvasEdgeStyle`: that layer is
+// `multiply`, which only darkens — white against multiply is a no-op. So the
+// highlight is a separate `screen` layer (screen only lightens) painted on top.
+export const canvasHighlightStyle: CSSProperties = {
+  background:
+    "linear-gradient(to bottom, rgba(255,255,255,0.81), rgba(255,255,255,0) 1%)",
+  mixBlendMode: "screen",
+};
+
 // Thumbnail-sized poster frame (no float shadow): a white paper margin with a
 // hairline edge, for cropped contexts like the same-style gallery.
 export const POSTER_THUMB_FRAME = "bg-white border border-black/10 p-1.5";
