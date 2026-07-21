@@ -78,7 +78,6 @@ export function ProductCard({
     <Card
       imageUrl={product.img}
       imageAlt={product.name}
-      naturalAspect
       onImageError={onImageError}
       className={`${posterClasses} ${FRAME_CLASS[frameStyle]}`}
     >

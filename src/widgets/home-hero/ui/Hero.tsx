@@ -66,13 +66,16 @@ export default function Hero() {
           </div>
           <div className="relative order-1 lg:order-2">
             <div className="aspect-square w-full overflow-hidden rounded-[2rem] bg-white shadow-2xl rotate-2 hover:rotate-0 transition-all duration-500">
-              <div
-                className="h-full w-full bg-cover bg-center"
-                style={{
-                  backgroundImage:
-                    "url('https://lh3.googleusercontent.com/aida-public/AB6AXuAkZr3BM3Rl_X88fvH5jSsAls2yTmqNxMtDvrcAFJkkmYePk10Chpwztanb0UhGGjFcGQd0l8oPjNvjPVMnnUxRhAvOzn57_Q_K0FVLd5BAo3n2OfcjNdJh3kLF4T8zlc-2LLBUqTE_dEt0oH5Ej_FLVf0UzX-5gM3_CPDfgVaafrYmfy5V7jqB1M_k84o3wrv42DRh5CEdtdab7bPWqlwJ1PO6-vLuthrh9qJFU6ZXa2ufJwvVseHXqiRJklzKglG1zUFf7IEda1kJ')",
-                }}
-              ></div>
+              <video
+                className="h-full w-full object-cover"
+                src="/videos/hero.mp4"
+                poster="/images/hero-poster.png"
+                autoPlay
+                muted
+                loop
+                playsInline
+                aria-label="Two happy dogs running through a sunlit field"
+              />
             </div>
             <div className="absolute -bottom-6 -left-6 hidden lg:block">
               <div className="rounded-xl bg-white p-4 shadow-xl">
