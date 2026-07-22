@@ -14,9 +14,9 @@ export default function HomeStyleGallery() {
       images={images}
       isLoading={isLoading}
       error={error}
-      title={"One style.\n Your pet."}
-      eyebrow="Featured style"
-      description="Every portrait here is the same hand-carved linocut, redrawn for a different animal. Upload a photo and yours joins them."
+      title={"Your pet.\n This poster."}
+      eyebrow="Printed art"
+      description="See a poster you love? We redraw it with your pet in the frame — a one-of-a-kind printed artwork made from your photo."
       ctaHref="/shop"
       ctaLabel="Explore the collection"
     />

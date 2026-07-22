@@ -198,7 +198,7 @@ export default function Hero({
         {LIGHT_RAYS.map((ray) => (
           <span
             key={ray.position}
-            className={`light-ray absolute -top-[20%] h-[150%] -rotate-[18deg] bg-gradient-to-b from-white/50 via-white/15 to-transparent blur-md ${ray.position}`}
+            className={`light-ray absolute -top-[20%] h-[150%] -rotate-18 bg-linear-to-b from-white/50 via-white/15 to-transparent blur-md ${ray.position}`}
             style={
               {
                 "--ray-duration": ray.duration,
