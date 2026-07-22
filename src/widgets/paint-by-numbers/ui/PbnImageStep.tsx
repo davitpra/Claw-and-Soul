@@ -10,20 +10,15 @@ interface PbnImageStepProps {
 /**
  * Step 1 of the Paint by Numbers sidebar: the image upload card. Shows a
  * thumbnail (click to replace) once an image is selected, otherwise an upload
- * button. Owns the hidden file <input>, so it must only be mounted once.
+ * button. Purely presentational — the hidden file <input> it drives lives in
+ * <PaintByNumbers>, so this card is safe to mount in the mobile and desktop
+ * layouts alike.
  */
 export default function PbnImageStep({ imageInput }: PbnImageStepProps) {
-  const { fileInputRef, onFileChange, imageSrc, openFilePicker } = imageInput;
+  const { imageSrc, openFilePicker } = imageInput;
 
   return (
     <section className={card}>
-      <input
-        ref={fileInputRef}
-        type="file"
-        accept="image/x-png,image/gif,image/jpeg"
-        onChange={onFileChange}
-        hidden
-      />
       {imageSrc ? (
         <div className="flex items-center justify-start gap-4">
           <button

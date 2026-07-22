@@ -36,6 +36,7 @@ import MixingGuide from "./MixingGuide";
 import InputOptionsPane from "./InputOptionsPane";
 import ProcessButtons from "./ProcessButtons";
 import PbnSidebar from "./PbnSidebar";
+import PbnImageStep from "./PbnImageStep";
 import PbnSettingsDrawer from "./PbnSettingsDrawer";
 import ExportControls from "./ExportControls";
 import PbnResultView from "./PbnResultView";
@@ -85,6 +86,8 @@ function PaintByNumbersStudio({
   const {
     inputCanvasRef,
     originalImageRef,
+    fileInputRef,
+    onFileChange,
     imageSrc,
     isDragging,
     openFilePicker,
@@ -247,8 +250,8 @@ function PaintByNumbersStudio({
   ];
 
   // On mobile the sidebar lives in a bottom sheet; on desktop it stays inline in
-  // the grid. A single mounted instance is reused in both places (mounting twice
-  // would duplicate the file <input> and its ref).
+  // the grid. A single element is reused in both places — only one of the two is
+  // ever rendered, so the step cards inside it are never mounted twice.
   const isMobile = useIsMobile();
   const sidebar = (
     <PbnSidebar
@@ -264,6 +267,19 @@ function PaintByNumbersStudio({
 
   return (
     <div className="container-site px-6 py-4 lg:px-10">
+      {/* The one hidden file <input> for the whole studio. It lives here rather
+          than in <PbnImageStep> because that card is mounted in some layouts and
+          not others (mobile pre-result vs. the bottom sheet vs. the desktop
+          sidebar), and openFilePicker() is a silent no-op whenever the input
+          behind its ref happens to be unmounted. */}
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept="image/x-png,image/gif,image/jpeg"
+        onChange={onFileChange}
+        hidden
+      />
+
       {/* minmax(0,1fr): without it the main column can't shrink below its
           content's min-content width, and the wide result cards squash the sidebar. */}
       <div className="h-full grid grid-cols-1 gap-6 md:grid-cols-[minmax(0,1fr)_minmax(0,340px)] lg:grid-cols-[minmax(0,1fr)_minmax(0,380px)]">
@@ -299,28 +315,33 @@ function PaintByNumbersStudio({
           {/*Progress bar: only shown while processing, hidden once the result is available */}
           {!showResult && <ProgressBar overall={overall} />}
 
-          {/* Image settings panel for Mobile */}
+          {/* Mobile, before there's a result: the bottom sheet only mounts once
+              there is one, so the step cards sit inline under the preview
+              instead — same order as the desktop sidebar. */}
           {isMobile && !showResult && (
-            <section className={`${card} mt-4`}>
-              <h3 className={stepTitle}>Image settings</h3>
-              <div className="mt-4">
-                <InputOptionsPane
-                  opts={inputOptions}
-                  imageSrc={imageSrc}
-                  showAdvanced={false}
-                />
-              </div>
-              <div className="mt-4">
-                <ProcessButtons
-                  isProcessing={isProcessing}
-                  hasImage={!!imageSrc}
-                  onProcess={() => void process()}
-                  onCancel={cancel}
-                />
-              </div>
-            </section>
+            <div className="mt-4 flex flex-col gap-4">
+              <PbnImageStep imageInput={imageInput} />
+              <section className={card}>
+                <h3 className={stepTitle}>Image settings</h3>
+                <div className="mt-4">
+                  <InputOptionsPane
+                    opts={inputOptions}
+                    imageSrc={imageSrc}
+                    showAdvanced={false}
+                  />
+                </div>
+                <div className="mt-4">
+                  <ProcessButtons
+                    isProcessing={isProcessing}
+                    hasImage={!!imageSrc}
+                    onProcess={() => void process()}
+                    onCancel={cancel}
+                  />
+                </div>
+              </section>
+            </div>
           )}
-
+          {/* Imagen de Resultado */}
           {showResult && compareImgs && (
             <PbnResultView
               compareImgs={compareImgs}

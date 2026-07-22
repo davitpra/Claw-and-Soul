@@ -22,9 +22,8 @@ interface PbnSidebarProps {
 
 /**
  * The numbered step cards (upload, image settings, export) that make up the
- * Paint by Numbers sidebar. Extracted so a single mounted instance can be placed
- * either inline in the desktop grid column or inside the mobile bottom sheet —
- * mounting it twice would duplicate the file <input> and its ref.
+ * Paint by Numbers sidebar. Extracted so the same element can be placed either
+ * inline in the desktop grid column or inside the mobile bottom sheet.
  */
 export default function PbnSidebar({
   imageInput,
