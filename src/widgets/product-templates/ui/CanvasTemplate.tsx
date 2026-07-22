@@ -13,7 +13,28 @@ import {
 import { getSimilarProducts } from "@/entities/product/lib/getSimilarProducts";
 import { SameStyleGallery } from "@/widgets/expanding-gallery";
 import { SimilarSouls } from "@/widgets/similar-souls";
-import { AIProcess } from "@/widgets/ai-process";
+import { AIProcess, type ProcessStep } from "@/widgets/ai-process";
+
+const CANVAS_STEPS: ProcessStep[] = [
+  {
+    img: "/process/2 approve.png",
+    alt: "Choose Style Illustration",
+    title: "1. Choose Your Style",
+    text: "Pick an art style for your pet, select size and click Personalize.",
+  },
+  {
+    img: "/process/1. Upload Picture.png",
+    alt: "Upload Illustration",
+    title: "Upload Pet Photo",
+    text: "Add a clear photo of your pet in JPG, PNG or WEBP format.",
+  },
+  {
+    img: "/process/3. Final Art.png",
+    alt: "Result Illustration",
+    title: "Get Your Masterpiece",
+    text: "Preview your masterpiece in seconds.",
+  },
+];
 
 export default function CanvasTemplate({
   product,
@@ -44,7 +65,19 @@ export default function CanvasTemplate({
       </div>
 
       <StyleCollection handle={handle} frameStyle={frameStyle} />
-      <AIProcess />
+      <AIProcess
+        eyebrow="HOW TO USE"
+        title="Get your custom pet portrait in 3 easy steps"
+        subtitle={
+          <>
+            Watch your pet become a masterpiece in seconds.
+            <br />
+            Try it free before you buy.
+          </>
+        }
+        steps={CANVAS_STEPS}
+        background="cream"
+      />
       <SameStyleGallery handle={handle} />
 
       {similarProducts.length > 0 && (
