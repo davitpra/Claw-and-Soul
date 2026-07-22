@@ -66,6 +66,43 @@
       transform: none;
     }
   }
+
+  /* Selector de tamaño: el valor gira sobre el eje X como un rodillo. El
+     sentido lo elige el componente según si se sube o se baja de talla. */
+  --animate-size-spin-up: size-spin-up 0.42s cubic-bezier(0.2, 0.7, 0.3, 1)
+    both;
+  --animate-size-spin-down: size-spin-down 0.42s cubic-bezier(0.2, 0.7, 0.3, 1)
+    both;
+
+  @keyframes size-spin-up {
+    0% {
+      transform: rotateX(90deg);
+      opacity: 0;
+    }
+    55% {
+      transform: rotateX(-8deg);
+      opacity: 1;
+    }
+    100% {
+      transform: rotateX(0deg);
+      opacity: 1;
+    }
+  }
+
+  @keyframes size-spin-down {
+    0% {
+      transform: rotateX(-90deg);
+      opacity: 0;
+    }
+    55% {
+      transform: rotateX(8deg);
+      opacity: 1;
+    }
+    100% {
+      transform: rotateX(0deg);
+      opacity: 1;
+    }
+  }
 }
 
 /* El track duplica su contenido 2×; -50% deja el loop sin salto visible. */

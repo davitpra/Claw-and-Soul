@@ -1,4 +1,7 @@
-import { Star } from "lucide-react";
+"use client";
+
+import { useState } from "react";
+// import { Star } from "lucide-react";
 import { ShopifyProduct, ShopifyVariant } from "@/lib/shopify";
 
 interface ProductInfoProps {
@@ -10,6 +13,8 @@ export default function ProductInfo({
   product,
   selectedVariant,
 }: ProductInfoProps) {
+  const [isDescriptionExpanded, setIsDescriptionExpanded] = useState(false);
+
   const price = selectedVariant?.price;
   const compareAtPrice = selectedVariant?.compareAtPrice;
 
@@ -42,7 +47,7 @@ export default function ProductInfo({
         </h1>
       </div>
       {/* Reviews */}
-      <div className="inline-flex w-fit items-center gap-2.5 rounded-xl bg-white px-3 py-2">
+      {/* <div className="inline-flex w-fit items-center gap-2.5 rounded-xl bg-white px-3 py-2">
         <span className="flex items-center gap-1.5">
           <span className="font-body text-base font-bold text-text-main">
             4.8
@@ -56,11 +61,11 @@ export default function ProductInfo({
         </span>
         <span className="h-4 w-px bg-[#E0DED9]" />
         <span className="font-body text-sm text-text-muted">237 Reviews</span>
-      </div>
+      </div> */}
 
       {/* Price */}
       <div className="flex items-baseline gap-4">
-        <span className="font-display text-4xl font-black text-text-main">
+        <span className="font-display text-4xl font-black text-primary">
           {currencySymbol}
           {priceAmount}
         </span>
@@ -71,17 +76,31 @@ export default function ProductInfo({
           </span>
         )}
         {discount > 0 && (
-          <span className="bg-primary/10 text-primary text-[10px] font-black px-3 py-1.5 rounded-xl uppercase tracking-[0.1em]">
+          <span className="bg-primary/10 text-primary font-black px-3 py-1.5 rounded-xl uppercase tracking-widest">
             Save {discount}%
           </span>
         )}
       </div>
 
-      {/* Short description — el texto completo vive en el acordeón de abajo */}
+      {/* Description — click para expandir / colapsar el texto completo */}
       {product.description && (
-        <p className="font-body text-text-muted leading-relaxed line-clamp-3">
-          {product.description}
-        </p>
+        <button
+          type="button"
+          onClick={() => setIsDescriptionExpanded((prev) => !prev)}
+          aria-expanded={isDescriptionExpanded}
+          className="group text-left cursor-pointer"
+        >
+          <p
+            className={`font-body text-text-muted leading-relaxed whitespace-pre-line ${
+              isDescriptionExpanded ? "" : "line-clamp-3"
+            }`}
+          >
+            {product.description}
+          </p>
+          <span className="mt-1 inline-block font-body text-sm font-bold text-primary group-hover:underline">
+            {isDescriptionExpanded ? "Read less" : "Read more"}
+          </span>
+        </button>
       )}
     </div>
   );

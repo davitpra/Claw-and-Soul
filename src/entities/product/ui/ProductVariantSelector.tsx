@@ -60,7 +60,12 @@ export default function ProductVariantSelector({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedVariantId]);
 
-  if (variants.length <= 1) return null;
+  // `set` nunca se expone; `size` lo renderiza ProductSizeSelector.
+  const visibleOptionNames = optionNames.filter(
+    (n) => n.toLowerCase() !== "set" && n.toLowerCase() !== "size",
+  );
+
+  if (variants.length <= 1 || visibleOptionNames.length === 0) return null;
 
   const handleOptionChange = (optionName: string, value: string) => {
     const newOptions = { ...selectedOptions, [optionName]: value };
@@ -77,9 +82,7 @@ export default function ProductVariantSelector({
 
   return (
     <div className="flex flex-col gap-6">
-      {optionNames
-        .filter((n) => n.toLowerCase() !== "set")
-        .map((optionName) => (
+      {visibleOptionNames.map((optionName) => (
           <OptionChips
             key={optionName}
             name={`variant-${optionName}`}

@@ -4,15 +4,20 @@ import { ShopifyProduct } from "@/lib/shopify";
 import ProductGallery from "@/entities/product/ui/ProductGallery";
 import ProductInfo from "@/entities/product/ui/ProductInfo";
 import ProductVariantSelector from "@/entities/product/ui/ProductVariantSelector";
+import ProductSizeSelector from "@/entities/product/ui/ProductSizeSelector";
 import ProductBreadcrumb from "@/entities/product/ui/ProductBreadcrumb";
 import ProductPerks from "@/entities/product/ui/ProductPerks";
 import PersonalizeButton from "@/features/personalize/ui/PersonalizeButton";
-import ProductAccordions from "./ProductAccordions";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useFormatOptions } from "@/hooks/useFormatOptions";
 import { useStyle } from "@/hooks/useStyle";
 import { StyleOptionsForm } from "@/entities/art-style/ui/StyleOptionsForm";
 import { getLifestyleImage } from "@/entities/product/lib/getLifestyleImage";
+import {
+  buildSizeOptions,
+  findVariantForSize,
+  getSizeOptionName,
+} from "@/entities/product/lib/sizeOptions";
 import type { FrameStyle } from "@/entities/product/lib/frameStyle";
 
 interface ProductDetailsProps {
@@ -72,6 +77,23 @@ export default function ProductDetails({
 
   const hasBackendMapping = !!productRefId;
 
+  // La lista de tallas y sus proporciones salen de Shopify (el valor de la
+  // opción, ej. `8x10`), así que el selector sigue vivo sin backend.
+  const sizeOptionName = getSizeOptionName(product);
+  const sizeOptions = useMemo(
+    () => buildSizeOptions(product, selectedVariant),
+    [product, selectedVariant],
+  );
+
+  const handleSizeChange = (size: string) => {
+    const variant = findVariantForSize(product, selectedVariant, size);
+    if (variant) setSelectedVariantId(variant.id);
+  };
+
+  const selectedSize =
+    selectedVariant?.selectedOptions.find((o) => o.name === sizeOptionName)
+      ?.value ?? "";
+
   const { style: detailedStyle } = useStyle(styleId ?? null);
   const [selectionsState, setSelectionsState] = useState<{
     styleId: string | null;
@@ -115,6 +137,15 @@ export default function ProductDetails({
 
           <div className="h-px w-full bg-text-main/10"></div>
 
+          {sizeOptionName && (
+            <ProductSizeSelector
+              label={sizeOptionName}
+              options={sizeOptions}
+              value={selectedSize}
+              onChange={handleSizeChange}
+            />
+          )}
+
           <ProductVariantSelector
             product={product}
             selectedVariantId={selectedVariantId}
@@ -155,8 +186,6 @@ export default function ProductDetails({
           />
 
           <ProductPerks />
-
-          <ProductAccordions html={product.description} />
         </div>
       </div>
     </div>
