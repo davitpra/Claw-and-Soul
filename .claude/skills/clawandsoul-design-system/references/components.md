@@ -173,7 +173,9 @@ Referencia: `src/components/home/Hero.tsx:77-92`
 <div className="rounded-xl bg-white p-4 shadow-xl">
   <div className="flex items-center gap-3">
     <span className="flex items-center justify-center rounded-full bg-green-100 p-2 text-green-600">
-      <span className="material-symbols-outlined text-[20px]">check_circle</span>
+      <span className="material-symbols-outlined text-[20px]">
+        check_circle
+      </span>
     </span>
     <div>
       <p className="text-sm font-bold text-slate-dark">Preview Listo</p>
@@ -230,14 +232,14 @@ Referencia: `src/components/home/Hero.tsx:5`, `src/components/home/FeaturedProdu
 ```tsx
 // Sección sobre cream (más común)
 <section className="py-20 bg-cream">
-  <div className="mx-auto max-w-[1280px] px-6 lg:px-10">
+  <div className="mx-auto max-w-7xl px-6 lg:px-10">
     {/* contenido */}
   </div>
 </section>
 
 // Sección sobre slate dark (Footer, CTA banners)
 <section className="py-16 bg-slate-dark text-white">
-  <div className="mx-auto max-w-[1280px] px-6 lg:px-10">
+  <div className="mx-auto max-w-7xl px-6 lg:px-10">
     {/* contenido */}
   </div>
 </section>
@@ -252,10 +254,15 @@ Referencia: `src/components/home/FeaturedProducts.tsx:15-33`
 ```tsx
 <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-12">
   <div>
-    <h2 className="text-3xl font-black text-slate-dark md:text-4xl">Título Sección</h2>
+    <h2 className="text-3xl font-black text-slate-dark md:text-4xl">
+      Título Sección
+    </h2>
     <p className="mt-2 text-slate-dark/70">Descripción breve de la sección.</p>
   </div>
-  <Link className="flex items-center gap-1 text-primary font-bold hover:gap-2 transition-all" href="/more">
+  <Link
+    className="flex items-center gap-1 text-primary font-bold hover:gap-2 transition-all"
+    href="/more"
+  >
     Ver todos
     <span className="material-symbols-outlined text-[20px]">arrow_forward</span>
   </Link>
@@ -268,7 +275,10 @@ Referencia: `src/components/home/FeaturedProducts.tsx:15-33`
 
 ```tsx
 // Icono a la izquierda del texto (20px es el tamaño estándar para UI)
-<a className="flex items-center gap-2 text-white/70 hover:text-primary transition-colors" href="mailto:...">
+<a
+  className="flex items-center gap-2 text-white/70 hover:text-primary transition-colors"
+  href="mailto:..."
+>
   <span className="material-symbols-outlined text-[18px]">mail</span>
   hello@clawandsoul.com
 </a>

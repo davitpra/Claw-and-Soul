@@ -87,7 +87,7 @@ export default function ProductGallery({
                     onClick={() => scrollTo(i)}
                     aria-label={`View image ${i + 1}`}
                     aria-current={i === selectedIndex}
-                    className={`flex-1 overflow-hidden rounded-xl bg-white transition-all ${
+                    className={`w-20 md:w-24 shrink-0 aspect-square overflow-hidden rounded-xl bg-white transition-all ${
                       i === selectedIndex
                         ? "ring-2 ring-primary"
                         : "opacity-60 hover:opacity-100 hover:shadow-md"
@@ -98,7 +98,7 @@ export default function ProductGallery({
                       alt={`${product.title} thumbnail ${i + 1}`}
                       width={120}
                       height={120}
-                      className="h-20 w-full object-cover md:h-24"
+                      className="h-full w-full object-cover"
                     />
                   </button>
                 ))}
