@@ -21,22 +21,22 @@ interface LandingStyle {
 const STYLES: LandingStyle[] = [
   {
     name: "Signature Bloom",
-    img: "/landing/style-signature-bloom.png",
+    img: "/landing/style-signature-bloom.webp",
     difficulty: "easy",
   },
   {
     name: "Signature Classic",
-    img: "/landing/style-signature.png",
+    img: "/landing/style-signature.webp",
     difficulty: "easy",
   },
   {
     name: "Fauvist",
-    img: "/landing/style-fauvist.png",
+    img: "/landing/style-fauvist.webp",
     difficulty: "medium",
   },
   {
     name: "Pop Art",
-    img: "/landing/style-popArt.png",
+    img: "/landing/style-pop-art.webp",
     difficulty: "medium",
   },
 ];
