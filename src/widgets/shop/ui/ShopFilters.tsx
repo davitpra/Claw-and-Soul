@@ -4,8 +4,9 @@ import { ShopFilters as ShopFiltersState } from "../model/useShopFilters";
 import { FilterGroup } from "./FilterGroup";
 import { FilterOption } from "./FilterOption";
 
-// Sidebar de filtros del shop, compartido entre el rail de desktop y el panel
-// móvil. La colección no vive aquí: la elige el carrusel CircularCategory.
+// Cuerpo del modal de filtros del shop (el título, el cierre y las acciones los
+// pone ShopFiltersModal). Los grupos fluyen en dos columnas desde `sm:` para
+// acortar el scroll. La colección no vive aquí: la elige CircularCategory.
 export function ShopFilters({ filters }: { filters: ShopFiltersState }) {
   const {
     productTypes,
@@ -27,26 +28,12 @@ export function ShopFilters({ filters }: { filters: ShopFiltersState }) {
     onSaleCount,
     onSaleOnly,
     toggleOnSaleOnly,
-    activeFilterCount,
-    clearFilters,
   } = filters;
 
   return (
-    <div className="flex flex-col gap-8 bg-white rounded-xl p-6">
-      <div className="flex items-center justify-between">
-        <h2 className="font-display font-black text-slate-dark text-lg">
-          Filters
-        </h2>
-        {activeFilterCount > 0 && (
-          <button
-            onClick={clearFilters}
-            className="text-xs font-bold text-primary hover:text-primary-dark transition-all uppercase tracking-wider"
-          >
-            Clear all
-          </button>
-        )}
-      </div>
-
+    // pb-0: el margen inferior del último grupo ya hace de padding, y `last:`
+    // no es fiable dentro de un contenedor multi-columna.
+    <div className="columns-1 sm:columns-2 gap-8 px-6 pt-6 pb-0">
       {productTypes.length > 0 && (
         <FilterGroup title="Product Type">
           {productTypes.map((type) => (

@@ -9,6 +9,8 @@ import { ShopProduct } from "../model/types";
 const SECTION_PAGE_SIZE = 6;
 
 interface ShopSectionProps {
+  /** Ancla para la barra de navegación por tipo (ShopTypeNav). */
+  id?: string;
   title: string;
   products: ShopProduct[];
   /** Resuelve el href de cada card (kit PBN → /paint-by-numbers, etc.). */
@@ -20,14 +22,19 @@ interface ShopSectionProps {
  * su propio "Show more" que expande solo esta sección (cada sección lleva su
  * estado por separado).
  */
-export function ShopSection({ title, products, productHref }: ShopSectionProps) {
+export function ShopSection({
+  id,
+  title,
+  products,
+  productHref,
+}: ShopSectionProps) {
   const [visibleCount, setVisibleCount] = useState(SECTION_PAGE_SIZE);
 
   const visibleProducts = products.slice(0, visibleCount);
   const hasMore = visibleCount < products.length;
 
   return (
-    <section className="mb-14 last:mb-0">
+    <section id={id} className="mb-14 last:mb-0 scroll-mt-32 lg:scroll-mt-40">
       <div className="flex items-baseline gap-3 mb-6">
         <h2 className="font-display text-2xl md:text-3xl font-black text-secondary leading-tight">
           {title}

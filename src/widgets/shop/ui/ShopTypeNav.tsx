@@ -1,0 +1,43 @@
+"use client";
+
+import type { ShopSectionGroup } from "../model/sections";
+
+/** Id del <section> de cada tipo; lo comparten la barra y el render de secciones. */
+export function shopSectionId(key: string): string {
+  return `shop-section-${key}`;
+}
+
+interface ShopTypeNavProps {
+  sections: ShopSectionGroup[];
+  selected: string | null;
+  onSelect: (key: string | null) => void;
+}
+
+/**
+ * Barra de chips para filtrar por product type. Cada chip es un toggle: al
+ * elegirlo se muestran solo los productos de ese tipo, y al volver a pulsarlo
+ * se vuelven a mostrar todas las secciones.
+ */
+export function ShopTypeNav({ sections, selected, onSelect }: ShopTypeNavProps) {
+  return (
+    <nav aria-label="Product types" className="flex gap-2 overflow-x-auto">
+      {sections.map((section) => {
+        const isActive = section.key === selected;
+        return (
+          <button
+            key={section.key}
+            onClick={() => onSelect(isActive ? null : section.key)}
+            aria-pressed={isActive}
+            className={`shrink-0 h-10 px-4 rounded-xl text-sm font-bold transition-all ${
+              isActive
+                ? "bg-primary text-white"
+                : "bg-white text-slate-dark shadow-sm hover:shadow-md"
+            }`}
+          >
+            {section.title}
+          </button>
+        );
+      })}
+    </nav>
+  );
+}

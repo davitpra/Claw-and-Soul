@@ -15,6 +15,11 @@ export const SHOP_SECTIONS = [
 // caen en esta sección, que siempre va al final.
 export const OTHER_SECTION = { key: "__other__", title: "Other" } as const;
 
+// Tipo preseleccionado al entrar al shop: los PBN son el producto principal, así
+// que se muestran solos hasta que el visitante toque otro chip (o deseleccione
+// este) para ver el catálogo completo.
+export const DEFAULT_SHOP_TYPE: string = "PBN";
+
 export interface ShopSectionGroup {
   key: string;
   title: string;

@@ -5,9 +5,12 @@ import { Footer } from "@/widgets/footer";
 import { Suspense, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import {
-  ShopFilters,
+  DEFAULT_SHOP_TYPE,
+  ShopFiltersModal,
   ShopSection,
+  ShopTypeNav,
   groupIntoSections,
+  shopSectionId,
   useShopFilters,
   useShopProducts,
 } from "@/widgets/shop";
@@ -32,8 +35,10 @@ function ShopContent() {
   // Vive en la URL, no en estado local, porque decide qué se le pide a Shopify.
   const collectionHandle = searchParams.get("collection")?.trim() ?? "";
 
-  const { products, loading, collectionTitle, styleCategories } =
-    useShopProducts(searchQuery, collectionHandle);
+  const { products, loading, styleCategories } = useShopProducts(
+    searchQuery,
+    collectionHandle,
+  );
   const filters = useShopFilters(
     products,
     styleCategories,
@@ -53,12 +58,37 @@ function ShopContent() {
     router.replace(query ? `/shop?${query}` : "/shop", { scroll: false });
   };
 
-  // En móvil el sidebar vive detrás de un toggle "Filters".
+  // Los filtros viven en un modal detrás del botón "Filters" en todos los
+  // tamaños: no hay rail fijo en desktop.
   const [filtersOpen, setFiltersOpen] = useState(false);
 
+  // Tipo elegido en la barra de chips; null muestra todas las secciones y
+  // DEFAULT_SHOP_TYPE es lo que se ve al entrar. La selección se guarda junto
+  // con el contexto (búsqueda + colección) en que se hizo: si el contexto
+  // cambia trae otro catálogo y se vuelve al tipo por defecto.
+  const typeContext = `${searchQuery}|${collectionHandle}`;
+  const [typeSelection, setTypeSelection] = useState<{
+    context: string;
+    type: string | null;
+  }>({ context: typeContext, type: DEFAULT_SHOP_TYPE });
+  const selectedType =
+    typeSelection.context === typeContext
+      ? typeSelection.type
+      : DEFAULT_SHOP_TYPE;
+  const selectType = (type: string | null) =>
+    setTypeSelection({ context: typeContext, type });
+
   // Los productos filtrados se agrupan por tipo en secciones ordenadas
-  // (PBN → Canvas → Poster → Accessories → Credits → Other).
-  const sections = groupIntoSections(filteredProducts);
+  // (PBN → Canvas → Poster → Accessories → Credits → Other). La barra siempre
+  // recibe todas las secciones; el grid solo la del tipo elegido. Si los
+  // filtros dejan sin productos al tipo elegido, se ignora la selección.
+  const allSections = groupIntoSections(filteredProducts);
+  const activeType = allSections.some((s) => s.key === selectedType)
+    ? selectedType
+    : null;
+  const sections = activeType
+    ? allSections.filter((s) => s.key === activeType)
+    : allSections;
 
   return (
     <div className="relative flex min-h-screen w-full flex-col overflow-x-clip bg-cream">
@@ -100,109 +130,114 @@ function ShopContent() {
               <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
             </div>
           ) : (
-            <div className="flex flex-col lg:flex-row gap-8 lg:gap-12 items-start">
-              {/* Filters rail (desktop) */}
-              <aside className="hidden lg:block w-64 shrink-0 sticky top-24">
-                <ShopFilters filters={filters} />
-              </aside>
-
-              {/* Results */}
-              <div className="flex-1 w-full min-w-0">
-                {/* Toolbar: toggle móvil + conteo de resultados */}
-                <div className="flex items-center justify-between mb-6">
-                  <button
-                    onClick={() => setFiltersOpen((prev) => !prev)}
-                    className="lg:hidden flex items-center gap-2 h-10 px-5 rounded-xl bg-white text-slate-dark text-sm font-bold shadow-sm hover:shadow-md transition-all"
-                  >
-                    <span className="material-symbols-outlined text-[20px]">
-                      tune
+            <div className="w-full min-w-0">
+              {/* Toolbar filters. En mobile son dos filas (botón + contador
+                  arriba, chips scrolleables abajo); en md+ una sola fila. */}
+              <div className="mb-6 flex flex-wrap items-center gap-x-4 gap-y-3">
+                <button
+                  onClick={() => setFiltersOpen(true)}
+                  className="flex shrink-0 items-center gap-2 h-10 px-5 rounded-xl bg-white text-slate-dark text-sm font-bold shadow-sm hover:shadow-md transition-all"
+                >
+                  <span className="material-symbols-outlined text-[20px]">
+                    tune
+                  </span>
+                  Filters
+                  {activeFilterCount > 0 && (
+                    <span className="flex items-center justify-center h-5 min-w-5 px-1.5 rounded-full bg-primary text-white text-[10px] font-bold">
+                      {activeFilterCount}
                     </span>
-                    Filters
-                    {activeFilterCount > 0 && (
-                      <span className="flex items-center justify-center h-5 min-w-5 px-1.5 rounded-full bg-primary text-white text-[10px] font-bold">
-                        {activeFilterCount}
-                      </span>
-                    )}
-                  </button>
+                  )}
+                </button>
 
-                  <p className="text-sm text-text-muted ml-auto">
-                    Showing{" "}
-                    <span className="font-bold text-slate-dark">
-                      {filteredProducts.length}
-                    </span>{" "}
-                    of {products.length}{" "}
-                    {products.length === 1 ? "product" : "products"}
-                  </p>
-                </div>
+                <p className="order-2 md:order-3 ml-auto shrink-0 text-sm text-text-muted">
+                  Showing{" "}
+                  <span className="font-bold text-slate-dark">
+                    {sections.reduce((n, s) => n + s.products.length, 0)}
+                  </span>{" "}
+                  of {products.length}{" "}
+                  {products.length === 1 ? "product" : "products"}
+                </p>
 
-                {/* Filters panel (mobile) */}
-                {filtersOpen && (
-                  <div className="lg:hidden mb-6">
-                    <ShopFilters filters={filters} />
-                  </div>
-                )}
-
-                {/* Product Grid */}
-                {products.length === 0 ? (
-                  <div className="text-center py-20">
-                    {searchQuery ? (
-                      <>
-                        <p className="text-secondary/60 text-xl">
-                          No products match &ldquo;{searchQuery}&rdquo;.
-                        </p>
-                        <p className="text-secondary/40 mt-2">
-                          Try a different search term.
-                        </p>
-                      </>
-                    ) : collectionHandle ? (
-                      <>
-                        <p className="text-secondary/60 text-xl">
-                          This collection has no products yet.
-                        </p>
-                        <button
-                          onClick={() => selectCollection("")}
-                          className="mt-4 text-primary font-bold hover:text-primary-dark transition-all text-sm uppercase tracking-widest"
-                        >
-                          Browse all products
-                        </button>
-                      </>
-                    ) : (
-                      <>
-                        <p className="text-secondary/60 text-xl">
-                          No products found in your Shopify store.
-                        </p>
-                        <p className="text-secondary/40 mt-2">
-                          Add some products in your Shopify Admin to see them
-                          here.
-                        </p>
-                      </>
-                    )}
-                  </div>
-                ) : filteredProducts.length === 0 ? (
-                  <div className="text-center py-20">
-                    <p className="text-secondary/60 text-xl">
-                      No products match your filters.
-                    </p>
-                    <button
-                      onClick={clearFilters}
-                      className="mt-4 text-primary font-bold hover:text-primary-dark transition-all text-sm uppercase tracking-widest"
-                    >
-                      Clear all filters
-                    </button>
-                  </div>
-                ) : (
-                  <div>
-                    {sections.map((section) => (
-                      <ShopSection
-                        key={section.key}
-                        title={section.title}
-                        products={section.products}
-                        productHref={productHref}
-                      />
-                    ))}
+                {/* Barra para filtrar los productos por product type.
+                    min-w-0 permite que el overflow-x-auto del nav actúe. */}
+                {allSections.length > 1 && (
+                  <div className="order-3 md:order-2 w-full min-w-0 md:w-auto md:flex-1">
+                    <ShopTypeNav
+                      sections={allSections}
+                      selected={activeType}
+                      onSelect={selectType}
+                    />
                   </div>
                 )}
               </div>
+
+              <ShopFiltersModal
+                open={filtersOpen}
+                onClose={() => setFiltersOpen(false)}
+                filters={filters}
+              />
+
+              {/* Product Grid */}
+              {products.length === 0 ? (
+                <div className="text-center py-20">
+                  {searchQuery ? (
+                    <>
+                      <p className="text-secondary/60 text-xl">
+                        No products match &ldquo;{searchQuery}&rdquo;.
+                      </p>
+                      <p className="text-secondary/40 mt-2">
+                        Try a different search term.
+                      </p>
+                    </>
+                  ) : collectionHandle ? (
+                    <>
+                      <p className="text-secondary/60 text-xl">
+                        This collection has no products yet.
+                      </p>
+                      <button
+                        onClick={() => selectCollection("")}
+                        className="mt-4 text-primary font-bold hover:text-primary-dark transition-all text-sm uppercase tracking-widest"
+                      >
+                        Browse all products
+                      </button>
+                    </>
+                  ) : (
+                    <>
+                      <p className="text-secondary/60 text-xl">
+                        No products found in your Shopify store.
+                      </p>
+                      <p className="text-secondary/40 mt-2">
+                        Add some products in your Shopify Admin to see them
+                        here.
+                      </p>
+                    </>
+                  )}
+                </div>
+              ) : filteredProducts.length === 0 ? (
+                <div className="text-center py-20">
+                  <p className="text-secondary/60 text-xl">
+                    No products match your filters.
+                  </p>
+                  <button
+                    onClick={clearFilters}
+                    className="mt-4 text-primary font-bold hover:text-primary-dark transition-all text-sm uppercase tracking-widest"
+                  >
+                    Clear all filters
+                  </button>
+                </div>
+              ) : (
+                <div>
+                  {sections.map((section) => (
+                    <ShopSection
+                      key={section.key}
+                      id={shopSectionId(section.key)}
+                      title={section.title}
+                      products={section.products}
+                      productHref={productHref}
+                    />
+                  ))}
+                </div>
+              )}
             </div>
           )}
         </Container>
