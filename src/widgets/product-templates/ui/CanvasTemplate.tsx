@@ -4,7 +4,7 @@ import ProductDetails from "@/widgets/product-details/ui/ProductDetails";
 import { StyleCollection } from "@/widgets/collection";
 import ProductFAQ from "@/widgets/product-faq/ui/ProductFAQ";
 import { ProductTemplateProps } from "./ProductPageTemplate";
-import { RoomView } from "@/widgets/room-view";
+import { PrintedOption } from "@/widgets/printed-option";
 
 import {
   RelatedProducts,
@@ -106,8 +106,7 @@ export default function CanvasTemplate({
           />
         </>
       )}
-      <RoomView product={product} selectedVariantId={selectedVariantId} />
-
+      <PrintedOption handle={handle} />
       <ProductFAQ faqs={faqs} />
     </>
   );

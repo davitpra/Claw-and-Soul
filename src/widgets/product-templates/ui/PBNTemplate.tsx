@@ -6,7 +6,7 @@ import {
   RelatedProducts,
   getRelatedAccessories,
 } from "@/widgets/related-products";
-import { RoomView } from "@/widgets/room-view";
+import { PrintedOption } from "@/widgets/printed-option";
 import ProductFAQ from "@/widgets/product-faq/ui/ProductFAQ";
 import { ProductTemplateProps } from "./ProductPageTemplate";
 import ProductDetails from "@/widgets/product-details/ui/ProductDetails";
@@ -57,8 +57,7 @@ export default function PBNTemplate({
           />
         </>
       )}
-
-      <RoomView product={product} selectedVariantId={selectedVariantId} />
+      <PrintedOption handle={handle} />
       <ProductFAQ faqs={faqs} />
     </>
   );
