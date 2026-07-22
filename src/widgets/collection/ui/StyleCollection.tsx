@@ -17,11 +17,9 @@ export default function StyleCollection({
   styleId: styleIdProp,
   frameStyle,
 }: StyleCollectionProps) {
-  const {
-    styleId: derivedStyleId,
-    styleName,
-    isLoading: styleLoading,
-  } = useProductStyle(styleIdProp ? null : (handle ?? null));
+  const { styleId: derivedStyleId, isLoading: styleLoading } = useProductStyle(
+    styleIdProp ? null : (handle ?? null),
+  );
 
   const resolvedStyleId = styleIdProp ?? derivedStyleId;
   const {
@@ -31,21 +29,13 @@ export default function StyleCollection({
   } = useStyleImages(resolvedStyleId);
 
   const isLoading = (styleIdProp ? false : styleLoading) || imagesLoading;
-  const title = "Minimalist Art Styles";
 
   return (
     <CollectionSection
       images={images}
       isLoading={isLoading}
       error={error}
-      title={title}
       frameStyle={frameStyle}
-      eyebrow={styleName}
-      description={
-        styleName
-          ? `Our ${styleName} style captures your pet's unique personality with elegant, hand-illustrated detail and a timeless finish.`
-          : null
-      }
     />
   );
 }

@@ -70,7 +70,7 @@ interface CollectionSectionProps {
   images: StyleImage[];
   isLoading: boolean;
   error: string | null;
-  title: string;
+  title?: string;
   eyebrow?: string | null;
   description?: string | null;
   ctaHref?: string;
