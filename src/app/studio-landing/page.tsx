@@ -8,7 +8,6 @@ import {
   LandingStyles,
   WhyItMatters,
   LandingProducts,
-  LandingReviews,
   LandingFinalCta,
 } from "@/widgets/studio-landing";
 import { AIProcess, type ProcessStep } from "@/widgets/ai-process";
@@ -65,7 +64,7 @@ const LANDING_FAQS = [
   },
   {
     q: "Can I get it as a physical product?",
-    a: "Absolutely. Any design can be ordered as a framed canvas, an art poster, or a complete paint-by-numbers kit with numbered canvas, brushes and paints delivered to your door.",
+    a: "Absolutely. We print your numbered design on heavyweight matte paper or on real cotton canvas, ready for you to paint — and you can add brushes and paints to any order. Prefer it already finished? We can print the artwork itself instead.",
   },
   {
     q: "Is this a good memorial gift?",
@@ -97,7 +96,6 @@ export default function StudioLandingPage() {
         <LandingStyles />
         <WhyItMatters />
         <LandingProducts />
-        <LandingReviews />
         <ProductFAQ faqs={LANDING_FAQS} />
         <LandingFinalCta />
       </main>
