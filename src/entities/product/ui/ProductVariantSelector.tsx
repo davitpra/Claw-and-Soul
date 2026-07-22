@@ -83,18 +83,19 @@ export default function ProductVariantSelector({
   return (
     <div className="flex flex-col gap-6">
       {visibleOptionNames.map((optionName) => (
-          <OptionChips
-            key={optionName}
-            name={`variant-${optionName}`}
-            label={optionName}
-            value={selectedOptions[optionName] || ""}
-            options={optionValues[optionName].map((value) => ({
-              value,
-              label: value,
-            }))}
-            onChange={(value) => handleOptionChange(optionName, value)}
-          />
-        ))}
+        <OptionChips
+          key={optionName}
+          name={`variant-${optionName}`}
+          label={optionName}
+          value={selectedOptions[optionName] || ""}
+          options={optionValues[optionName].map((value) => ({
+            value,
+            label: value,
+          }))}
+          onChange={(value) => handleOptionChange(optionName, value)}
+          fill
+        />
+      ))}
     </div>
   );
 }

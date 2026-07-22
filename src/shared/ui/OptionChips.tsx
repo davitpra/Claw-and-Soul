@@ -13,10 +13,18 @@ interface OptionChipsProps {
   value: string;
   options: ChipOption[];
   onChange: (value: string) => void;
+  /**
+   * Reparte los chips en una grilla de columnas iguales que ocupa todo el
+   * ancho, en vez de dejarlos crecer según su texto.
+   */
+  fill?: boolean;
 }
 
+/** Máximo de chips por fila en modo `fill`; el resto baja a la fila siguiente. */
+const MAX_FILL_COLUMNS = 4;
+
 const chipClassName =
-  "block cursor-pointer rounded-xl border border-[#E0DED9] bg-white px-4 py-2.5 " +
+  "cursor-pointer rounded-xl border border-[#E0DED9] bg-white px-4 py-2.5 " +
   "font-body text-sm font-bold text-text-main transition-all " +
   "hover:border-primary/50 hover:shadow-md " +
   "peer-checked:border-primary peer-checked:bg-primary peer-checked:text-white " +
@@ -34,8 +42,19 @@ export default function OptionChips({
   value,
   options,
   onChange,
+  fill = false,
 }: OptionChipsProps) {
   const selectedLabel = options.find((o) => o.value === value)?.label;
+
+  const listClassName = fill ? "grid gap-2.5" : "flex flex-wrap gap-2.5";
+  const listStyle = fill
+    ? {
+        gridTemplateColumns: `repeat(${Math.min(
+          options.length,
+          MAX_FILL_COLUMNS,
+        )}, minmax(0, 1fr))`,
+      }
+    : undefined;
 
   return (
     <div className="flex flex-col gap-3">
@@ -49,9 +68,9 @@ export default function OptionChips({
           </span>
         )}
       </div>
-      <div className="flex flex-wrap gap-2.5">
+      <div className={listClassName} style={listStyle}>
         {options.map((option) => (
-          <label key={option.value}>
+          <label key={option.value} className={fill ? "block h-full" : "block"}>
             <input
               type="radio"
               name={name}
@@ -62,7 +81,15 @@ export default function OptionChips({
               aria-label={`${label}: ${option.label}`}
               className="peer sr-only"
             />
-            <span className={chipClassName}>{option.label}</span>
+            <span
+              className={
+                fill
+                  ? `${chipClassName} flex h-full w-full items-center justify-center text-center leading-tight`
+                  : `${chipClassName} block`
+              }
+            >
+              {option.label}
+            </span>
           </label>
         ))}
       </div>
