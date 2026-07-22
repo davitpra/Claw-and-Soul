@@ -59,7 +59,7 @@ export default function OptionChips({
   return (
     <div className="flex flex-col gap-3">
       <div className="flex items-baseline justify-between gap-4">
-        <span className="text-[10px] font-black uppercase tracking-widest text-text-muted">
+        <span className="text-sm font-black uppercase tracking-widest text-text-muted">
           {label}
         </span>
         {selectedLabel && (

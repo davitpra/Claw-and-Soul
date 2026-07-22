@@ -66,7 +66,7 @@ export default function ColorOptionSelect({
 
   return (
     <div className="flex flex-col gap-3">
-      <span className="text-[10px] font-black uppercase tracking-widest text-text-muted">
+      <span className="text-sm font-black uppercase tracking-widest text-text-muted">
         {label}
       </span>
 

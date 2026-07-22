@@ -46,7 +46,7 @@ export function StyleOptionsForm({
         ) : (
           <div key={key} className="flex flex-col gap-3">
             <div className="flex items-baseline justify-between gap-4">
-              <span className="text-[10px] font-black uppercase tracking-widest text-text-muted">
+              <span className="text-sm font-black uppercase tracking-widest text-text-muted">
                 {opt.label}
               </span>
               <span className="font-body text-sm font-bold text-text-main uppercase tracking-wider">
