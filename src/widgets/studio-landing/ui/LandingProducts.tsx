@@ -41,7 +41,7 @@ export default function LandingProducts() {
   return (
     <ExpandingGallery
       eyebrow="Choose your surface"
-      title="Paint Them on Paper. Or on Canvas."
+      title={"Paint Them on Paper.\nOr on Canvas."}
       description="Same design, two ways to paint it — pick the surface that fits how you like to work."
       items={PRODUCT_ITEMS}
     />
