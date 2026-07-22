@@ -82,7 +82,7 @@ export default function AccessoryTemplate({
           </div>
 
           {images.length > 1 && (
-            <div className="flex gap-3 overflow-x-auto pb-1">
+            <div className="flex gap-3 overflow-x-auto p-1">
               {images.map((img) => {
                 const isActive = img.url === mainImage;
                 return (
