@@ -8,6 +8,7 @@ import {
   LandingStyles,
   WhyItMatters,
   LandingProducts,
+  LandingRelatedProducts,
   LandingFinalCta,
 } from "@/widgets/studio-landing";
 import { AIProcess, type ProcessStep } from "@/widgets/ai-process";
@@ -110,8 +111,9 @@ export default function StudioLandingPage() {
         />
         <LandingShowcase />
         <LandingStyles />
-        <WhyItMatters />
+        <LandingRelatedProducts />
         <LandingProducts />
+        <WhyItMatters />
         <ProductFAQ faqs={LANDING_FAQS} />
         <LandingFinalCta />
       </main>

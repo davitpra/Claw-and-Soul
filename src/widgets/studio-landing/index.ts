@@ -3,4 +3,5 @@ export { default as LandingShowcase } from "./ui/LandingShowcase";
 export { default as LandingStyles } from "./ui/LandingStyles";
 export { default as WhyItMatters } from "./ui/WhyItMatters";
 export { default as LandingProducts } from "./ui/LandingProducts";
+export { default as LandingRelatedProducts } from "./ui/LandingRelatedProducts";
 export { default as LandingFinalCta } from "./ui/LandingFinalCta";
