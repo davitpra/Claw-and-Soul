@@ -5,19 +5,16 @@ const REASONS = [
     icon: "favorite",
     title: "Celebrate",
     text: "Capture the goofy grin, the tilted head, the little soul that fills your home with joy every single day.",
-    highlight: false,
   },
   {
     icon: "military_tech",
     title: "Honor",
     text: "A service dog's retirement, a cat's 15th birthday — some milestones deserve more than a photo in your camera roll.",
-    highlight: false,
   },
   {
     icon: "all_inclusive",
     title: "Remember",
     text: "For the ones who crossed the rainbow bridge: painting their portrait, stroke by stroke, is a quiet way to say thank you. Many families tell us it helped them heal.",
-    highlight: true,
   },
 ];
 
@@ -42,14 +39,10 @@ export default function WhyItMatters() {
           {REASONS.map((reason) => (
             <div
               key={reason.title}
-              className={`flex flex-col gap-4 rounded-xl p-8 ${
-                reason.highlight ? "bg-primary/10" : "bg-white"
-              }`}
+              className="flex flex-col items-center gap-4 rounded-xl border-2 border-primary bg-primary/10 px-7 py-10 text-center"
             >
-              <span className="flex size-12 items-center justify-center rounded-xl bg-primary/10 text-primary">
-                <span className="material-symbols-outlined text-[24px]">
-                  {reason.icon}
-                </span>
+              <span className="material-symbols-outlined text-[64px] leading-none text-primary-dark">
+                {reason.icon}
               </span>
               <h3 className="font-display text-2xl font-black text-slate-dark">
                 {reason.title}
