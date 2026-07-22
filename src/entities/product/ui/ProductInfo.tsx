@@ -42,36 +42,20 @@ export default function ProductInfo({
         </h1>
       </div>
       {/* Reviews */}
-      <div className="flex items-center gap-2">
-        <div className="flex items-center gap-0.5">
-          {[1, 2, 3, 4, 5].map((star) => {
-            const fill = Math.min(1, Math.max(0, 4.8 - (star - 1)));
-            return (
-              <div key={star} className="relative w-5 h-5">
-                <Star
-                  size={20}
-                  className="absolute inset-0 text-text-muted/20"
-                  fill="currentColor"
-                  strokeWidth={0}
-                />
-                <div
-                  className="absolute inset-0 overflow-hidden"
-                  style={{ width: `${fill * 100}%` }}
-                >
-                  <Star
-                    size={20}
-                    className="text-yellow-500"
-                    fill="currentColor"
-                    strokeWidth={0}
-                  />
-                </div>
-              </div>
-            );
-          })}
-        </div>
-        <span className="text-sm text-text-muted font-medium">
-          (4.8) <span className="font-normal">237 reseñas</span>
+      <div className="inline-flex w-fit items-center gap-2.5 rounded-xl bg-white px-3 py-2">
+        <span className="flex items-center gap-1.5">
+          <span className="font-body text-base font-bold text-text-main">
+            4.8
+          </span>
+          <Star
+            size={16}
+            className="text-yellow-500"
+            fill="currentColor"
+            strokeWidth={0}
+          />
         </span>
+        <span className="h-4 w-px bg-[#E0DED9]" />
+        <span className="font-body text-sm text-text-muted">237 Reviews</span>
       </div>
 
       {/* Price */}
@@ -87,28 +71,18 @@ export default function ProductInfo({
           </span>
         )}
         {discount > 0 && (
-          <span className="bg-primary/10 text-primary text-[10px] font-black px-3 py-1.5 rounded-xl uppercase tracking-[0.1em] border border-primary/20">
+          <span className="bg-primary/10 text-primary text-[10px] font-black px-3 py-1.5 rounded-xl uppercase tracking-[0.1em]">
             Save {discount}%
           </span>
         )}
       </div>
 
-      {/* Selected Options Summary */}
-      {selectedVariant?.selectedOptions &&
-        selectedVariant.selectedOptions.length > 0 && (
-          <div className="flex flex-wrap gap-x-6 gap-y-2">
-            {selectedVariant.selectedOptions.map((option) => (
-              <div key={option.name} className="flex items-center gap-2">
-                <span className="text-[10px] font-black uppercase tracking-widest text-text-muted">
-                  {option.name}
-                </span>
-                <span className="font-body text-sm font-bold text-text-main">
-                  {option.value}
-                </span>
-              </div>
-            ))}
-          </div>
-        )}
+      {/* Short description — el texto completo vive en el acordeón de abajo */}
+      {product.description && (
+        <p className="font-body text-text-muted leading-relaxed line-clamp-3">
+          {product.description}
+        </p>
+      )}
     </div>
   );
 }

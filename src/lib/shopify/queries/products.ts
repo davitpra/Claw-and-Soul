@@ -130,6 +130,14 @@ export const GET_PRODUCT = `
         }
       }
     }
+    collections(first: 3) {
+      edges {
+        node {
+          title
+          handle
+        }
+      }
+    }
     images(first: 10) {
       edges {
         node {

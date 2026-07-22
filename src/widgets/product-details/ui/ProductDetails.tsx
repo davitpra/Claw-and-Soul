@@ -4,6 +4,8 @@ import { ShopifyProduct } from "@/lib/shopify";
 import ProductGallery from "@/entities/product/ui/ProductGallery";
 import ProductInfo from "@/entities/product/ui/ProductInfo";
 import ProductVariantSelector from "@/entities/product/ui/ProductVariantSelector";
+import ProductBreadcrumb from "@/entities/product/ui/ProductBreadcrumb";
+import ProductPerks from "@/entities/product/ui/ProductPerks";
 import PersonalizeButton from "@/features/personalize/ui/PersonalizeButton";
 import ProductAccordions from "./ProductAccordions";
 import { useEffect, useRef, useState } from "react";
@@ -55,11 +57,6 @@ export default function ProductDetails({
     (f) => f.shopifyVariantId === selectedVariantId,
   );
 
-  // La variante por defecto es la primera de Shopify (page.tsx), que puede no
-  // estar mapeada a un formato del backend → el botón "Personalize" aparecería
-  // deshabilitado sin motivo aparente. Una sola vez, cuando cargan los formatos,
-  // si la variante actual no es personalizable saltamos a la primera que sí lo
-  // sea. Solo corre una vez para no pisar una selección deliberada del usuario.
   const didAutoSelectRef = useRef(false);
   useEffect(() => {
     if (didAutoSelectRef.current) return;
@@ -112,6 +109,8 @@ export default function ProductDetails({
 
       <div className="lg:col-span-5 flex flex-col h-full">
         <div className="sticky top-24 flex flex-col gap-6">
+          <ProductBreadcrumb product={product} />
+
           <ProductInfo product={product} selectedVariant={selectedVariant} />
 
           <div className="h-px w-full bg-text-main/10"></div>
@@ -122,30 +121,24 @@ export default function ProductDetails({
             onVariantChange={setSelectedVariantId}
           />
 
-          <div className="h-px w-full bg-linear-to-r from-text-main/15 via-text-main/5 to-transparent" />
-
-          <ProductAccordions html={product.description} />
-
-          <div className="h-px w-full bg-linear-to-r from-text-main/15 via-text-main/5 to-transparent" />
-          <div className="flex flex-col gap-1">
-            <span className="text-primary font-bold tracking-wider uppercase text-sm">
-              Make It Yours
-            </span>
-          </div>
           {hasOptions && (
             <>
-              <div>
-                <StyleOptionsForm
-                  options={detailedStyle!.templateVarOptions!}
-                  value={userSelections}
-                  onChange={(key, val) =>
-                    setSelectionsState((prev) => ({
-                      ...prev,
-                      values: { ...prev.values, [key]: val },
-                    }))
-                  }
-                />
+              <div className="h-px w-full bg-linear-to-r from-text-main/15 via-text-main/5 to-transparent" />
+              <div className="flex flex-col gap-1">
+                <span className="text-primary font-bold tracking-wider uppercase text-sm">
+                  Make It Yours
+                </span>
               </div>
+              <StyleOptionsForm
+                options={detailedStyle!.templateVarOptions!}
+                value={userSelections}
+                onChange={(key, val) =>
+                  setSelectionsState((prev) => ({
+                    ...prev,
+                    values: { ...prev.values, [key]: val },
+                  }))
+                }
+              />
             </>
           )}
 
@@ -160,6 +153,10 @@ export default function ProductDetails({
             backendError={formatsError}
             userSelections={hasOptions ? userSelections : undefined}
           />
+
+          <ProductPerks />
+
+          <ProductAccordions html={product.description} />
         </div>
       </div>
     </div>

@@ -21,6 +21,15 @@ interface CarouselProps {
    * asomar la siguiente. Requiere `perView`. Tablet/desktop no cambian.
    */
   mobileOne?: boolean;
+  /**
+   * Render opcional bajo el track (miniaturas, contador…). Recibe el estado de
+   * navegación de Embla que el carrusel ya calcula para los dots.
+   */
+  renderThumbs?: (nav: {
+    selectedIndex: number;
+    scrollTo: (index: number) => void;
+    count: number;
+  }) => React.ReactNode;
 }
 
 // Ancho de cada slide de tablet en adelante; en desktop entran exactamente
@@ -51,6 +60,7 @@ export function Carousel({
   loop = false,
   perView,
   mobileOne = false,
+  renderThumbs,
 }: CarouselProps) {
   const [emblaRef, emblaApi] = useEmblaCarousel({ align: "start", loop });
 
@@ -133,6 +143,8 @@ export function Carousel({
           </span>
         </button>
       )}
+
+      {renderThumbs?.({ selectedIndex, scrollTo, count: snaps.length })}
 
       {showDots && snaps.length > 1 && (
         <div className="flex justify-center gap-2 mt-5">

@@ -1,7 +1,7 @@
 "use client";
 
-import { ChevronDown } from "lucide-react";
 import { TemplateVarOption } from "@/entities/art-style/model/styles";
+import OptionChips from "@/shared/ui/OptionChips";
 
 interface StyleOptionsFormProps {
   options: Record<string, TemplateVarOption>;
@@ -18,67 +18,57 @@ export function StyleOptionsForm({
   if (entries.length === 0) return null;
 
   return (
-    <div className="flex flex-col gap-1">
-      {entries.map(([key, opt]) => (
-        <div
-          key={key}
-          className="flex items-center border border-primary/40 rounded-lg overflow-hidden"
-        >
-          <div className="bg-primary/10 px-4 py-3 min-w-24 border-r border-primary/40">
-            <span className="font-bold text-primary uppercase tracking-widest">
-              {opt.label}
-            </span>
+    <div className="flex flex-col gap-6">
+      {entries.map(([key, opt]) =>
+        opt.type === "select" ? (
+          <OptionChips
+            key={key}
+            name={`style-${key}`}
+            label={opt.label}
+            value={String(value[key] ?? opt.default)}
+            options={opt.options}
+            onChange={(val) => onChange(key, val)}
+          />
+        ) : (
+          <div key={key} className="flex flex-col gap-3">
+            <div className="flex items-baseline justify-between gap-4">
+              <span className="text-[10px] font-black uppercase tracking-widest text-text-muted">
+                {opt.label}
+              </span>
+              <span className="font-body text-sm font-bold text-text-main uppercase tracking-wider">
+                {value[key] ?? opt.default}
+              </span>
+            </div>
+
+            {opt.type === "slider" && (
+              <div className="rounded-xl bg-white px-4 py-3">
+                <input
+                  type="range"
+                  min={opt.min}
+                  max={opt.max}
+                  step={opt.step ?? 1}
+                  value={Number(value[key] ?? opt.default)}
+                  onChange={(e) => onChange(key, Number(e.target.value))}
+                  aria-label={opt.label}
+                  className="w-full accent-primary"
+                />
+              </div>
+            )}
+
+            {opt.type === "color" && (
+              <div className="flex items-center gap-3 rounded-xl bg-white px-4 py-3">
+                <input
+                  type="color"
+                  value={String(value[key] ?? opt.default)}
+                  onChange={(e) => onChange(key, e.target.value)}
+                  aria-label={opt.label}
+                  className="h-8 w-8 cursor-pointer rounded-xl border border-[#E0DED9] bg-white p-0.5"
+                />
+              </div>
+            )}
           </div>
-
-          {opt.type === "select" && (
-            <div className="relative flex-1">
-              <select
-                value={String(value[key] ?? opt.default)}
-                onChange={(e) => onChange(key, e.target.value)}
-                className="w-full appearance-none bg-white px-4 py-3 pr-10 font-medium text-text-main focus:outline-none cursor-pointer"
-              >
-                {opt.options.map((o) => (
-                  <option key={o.value} value={o.value}>
-                    {o.label}
-                  </option>
-                ))}
-              </select>
-              <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-primary pointer-events-none" />
-            </div>
-          )}
-
-          {opt.type === "slider" && (
-            <div className="flex-1 flex items-center gap-3 bg-white px-4 py-3">
-              <input
-                type="range"
-                min={opt.min}
-                max={opt.max}
-                step={opt.step ?? 1}
-                value={Number(value[key] ?? opt.default)}
-                onChange={(e) => onChange(key, Number(e.target.value))}
-                className="flex-1 accent-primary"
-              />
-              <span className="font-bold text-primary w-8 text-right">
-                {value[key] ?? opt.default}
-              </span>
-            </div>
-          )}
-
-          {opt.type === "color" && (
-            <div className="flex-1 flex items-center gap-3 bg-white px-4 py-3">
-              <input
-                type="color"
-                value={String(value[key] ?? opt.default)}
-                onChange={(e) => onChange(key, e.target.value)}
-                className="w-8 h-8 rounded-lg border border-primary/40 cursor-pointer p-0.5 bg-white"
-              />
-              <span className="font-medium text-text-main uppercase tracking-wider">
-                {value[key] ?? opt.default}
-              </span>
-            </div>
-          )}
-        </div>
-      ))}
+        ),
+      )}
     </div>
   );
 }

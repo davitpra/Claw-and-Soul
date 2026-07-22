@@ -87,7 +87,7 @@ export interface ShopifyProduct {
     }[];
   };
   collections?: {
-    edges: { node: { title: string } }[];
+    edges: { node: { title: string; handle?: string } }[];
   };
 }
 

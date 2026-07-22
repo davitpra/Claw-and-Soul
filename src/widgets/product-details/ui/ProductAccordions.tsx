@@ -25,18 +25,6 @@ export default function ProductAccordions({ html }: ProductAccordionsProps) {
           dangerouslySetInnerHTML={{ __html: html }}
         />
       </Accordion>
-      <Accordion
-        title="Shipping"
-        className={panelClassName}
-        summaryClassName="px-5 py-4"
-        titleClassName={titleClassName}
-        iconClassName={iconClassName}
-        contentClassName="px-5 pb-5 pt-0"
-      >
-        <span className="font-body text-text-muted leading-relaxed text-base max-w-prose">
-          Shipping information goes here.
-        </span>
-      </Accordion>
     </div>
   );
 }
