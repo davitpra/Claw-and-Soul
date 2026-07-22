@@ -9,12 +9,11 @@ export default function HomeHero() {
       primaryCta={{ href: "/shop", label: "See our Products" }}
       secondaryCta={{ href: "/gallery", label: "View Gallery" }}
       media={{
-        kind: "video",
-        src: "/videos/paint transformation.mp4",
-        poster: "/images/hero-painted.png",
+        kind: "image",
+        src: "/images/hero-painted.webp",
         alt: "Two happy dogs running through a sunlit field",
-        width: 1125,
-        height: 1398,
+        width: 1127,
+        height: 1395,
       }}
       frameStyle="canvas"
       badge={{
