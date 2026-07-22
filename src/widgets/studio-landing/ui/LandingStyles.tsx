@@ -1,42 +1,43 @@
 import Link from "next/link";
 import { Container } from "@/shared/ui/Container";
+import { Carousel } from "@/shared/ui/Carousel";
 import { Card } from "@/shared/ui/Card";
+import { FRAME_SHADOWS } from "@/entities/product/lib/frameStyle";
 import {
   DIFFICULTY_LABELS,
   StyleDifficulty,
 } from "@/entities/art-style/model/difficulty";
 
+// Mismo "poster flotando" que las cards de CollectionSection.
+const posterClasses =
+  "transition-all duration-300 ease-out hover:-translate-y-1.5 hover:shadow-[0_22px_40px_-14px_rgba(16,54,66,0.50)]";
+
 interface LandingStyle {
   name: string;
   img: string;
   difficulty: StyleDifficulty;
-  blurb: string;
 }
 
 const STYLES: LandingStyle[] = [
   {
-    name: "Watercolor Portrait",
-    img: "/landing/style-watercolor.webp",
+    name: "Signature Bloom",
+    img: "/landing/style-signature-bloom.png",
     difficulty: "easy",
-    blurb: "Soft, dreamy washes that capture every whisker with warmth.",
   },
   {
-    name: "Classic Linocut",
-    img: "/landing/style-linocut.webp",
+    name: "Signature Classic",
+    img: "/landing/style-signature.png",
+    difficulty: "easy",
+  },
+  {
+    name: "Fauvist",
+    img: "/landing/style-fauvist.png",
     difficulty: "medium",
-    blurb: "Bold hand-carved lines that turn your pet into timeless wall art.",
-  },
-  {
-    name: "Royal Portrait",
-    img: "/landing/style-royal.webp",
-    difficulty: "challenging",
-    blurb: "Regal, museum-style portraits fit for your four-legged royalty.",
   },
   {
     name: "Pop Art",
-    img: "/landing/style-popart.webp",
-    difficulty: "easy",
-    blurb: "Playful color blocks with serious personality.",
+    img: "/landing/style-popArt.png",
+    difficulty: "medium",
   },
 ];
 
@@ -52,43 +53,39 @@ export default function LandingStyles() {
             One Photo, Endless Styles
           </h2>
           <p className="mx-auto mt-4 max-w-lg text-base leading-relaxed text-slate-dark/55">
-            Watercolor, linocut, royal portrait and more — each with an Easy,
-            Medium or Challenging paint difficulty, so there&apos;s a canvas for
-            every skill level.
+            With an Easy, Medium or Challenging paint difficulty, so
+            there&apos;s a canvas for every skill level.
           </p>
         </div>
 
-        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
+        <Carousel gap="gap-8" perView={4} mobileOne>
           {STYLES.map((style) => (
-            <div key={style.name} className="group flex flex-col gap-3">
+            <div key={style.name} className="group flex flex-col gap-4 ">
               <Card
                 imageUrl={style.img}
                 imageAlt={`The same tabby cat rendered in the ${style.name} style`}
-                className="transition-all duration-300 ease-out group-hover:-translate-y-1.5 group-hover:shadow-md"
+                className={`${posterClasses} ${FRAME_SHADOWS.art} aspect-2/3`}
               >
-                <span className="absolute left-3 top-3 flex items-center gap-1 rounded-full bg-primary px-4 py-1 text-[10px] font-bold uppercase tracking-wider text-white">
+                <span className="absolute left-3 top-3 flex items-center gap-1 rounded-full bg-primary px-2 py-1 text-[10px] font-bold uppercase tracking-wider text-white">
                   <span className="material-symbols-outlined text-[14px]">
                     brush
                   </span>
                   {DIFFICULTY_LABELS[style.difficulty]}
                 </span>
               </Card>
-              <div>
+              <div className="flex items-center justify-center gap-2">
                 <p className="font-bold text-slate-dark">{style.name}</p>
-                <p className="mt-1 text-sm leading-relaxed text-slate-dark/55">
-                  {style.blurb}
-                </p>
               </div>
             </div>
           ))}
-        </div>
+        </Carousel>
 
         <div className="mt-12 flex justify-center">
           <Link
             href="/paint-by-numbers"
             className="flex items-center justify-center rounded-xl bg-primary px-8 py-4 text-base font-bold text-white shadow-lg shadow-primary/20 transition-transform hover:scale-105 hover:bg-primary-dark"
           >
-            Try a Style With Your Photo
+            Look for more styles
           </Link>
         </div>
       </Container>
