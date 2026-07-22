@@ -3,11 +3,16 @@ import Hero from "./Hero";
 export default function HomeHero() {
   return (
     <Hero
-      eyebrow="Personalized Pet Art"
-      title="Capture Their Soul in Art"
-      description="Turn your favorite photo into a personalized keepsake that celebrates the unique bond with your furry friend."
-      primaryCta={{ href: "/shop", label: "See our Products" }}
-      secondaryCta={{ href: "/gallery", label: "View Gallery" }}
+      eyebrow="Custom Paint by Numbers"
+      title="Paint the Portrait Only You Could Make"
+      description="Upload your favorite photo, choose the style that fits their personality, and paint it with your own hands — every stroke adds a piece of you to a portrait as unique as your pet."
+      primaryCta={{
+        href: "/shop",
+        label: "Create Your Own Painting",
+        icon: "palette",
+      }}
+      secondaryCta={{ href: "/paint-by-numbers", label: "Try the Studio Free" }}
+      note="Made from your photo — no two kits are ever alike."
       media={{
         kind: "image",
         src: "/images/hero-painted.webp",
@@ -17,10 +22,9 @@ export default function HomeHero() {
       }}
       frameStyle="canvas"
       badge={{
-        icon: "check_circle",
-        title: "Preview Ready",
-        subtitle: "See it now",
-        iconClassName: "bg-green-100 text-green-600",
+        icon: "palette",
+        title: "100% Unique",
+        subtitle: "Made from your photo",
       }}
     />
   );

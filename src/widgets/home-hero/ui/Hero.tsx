@@ -1,3 +1,4 @@
+import type { CSSProperties } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { Container } from "@/shared/ui/Container";
@@ -7,10 +8,13 @@ import {
 } from "@/entities/product/lib/frameStyle";
 import { CanvasEdgeOverlay } from "@/entities/product/ui/CanvasEdgeOverlay";
 
-const SOCIAL_PROOF_AVATARS = [
-  "https://lh3.googleusercontent.com/aida-public/AB6AXuD6DgqXswmvwDWNDv1q2X7m7lAnB34Z1hb2f9ISZJO8IQr2GyPfrff5dyLR4UyCo8jM9sOgRUVjreHp_91Zc233yM9MSdg1SLkSEWt5eJffB4Ns5dPj2IxcVZoA8jdN82nqKgc__ag8xMOiHult_2ciiQqIGnrlVmmdk1PbSfAmK4UhCZBQxfo532cbUb96JNWqcFmnxHRnFHueGM0rNM4ZJeY7dq5IxF3Cnny0SkiCZ-tSrKFrgg9jfAo8UB1m8OZ_hb5CknVIQYsg",
-  "https://lh3.googleusercontent.com/aida-public/AB6AXuBTWHCYfQET_qj7P9AVFTmaEHpDfPp6QWspagVxJqDGw1FvprnYi37nZK-k8RLcJrtSo3KjwPPixPCnphXLpKl-ERDXfD-yekwstIrNwNyo0jxMbpO6taPmWSZoVHAr6tshCVuh1UiSA1F-gFG9T07CW3a49NGIuhj3DF9jYypG0AqiYOpjqA-ThkFYGVES2YD9WIl47vV6qYQ7tLWFd9iZKwDlk_pc9v6lSsm5JqoMn_aTNK98X4V1RjmXjy4Vlb98DOu7dmQka7TK",
-  "https://lh3.googleusercontent.com/aida-public/AB6AXuDxwdrz9AP1t68eOQ76ZYjIe-hXC0i7BP_vLztVyDF4H8oGHZoZasluOpA0W-J777f3eebeCdYQzvnwMYeA9-d8KWudRdMWLxVpT7oTzbjXFR7cs-FYfriYx0PH6uXZdSbXxN1RVVL-ovqH2INyB75O9kpWj3N1GYgb1XNCXJpjR_uX5WfhsxBOKFC-yRl3qNKCU0k4OmH1LZejG7cTzfLHeb4WGsJ0Q5h5hTGWz94jKbXpFnl5IiEYT4kTFMVS9jwyGlVTTUyVvSW1",
+/* Cada haz varía posición, grosor y ritmo para que el shimmer no sea síncrono.
+   Los delays negativos arrancan cada ciclo ya empezado (ver .light-ray). */
+const LIGHT_RAYS = [
+  { position: "left-[8%] w-16 md:w-24", duration: "9s", delay: "0s" },
+  { position: "left-[30%] w-12 md:w-16", duration: "12s", delay: "-3s" },
+  { position: "left-[55%] w-20 md:w-28", duration: "8s", delay: "-6s" },
+  { position: "left-[80%] w-14 md:w-20", duration: "13s", delay: "-1.5s" },
 ];
 
 type HeroCta = {
@@ -77,7 +81,7 @@ export default function Hero({
   const fade = animateText ? "animate-fade-in-up" : "";
 
   return (
-    <section className="w-full bg-cream py-12 md:py-20 lg:py-28">
+    <section className="relative w-full overflow-hidden bg-cream py-12 md:py-20 lg:py-28">
       <Container>
         <div className="grid grid-cols-1 gap-12 lg:grid-cols-2 lg:items-center">
           <div className="flex flex-col gap-6 order-2 lg:order-1">
@@ -101,7 +105,7 @@ export default function Hero({
             <div className="flex flex-wrap gap-4 pt-2">
               <Link
                 href={primaryCta.href}
-                className="flex items-center justify-center gap-2 rounded-xl bg-primary px-8 py-4 text-base font-bold text-white shadow-lg shadow-primary/20 transition-transform hover:scale-105 hover:bg-primary-dark"
+                className="flex items-center justify-center gap-2 rounded-xl bg-primary px-8 py-4 text-base font-bold text-white shadow-lg shadow-primary/20 transition-all hover:scale-105 hover:bg-primary-dark"
               >
                 {primaryCta.icon && (
                   <span className="material-symbols-outlined text-[20px]">
@@ -127,32 +131,6 @@ export default function Hero({
             {note && (
               <p className="text-xs font-medium text-slate-dark/60">{note}</p>
             )}
-            <div className="flex items-center gap-4 pt-4">
-              <div className="flex -space-x-2">
-                {SOCIAL_PROOF_AVATARS.map((src, i) => (
-                  <div
-                    key={i}
-                    className="size-10 rounded-full border-2 border-cream bg-gray-200 bg-cover bg-center"
-                    style={{ backgroundImage: `url('${src}')` }}
-                  ></div>
-                ))}
-              </div>
-              <div className="flex flex-col">
-                <div className="flex text-yellow-500 text-sm">
-                  {[...Array(5)].map((_, i) => (
-                    <span
-                      key={i}
-                      className="material-symbols-outlined text-[16px] fill-current"
-                    >
-                      star
-                    </span>
-                  ))}
-                </div>
-                <span className="text-xs font-medium text-slate-dark/70">
-                  Loved by 10,000+ pet parents
-                </span>
-              </div>
-            </div>
           </div>
           <div className="relative order-1 lg:order-2">
             <div
@@ -211,6 +189,25 @@ export default function Hero({
           </div>
         </div>
       </Container>
+      {/* Rayos de luz decorativos; último hijo para pintar por encima de todo
+          el contenido (imagen incluida) sin bloquear clics. */}
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-0 overflow-hidden"
+      >
+        {LIGHT_RAYS.map((ray) => (
+          <span
+            key={ray.position}
+            className={`light-ray absolute -top-[20%] h-[150%] -rotate-[18deg] bg-gradient-to-b from-white/50 via-white/15 to-transparent blur-md ${ray.position}`}
+            style={
+              {
+                "--ray-duration": ray.duration,
+                "--ray-delay": ray.delay,
+              } as CSSProperties
+            }
+          />
+        ))}
+      </div>
     </section>
   );
 }

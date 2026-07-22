@@ -166,11 +166,35 @@
   }
 }
 
+/* Rayos de luz del hero: cada haz "respira" (opacidad) y deriva unos px en
+   horizontal. Se anima `translate` y no `transform` para no pisar la rotación
+   diagonal, que Tailwind aplica vía la propiedad independiente `rotate`. */
+.light-ray {
+  /* Nivel visible cuando la animación está desactivada (reduced motion). */
+  opacity: 0.5;
+  animation: light-ray var(--ray-duration, 9s) ease-in-out infinite;
+  /* Delay negativo: cada haz arranca con el ciclo empezado, sin fade inicial. */
+  animation-delay: var(--ray-delay, 0s);
+}
+
+@keyframes light-ray {
+  0%,
+  100% {
+    opacity: 0.35;
+    translate: 0;
+  }
+  50% {
+    opacity: 0.7;
+    translate: 14px;
+  }
+}
+
 /* Las cards de la galería entran escalonadas; sin movimiento si el usuario lo pide. */
 @media (prefers-reduced-motion: reduce) {
   .animate-fade-in-up,
   .animate-marquee,
-  .waves-layer {
+  .waves-layer,
+  .light-ray {
     animation: none;
   }
 }
