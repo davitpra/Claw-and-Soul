@@ -23,6 +23,7 @@ import {
 import { useSavePbnFlow } from "../model/useSavePbnFlow";
 import { useStylePbnConfig } from "../model/useStylePbnConfig";
 import {
+  STOREFRONT_INITIAL_IMAGE,
   STOREFRONT_INPUT_DEFAULTS,
   STOREFRONT_RENDER_DEFAULTS,
 } from "../model/defaults";
@@ -58,7 +59,7 @@ export default function PaintByNumbers() {
   return (
     <PaintByNumbersStudio
       generationId={generationId}
-      initialImageUrl={initialImageUrl}
+      initialImageUrl={initialImageUrl ?? STOREFRONT_INITIAL_IMAGE}
       inputInit={inputInit}
       renderInit={renderInit}
     />
