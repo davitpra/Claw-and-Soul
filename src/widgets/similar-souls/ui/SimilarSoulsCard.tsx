@@ -25,21 +25,21 @@ export function SimilarSoulsCard({ product }: SimilarSoulsCardProps) {
   // póster. `overflow-hidden` recortaría la sombra del frame, por eso no se usa.
   const frameStyle = toFrameStyle(product.template);
   const framedImage = (
-    <div className="relative">
+    <div className="relative hover:-translate-y-1 shadow-sm ease-out  hover:shadow-[0_22px_40px_-14px_rgba(16,54,66,0.35)]">
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img
         src={product.img}
         alt={product.name}
         loading="lazy"
         decoding="async"
-        className={`block w-full h-auto bg-white ${FRAME_SHADOWS[frameStyle]}`}
+        className={`block w-full h-auto bg-white ${FRAME_SHADOWS[frameStyle]} `}
       />
       {frameStyle === "canvas" && <CanvasEdgeOverlay />}
     </div>
   );
 
   return (
-    <div className="group flex h-full w-full flex-col gap-4 rounded-2xl border-2 border-cream bg-white p-4 shadow-sm ease-out hover:-translate-y-1 hover:shadow-[0_22px_40px_-14px_rgba(16,54,66,0.35)]">
+    <div className="group flex h-full w-full flex-col gap-4 rounded-2xl border-2 border-cream bg-white p-4 ">
       {href ? (
         <Link href={href} className="block" aria-label={product.name}>
           {framedImage}
