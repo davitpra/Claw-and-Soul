@@ -24,7 +24,7 @@ export default function RoomView({
   if (!sceneImage) return null;
 
   return (
-    <section className="bg-cream">
+    <section className="bg-white">
       <Container className="flex flex-col items-center gap-8 md:flex-row md:gap-16">
         <div className="w-full overflow-hidden md:w-2/5">
           <Image

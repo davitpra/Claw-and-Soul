@@ -82,10 +82,58 @@
   animation: marquee 45s linear infinite;
 }
 
+/* Waves divider: la misma onda repetida en 4 capas, cada una a distinta
+   velocidad y sentido, produce la sensación de profundidad (parallax).
+   Los desplazamientos van en unidades del viewBox, no en px de pantalla. */
+.waves-layer {
+  animation-timing-function: linear;
+  animation-iteration-count: infinite;
+  /* Arranca con el ciclo empezado para que no se vea el "salto" inicial. */
+  animation-delay: -2s;
+}
+/* `--waves-duration` la fija el componente a partir de su prop `speed`; cada
+   capa mantiene la proporción original (10s / 8s / 6s / 4s) sobre esa base. */
+.waves-layer-1 {
+  animation-name: waves-drift-out;
+  animation-duration: var(--waves-duration, 10s);
+}
+.waves-layer-2 {
+  animation-name: waves-drift-in;
+  animation-duration: calc(var(--waves-duration, 10s) * 0.8);
+}
+.waves-layer-3 {
+  animation-name: waves-drift-out;
+  animation-duration: calc(var(--waves-duration, 10s) * 0.6);
+}
+.waves-layer-4 {
+  animation-name: waves-drift-in;
+  animation-duration: calc(var(--waves-duration, 10s) * 0.4);
+}
+
+/* 88 = medio período de la onda (constante `DRIFT` en WavesDivider.tsx). Ir de
+   +88 a -88 recorre un período completo, así que el loop cierra sin salto. */
+@keyframes waves-drift-out {
+  from {
+    transform: translateX(88px);
+  }
+  to {
+    transform: translateX(-88px);
+  }
+}
+@keyframes waves-drift-in {
+  from {
+    transform: translateX(-88px);
+  }
+  to {
+    transform: translateX(88px);
+  }
+}
+
 /* Las cards de la galería entran escalonadas; sin movimiento si el usuario lo pide. */
 @media (prefers-reduced-motion: reduce) {
   .animate-fade-in-up,
-  .animate-marquee {
+  .animate-marquee,
+  .waves-layer {
     animation: none;
   }
 }

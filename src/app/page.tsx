@@ -5,7 +5,7 @@ import { NewCollection } from "@/widgets/collection";
 import { CategoryGrid } from "@/widgets/category-grid";
 import { HomeStyleGallery } from "@/widgets/style-gallery";
 import { StudioShowcase } from "@/widgets/studio-showcase";
-import { HomeExpandingGallery } from "@/widgets/expanding-gallery";
+import WavesDivider from "@/shared/ui/WavesDivider";
 
 export default async function Home() {
   return (
@@ -14,10 +14,13 @@ export default async function Home() {
 
       <main className="flex-1">
         <HomeHero />
+        <WavesDivider />
         <NewCollection />
+        <WavesDivider flip />
         <HomeStyleGallery />
-        <HomeExpandingGallery />
+        <WavesDivider />
         <CategoryGrid />
+        <WavesDivider flip />
         <StudioShowcase />
       </main>
 

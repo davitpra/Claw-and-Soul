@@ -13,7 +13,7 @@ interface ProductFAQProps {
 
 export default function ProductFAQ({ faqs }: ProductFAQProps) {
   return (
-    <div className="bg-[#FAF9F6] p-6 md:p-12">
+    <div className="bg-white p-6 md:p-12">
       <h2 className="font-display text-3xl font-black text-slate-dark md:text-4xl text-center mb-16">
         Frequently Asked Questions
       </h2>
@@ -22,7 +22,7 @@ export default function ProductFAQ({ faqs }: ProductFAQProps) {
           <Accordion
             key={i}
             title={faq.q}
-            className="bg-white rounded-xl shadow-sm"
+            className="bg-cream rounded-xl shadow-sm"
             summaryClassName="w-full p-5"
             titleClassName="font-bold text-text-main text-lg"
             iconClassName="text-text-main"

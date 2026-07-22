@@ -11,6 +11,7 @@ import {
   LandingRelatedProducts,
 } from "@/widgets/studio-landing";
 import { AIProcess, type ProcessStep } from "@/widgets/ai-process";
+import WavesDivider from "@/shared/ui/WavesDivider";
 
 export const metadata: Metadata = {
   title: "Free Pet Paint by Numbers from Your Photo · Claw & Soul",
@@ -95,6 +96,7 @@ export default function StudioLandingPage() {
 
       <main className="flex-1">
         <LandingHero />
+        <WavesDivider />
         <AIProcess
           eyebrow="How it works"
           title="From Photo to Masterpiece in 4 Steps"
@@ -108,11 +110,17 @@ export default function StudioLandingPage() {
           steps={LANDING_STEPS}
           background="white"
         />
+        <WavesDivider flip />
         <LandingShowcase />
+        <WavesDivider />
         <LandingStyles />
+        <WavesDivider flip />
         <LandingRelatedProducts />
+        <WavesDivider />
         <LandingProducts />
+        <WavesDivider flip />
         <WhyItMatters />
+        <WavesDivider />
         <ProductFAQ faqs={LANDING_FAQS} />
       </main>
 

@@ -5,7 +5,7 @@ import { StyleCollection } from "@/widgets/collection";
 import ProductFAQ from "@/widgets/product-faq/ui/ProductFAQ";
 import { ProductTemplateProps } from "./ProductPageTemplate";
 import { RoomView } from "@/widgets/room-view";
-import { Reviews } from "@/widgets/reviews";
+
 import {
   RelatedProducts,
   getRelatedAccessories,
@@ -14,6 +14,7 @@ import { getSimilarProducts } from "@/entities/product/lib/getSimilarProducts";
 import { SameStyleGallery } from "@/widgets/expanding-gallery";
 import { SimilarSouls } from "@/widgets/similar-souls";
 import { AIProcess, type ProcessStep } from "@/widgets/ai-process";
+import WavesDivider from "@/shared/ui/WavesDivider";
 
 const CANVAS_STEPS: ProcessStep[] = [
   {
@@ -65,6 +66,10 @@ export default function CanvasTemplate({
       </div>
 
       <StyleCollection handle={handle} frameStyle={frameStyle} />
+      <WavesDivider
+        waveColor="var(--color-cream)"
+        fillColor="var(--color-cream)"
+      />
       <AIProcess
         eyebrow="HOW TO USE"
         title="Get your custom pet portrait in 3 easy steps"
@@ -78,17 +83,31 @@ export default function CanvasTemplate({
         steps={CANVAS_STEPS}
         background="cream"
       />
+      <WavesDivider
+        waveColor="var(--color-cream)"
+        fillColor="var(--color-cream)"
+        flip
+      />
       <SameStyleGallery handle={handle} />
-
       {similarProducts.length > 0 && (
         <SimilarSouls products={similarProducts} />
       )}
       {relatedAccessories.length > 0 && (
-        <RelatedProducts accessories={relatedAccessories} />
+        <>
+          <WavesDivider
+            waveColor="var(--color-cream)"
+            fillColor="var(--color-cream)"
+          />
+          <RelatedProducts accessories={relatedAccessories} />
+          <WavesDivider
+            waveColor="var(--color-cream)"
+            fillColor="var(--color-cream)"
+            flip
+          />
+        </>
       )}
       <RoomView product={product} selectedVariantId={selectedVariantId} />
 
-      <Reviews />
       <ProductFAQ faqs={faqs} />
     </>
   );

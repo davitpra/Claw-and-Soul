@@ -7,10 +7,10 @@ import {
   getRelatedAccessories,
 } from "@/widgets/related-products";
 import { RoomView } from "@/widgets/room-view";
-import { Reviews } from "@/widgets/reviews";
 import ProductFAQ from "@/widgets/product-faq/ui/ProductFAQ";
 import { ProductTemplateProps } from "./ProductPageTemplate";
 import ProductDetails from "@/widgets/product-details/ui/ProductDetails";
+import WavesDivider from "@/shared/ui/WavesDivider";
 
 /**
  * Storefront template for the Paint-by-Numbers kit: same shape as Canvas, plus
@@ -44,11 +44,21 @@ export default function PBNTemplate({
       <StyleCollection handle={handle} />
       <SameStyleGallery handle={handle} />
       {relatedAccessories.length > 0 && (
-        <RelatedProducts accessories={relatedAccessories} />
+        <>
+          <WavesDivider
+            waveColor="var(--color-cream)"
+            fillColor="var(--color-cream)"
+          />
+          <RelatedProducts accessories={relatedAccessories} />
+          <WavesDivider
+            waveColor="var(--color-cream)"
+            fillColor="var(--color-cream)"
+            flip
+          />
+        </>
       )}
 
       <RoomView product={product} selectedVariantId={selectedVariantId} />
-      <Reviews />
       <ProductFAQ faqs={faqs} />
     </>
   );
