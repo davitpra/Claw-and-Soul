@@ -1,6 +1,8 @@
 "use client";
 
 import { TemplateVarOption } from "@/entities/art-style/model/styles";
+import { isColorOptionList } from "@/entities/art-style/lib/optionColors";
+import ColorOptionSelect from "@/entities/art-style/ui/ColorOptionSelect";
 import OptionChips from "@/shared/ui/OptionChips";
 
 interface StyleOptionsFormProps {
@@ -21,14 +23,26 @@ export function StyleOptionsForm({
     <div className="flex flex-col gap-6">
       {entries.map(([key, opt]) =>
         opt.type === "select" ? (
-          <OptionChips
-            key={key}
-            name={`style-${key}`}
-            label={opt.label}
-            value={String(value[key] ?? opt.default)}
-            options={opt.options}
-            onChange={(val) => onChange(key, val)}
-          />
+          // Los selects cuyas opciones son colores (fondo, líneas...) usan un
+          // desplegable con el color a la vista; el resto siguen siendo chips.
+          isColorOptionList(opt.options) ? (
+            <ColorOptionSelect
+              key={key}
+              label={opt.label}
+              value={String(value[key] ?? opt.default)}
+              options={opt.options}
+              onChange={(val) => onChange(key, val)}
+            />
+          ) : (
+            <OptionChips
+              key={key}
+              name={`style-${key}`}
+              label={opt.label}
+              value={String(value[key] ?? opt.default)}
+              options={opt.options}
+              onChange={(val) => onChange(key, val)}
+            />
+          )
         ) : (
           <div key={key} className="flex flex-col gap-3">
             <div className="flex items-baseline justify-between gap-4">
