@@ -155,11 +155,6 @@ export default function ProductDetails({
           {hasOptions && (
             <>
               <div className="h-px w-full bg-linear-to-r from-text-main/15 via-text-main/5 to-transparent" />
-              <div className="flex flex-col gap-1">
-                <span className="text-primary font-bold tracking-wider uppercase text-sm">
-                  Make It Yours
-                </span>
-              </div>
               <StyleOptionsForm
                 options={detailedStyle!.templateVarOptions!}
                 value={userSelections}

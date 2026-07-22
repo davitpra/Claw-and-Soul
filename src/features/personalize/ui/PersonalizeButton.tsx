@@ -59,7 +59,7 @@ export default function PersonalizeButton({
           ? "Select a size"
           : !formatId
             ? "This size can't be personalized yet"
-            : "Personalize";
+            : "Create";
 
   return (
     <div className="flex flex-col gap-3 mt-2">
