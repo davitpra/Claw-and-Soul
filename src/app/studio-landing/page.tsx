@@ -48,11 +48,19 @@ const LANDING_STEPS: ProcessStep[] = [
 const LANDING_FAQS = [
   {
     q: "Is the coloring page really free?",
-    a: "Yes. Upload a photo, preview your pet in any style, and download the printable PDF at no cost — no account or credit card needed. You only pay if you want a physical canvas, poster or paint kit.",
+    a: "Yes. Turn your photo into a numbered design and download the printable PDF at no cost — no credit card needed. You only pay if you want a physical canvas, poster or paint kit.",
+  },
+  {
+    q: "Do I need an account?",
+    a: "Not for the coloring page. The paint-by-numbers studio runs right in your browser, so you can upload a photo and download your PDF without signing up. Creating an AI art style is the one step that needs a free account — you start with free credits, and you only buy more if you want to keep exploring styles.",
   },
   {
     q: "What photos work best?",
     a: "A clear, well-lit photo where your pet's face is easy to see gives the best result. Old photos, phone snapshots and even slightly blurry favorites usually work great — our AI does the heavy lifting.",
+  },
+  {
+    q: "What happens to my pet's photo?",
+    a: "If you only use the free studio, your photo never leaves your device — the whole design is built right in your browser. It's uploaded only when you ask our AI for a style or save a design to your account, so we can create and store your artwork. You can delete any artwork from your account whenever you want, and we never sell your photos or use them without asking you first.",
   },
   {
     q: "How does the AI styling work?",
@@ -65,6 +73,14 @@ const LANDING_FAQS = [
   {
     q: "Can I get it as a physical product?",
     a: "Absolutely. We print your numbered design on heavyweight matte paper or on real cotton canvas, ready for you to paint — and you can add brushes and paints to any order. Prefer it already finished? We can print the artwork itself instead.",
+  },
+  {
+    q: "What do I need to paint it?",
+    a: "Acrylics and a couple of brushes — a fine one for the small numbered areas and a wider one for the background. Ordering a printed design? You can add a full brush and paint set to any order at checkout, so everything arrives ready to go.",
+  },
+  {
+    q: "Where do you ship, and how long does it take?",
+    a: "We ship across Canada, and most orders arrive within 5 business days. You'll get a tracking link by email as soon as your order leaves our studio.",
   },
   {
     q: "Is this a good memorial gift?",

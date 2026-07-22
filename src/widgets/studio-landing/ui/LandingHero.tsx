@@ -12,7 +12,7 @@ export default function LandingHero() {
         icon: "upload",
       }}
       secondaryCta={{ href: "#styles", label: "Explore Art Styles" }}
-      note="No account needed · Free PDF download"
+      note="Free PDF download · Sign up only for AI styles"
       media={{
         kind: "image",
         src: "/landing/hero-main-v2.webp",
