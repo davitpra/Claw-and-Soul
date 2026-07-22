@@ -36,9 +36,9 @@ interface StudioShowcaseProps {
 }
 
 const DEFAULT_FEATURES: ShowcaseFeature[] = [
-  { text: "Instant SVG vectorization, edge to edge" },
+  { text: "Your preview is ready in seconds" },
   { text: "Numbered color regions you can print" },
-  { text: "Free to try before you order" },
+  { text: "100% free to try before you order" },
 ];
 
 const DEFAULT_IMAGE: ShowcaseImage = {
@@ -53,23 +53,30 @@ export default function StudioShowcase({
   eyebrow = "Claw & Soul Studio",
   title = (
     <>
-      Turn your pet into a<br /> paint-by-numbers
+      See your pet as a<br /> paint-by-numbers — free
     </>
   ),
-  description = "Upload one photo and the Studio vectorizes it into a hand-paintable, numbered SVG — every region mapped to a color, ready to print and paint. No skills required, just a clear picture of your best friend.",
+  description = "Upload one photo and watch the Studio transform your best friend into a numbered, hand-paintable canvas in seconds. No skills, no commitment — just try it and see.",
   features = DEFAULT_FEATURES,
   image = DEFAULT_IMAGE,
-  primaryCta = { href: "/paint-by-numbers", label: "Open the Studio" },
+  primaryCta = {
+    href: "/paint-by-numbers",
+    label: "Try the Studio — it's free",
+  },
   secondaryCta = { href: "/shop", label: "Browse finished pieces" },
 }: StudioShowcaseProps) {
   return (
     <section className="w-full bg-cream py-20 md:py-28">
       <Container>
         <div className="grid items-center gap-12 lg:grid-cols-2 lg:gap-16">
-          {/* ── Copy ── */}
           <div className="order-2 lg:order-1 items-center flex flex-col gap-4 text-center lg:items-start lg:text-left">
-            <span className="inline-flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-[0.18em] text-primary">
-              {eyebrow}
+            <span className="inline-flex items-center gap-2 rounded-full border border-[#E0DED9] bg-white px-4 py-1.5 text-primary">
+              <span className="material-symbols-outlined text-[16px]">
+                pets
+              </span>
+              <span className="text-xs font-bold tracking-wider uppercase">
+                {eyebrow}
+              </span>
             </span>
             <h2 className="mt-5 font-display text-4xl font-black leading-[1.1] tracking-tight text-slate-dark md:text-5xl">
               {title}
@@ -117,7 +124,7 @@ export default function StudioShowcase({
                 {primaryCta && (
                   <Link
                     href={primaryCta.href}
-                    className="flex items-center justify-center rounded-xl bg-primary px-8 py-4 text-base font-bold text-white shadow-lg shadow-primary/20 transition-transform hover:scale-105 hover:bg-primary-dark"
+                    className="flex items-center justify-center rounded-xl bg-primary px-8 py-4 text-base font-bold text-white shadow-lg shadow-primary/20 transition-all hover:scale-105 hover:bg-primary-dark"
                   >
                     {primaryCta.label}
                   </Link>

@@ -83,7 +83,7 @@ export default function LandingStyles() {
         <div className="mt-12 flex justify-center">
           <Link
             href="/paint-by-numbers"
-            className="flex items-center justify-center rounded-xl bg-primary px-8 py-4 text-base font-bold text-white shadow-lg shadow-primary/20 transition-transform hover:scale-105 hover:bg-primary-dark"
+            className="flex items-center justify-center rounded-xl bg-primary px-8 py-4 text-base font-bold text-white shadow-lg shadow-primary/20 transition-all hover:scale-105 hover:bg-primary-dark"
           >
             Look for more styles
           </Link>
