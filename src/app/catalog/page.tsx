@@ -90,6 +90,15 @@ function CatalogContent() {
     ? allSections.filter((s) => s.key === activeType)
     : allSections;
 
+  // Contadores del "Showing X of Y". El total sigue al chip elegido: con un tipo
+  // seleccionado cuenta los productos de ese tipo sin filtrar, para que se lea
+  // contra lo que la barra tiene marcado y no contra todo el catálogo.
+  const shownCount = sections.reduce((n, s) => n + s.products.length, 0);
+  const totalCount = activeType
+    ? (groupIntoSections(products).find((s) => s.key === activeType)?.products
+        .length ?? products.length)
+    : products.length;
+
   return (
     <div className="relative flex min-h-screen w-full flex-col overflow-x-clip bg-cream">
       <Navbar />
@@ -151,11 +160,8 @@ function CatalogContent() {
 
                 <p className="order-2 md:order-3 ml-auto shrink-0 text-sm text-text-muted">
                   Showing{" "}
-                  <span className="font-bold text-slate-dark">
-                    {sections.reduce((n, s) => n + s.products.length, 0)}
-                  </span>{" "}
-                  of {products.length}{" "}
-                  {products.length === 1 ? "product" : "products"}
+                  <span className="font-bold text-slate-dark">{shownCount}</span>{" "}
+                  of {totalCount} {totalCount === 1 ? "product" : "products"}
                 </p>
 
                 {/* Barra para filtrar los productos por product type.
