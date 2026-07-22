@@ -1,5 +1,5 @@
 import { RenderOptions, Toggle } from "@/features/pbn-studio";
-import Modal from "./Modal";
+import Modal from "@/shared/ui/Modal";
 import { fieldInput, fieldLabel } from "@/features/pbn-studio/ui/pbnStyles";
 
 interface RenderOptionsPaneProps {

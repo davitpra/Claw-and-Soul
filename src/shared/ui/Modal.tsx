@@ -13,13 +13,15 @@ interface ModalProps {
   maxWidth?: string;
   /** Accessible label announced for the dialog. */
   label?: string;
+  /** Actions pinned below the scrollable body (e.g. a "Done" button). */
+  footer?: ReactNode;
 }
 
 /**
- * Reusable modal shell for the Paint by Numbers widget. Rendered through a
- * portal to <body> so it escapes any ancestor that captures pointer events
- * (e.g. the ImageCompareSlider drag surface) and any overflow/stacking context.
- * The header shows a close button; the caller provides its own title/content.
+ * Reusable modal shell for the storefront. Rendered through a portal to <body>
+ * so it escapes any ancestor that captures pointer events (e.g. the
+ * ImageCompareSlider drag surface) and any overflow/stacking context. The
+ * header shows a close button; the caller provides its own title/content.
  */
 export default function Modal({
   open,
@@ -28,6 +30,7 @@ export default function Modal({
   title,
   maxWidth = "max-w-3xl",
   label,
+  footer,
 }: ModalProps) {
   // Escape to close.
   useEffect(() => {
@@ -72,7 +75,10 @@ export default function Modal({
             <span className="material-symbols-outlined text-[20px]">close</span>
           </button>
         </div>
-        <div className="overflow-y-auto">{children}</div>
+        <div className="min-h-0 overflow-y-auto">{children}</div>
+        {footer && (
+          <div className="border-t border-[#E0DED9] px-4 py-3">{footer}</div>
+        )}
       </div>
     </div>,
     document.body,

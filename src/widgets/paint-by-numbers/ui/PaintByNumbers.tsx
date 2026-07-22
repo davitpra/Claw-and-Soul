@@ -29,7 +29,7 @@ import {
 } from "../model/defaults";
 import DropZone from "./DropZone";
 import CropModal from "./CropModal";
-import Modal from "./Modal";
+import Modal from "@/shared/ui/Modal";
 import RenderOptionsPane from "./RenderOptionsPane";
 import { PbnPostMenuItem } from "./PbnPostMenu";
 import MixingGuide from "./MixingGuide";
