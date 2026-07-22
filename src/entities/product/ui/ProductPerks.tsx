@@ -8,12 +8,17 @@ const PERKS: Perk[] = [
   {
     icon: "local_shipping",
     title: "Free Delivery",
-    detail: "Enter your postal code for delivery availability.",
+    detail: "Ships in 5–7 business days. Availability varies by country.",
   },
   {
-    icon: "autorenew",
-    title: "Return Delivery",
-    detail: "Free 30 days delivery returns.",
+    icon: "visibility",
+    title: "Free Preview",
+    detail: "See your artwork before you buy — no surprises.",
+  },
+  {
+    icon: "palette",
+    title: "Made to Order",
+    detail: "Each piece is printed just for you, so all sales are final.",
   },
 ];
 
