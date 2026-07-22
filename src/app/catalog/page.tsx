@@ -5,29 +5,29 @@ import { Footer } from "@/widgets/footer";
 import { Suspense, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import {
-  DEFAULT_SHOP_TYPE,
-  ShopFiltersModal,
-  ShopSection,
-  ShopTypeNav,
+  DEFAULT_CATALOG_TYPE,
+  CatalogFiltersModal,
+  CatalogSection,
+  CatalogTypeNav,
   groupIntoSections,
-  shopSectionId,
-  useShopFilters,
-  useShopProducts,
-} from "@/widgets/shop";
-import type { ShopProduct } from "@/widgets/shop";
+  catalogSectionId,
+  useCatalogFilters,
+  useCatalogProducts,
+} from "@/widgets/catalog";
+import type { CatalogProduct } from "@/widgets/catalog";
 import { CircularCategory } from "@/widgets/circular-category";
 import { Container } from "@/shared/ui/Container";
 
 // Solo los productos con rol dedicado en el admin ("Producto Paint by Numbers" y
 // "Producto Credit Pack") tienen su propia landing en vez de la página genérica
 // /product/{handle}. El resto de los PBN por estilo mantienen su página normal.
-function productHref(product: ShopProduct): string | undefined {
-  if (product.isPbnKit) return "/paint-by-numbers";
+function productHref(product: CatalogProduct): string | undefined {
+  if (product.isPbnKit) return "/studio";
   if (product.isCreditPack) return "/credits";
   return undefined;
 }
 
-function ShopContent() {
+function CatalogContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const searchQuery = searchParams.get("q")?.trim() ?? "";
@@ -35,11 +35,11 @@ function ShopContent() {
   // Vive en la URL, no en estado local, porque decide qué se le pide a Shopify.
   const collectionHandle = searchParams.get("collection")?.trim() ?? "";
 
-  const { products, loading, styleCategories } = useShopProducts(
+  const { products, loading, styleCategories } = useCatalogProducts(
     searchQuery,
     collectionHandle,
   );
-  const filters = useShopFilters(
+  const filters = useCatalogFilters(
     products,
     styleCategories,
     searchQuery,
@@ -55,7 +55,7 @@ function ShopContent() {
     if (handle) params.set("collection", handle);
     else params.delete("collection");
     const query = params.toString();
-    router.replace(query ? `/shop?${query}` : "/shop", { scroll: false });
+    router.replace(query ? `/catalog?${query}` : "/catalog", { scroll: false });
   };
 
   // Los filtros viven en un modal detrás del botón "Filters" en todos los
@@ -63,18 +63,18 @@ function ShopContent() {
   const [filtersOpen, setFiltersOpen] = useState(false);
 
   // Tipo elegido en la barra de chips; null muestra todas las secciones y
-  // DEFAULT_SHOP_TYPE es lo que se ve al entrar. La selección se guarda junto
+  // DEFAULT_CATALOG_TYPE es lo que se ve al entrar. La selección se guarda junto
   // con el contexto (búsqueda + colección) en que se hizo: si el contexto
   // cambia trae otro catálogo y se vuelve al tipo por defecto.
   const typeContext = `${searchQuery}|${collectionHandle}`;
   const [typeSelection, setTypeSelection] = useState<{
     context: string;
     type: string | null;
-  }>({ context: typeContext, type: DEFAULT_SHOP_TYPE });
+  }>({ context: typeContext, type: DEFAULT_CATALOG_TYPE });
   const selectedType =
     typeSelection.context === typeContext
       ? typeSelection.type
-      : DEFAULT_SHOP_TYPE;
+      : DEFAULT_CATALOG_TYPE;
   const selectType = (type: string | null) =>
     setTypeSelection({ context: typeContext, type });
 
@@ -162,7 +162,7 @@ function ShopContent() {
                     min-w-0 permite que el overflow-x-auto del nav actúe. */}
                 {allSections.length > 1 && (
                   <div className="order-3 md:order-2 w-full min-w-0 md:w-auto md:flex-1">
-                    <ShopTypeNav
+                    <CatalogTypeNav
                       sections={allSections}
                       selected={activeType}
                       onSelect={selectType}
@@ -171,7 +171,7 @@ function ShopContent() {
                 )}
               </div>
 
-              <ShopFiltersModal
+              <CatalogFiltersModal
                 open={filtersOpen}
                 onClose={() => setFiltersOpen(false)}
                 filters={filters}
@@ -228,9 +228,9 @@ function ShopContent() {
               ) : (
                 <div>
                   {sections.map((section) => (
-                    <ShopSection
+                    <CatalogSection
                       key={section.key}
-                      id={shopSectionId(section.key)}
+                      id={catalogSectionId(section.key)}
                       title={section.title}
                       products={section.products}
                       productHref={productHref}
@@ -248,7 +248,7 @@ function ShopContent() {
   );
 }
 
-export default function ShopPage() {
+export default function CatalogPage() {
   return (
     <Suspense
       fallback={
@@ -261,7 +261,7 @@ export default function ShopPage() {
         </div>
       }
     >
-      <ShopContent />
+      <CatalogContent />
     </Suspense>
   );
 }

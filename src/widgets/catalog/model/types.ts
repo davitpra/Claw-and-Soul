@@ -1,7 +1,7 @@
 import { Product } from "@/entities/pet-product/model/types";
 
-// Producto de entidad + los campos usados por los filtros del shop.
-export type ShopProduct = Product & {
+// Producto de entidad + los campos usados por los filtros del catálogo.
+export type CatalogProduct = Product & {
   collection: string;
   /** Tipo de producto: template del backend (Canvas, Poster, PBN…); fallback al productType de Shopify. Vacío si ninguno. */
   productType: string;
@@ -11,7 +11,7 @@ export type ShopProduct = Product & {
   difficulty: string;
   priceAmount: number;
   onSale: boolean;
-  /** Es el kit PBN dedicado seleccionado en el admin (único). Enlaza a /paint-by-numbers. */
+  /** Es el kit PBN dedicado seleccionado en el admin (único). Enlaza a /studio. */
   isPbnKit: boolean;
   /** Es el producto Credit Pack dedicado seleccionado en el admin (único). Enlaza a /credits. */
   isCreditPack: boolean;

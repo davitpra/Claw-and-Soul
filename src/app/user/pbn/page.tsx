@@ -74,7 +74,7 @@ export default function UserPbnPage() {
             Mis Paint by Numbers
           </h2>
           <Link
-            href="/paint-by-numbers"
+            href="/studio"
             className="rounded-xl bg-primary px-4 py-2 text-sm font-bold text-white transition-all hover:bg-primary-dark hover:shadow-md"
           >
             Crear nuevo
@@ -103,7 +103,7 @@ export default function UserPbnPage() {
             <div className="rounded-xl bg-cream px-4 py-8 text-center">
               <p className="text-text-muted">Aún no has guardado ningún PBN.</p>
               <Link
-                href="/paint-by-numbers"
+                href="/studio"
                 className="mt-3 inline-block rounded-xl bg-primary px-6 py-3 text-sm font-bold text-white transition-all hover:bg-primary-dark hover:shadow-md"
               >
                 Crear tu primer Paint by Numbers

@@ -272,7 +272,7 @@ export function GenerationDetail({ id }: Props) {
 
             {/* CTA primario — Ordenar como print */}
             <Link
-              href="/shop"
+              href="/catalog"
               className="flex h-14 w-full items-center justify-center gap-2 rounded-full bg-primary text-lg font-bold text-white transition-all hover:-translate-y-0.5 hover:bg-primary-dark hover:shadow-lg active:translate-y-0"
             >
               <span className="material-symbols-outlined text-[22px]">
@@ -308,7 +308,7 @@ export function GenerationDetail({ id }: Props) {
               {/* Enviar a PBN */}
               {isReady && imageUrl && (
                 <Link
-                  href={`/paint-by-numbers?generationId=${generation.id}&imageUrl=${encodeURIComponent(imageUrl)}${generation.style?.id ? `&styleId=${generation.style.id}` : ""}`}
+                  href={`/studio?generationId=${generation.id}&imageUrl=${encodeURIComponent(imageUrl)}${generation.style?.id ? `&styleId=${generation.style.id}` : ""}`}
                   className="flex flex-1 items-center justify-center gap-2 rounded-xl border border-[#E0DED9] bg-white px-5 py-3 text-sm font-bold text-text-main shadow-sm transition-all hover:bg-gray-50 hover:shadow-md"
                 >
                   <span className="material-symbols-outlined text-[20px]">

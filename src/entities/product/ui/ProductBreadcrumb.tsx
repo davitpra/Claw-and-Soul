@@ -12,19 +12,19 @@ interface Crumb {
 
 export default function ProductBreadcrumb({ product }: ProductBreadcrumbProps) {
   // La primera colección con handle es la que sirve como categoría; si el
-  // producto no está en ninguna, el rastro queda en Home › Shop › título.
+  // producto no está en ninguna, el rastro queda en Home › Catalog › título.
   const collection = product.collections?.edges?.find(
     (edge) => edge.node.handle,
   )?.node;
 
   const crumbs: Crumb[] = [
     { label: "Home", href: "/" },
-    { label: "Shop", href: "/shop" },
+    { label: "Catalog", href: "/catalog" },
     ...(collection
       ? [
           {
             label: collection.title,
-            href: `/shop?collection=${collection.handle}`,
+            href: `/catalog?collection=${collection.handle}`,
           },
         ]
       : []),

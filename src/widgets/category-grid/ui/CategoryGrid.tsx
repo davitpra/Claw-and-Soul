@@ -28,7 +28,7 @@ export default async function CategoryGrid({
   background = "bg-white",
   eyebrow = "Catalog",
   ctaLabel = "View all styles",
-  ctaHref = "/shop",
+  ctaHref = "/catalog",
 }: CategoryGridProps) {
   const collections = await getCollectionsWithImage(handles ? 250 : limit);
 
@@ -76,7 +76,7 @@ export default async function CategoryGrid({
             >
               <Link
                 // /shop pide la colección a Shopify por handle.
-                href={`/shop?collection=${encodeURIComponent(category.handle)}`}
+                href={`/catalog?collection=${encodeURIComponent(category.handle)}`}
                 className="group block focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-primary"
               >
                 <Card

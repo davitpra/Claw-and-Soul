@@ -13,7 +13,7 @@ const PRODUCTS = [
     description:
       "Heavyweight matte paper, numbered and ready for your brush. The easy, low-pressure way to start.",
     cta: "Order on paper",
-    href: "/shop",
+    href: "/catalog",
     imageUrl: "/studio/bengal-pbn.webp",
     imageAlt:
       "A numbered paint-by-numbers Bengal cat design printed on matte paper",
@@ -24,7 +24,7 @@ const PRODUCTS = [
     description:
       "Real cotton canvas stretched over a wooden frame — the surface real painters use. Hang it the moment you set the brush down.",
     cta: "Order on canvas",
-    href: "/shop",
+    href: "/catalog",
     imageUrl: "/studio/bengal-pbn.webp",
     imageAlt:
       "A numbered paint-by-numbers Bengal cat design printed on a framed cotton canvas",

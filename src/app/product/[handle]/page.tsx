@@ -57,7 +57,7 @@ export default function ProductDetail({
               Product Not Found
             </h1>
             <Link
-              href="/shop"
+              href="/catalog"
               className="text-primary font-bold hover:underline"
             >
               Back to Shop

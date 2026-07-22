@@ -57,16 +57,16 @@ export default function Footer() {
             </div>
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-8">
               <div className="flex flex-col gap-4">
-                <h4 className="font-display font-black text-lg">Shop</h4>
+                <h4 className="font-display font-black text-lg">Catalog</h4>
                 <Link
                   className="text-white/70 hover:text-white transition-colors"
-                  href="/shop"
+                  href="/catalog"
                 >
                   Portraits
                 </Link>
                 <Link
                   className="text-white/70 hover:text-white transition-colors"
-                  href="/shop"
+                  href="/catalog"
                 >
                   Puzzles
                 </Link>

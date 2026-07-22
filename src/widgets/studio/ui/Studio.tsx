@@ -46,7 +46,7 @@ import { card, stepTitle } from "@/features/pbn-studio/ui/pbnStyles";
 // artwork por query param para precargarla en el canvas; generationId liga el
 // PBN guardado a esa generación (ver handleSave) y styleId trae el default PBN
 // del estilo (Style.pbnConfig) con el que se seedean los paneles de opciones.
-export default function PaintByNumbers() {
+export default function Studio() {
   const searchParams = useSearchParams();
   const generationId = searchParams.get("generationId");
   const initialImageUrl = searchParams.get("imageUrl");
@@ -58,7 +58,7 @@ export default function PaintByNumbers() {
   if (loading) return null;
 
   return (
-    <PaintByNumbersStudio
+    <StudioLayout
       generationId={generationId}
       initialImageUrl={initialImageUrl ?? STOREFRONT_INITIAL_IMAGE}
       inputInit={inputInit}
@@ -67,7 +67,7 @@ export default function PaintByNumbers() {
   );
 }
 
-function PaintByNumbersStudio({
+function StudioLayout({
   generationId,
   initialImageUrl,
   inputInit,

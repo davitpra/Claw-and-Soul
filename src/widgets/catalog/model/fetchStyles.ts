@@ -5,7 +5,7 @@ const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001/api";
 
 /**
  * Resuelve el estilo de arte de cada producto desde el backend (donde vive).
- * Si el backend falla o no responde, devuelve mapas vacíos: el shop sigue
+ * Si el backend falla o no responde, devuelve mapas vacíos: el catálogo sigue
  * funcionando y los grupos de filtro "Style"/"Difficulty" no se muestran.
  */
 export async function fetchStyles(): Promise<StyleData> {
@@ -38,7 +38,7 @@ export async function fetchStyles(): Promise<StyleData> {
       if (bp.isPaintByNumbers || bp.template === "PBN")
         pbnHandles.add(bp.shopifyHandle);
       // Los roles dedicados (marcados en el admin) son únicos y tienen su propia
-      // landing: el kit PBN → /paint-by-numbers, el Credit Pack → /credits.
+      // landing: el kit PBN → /studio, el Credit Pack → /credits.
       if (bp.isPaintByNumbers) result.pbnKitHandle = bp.shopifyHandle;
       if (bp.isCreditPack) result.creditPackHandle = bp.shopifyHandle;
       const name = bp.style?.displayName;

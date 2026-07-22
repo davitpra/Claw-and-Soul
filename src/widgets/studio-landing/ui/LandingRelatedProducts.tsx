@@ -22,7 +22,7 @@ export default function LandingRelatedProducts() {
     <RelatedProducts
       accessories={accessories}
       heading={"Everything you need\nto paint it."}
-      ctaHref="/shop"
+      ctaHref="/catalog"
       ctaLabel="Shop the studio"
     />
   );

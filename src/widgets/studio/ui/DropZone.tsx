@@ -1,5 +1,5 @@
 // Drop zone hero: fills the viewport height until an image is loaded. The
-// hidden file <input> lives in <PaintByNumbers>, so we just trigger it via
+// hidden file <input> lives in <Studio>, so we just trigger it via
 // openFilePicker (avoids a duplicate ref). Drag/drop handlers come from
 // useImageInput; this component is purely presentational.
 export default function DropZone({

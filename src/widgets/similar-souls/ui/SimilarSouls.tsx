@@ -23,7 +23,7 @@ interface SimilarSoulsProps {
  */
 export default function SimilarSouls({
   products,
-  ctaHref = "/shop",
+  ctaHref = "/catalog",
   ctaLabel = "Explore all styles",
 }: SimilarSoulsProps) {
   if (products.length === 0) return null;

@@ -130,7 +130,7 @@ export function AllOrders() {
               When you place an order it will show up here.
             </p>
             <Link
-              href="/shop"
+              href="/catalog"
               className="mt-5 inline-flex items-center gap-2 rounded-xl bg-primary px-6 py-3 text-sm font-bold text-white shadow-sm transition-all hover:bg-primary-dark hover:shadow-md"
             >
               <span className="material-symbols-outlined text-[18px]">

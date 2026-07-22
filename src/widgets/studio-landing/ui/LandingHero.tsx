@@ -7,7 +7,7 @@ export default function LandingHero() {
       title="Turn Their Photo Into Art You Paint Yourself"
       description="Upload a photo of your pet, watch our AI transform it into a custom paint-by-numbers design in the style you love — and download your free printable coloring page in minutes."
       primaryCta={{
-        href: "/paint-by-numbers",
+        href: "/studio",
         label: "Create My Free Coloring Page",
         icon: "upload",
       }}

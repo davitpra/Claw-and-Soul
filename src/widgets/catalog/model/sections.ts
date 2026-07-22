@@ -1,9 +1,9 @@
-import { ShopProduct } from "./types";
+import { CatalogProduct } from "./types";
 
-// Secciones del shop en el orden en que se muestran. La `key` es el `productType`
+// Secciones del catálogo en el orden en que se muestran. La `key` es el `productType`
 // (template del backend); el `title` es el encabezado visible. Ver los valores
 // canónicos en admin `ProductsTable` (TEMPLATE_OPTIONS) y `ProductPageTemplate`.
-export const SHOP_SECTIONS = [
+export const CATALOG_SECTIONS = [
   { key: "PBN", title: "Paint by Numbers" },
   { key: "Canvas", title: "Canvas" },
   { key: "Poster", title: "Posters" },
@@ -11,31 +11,31 @@ export const SHOP_SECTIONS = [
   { key: "Credits", title: "Credits" },
 ] as const;
 
-// Los productos sin un tipo reconocido (productType vacío o fuera de SHOP_SECTIONS)
+// Los productos sin un tipo reconocido (productType vacío o fuera de CATALOG_SECTIONS)
 // caen en esta sección, que siempre va al final.
 export const OTHER_SECTION = { key: "__other__", title: "Other" } as const;
 
-// Tipo preseleccionado al entrar al shop: los PBN son el producto principal, así
+// Tipo preseleccionado al entrar al catálogo: los PBN son el producto principal, así
 // que se muestran solos hasta que el visitante toque otro chip (o deseleccione
 // este) para ver el catálogo completo.
-export const DEFAULT_SHOP_TYPE: string = "PBN";
+export const DEFAULT_CATALOG_TYPE: string = "PBN";
 
-export interface ShopSectionGroup {
+export interface CatalogSectionGroup {
   key: string;
   title: string;
-  products: ShopProduct[];
+  products: CatalogProduct[];
 }
 
 /**
- * Agrupa los productos en las secciones de SHOP_SECTIONS (en orden) más una
+ * Agrupa los productos en las secciones de CATALOG_SECTIONS (en orden) más una
  * sección "Other" al final para los que no encajen en ninguna. Se omiten las
  * secciones vacías, por lo que con filtros/búsqueda solo aparecen las que tienen
  * productos.
  */
-export function groupIntoSections(products: ShopProduct[]): ShopSectionGroup[] {
-  const knownKeys = new Set<string>(SHOP_SECTIONS.map((s) => s.key));
+export function groupIntoSections(products: CatalogProduct[]): CatalogSectionGroup[] {
+  const knownKeys = new Set<string>(CATALOG_SECTIONS.map((s) => s.key));
 
-  const groups: ShopSectionGroup[] = SHOP_SECTIONS.map((section) => ({
+  const groups: CatalogSectionGroup[] = CATALOG_SECTIONS.map((section) => ({
     key: section.key,
     title: section.title,
     products: products.filter((p) => p.productType === section.key),

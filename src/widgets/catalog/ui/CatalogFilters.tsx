@@ -1,13 +1,13 @@
 import { DIFFICULTY_LABELS } from "@/entities/art-style/model/difficulty";
 import { PRICE_RANGES } from "../model/priceRanges";
-import { ShopFilters as ShopFiltersState } from "../model/useShopFilters";
+import { CatalogFilters as CatalogFiltersState } from "../model/useCatalogFilters";
 import { FilterGroup } from "./FilterGroup";
 import { FilterOption } from "./FilterOption";
 
-// Cuerpo del modal de filtros del shop (el título, el cierre y las acciones los
-// pone ShopFiltersModal). Los grupos fluyen en dos columnas desde `sm:` para
+// Cuerpo del modal de filtros del catálogo (el título, el cierre y las acciones los
+// pone CatalogFiltersModal). Los grupos fluyen en dos columnas desde `sm:` para
 // acortar el scroll. La colección no vive aquí: la elige CircularCategory.
-export function ShopFilters({ filters }: { filters: ShopFiltersState }) {
+export function CatalogFilters({ filters }: { filters: CatalogFiltersState }) {
   const {
     productTypes,
     productTypeCounts,

@@ -1,20 +1,20 @@
 "use client";
 
 import Modal from "@/shared/ui/Modal";
-import { ShopFilters as ShopFiltersState } from "../model/useShopFilters";
-import { ShopFilters } from "./ShopFilters";
+import { CatalogFilters as CatalogFiltersState } from "../model/useCatalogFilters";
+import { CatalogFilters } from "./CatalogFilters";
 
-// Modal de filtros del shop: el único acceso a los filtros en todos los
+// Modal de filtros del catálogo: el único acceso a los filtros en todos los
 // breakpoints. No hay botón "Apply" porque cada checkbox ya reordena el grid al
 // instante; el botón primario solo cierra y sirve de resumen del resultado.
-export function ShopFiltersModal({
+export function CatalogFiltersModal({
   open,
   onClose,
   filters,
 }: {
   open: boolean;
   onClose: () => void;
-  filters: ShopFiltersState;
+  filters: CatalogFiltersState;
 }) {
   const { filteredProducts, activeFilterCount, clearFilters } = filters;
 
@@ -24,7 +24,7 @@ export function ShopFiltersModal({
       onClose={onClose}
       title="Filters"
       maxWidth="max-w-2xl"
-      label="Shop filters"
+      label="Catalog filters"
       footer={
         <div className="flex items-center justify-end gap-2">
           {activeFilterCount > 0 && (
@@ -47,7 +47,7 @@ export function ShopFiltersModal({
         </div>
       }
     >
-      <ShopFilters filters={filters} />
+      <CatalogFilters filters={filters} />
     </Modal>
   );
 }

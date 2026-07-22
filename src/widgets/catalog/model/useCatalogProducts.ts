@@ -3,7 +3,7 @@ import { getProducts } from "@/lib/shopify";
 import { getCollectionProducts } from "@/lib/shopify/actions/collections";
 import { ShopifyProduct } from "@/lib/shopify/types";
 import { fetchStyles } from "./fetchStyles";
-import { ShopProduct, StyleData } from "./types";
+import { CatalogProduct, StyleData } from "./types";
 
 // Formatea un monto como moneda (p. ej. "$42.00").
 function formatMoney(amount: string, currencyCode: string) {
@@ -14,16 +14,16 @@ function formatMoney(amount: string, currencyCode: string) {
   }).format(parseFloat(amount));
 }
 
-// Convierte un nodo de Shopify (+ estilos del backend) en un ShopProduct.
+// Convierte un nodo de Shopify (+ estilos del backend) en un CatalogProduct.
 // `collectionTitle` es la colección que se está navegando: cuando la hay, es la
 // etiqueta correcta para la card. Sin ella (catálogo completo o búsqueda) no
 // existe una "colección principal", así que se cae a la primera que devuelva
 // Shopify, que es arbitraria.
-function toShopProduct(
+function toCatalogProduct(
   node: ShopifyProduct,
   styleData: StyleData,
   collectionTitle?: string,
-): ShopProduct {
+): CatalogProduct {
   const price = node.priceRange?.minVariantPrice || {
     amount: "0.00",
     currencyCode: "USD",
@@ -65,8 +65,8 @@ function toShopProduct(
   };
 }
 
-export interface ShopProductsState {
-  products: ShopProduct[];
+export interface CatalogProductsState {
+  products: CatalogProduct[];
   loading: boolean;
   /** Título de la colección navegada; null en el catálogo completo o si el handle no existe. */
   collectionTitle: string | null;
@@ -79,7 +79,7 @@ const PAGE_SIZE = 20;
 const COLLECTION_PAGE_SIZE = 100;
 
 /**
- * Carga el catálogo del shop: Shopify da los productos y el backend el estilo
+ * Carga el catálogo: Shopify da los productos y el backend el estilo
  * de arte de cada uno. Se recarga cuando cambia la búsqueda o la colección.
  *
  * La colección se resuelve en el servidor (`collection(handle:)`), no filtrando
@@ -89,11 +89,11 @@ const COLLECTION_PAGE_SIZE = 100;
  * texto dentro de una colección, y `?q=` siempre llega desde el navbar, que no
  * arrastra la categoría.
  */
-export function useShopProducts(
+export function useCatalogProducts(
   searchQuery: string,
   collectionHandle: string = "",
-): ShopProductsState {
-  const [products, setProducts] = useState<ShopProduct[]>([]);
+): CatalogProductsState {
+  const [products, setProducts] = useState<CatalogProduct[]>([]);
   const [loading, setLoading] = useState(true);
   const [collectionTitle, setCollectionTitle] = useState<string | null>(null);
   const [styleCategories, setStyleCategories] = useState<Map<string, string>>(
@@ -136,7 +136,7 @@ export function useShopProducts(
         if (cancelled) return;
 
         setProducts(
-          nodes.map((node) => toShopProduct(node, styleData, title ?? undefined)),
+          nodes.map((node) => toCatalogProduct(node, styleData, title ?? undefined)),
         );
         setCollectionTitle(title);
         setStyleCategories(styleData.categoryByStyle);

@@ -60,10 +60,10 @@ export default function StudioShowcase({
   features = DEFAULT_FEATURES,
   image = DEFAULT_IMAGE,
   primaryCta = {
-    href: "/paint-by-numbers",
+    href: "/studio",
     label: "Try the Studio — it's free",
   },
-  secondaryCta = { href: "/shop", label: "Browse finished pieces" },
+  secondaryCta = { href: "/catalog", label: "Browse finished pieces" },
 }: StudioShowcaseProps) {
   return (
     <section className="w-full bg-cream py-20 md:py-28">

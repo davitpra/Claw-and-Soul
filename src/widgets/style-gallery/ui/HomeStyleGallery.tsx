@@ -17,7 +17,7 @@ export default function HomeStyleGallery() {
       title={"Your pet.\n This poster."}
       eyebrow="Printed art"
       description="See a poster you love? We redraw it with your pet in the frame — a one-of-a-kind printed artwork made from your photo."
-      ctaHref="/shop"
+      ctaHref="/catalog"
       ctaLabel="Explore the collection"
     />
   );

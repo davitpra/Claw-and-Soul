@@ -1,6 +1,6 @@
 /**
  * Paint by Numbers studio — the pipeline layer shared by the two surfaces that
- * expose it: the public studio (`widgets/paint-by-numbers`) and the admin studio
+ * expose it: the public studio (`widgets/studio`) and the admin studio
  * (`app/admin/_components/pbn`).
  *
  * Everything here is presentation-agnostic: the hooks that drive `@/lib/pbn`'s

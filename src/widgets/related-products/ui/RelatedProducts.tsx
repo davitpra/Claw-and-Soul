@@ -22,7 +22,7 @@ interface RelatedProductsProps {
 export default function RelatedProducts({
   accessories,
   heading = "More souls, framed.",
-  ctaHref = "/shop",
+  ctaHref = "/catalog",
   ctaLabel = "View all styles",
 }: RelatedProductsProps) {
   if (accessories.length === 0) return null;

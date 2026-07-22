@@ -11,7 +11,7 @@ interface PbnImageStepProps {
  * Step 1 of the Paint by Numbers sidebar: the image upload card. Shows a
  * thumbnail (click to replace) once an image is selected, otherwise an upload
  * button. Purely presentational — the hidden file <input> it drives lives in
- * <PaintByNumbers>, so this card is safe to mount in the mobile and desktop
+ * <Studio>, so this card is safe to mount in the mobile and desktop
  * layouts alike.
  */
 export default function PbnImageStep({ imageInput }: PbnImageStepProps) {

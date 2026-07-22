@@ -7,11 +7,11 @@ export default function HomeHero() {
       title="Paint the Portrait Only You Could Make"
       description="Upload your favorite photo, choose the style that fits their personality, and paint it with your own hands — every stroke adds a piece of you to a portrait as unique as your pet."
       primaryCta={{
-        href: "/shop",
+        href: "/catalog",
         label: "Create Your Own Painting",
         icon: "palette",
       }}
-      secondaryCta={{ href: "/paint-by-numbers", label: "Try the Studio Free" }}
+      secondaryCta={{ href: "/studio", label: "Try the Studio Free" }}
       note="Made from your photo — no two kits are ever alike."
       media={{
         kind: "image",

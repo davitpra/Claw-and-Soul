@@ -1,14 +1,14 @@
 "use client";
 
-import type { ShopSectionGroup } from "../model/sections";
+import type { CatalogSectionGroup } from "../model/sections";
 
 /** Id del <section> de cada tipo; lo comparten la barra y el render de secciones. */
-export function shopSectionId(key: string): string {
-  return `shop-section-${key}`;
+export function catalogSectionId(key: string): string {
+  return `catalog-section-${key}`;
 }
 
-interface ShopTypeNavProps {
-  sections: ShopSectionGroup[];
+interface CatalogTypeNavProps {
+  sections: CatalogSectionGroup[];
   selected: string | null;
   onSelect: (key: string | null) => void;
 }
@@ -18,7 +18,7 @@ interface ShopTypeNavProps {
  * elegirlo se muestran solo los productos de ese tipo, y al volver a pulsarlo
  * se vuelven a mostrar todas las secciones.
  */
-export function ShopTypeNav({ sections, selected, onSelect }: ShopTypeNavProps) {
+export function CatalogTypeNav({ sections, selected, onSelect }: CatalogTypeNavProps) {
   return (
     <nav aria-label="Product types" className="flex gap-2 overflow-x-auto">
       {sections.map((section) => {

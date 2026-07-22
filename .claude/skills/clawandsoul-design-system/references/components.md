@@ -13,7 +13,7 @@ Referencia: `src/components/home/Hero.tsx:22-26`, `src/components/Navbar.tsx:144
 ```tsx
 // CTA grande (hero, sección principal)
 <Link
-  href="/shop"
+  href="/catalog"
   className="flex items-center justify-center rounded-xl bg-primary px-8 py-4 text-base font-bold text-white shadow-lg shadow-primary/20 transition-transform hover:scale-105 hover:bg-primary-dark"
 >
   Ver Productos
@@ -216,7 +216,7 @@ Referencia: `src/components/home/FeaturedProducts.tsx:25-33`
 ```tsx
 <Link
   className="flex items-center gap-1 text-primary font-bold hover:gap-2 transition-all"
-  href="/shop"
+  href="/catalog"
 >
   Ver todos los productos
   <span className="material-symbols-outlined text-[20px]">arrow_forward</span>

@@ -83,7 +83,7 @@ export function useSavePbnFlow({
 
   const handleSave = useCallback(async (): Promise<SavedPbnRef | null> => {
     if (!isAuthenticated) {
-      router.push("/login?redirect=/paint-by-numbers");
+      router.push("/login?redirect=/studio");
       return null;
     }
     const saved = await save({

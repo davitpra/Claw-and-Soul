@@ -3,31 +3,31 @@
 import { useState } from "react";
 import { ProductCard } from "@/entities/pet-product/ui/ProductCard";
 import { toFrameStyle } from "@/entities/product/lib/frameStyle";
-import { ShopProduct } from "../model/types";
+import { CatalogProduct } from "../model/types";
 
 // Cuántos productos muestra una sección al inicio y cuántos añade cada "Show more".
 const SECTION_PAGE_SIZE = 6;
 
-interface ShopSectionProps {
-  /** Ancla para la barra de navegación por tipo (ShopTypeNav). */
+interface CatalogSectionProps {
+  /** Ancla para la barra de navegación por tipo (CatalogTypeNav). */
   id?: string;
   title: string;
-  products: ShopProduct[];
-  /** Resuelve el href de cada card (kit PBN → /paint-by-numbers, etc.). */
-  productHref: (product: ShopProduct) => string | undefined;
+  products: CatalogProduct[];
+  /** Resuelve el href de cada card (kit PBN → /studio, etc.). */
+  productHref: (product: CatalogProduct) => string | undefined;
 }
 
 /**
- * Una sección del shop: encabezado + grilla de productos de un mismo tipo, con
+ * Una sección del catálogo: encabezado + grilla de productos de un mismo tipo, con
  * su propio "Show more" que expande solo esta sección (cada sección lleva su
  * estado por separado).
  */
-export function ShopSection({
+export function CatalogSection({
   id,
   title,
   products,
   productHref,
-}: ShopSectionProps) {
+}: CatalogSectionProps) {
   const [visibleCount, setVisibleCount] = useState(SECTION_PAGE_SIZE);
 
   const visibleProducts = products.slice(0, visibleCount);

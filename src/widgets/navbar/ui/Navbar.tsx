@@ -23,11 +23,11 @@ export default function Navbar() {
   const lastScrollY = useRef(0);
 
   // Navega a la tienda con el término como query param. Si está vacío, va a
-  // /shop sin filtro, para que enviar el buscador vacío también quite la búsqueda.
+  // /catalog sin filtro, para que enviar el buscador vacío también quite la búsqueda.
   const handleSearch = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     const term = searchTerm.trim();
-    router.push(term ? `/shop?q=${encodeURIComponent(term)}` : "/shop");
+    router.push(term ? `/catalog?q=${encodeURIComponent(term)}` : "/catalog");
     setMobileMenuOpen(false);
   };
 
@@ -35,8 +35,8 @@ export default function Navbar() {
   // al instante cuando ya estamos en la página de resultados.
   const handleSearchChange = (value: string) => {
     setSearchTerm(value);
-    if (value.trim() === "" && pathname === "/shop") {
-      router.push("/shop");
+    if (value.trim() === "" && pathname === "/catalog") {
+      router.push("/catalog");
     }
   };
 
@@ -48,8 +48,8 @@ export default function Navbar() {
   }
 
   const navLinks = [
-    { name: "Studio", href: "/paint-by-numbers" },
-    { name: "Catalog", href: "/shop" },
+    { name: "Studio", href: "/studio" },
+    { name: "Catalog", href: "/catalog" },
     { name: "Contact", href: "/contact" },
   ];
 

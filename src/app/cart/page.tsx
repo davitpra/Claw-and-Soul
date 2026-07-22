@@ -236,7 +236,7 @@ export default function CartPage() {
           <div className="mb-8">
             <Link
               className="inline-flex items-center gap-2 text-sm font-bold text-slate-dark/60 hover:text-primary transition-colors"
-              href="/shop"
+              href="/catalog"
             >
               <span className="material-symbols-outlined text-[18px]">
                 arrow_back
@@ -266,7 +266,7 @@ export default function CartPage() {
                         Your cart is empty
                       </p>
                       <Link
-                        href="/shop"
+                        href="/catalog"
                         className="text-primary font-black hover:underline"
                       >
                         Start Shopping
@@ -502,7 +502,7 @@ export default function CartPage() {
                 You Might Also Like
               </h3>
               <Link
-                href="/shop"
+                href="/catalog"
                 className="text-primary font-black text-sm uppercase tracking-widest hover:underline decoration-2 underline-offset-4"
               >
                 View All

@@ -29,7 +29,7 @@ export default function PrintedOption({ handle }: PrintedOptionProps) {
   );
   const ctaHref = printedProduct
     ? `/product/${printedProduct.shopifyHandle}`
-    : "/shop";
+    : "/catalog";
 
   return (
     <section className="bg-cream">
