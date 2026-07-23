@@ -12,7 +12,6 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useFormatOptions } from "@/hooks/useFormatOptions";
 import { useStyle } from "@/hooks/useStyle";
 import { StyleOptionsForm } from "@/entities/art-style/ui/StyleOptionsForm";
-import { getLifestyleImage } from "@/entities/product/lib/getLifestyleImage";
 import {
   buildSizeOptions,
   findVariantForSize,
@@ -54,9 +53,6 @@ export default function ProductDetails({
     isLoading: isLoadingFormats,
     error: formatsError,
   } = useFormatOptions(product.handle);
-
-  // Lifestyle image comes from the Shopify variant metafield "Size life style".
-  const lifestyleImage = getLifestyleImage(selectedVariant);
 
   const selectedFormatOption = formats.find(
     (f) => f.shopifyVariantId === selectedVariantId,
@@ -124,7 +120,6 @@ export default function ProductDetails({
       <ProductGallery
         product={product}
         mainImage={mainImage}
-        otherSetImage={lifestyleImage}
         variantImage={selectedVariant?.image?.url}
         frameStyle={frameStyle}
       />

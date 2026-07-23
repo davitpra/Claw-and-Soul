@@ -11,7 +11,6 @@ import { CanvasEdgeOverlay } from "@/entities/product/ui/CanvasEdgeOverlay";
 interface ProductGalleryProps {
   product: ShopifyProduct;
   mainImage: string;
-  otherSetImage?: string | null;
   variantImage?: string | null;
   frameStyle?: FrameStyle;
 }
@@ -19,16 +18,14 @@ interface ProductGalleryProps {
 export default function ProductGallery({
   product,
   mainImage,
-  otherSetImage,
   variantImage,
   frameStyle = "art",
 }: ProductGalleryProps) {
   const primaryImage = variantImage || mainImage;
-  // Imagen de la variante y lifestyle primero; el resto del catálogo de fotos
-  // del producto va detrás para que la tira de miniaturas tenga contenido.
+  // La imagen de la variante va primero; el resto del catálogo de fotos del
+  // producto va detrás para que la tira de miniaturas tenga contenido.
   const images = [
     primaryImage,
-    otherSetImage,
     ...product.images.edges.map((edge) => edge.node.url),
   ].filter((src): src is string => Boolean(src));
   const uniqueImages = Array.from(new Set(images));
@@ -36,7 +33,7 @@ export default function ProductGallery({
   const baseImageClassName =
     "w-full h-auto bg-white transition-all duration-300 ease-out";
   // The frame effect (canvas/poster/art) only applies to the primary product
-  // image; secondary images (e.g. lifestyle) stay neutral with the art float.
+  // image; secondary catalog images stay neutral with the art float.
   const primaryImageClassName = `${baseImageClassName} ${FRAME_SHADOWS[frameStyle]}`;
   const secondaryImageClassName = `${baseImageClassName} ${FRAME_SHADOWS.art}`;
   // Only "art" deepens its shadow on hover; canvas/poster keep their base shadow

@@ -19,13 +19,6 @@ export interface ShopifyVariant {
   price: ShopifyPrice;
   compareAtPrice: ShopifyPrice | null;
   image: ShopifyImage | null;
-  lifestyleImage?: {
-    reference?: {
-      field?: {
-        reference?: { image?: ShopifyImage } | null;
-      } | null;
-    } | null;
-  } | null;
 }
 
 /** Producto referenciado desde un metafield list.product_reference. */

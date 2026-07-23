@@ -18,7 +18,7 @@ function formatPrice(amount: string, currency: string): string {
 /**
  * Storefront template for generic PBN accessories (paints, brushes, markers,
  * palettes…). Unlike Canvas/Poster it does NOT route into the AI personalize
- * flow: no size selector, no lifestyle metaobject, no PBN logic. Just a simple
+ * flow: no size selector, no PBN logic. Just a simple
  * gallery + price + quantity + add-to-cart. Items go to the cart as plain line
  * items with no generation/paint-by-numbers attributes.
  */

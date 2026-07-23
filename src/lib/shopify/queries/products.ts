@@ -168,22 +168,6 @@ export const GET_PRODUCT = `
             url
             altText
           }
-          lifestyleImage: metafield(namespace: "custom", key: "size_life_style") {
-            reference {
-              ... on Metaobject {
-                field(key: "lifestyle_render") {
-                  reference {
-                    ... on MediaImage {
-                      image {
-                        url
-                        altText
-                      }
-                    }
-                  }
-                }
-              }
-            }
-          }
         }
       }
     }
