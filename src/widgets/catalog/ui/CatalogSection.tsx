@@ -3,10 +3,15 @@
 import { useState } from "react";
 import { ProductCard } from "@/entities/pet-product/ui/ProductCard";
 import { toFrameStyle } from "@/entities/product/lib/frameStyle";
+import { artKindLabel } from "@/entities/product/model/artKind";
 import { CatalogProduct } from "../model/types";
 
 // Cuántos productos muestra una sección al inicio y cuántos añade cada "Show more".
 const SECTION_PAGE_SIZE = 6;
+
+// Solo los coloreables digitales (Digital Downloads) se recortan al aspecto de card
+// de arte; el resto de formatos muestra su imagen en proporción natural.
+const CROPPED_ASPECT_TYPE = "Digital";
 
 interface CatalogSectionProps {
   /** Ancla para la barra de navegación por tipo (CatalogTypeNav). */
@@ -51,6 +56,8 @@ export function CatalogSection({
             product={product}
             href={productHref(product)}
             frameStyle={toFrameStyle(product.productType)}
+            naturalAspect={product.productType !== CROPPED_ASPECT_TYPE}
+            artKindBadge={artKindLabel(product.artKind)}
             showPrice={true}
             showBadge={false}
           />
@@ -60,7 +67,9 @@ export function CatalogSection({
       {hasMore && (
         <div className="mt-8 flex justify-center">
           <button
-            onClick={() => setVisibleCount((count) => count + SECTION_PAGE_SIZE)}
+            onClick={() =>
+              setVisibleCount((count) => count + SECTION_PAGE_SIZE)
+            }
             className="flex items-center gap-2 h-11 px-6 rounded-xl bg-white text-slate-dark text-sm font-bold shadow-sm hover:shadow-md transition-all"
           >
             <span className="material-symbols-outlined text-[20px]">
