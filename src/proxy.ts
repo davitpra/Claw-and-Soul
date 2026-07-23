@@ -11,7 +11,7 @@ function getJwtRole(token: string): string | null {
   }
 }
 
-export function middleware(request: NextRequest) {
+export function proxy(request: NextRequest) {
   const accessToken = request.cookies.get('accessToken');
   const isAdminRoute = request.nextUrl.pathname.startsWith('/admin');
 

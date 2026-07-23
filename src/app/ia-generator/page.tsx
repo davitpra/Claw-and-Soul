@@ -141,6 +141,7 @@ function IAGeneratorContent() {
   const {
     formats: deepLinkFormats,
     product: deepLinkShopifyProduct,
+    template: deepLinkTemplate,
   } = useFormatOptions(resolvedHandle);
 
   const effectiveProductInfo: SelectedProductInfo | null = useMemo(() => {
@@ -156,8 +157,9 @@ function IAGeneratorContent() {
       productImage: deepLinkShopifyProduct.images.edges[0]?.node.url ?? "",
       formatLabel: f.displayName,
       thankYouImageUrl: getThankYouImage(deepLinkShopifyProduct),
+      template: deepLinkTemplate,
     };
-  }, [productInfo, deepLinkFormats, deepLinkShopifyProduct, formatIdFromUrl]);
+  }, [productInfo, deepLinkFormats, deepLinkShopifyProduct, formatIdFromUrl, deepLinkTemplate]);
 
   return (
     <div className="bg-white text-slate-dark font-body min-h-screen flex flex-col transition-all duration-500">

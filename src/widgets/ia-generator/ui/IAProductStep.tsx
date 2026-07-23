@@ -25,6 +25,9 @@ export type SelectedProductInfo = {
   productImage: string;
   formatLabel: string;
   thankYouImageUrl: string | null;
+  // Formato de entrega del backend (Digital | Canvas | Poster…); "PBN" legacy.
+  // Digital es gratuito: el flujo de generación lo usa para omitir el carrito.
+  template: string | null;
 };
 
 interface IAProductStepProps {
@@ -41,6 +44,7 @@ export function IAProductStep({ onSelect }: IAProductStepProps) {
 
   const {
     productRefId,
+    template,
     formats,
     product,
     isLoading: isLoadingFormats,
@@ -87,6 +91,7 @@ export function IAProductStep({ onSelect }: IAProductStepProps) {
         productImage: selectedProduct?.image ?? "",
         formatLabel: selectedFormat.displayName,
         thankYouImageUrl: getThankYouImage(product),
+        template,
       });
     }
   };

@@ -26,6 +26,7 @@ interface BackendProductWithVariants {
   displayName: string;
   description: string | null;
   style: { id: string } | null;
+  template: string | null;
   variants: BackendProductVariant[];
 }
 
@@ -45,6 +46,7 @@ export interface FormatOption {
 interface UseFormatOptionsResult {
   productRefId: string | null;
   styleId: string | null;
+  template: string | null;
   formats: FormatOption[];
   product: ShopifyProduct | null;
   isLoading: boolean;
@@ -61,6 +63,7 @@ export function useFormatOptions(
 ): UseFormatOptionsResult {
   const [productRefId, setProductRefId] = useState<string | null>(null);
   const [styleId, setStyleId] = useState<string | null>(null);
+  const [template, setTemplate] = useState<string | null>(null);
   const [formats, setFormats] = useState<FormatOption[]>([]);
   const [product, setProduct] = useState<ShopifyProduct | null>(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -70,6 +73,7 @@ export function useFormatOptions(
     if (!productHandle) {
       setProductRefId(null);
       setStyleId(null);
+      setTemplate(null);
       setFormats([]);
       setProduct(null);
       setError(null);
@@ -105,6 +109,7 @@ export function useFormatOptions(
           setError(`Product '${productHandle}' not found in Shopify`);
           setProductRefId(backendProduct.productRefId);
           setStyleId(backendProduct.style?.id ?? null);
+          setTemplate(backendProduct.template ?? null);
           setFormats([]);
           setProduct(null);
           return;
@@ -122,6 +127,7 @@ export function useFormatOptions(
 
         setProductRefId(backendProduct.productRefId);
         setStyleId(backendProduct.style?.id ?? null);
+        setTemplate(backendProduct.template ?? null);
         setFormats(merged);
         setProduct(shopifyProduct);
       })
@@ -135,6 +141,7 @@ export function useFormatOptions(
         );
         setProductRefId(null);
         setStyleId(null);
+        setTemplate(null);
         setFormats([]);
         setProduct(null);
       })
@@ -150,6 +157,7 @@ export function useFormatOptions(
   return {
     productRefId,
     styleId,
+    template,
     formats,
     product,
     isLoading,
