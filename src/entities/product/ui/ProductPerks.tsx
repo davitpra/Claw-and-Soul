@@ -20,6 +20,12 @@ const PERKS: Perk[] = [
     title: "Made to Order",
     detail: "Each piece is printed just for you, so all sales are final.",
   },
+  {
+    icon: "redeem",
+    title: "Earn 5 Credits",
+    detail:
+      "Every piece you order adds 5 studio credits to your account for more AI art.",
+  },
 ];
 
 export default function ProductPerks() {

@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-// import { Star } from "lucide-react";
 import { ShopifyProduct, ShopifyVariant } from "@/lib/shopify";
 
 interface ProductInfoProps {
@@ -46,23 +45,6 @@ export default function ProductInfo({
           {product.title}
         </h1>
       </div>
-      {/* Reviews */}
-      {/* <div className="inline-flex w-fit items-center gap-2.5 rounded-xl bg-white px-3 py-2">
-        <span className="flex items-center gap-1.5">
-          <span className="font-body text-base font-bold text-text-main">
-            4.8
-          </span>
-          <Star
-            size={16}
-            className="text-yellow-500"
-            fill="currentColor"
-            strokeWidth={0}
-          />
-        </span>
-        <span className="h-4 w-px bg-[#E0DED9]" />
-        <span className="font-body text-sm text-text-muted">237 Reviews</span>
-      </div> */}
-
       {/* Price */}
       <div className="flex items-baseline gap-4">
         <span className="font-display text-4xl font-black text-primary">
@@ -80,6 +62,16 @@ export default function ProductInfo({
             Save {discount}%
           </span>
         )}
+      </div>
+      {/* Credit Price */}
+      <div className="flex items-center gap-2 text-text-muted">
+        <span className="material-symbols-outlined text-[20px] text-primary">
+          auto_awesome
+        </span>
+        <span className="font-body">
+          Generating each image costs{" "}
+          <span className="font-bold text-primary">1 credit</span>
+        </span>
       </div>
 
       {/* Description — click para expandir / colapsar el texto completo */}
