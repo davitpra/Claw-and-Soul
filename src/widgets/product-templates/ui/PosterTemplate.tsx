@@ -16,6 +16,7 @@ export default function PosterTemplate({
   faqs,
   handle,
   frameStyle,
+  template,
   artKind,
 }: ProductTemplateProps) {
   return (
@@ -29,6 +30,8 @@ export default function PosterTemplate({
             mainImage={mainImage}
             setMainImage={setMainImage}
             frameStyle={frameStyle}
+            template={template}
+            artKind={artKind}
           />
         </div>
       </div>

@@ -27,6 +27,8 @@ export default function DigitalTemplate({
   setMainImage,
   handle,
   faqs,
+  template,
+  artKind,
 }: ProductTemplateProps) {
   const relatedAccessories = getRelatedAccessories(product);
 
@@ -40,6 +42,8 @@ export default function DigitalTemplate({
             setSelectedVariantId={setSelectedVariantId}
             mainImage={mainImage}
             setMainImage={setMainImage}
+            template={template}
+            artKind={artKind}
           />
         </div>
       </div>

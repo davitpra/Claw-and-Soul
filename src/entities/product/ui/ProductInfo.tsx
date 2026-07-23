@@ -2,16 +2,30 @@
 
 import { useState } from "react";
 import { ShopifyProduct, ShopifyVariant } from "@/lib/shopify";
+import { templateLabel } from "@/entities/product/lib/template";
+import { artKindLabel } from "@/entities/product/model/artKind";
 
 interface ProductInfoProps {
   product: ShopifyProduct;
   selectedVariant: ShopifyVariant | undefined;
+  /** Formato de entrega normalizado (Digital | Canvas | Poster…). */
+  template?: string;
+  /** Contenido de la obra: "pbn" | "print"; undefined si no está asignado. */
+  artKind?: string | null;
 }
 
 export default function ProductInfo({
   product,
   selectedVariant,
+  template,
+  artKind,
 }: ProductInfoProps) {
+  // Tipo de producto de cara al cliente: formato + contenido, ej.
+  // "Canvas Print · Paint by Numbers". Cae a "Personalized" si no hay nada.
+  const typeLabel =
+    [templateLabel(template), artKindLabel(artKind)]
+      .filter(Boolean)
+      .join(" · ") || "Personalized";
   const [isDescriptionExpanded, setIsDescriptionExpanded] = useState(false);
 
   const price = selectedVariant?.price;
@@ -39,7 +53,7 @@ export default function ProductInfo({
       {/* Title + Availability */}
       <div className="flex flex-col gap-3">
         <span className="text-primary font-bold tracking-wider uppercase text-sm">
-          Personalized
+          {typeLabel}
         </span>
         <h1 className="font-display text-4xl lg:text-5xl font-black text-text-main tracking-tight leading-[1.1]">
           {product.title}

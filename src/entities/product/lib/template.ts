@@ -7,3 +7,19 @@ export function normalizeTemplate(value?: string | null): string {
   const trimmed = value?.trim() ?? "";
   return trimmed === "PBN" ? "Digital" : trimmed;
 }
+
+// User-facing copy for the delivery format (storefront is in English).
+const TEMPLATE_LABELS: Record<string, string> = {
+  Digital: "Digital Download",
+  Canvas: "Canvas Print",
+  Poster: "Poster Print",
+  Credits: "Credits",
+  Accessory: "Accessory",
+};
+
+/** Label visible del template. Devuelve el valor normalizado tal cual si no
+ *  está mapeado, o "" si viene vacío. */
+export function templateLabel(value?: string | null): string {
+  const normalized = normalizeTemplate(value);
+  return TEMPLATE_LABELS[normalized] ?? normalized;
+}

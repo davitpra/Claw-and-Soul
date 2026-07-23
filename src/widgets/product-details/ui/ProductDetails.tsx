@@ -26,6 +26,10 @@ interface ProductDetailsProps {
   mainImage: string;
   setMainImage: (url: string) => void;
   frameStyle?: FrameStyle;
+  /** Formato de entrega normalizado (Digital | Canvas | Poster…), para el label del tipo de producto. */
+  template?: string;
+  /** Contenido de la obra: "pbn" | "print"; undefined si no está asignado. */
+  artKind?: string | null;
 }
 
 export default function ProductDetails({
@@ -35,6 +39,8 @@ export default function ProductDetails({
   mainImage,
   setMainImage,
   frameStyle = "art",
+  template,
+  artKind,
 }: ProductDetailsProps) {
   const selectedVariant = product.variants.edges.find(
     (v) => v.node.id === selectedVariantId,
@@ -128,7 +134,12 @@ export default function ProductDetails({
         <div className="sticky top-24 flex flex-col gap-6">
           <ProductBreadcrumb product={product} />
 
-          <ProductInfo product={product} selectedVariant={selectedVariant} />
+          <ProductInfo
+            product={product}
+            selectedVariant={selectedVariant}
+            template={template}
+            artKind={artKind}
+          />
 
           <div className="h-px w-full bg-text-main/10"></div>
 
@@ -175,7 +186,7 @@ export default function ProductDetails({
             userSelections={hasOptions ? userSelections : undefined}
           />
 
-          <ProductPerks />
+          <ProductPerks template={template} />
         </div>
       </div>
     </div>

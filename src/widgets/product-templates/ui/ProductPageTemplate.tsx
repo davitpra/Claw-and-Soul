@@ -20,6 +20,8 @@ export interface ProductTemplateProps {
   handle: string;
   faqs: { q: string; a: string }[];
   frameStyle: FrameStyle;
+  /** Formato de entrega normalizado (Digital | Canvas | Poster…), para el label del tipo de producto. */
+  template: string;
   /** Contenido de la obra: "pbn" (coloreable) o "print" (arte terminado); undefined si no está asignado. */
   artKind?: string | null;
 }
@@ -37,11 +39,13 @@ const TEMPLATE_MAP: Record<string, ComponentType<ProductTemplateProps>> = {
 export default function ProductPageTemplate({
   templateOverride,
   ...props
-}: Omit<ProductTemplateProps, "frameStyle"> & {
+}: Omit<ProductTemplateProps, "frameStyle" | "template"> & {
   templateOverride?: string | null;
 }) {
   // normalizeTemplate absorbe el valor legacy "PBN" (alias de "Digital").
   const template = normalizeTemplate(templateOverride);
   const Template = TEMPLATE_MAP[template] ?? CanvasTemplate;
-  return <Template {...props} frameStyle={toFrameStyle(template)} />;
+  return (
+    <Template {...props} template={template} frameStyle={toFrameStyle(template)} />
+  );
 }

@@ -46,6 +46,7 @@ export default function CanvasTemplate({
   handle,
   faqs,
   frameStyle,
+  template,
   artKind,
 }: ProductTemplateProps) {
   const similarProducts = getSimilarProducts(product);
@@ -65,6 +66,8 @@ export default function CanvasTemplate({
             mainImage={mainImage}
             setMainImage={setMainImage}
             frameStyle={frameStyle}
+            template={template}
+            artKind={artKind}
           />
         </div>
       </div>
