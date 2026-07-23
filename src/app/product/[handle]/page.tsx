@@ -96,6 +96,7 @@ export default function ProductDetail({
         <ProductPageTemplate
           product={product}
           templateOverride={backendProduct?.template ?? undefined}
+          artKind={backendProduct?.artKind ?? undefined}
           selectedVariantId={selectedVariantId}
           setSelectedVariantId={setSelectedVariantId}
           mainImage={mainImage}

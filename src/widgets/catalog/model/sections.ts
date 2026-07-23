@@ -1,10 +1,12 @@
 import { CatalogProduct } from "./types";
 
 // Secciones del catálogo en el orden en que se muestran. La `key` es el `productType`
-// (template del backend); el `title` es el encabezado visible. Ver los valores
+// (template del backend = formato de entrega; "Digital" son las descargas del
+// coloreable de la mascota); el `title` es el encabezado visible. Ver los valores
 // canónicos en admin `ProductsTable` (TEMPLATE_OPTIONS) y `ProductPageTemplate`.
+// El contenido (coloreable PBN vs arte terminado) es un eje aparte: `artKind`.
 export const CATALOG_SECTIONS = [
-  { key: "PBN", title: "Paint by Numbers" },
+  { key: "Digital", title: "Digital Downloads" },
   { key: "Canvas", title: "Canvas" },
   { key: "Poster", title: "Posters" },
   { key: "Accessory", title: "Accessories" },
@@ -15,10 +17,10 @@ export const CATALOG_SECTIONS = [
 // caen en esta sección, que siempre va al final.
 export const OTHER_SECTION = { key: "__other__", title: "Other" } as const;
 
-// Tipo preseleccionado al entrar al catálogo: los PBN son el producto principal, así
-// que se muestran solos hasta que el visitante toque otro chip (o deseleccione
-// este) para ver el catálogo completo.
-export const DEFAULT_CATALOG_TYPE: string = "PBN";
+// Tipo preseleccionado al entrar al catálogo: los coloreables digitales son el
+// producto principal, así que se muestran solos hasta que el visitante toque otro
+// chip (o deseleccione este) para ver el catálogo completo.
+export const DEFAULT_CATALOG_TYPE: string = "Digital";
 
 export interface CatalogSectionGroup {
   key: string;

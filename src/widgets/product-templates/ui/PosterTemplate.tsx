@@ -16,6 +16,7 @@ export default function PosterTemplate({
   faqs,
   handle,
   frameStyle,
+  artKind,
 }: ProductTemplateProps) {
   return (
     <>
@@ -33,7 +34,8 @@ export default function PosterTemplate({
       </div>
       <StyleCollection handle={handle} frameStyle={frameStyle} />
       <SameStyleGallery handle={handle} />
-      <PrintedOption handle={handle} />
+      {/* La alternativa impresa solo tiene sentido en el poster coloreable. */}
+      {artKind === "pbn" && <PrintedOption handle={handle} />}
       <ProductFAQ faqs={faqs} />
     </>
   );

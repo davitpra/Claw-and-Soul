@@ -13,18 +13,32 @@ import {
 } from "@shopify/polaris";
 import { DeleteIcon, ImageIcon } from "@shopify/polaris-icons";
 import { AdminProduct, AdminStyle } from "@/entities/admin/api";
+import { normalizeTemplate } from "@/entities/product/lib/template";
 
+// El template es el formato de entrega del storefront: Digital es la descarga
+// del coloreable; Canvas/Poster son los físicos. El contenido (coloreable vs
+// arte terminado) se elige aparte en la columna "Contenido" (artKind).
 export const TEMPLATE_OPTIONS = [
   { label: "Por defecto", value: "" },
+  { label: "Digital (descarga)", value: "Digital" },
   { label: "Canvas", value: "Canvas" },
   { label: "Poster", value: "Poster" },
   { label: "Credits", value: "Credits" },
   { label: "Accessory", value: "Accessory" },
-  { label: "PBN", value: "PBN" },
 ];
 
 /** Un producto es accesorio cuando su template es "Accessory". */
 export const ACCESSORY_TEMPLATE = "Accessory";
+
+// Formatos que llevan una obra de arte y por tanto admiten contenido (artKind);
+// Credits y Accessory no aplican.
+const ART_TEMPLATES = new Set(["Digital", "Canvas", "Poster"]);
+
+export const ART_KIND_OPTIONS = [
+  { label: "Sin asignar", value: "" },
+  { label: "Paint by Numbers", value: "pbn" },
+  { label: "Print art", value: "print" },
+];
 
 /** Valores de template que el Select acepta (sin la opción vacía "Por defecto"). */
 const VALID_TEMPLATES = new Set(
@@ -34,17 +48,18 @@ const VALID_TEMPLATES = new Set(
 /**
  * Template efectivo de un producto: el guardado manda; si no hay, cae al
  * `productType` de Shopify (solo si es una opción válida); si no, "".
+ * normalizeTemplate absorbe el valor legacy "PBN" (alias de "Digital").
  * Compartido entre la partición de la página y el default del Select.
  */
 export function resolveTemplate(
   p: Pick<AdminProduct, "template" | "shopifyHandle">,
   productTypeMap: Record<string, string>,
 ): string {
-  if (p.template) return p.template;
-  const shopifyType = p.shopifyHandle
-    ? productTypeMap[p.shopifyHandle]
-    : undefined;
-  return shopifyType && VALID_TEMPLATES.has(shopifyType) ? shopifyType : "";
+  if (p.template) return normalizeTemplate(p.template);
+  const shopifyType = normalizeTemplate(
+    p.shopifyHandle ? productTypeMap[p.shopifyHandle] : undefined,
+  );
+  return VALID_TEMPLATES.has(shopifyType) ? shopifyType : "";
 }
 
 interface ProductsTableProps {
@@ -58,11 +73,13 @@ interface ProductsTableProps {
   savingStyle: string | null;
   savingFulfillment: string | null;
   savingTemplate: string | null;
+  savingArtKind: string | null;
   toggling: string | null;
   onRowClick: (id: string) => void;
   onStyleChange: (productId: string, styleId: string) => void;
   onFulfillmentChange: (productId: string, value: string) => void;
   onTemplateChange: (productId: string, value: string) => void;
+  onArtKindChange: (productId: string, value: string) => void;
   onToggleActive: (product: AdminProduct) => void;
   onDelete: (product: AdminProduct) => void;
 }
@@ -80,11 +97,13 @@ export function ProductsTable({
   savingStyle,
   savingFulfillment,
   savingTemplate,
+  savingArtKind,
   toggling,
   onRowClick,
   onStyleChange,
   onFulfillmentChange,
   onTemplateChange,
+  onArtKindChange,
   onToggleActive,
   onDelete,
 }: ProductsTableProps) {
@@ -97,6 +116,7 @@ export function ProductsTable({
         ...(showStyleColumn ? [{ title: "Estilo asignado" }] : []),
         { title: "Fulfillment" },
         { title: "Template" },
+        { title: "Contenido" },
         { title: "Estado" },
         { title: "Acciones" },
       ]}
@@ -200,6 +220,32 @@ export function ProductsTable({
                 {savingTemplate === p.id && <Spinner size="small" />}
               </InlineStack>
             </div>
+          </IndexTable.Cell>
+
+          <IndexTable.Cell>
+            {/* Contenido de la obra (coloreable vs arte terminado): solo aplica
+                a los formatos con obra (Digital/Canvas/Poster). */}
+            {ART_TEMPLATES.has(resolveTemplate(p, productTypeMap)) ? (
+              <div onClick={(e) => e.stopPropagation()}>
+                <InlineStack gap="200" blockAlign="center">
+                  <div style={{ minWidth: 160 }}>
+                    <Select
+                      label=""
+                      labelHidden
+                      disabled={savingArtKind === p.id}
+                      value={p.artKind ?? ""}
+                      onChange={(value) => onArtKindChange(p.id, value)}
+                      options={ART_KIND_OPTIONS}
+                    />
+                  </div>
+                  {savingArtKind === p.id && <Spinner size="small" />}
+                </InlineStack>
+              </div>
+            ) : (
+              <Text variant="bodySm" tone="subdued" as="span">
+                —
+              </Text>
+            )}
           </IndexTable.Cell>
 
           <IndexTable.Cell>

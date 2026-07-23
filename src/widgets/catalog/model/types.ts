@@ -3,8 +3,10 @@ import { Product } from "@/entities/pet-product/model/types";
 // Producto de entidad + los campos usados por los filtros del catálogo.
 export type CatalogProduct = Product & {
   collection: string;
-  /** Tipo de producto: template del backend (Canvas, Poster, PBN…); fallback al productType de Shopify. Vacío si ninguno. */
+  /** Formato de entrega: template del backend (Digital, Canvas, Poster…); fallback al productType de Shopify. Vacío si ninguno. */
   productType: string;
+  /** Contenido de la obra: "pbn" (coloreable) o "print" (arte terminado). Vacío si no está asignado. */
+  artKind: string;
   /** Estilo de arte (vive en el backend, no en Shopify); vacío si el producto no tiene. */
   style: string;
   /** Dificultad del estilo (easy/medium/challenging); vacío si no tiene. */
@@ -24,8 +26,10 @@ export interface BackendProductLite {
   isPaintByNumbers?: boolean;
   /** Producto dedicado a la venta de créditos (único). */
   isCreditPack?: boolean;
-  /** Template del storefront; "PBN" marca los kits Paint-by-Numbers por estilo. */
+  /** Formato de entrega del storefront (Digital | Canvas | Poster | Accessory | Credits; "PBN" es alias legacy de Digital). */
   template?: string | null;
+  /** Contenido de la obra: "pbn" (coloreable) o "print" (arte terminado); null si no está asignado. */
+  artKind?: string | null;
   style?: {
     id: string;
     displayName: string;
@@ -38,8 +42,10 @@ export interface BackendProductLite {
 export interface StyleData {
   /** handle de Shopify → nombre del estilo del producto. */
   byHandle: Map<string, string>;
-  /** handle de Shopify → template del backend (Canvas | Poster | PBN | Accessory | Credits). */
+  /** handle de Shopify → formato de entrega del backend (Digital | Canvas | Poster | Accessory | Credits). */
   templateByHandle: Map<string, string>;
+  /** handle de Shopify → contenido de la obra ("pbn" | "print"). */
+  artKindByHandle: Map<string, string>;
   /** handle de Shopify → dificultad del estilo del producto. */
   difficultyByHandle: Map<string, string>;
   /** handles de Shopify que corresponden a kits Paint-by-Numbers. */

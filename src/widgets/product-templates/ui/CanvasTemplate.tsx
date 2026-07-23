@@ -46,9 +46,13 @@ export default function CanvasTemplate({
   handle,
   faqs,
   frameStyle,
+  artKind,
 }: ProductTemplateProps) {
   const similarProducts = getSimilarProducts(product);
   const relatedAccessories = getRelatedAccessories(product);
+  // Un canvas puede llevar el coloreable (para pintar) o arte terminado; los
+  // bloques de pintura (accesorios, alternativa impresa) solo aplican al primero.
+  const isPaintable = artKind === "pbn";
 
   return (
     <>
@@ -92,7 +96,7 @@ export default function CanvasTemplate({
       {similarProducts.length > 0 && (
         <SimilarSouls products={similarProducts} />
       )}
-      {relatedAccessories.length > 0 && (
+      {isPaintable && relatedAccessories.length > 0 && (
         <>
           <WavesDivider
             waveColor="var(--color-cream)"
@@ -106,7 +110,7 @@ export default function CanvasTemplate({
           />
         </>
       )}
-      <PrintedOption handle={handle} />
+      {isPaintable && <PrintedOption handle={handle} />}
       <ProductFAQ faqs={faqs} />
     </>
   );

@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { normalizeTemplate } from "@/entities/product/lib/template";
 import { getProducts } from "@/lib/shopify";
 import { getCollectionProducts } from "@/lib/shopify/actions/collections";
 import { ShopifyProduct } from "@/lib/shopify/types";
@@ -53,8 +54,8 @@ function toCatalogProduct(
     collection,
     productType:
       styleData.templateByHandle.get(node.handle) ??
-      node.productType?.trim() ??
-      "",
+      normalizeTemplate(node.productType),
+    artKind: styleData.artKindByHandle.get(node.handle) ?? "",
     style: styleData.byHandle.get(node.handle) ?? "",
     difficulty: styleData.difficultyByHandle.get(node.handle) ?? "",
     isPaintByNumbers: styleData.pbnHandles.has(node.handle),

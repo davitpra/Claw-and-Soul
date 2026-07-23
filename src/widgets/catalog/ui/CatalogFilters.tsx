@@ -1,4 +1,5 @@
 import { DIFFICULTY_LABELS } from "@/entities/art-style/model/difficulty";
+import { artKindLabel } from "@/entities/product/model/artKind";
 import { PRICE_RANGES } from "../model/priceRanges";
 import { CatalogFilters as CatalogFiltersState } from "../model/useCatalogFilters";
 import { FilterGroup } from "./FilterGroup";
@@ -13,6 +14,10 @@ export function CatalogFilters({ filters }: { filters: CatalogFiltersState }) {
     productTypeCounts,
     selectedProductTypes,
     toggleProductType,
+    artKinds,
+    artKindCounts,
+    selectedArtKinds,
+    toggleArtKind,
     styles,
     styleCounts,
     stylesByCategory,
@@ -43,6 +48,21 @@ export function CatalogFilters({ filters }: { filters: CatalogFiltersState }) {
               count={productTypeCounts.get(type) ?? 0}
               checked={selectedProductTypes.includes(type)}
               onChange={() => toggleProductType(type)}
+            />
+          ))}
+        </FilterGroup>
+      )}
+
+      {/* Contenido de la obra: coloreable para pintar vs arte terminado. */}
+      {artKinds.length > 0 && (
+        <FilterGroup title="Artwork Type">
+          {artKinds.map((kind) => (
+            <FilterOption
+              key={kind}
+              label={artKindLabel(kind) ?? kind}
+              count={artKindCounts.get(kind) ?? 0}
+              checked={selectedArtKinds.includes(kind)}
+              onChange={() => toggleArtKind(kind)}
             />
           ))}
         </FilterGroup>

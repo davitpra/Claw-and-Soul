@@ -55,7 +55,7 @@ function SkeletonBand() {
       {Array.from({ length: 5 }).map((_, i) => (
         <div
           key={i}
-          className={`w-60 md:w-72 shrink-0 aspect-[848/1264] animate-pulse bg-slate-200 ${
+          className={`w-60 md:w-72 shrink-0 aspect-848/1264 animate-pulse bg-slate-200 ${
             i === 2 ? "scale-110" : "opacity-60"
           }`}
         />
@@ -81,8 +81,7 @@ export function StyleGallery({
   if (!isLoading && (error || images.length === 0)) return null;
 
   const fallback = images.find((image) => image.isPrimary) ?? images[0];
-  const featured =
-    images.find((image) => image.id === selectedId) ?? fallback;
+  const featured = images.find((image) => image.id === selectedId) ?? fallback;
   const rest = images
     .filter((image) => image.id !== featured?.id)
     .sort((a, b) => a.orderIndex - b.orderIndex);
@@ -136,19 +135,19 @@ export function StyleGallery({
               <div className="flex items-center gap-6 pr-6">
                 {loop.map((image, i) => (
                   <MarqueeCard
-                  key={`${image.id}-a-${i}`}
-                  image={image}
-                  onSelect={(img) => setSelectedId(img.id)}
-                />
+                    key={`${image.id}-a-${i}`}
+                    image={image}
+                    onSelect={(img) => setSelectedId(img.id)}
+                  />
                 ))}
               </div>
               <div aria-hidden className="flex items-center gap-6 pr-6">
                 {loop.map((image, i) => (
                   <MarqueeCard
-                  key={`${image.id}-b-${i}`}
-                  image={image}
-                  onSelect={(img) => setSelectedId(img.id)}
-                />
+                    key={`${image.id}-b-${i}`}
+                    image={image}
+                    onSelect={(img) => setSelectedId(img.id)}
+                  />
                 ))}
               </div>
             </div>

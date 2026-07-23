@@ -408,6 +408,8 @@ export interface AdminProduct {
   styleId: string | null;
   style: { id: string; name: string; displayName: string; previewUrl: string | null } | null;
   template: string | null;
+  /** Contenido de la obra: "pbn" (coloreable) o "print" (arte terminado); null = sin asignar. */
+  artKind: string | null;
   fulfillmentMethod: string;
   isPaintByNumbers: boolean;
   isCreditPack: boolean;

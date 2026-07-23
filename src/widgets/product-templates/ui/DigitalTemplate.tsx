@@ -13,10 +13,13 @@ import ProductDetails from "@/widgets/product-details/ui/ProductDetails";
 import WavesDivider from "@/shared/ui/WavesDivider";
 
 /**
- * Storefront template for the Paint-by-Numbers kit: same shape as Canvas, plus
- * the PBN accessories upsell (paints, brushes…) from getRelatedAccessories.
+ * Storefront template for digital downloads: the downloadable paint-by-numbers
+ * coloring file of the customer's pet (not a physical kit). Same shape as
+ * Canvas, plus the painting accessories upsell (paints, brushes…) from
+ * getRelatedAccessories and the printed-art alternative for those who'd
+ * rather not paint.
  */
-export default function PBNTemplate({
+export default function DigitalTemplate({
   product,
   selectedVariantId,
   setSelectedVariantId,

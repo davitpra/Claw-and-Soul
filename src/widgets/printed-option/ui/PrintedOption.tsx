@@ -6,7 +6,7 @@ import { Container } from "@/shared/ui/Container";
 import { useProductStyle } from "@/hooks/useProductStyle";
 import { useSameStyleProducts } from "@/hooks/useSameStyleProducts";
 
-// Templates whose products are printed (as opposed to the paint-it-yourself kit).
+// Formatos físicos: fallback para datos legacy sin artKind asignado.
 const PRINTED_TEMPLATES = ["Poster", "Canvas"];
 
 interface PrintedOptionProps {
@@ -15,18 +15,25 @@ interface PrintedOptionProps {
 }
 
 /**
- * Sección de cierre de la ficha para quien prefiere no pintar: ofrece la misma
- * obra como impresión ultra alta definición lista para colgar.
- * The CTA points to a printed product (Poster/Canvas) sharing the current
- * product's style, falling back to the shop when none is available.
+ * Sección de cierre de las fichas de coloreables (artKind "pbn") para quien
+ * prefiere no pintar: ofrece la misma obra como arte terminado listo para
+ * colgar. The CTA points to a finished-art product (artKind "print") sharing
+ * the current product's style; legacy products without an assigned artKind
+ * fall back to any physical format (Canvas/Poster) that isn't itself a
+ * paintable, and finally to the shop.
  */
 export default function PrintedOption({ handle }: PrintedOptionProps) {
   const { styleId } = useProductStyle(handle ?? null);
   const { products } = useSameStyleProducts(styleId, handle);
 
-  const printedProduct = products.find(
-    (p) => p.template && PRINTED_TEMPLATES.includes(p.template),
-  );
+  const printedProduct =
+    products.find((p) => p.artKind === "print") ??
+    products.find(
+      (p) =>
+        !p.artKind &&
+        p.template != null &&
+        PRINTED_TEMPLATES.includes(p.template),
+    );
   const ctaHref = printedProduct
     ? `/product/${printedProduct.shopifyHandle}`
     : "/catalog";

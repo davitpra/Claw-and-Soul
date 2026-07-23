@@ -15,6 +15,7 @@ interface BackendProduct {
   displayName: string;
   description: string | null;
   template: string | null;
+  artKind: string | null;
   style?: {
     id: string;
     displayName: string;
@@ -123,6 +124,7 @@ export function useSameStyleProducts(
               shopifyHandle: bp.shopifyHandle!,
               productRefId: bp.id,
               template: bp.template,
+              artKind: bp.artKind,
             };
           });
 
