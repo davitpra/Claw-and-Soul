@@ -81,9 +81,9 @@ export default function Hero({
   const fade = animateText ? "animate-fade-in-up" : "";
 
   return (
-    <section className="relative w-full overflow-hidden bg-cream py-12 md:py-20 lg:py-28">
+    <section className="relative flex w-full items-center overflow-hidden bg-cream py-12 min-h-[calc(100svh-4rem)] lg:min-h-[calc(100svh-5rem)]">
       <Container>
-        <div className="grid grid-cols-1 gap-12 lg:grid-cols-2 lg:items-center">
+        <div className="grid grid-cols-1 gap-4 lg:grid-cols-2 lg:items-center">
           <div className="flex flex-col gap-6 order-2 lg:order-1">
             <div className="flex flex-col gap-4">
               <span
@@ -132,56 +132,60 @@ export default function Hero({
               <p className="text-xs font-medium text-slate-dark/60">{note}</p>
             )}
           </div>
-          <div className="relative order-1 lg:order-2">
+          <div className="order-1 flex justify-center lg:order-2">
             <div
-              className={`relative w-full overflow-hidden bg-white rotate-2 hover:rotate-0 transition-all duration-500 ${
-                frameStyle ? FRAME_SHADOWS[frameStyle] : ""
-              } ${mediaClassName}`}
+              className="relative w-full max-w-full lg:h-[calc(100svh-13rem)] lg:w-auto"
               style={{ aspectRatio: `${media.width} / ${media.height}` }}
             >
-              {media.kind === "video" ? (
-                <video
-                  className="h-full w-full object-cover"
-                  src={media.src}
-                  poster={media.poster}
-                  width={media.width}
-                  height={media.height}
-                  autoPlay
-                  muted
-                  playsInline
-                  aria-label={media.alt}
-                />
-              ) : (
-                <Image
-                  src={media.src}
-                  alt={media.alt}
-                  width={media.width}
-                  height={media.height}
-                  priority
-                  className="h-full w-full object-cover"
-                />
-              )}
-              {frameStyle === "canvas" && <CanvasEdgeOverlay />}
-            </div>
-            <div className="absolute -bottom-6 -left-6 hidden lg:block">
-              <div className="rounded-xl bg-white p-4 shadow-xl">
-                <div className="flex items-center gap-3">
-                  <span
-                    className={`flex items-center justify-center rounded-full p-2 ${
-                      badge.iconClassName ?? "bg-primary/10 text-primary"
-                    }`}
-                  >
-                    <span className="material-symbols-outlined text-[20px]">
-                      {badge.icon}
+              <div
+                className={`relative h-full w-full overflow-hidden bg-white rotate-2 hover:rotate-0 transition-all duration-500 ${
+                  frameStyle ? FRAME_SHADOWS[frameStyle] : ""
+                } ${mediaClassName}`}
+              >
+                {media.kind === "video" ? (
+                  <video
+                    className="h-full w-full object-cover"
+                    src={media.src}
+                    poster={media.poster}
+                    width={media.width}
+                    height={media.height}
+                    autoPlay
+                    muted
+                    playsInline
+                    aria-label={media.alt}
+                  />
+                ) : (
+                  <Image
+                    src={media.src}
+                    alt={media.alt}
+                    width={media.width}
+                    height={media.height}
+                    priority
+                    className="h-full w-full object-cover"
+                  />
+                )}
+                {frameStyle === "canvas" && <CanvasEdgeOverlay />}
+              </div>
+              <div className="absolute -bottom-6 -left-6 hidden lg:block">
+                <div className="rounded-xl bg-white p-4 shadow-xl">
+                  <div className="flex items-center gap-3">
+                    <span
+                      className={`flex items-center justify-center rounded-full p-2 ${
+                        badge.iconClassName ?? "bg-primary/10 text-primary"
+                      }`}
+                    >
+                      <span className="material-symbols-outlined text-[20px]">
+                        {badge.icon}
+                      </span>
                     </span>
-                  </span>
-                  <div>
-                    <p className="text-sm font-bold text-slate-dark">
-                      {badge.title}
-                    </p>
-                    <p className="text-xs text-slate-dark/60">
-                      {badge.subtitle}
-                    </p>
+                    <div>
+                      <p className="text-sm font-bold text-slate-dark">
+                        {badge.title}
+                      </p>
+                      <p className="text-xs text-slate-dark/60">
+                        {badge.subtitle}
+                      </p>
+                    </div>
                   </div>
                 </div>
               </div>
