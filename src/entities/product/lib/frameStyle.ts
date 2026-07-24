@@ -11,6 +11,10 @@ export function toFrameStyle(template?: string | null): FrameStyle {
   return "art";
 }
 
+// Paper margin (white mat + hairline) without a shadow, so it can be layered
+// over a caller's own shadow (e.g. the IA thank-you hero's warm shadow).
+export const POSTER_FRAME = "bg-white border border-black/10 p-2";
+
 // Per-type presentation for the product image. "art" keeps the original flat
 // float; "canvas" adds a directional float (the wrap darkening is a separate
 // overlay, see `canvasEdgeStyle`); "poster" adds a white paper margin with a
@@ -18,8 +22,7 @@ export function toFrameStyle(template?: string | null): FrameStyle {
 export const FRAME_SHADOWS: Record<FrameStyle, string> = {
   art: "shadow-[0_14px_32px_-12px_rgba(16,54,66,0.40)]",
   canvas: "shadow-[8px_10px_22px_-8px_rgba(16,54,66,0.45)]",
-  poster:
-    "bg-white border border-black/10 p-2 shadow-[0_8px_20px_-12px_rgba(16,54,66,0.30)]",
+  poster: `${POSTER_FRAME} shadow-[0_8px_20px_-12px_rgba(16,54,66,0.30)]`,
 };
 
 // The canvas "wrap" darkening. Box-shadow insets don't render over an <img>

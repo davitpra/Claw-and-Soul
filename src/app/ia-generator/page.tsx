@@ -259,6 +259,7 @@ function IAGeneratorContent() {
               productImage={effectiveProductInfo?.productImage}
               formatWidth={effectiveProductInfo?.formatWidth}
               formatHeight={effectiveProductInfo?.formatHeight}
+              template={effectiveProductInfo?.template}
             />
           )}
         </>

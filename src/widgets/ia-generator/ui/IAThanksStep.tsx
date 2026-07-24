@@ -5,6 +5,10 @@ import { Container } from "@/shared/ui/Container";
 import { useRouter } from "next/navigation";
 import { CanvasEdgeOverlay } from "@/entities/product/ui/CanvasEdgeOverlay";
 import {
+  toFrameStyle,
+  POSTER_FRAME,
+} from "@/entities/product/lib/frameStyle";
+import {
   setSunlightStyle,
   setAmbientStyle,
 } from "@/entities/product/lib/setLighting";
@@ -22,6 +26,7 @@ interface IAThanksStepProps {
   productImage?: string | null;
   formatWidth?: number | null;
   formatHeight?: number | null;
+  template?: string | null;
 }
 
 export function IAThanksStep({
@@ -29,8 +34,13 @@ export function IAThanksStep({
   productImage,
   formatWidth,
   formatHeight,
+  template,
 }: IAThanksStepProps) {
   const router = useRouter();
+
+  // La presentación del cuadro (lienzo / póster / plano) se deriva del tipo de
+  // producto, igual que en el resto de la app (ProductGallery, Hero, etc.).
+  const frameStyle = toFrameStyle(template);
 
   // La petición de generación ya se disparó antes de llegar aquí; hacemos
   // polling hasta tener el resultado y lo mostramos en lugar del mockup.
@@ -105,7 +115,9 @@ export function IAThanksStep({
                   // Imagen del producto centrada y escalada a la proporción y al
                   // tamaño del formato elegido. Conserva sombra + lienzo + luz.
                   <div
-                    className="relative shadow-[10px_12px_26px_-10px_rgba(96,66,38,0.40),2px_3px_6px_-2px_rgba(96,66,38,0.30)]"
+                    className={`relative shadow-[10px_12px_26px_-10px_rgba(96,66,38,0.40),2px_3px_6px_-2px_rgba(96,66,38,0.30)] ${
+                      frameStyle === "poster" ? POSTER_FRAME : ""
+                    }`}
                     style={{
                       width: `${widthPct}%`,
                       ...(aspectRatio ? { aspectRatio } : {}),
@@ -127,7 +139,7 @@ export function IAThanksStep({
                         filter: "brightness(0.98) saturate(0.94) sepia(0.06)",
                       }}
                     />
-                    <CanvasEdgeOverlay />
+                    {frameStyle === "canvas" && <CanvasEdgeOverlay />}
                     <div
                       aria-hidden
                       className="pointer-events-none absolute inset-0"
