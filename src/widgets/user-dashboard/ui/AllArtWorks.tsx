@@ -298,7 +298,7 @@ export function AllArtWorks() {
               <span className="material-symbols-outlined text-[18px]">
                 refresh
               </span>
-              Sorry
+              Retry
             </button>
           </div>
         )}
