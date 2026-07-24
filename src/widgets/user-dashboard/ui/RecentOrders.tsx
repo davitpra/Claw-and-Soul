@@ -95,7 +95,7 @@ export function RecentOrders({ orders, isLoading, error }: Props) {
                         <img
                           src={thumb}
                           alt=""
-                          className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
+                          className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105 p-2 rounded-2xl"
                         />
                       ) : (
                         <span className="flex h-full w-full items-center justify-center">

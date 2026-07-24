@@ -65,6 +65,7 @@ export function WelcomeHeader({
               src={cloudinaryThumb(avatarUrl, 160)}
               alt={user?.fullName || "Profile photo"}
               className="size-full object-cover"
+              referrerPolicy="no-referrer"
             />
           ) : (
             <span className="flex size-full items-center justify-center bg-primary/10 text-lg font-bold text-primary">
