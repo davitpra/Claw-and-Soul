@@ -140,7 +140,7 @@ export function ProductCard({
           loading="lazy"
           decoding="async"
           onError={onImageError}
-          className="h-full w-full rounded-full object-cover ring-4 ring-white outline outline-1 outline-primary/30 shadow-[0_14px_30px_-8px_rgba(16,54,66,0.45)]"
+          className="h-full w-full rounded-full object-cover ring-4 ring-white outline-1 outline-primary/30 shadow-[0_14px_30px_-8px_rgba(16,54,66,0.45)]"
         />
       </div>
       <div
@@ -194,13 +194,13 @@ export function ProductCard({
         {showPrice &&
           frameStyle !== "accessory" &&
           frameStyle !== "credits" && (
-          <p className="flex items-center gap-1 text-xs font-semibold text-slate-dark/60">
-            <span className="material-symbols-outlined text-[14px] text-primary">
-              paid
-            </span>
-            1 credit
-          </p>
-        )}
+            <p className="flex items-center gap-1 text-xs font-semibold text-slate-dark/60">
+              <span className="material-symbols-outlined text-[14px] text-primary">
+                paid
+              </span>
+              1 credit
+            </p>
+          )}
 
         {cta}
       </div>

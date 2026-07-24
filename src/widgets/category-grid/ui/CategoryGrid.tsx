@@ -23,7 +23,7 @@ interface CategoryGridProps {
 export default async function CategoryGrid({
   title = "Find your pet's perfect style",
   description = "From classic portraits to playful pop art — pick a style and turn your pet's photo into a masterpiece you paint yourself.",
-  limit = 6,
+  limit = 8,
   handles,
   background = "bg-white",
   eyebrow = "Catalog",
@@ -68,7 +68,7 @@ export default async function CategoryGrid({
             de CollectionSection, que asume ese mismo gap. */}
         {/* Muro de arte: al hacer hover sobre una card las hermanas se atenúan
             (group/wall) y la activa se ilumina, como un foco de galería. */}
-        <ul className="group/wall grid grid-cols-2 gap-4 md:grid-cols-3 lg:gap-8">
+        <ul className="group/wall grid grid-cols-2 gap-4 md:grid-cols-4 lg:gap-8">
           {categories.map((category) => (
             <li
               key={category.id}
