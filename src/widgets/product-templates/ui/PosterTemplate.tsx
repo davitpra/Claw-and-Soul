@@ -38,7 +38,7 @@ export default function PosterTemplate({
       <StyleCollection handle={handle} frameStyle={frameStyle} />
       <SameStyleGallery handle={handle} />
       {/* La alternativa impresa solo tiene sentido en el poster coloreable. */}
-      {artKind === "pbn" && <PrintedOption handle={handle} />}
+      <PrintedOption handle={handle} />
       <ProductFAQ faqs={faqs} />
     </>
   );

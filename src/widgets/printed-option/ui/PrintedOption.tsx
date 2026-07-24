@@ -5,6 +5,8 @@ import Link from "next/link";
 import { Container } from "@/shared/ui/Container";
 import { useProductStyle } from "@/hooks/useProductStyle";
 import { useSameStyleProducts } from "@/hooks/useSameStyleProducts";
+import { CanvasEdgeOverlay } from "@/entities/product/ui/CanvasEdgeOverlay";
+import { setSunlightStyle, setAmbientStyle } from "./setLighting";
 
 // Formatos físicos: fallback para datos legacy sin artKind asignado.
 const PRINTED_TEMPLATES = ["Poster", "Canvas"];
@@ -82,20 +84,58 @@ export default function PrintedOption({ handle }: PrintedOptionProps) {
             </span>
           </Link>
         </div>
-        <div className="w-full overflow-hidden md:w-2/5">
+        {/* El mask vive en el wrapper (no en el <Image>) para que el fundido
+            del borde derecho también afecte a la obra colgada encima. */}
+        <div
+          className="relative w-full overflow-hidden md:w-2/5"
+          style={{
+            maskImage: "linear-gradient(to left, transparent, black 15%)",
+            WebkitMaskImage: "linear-gradient(to left, transparent, black 15%)",
+          }}
+        >
           <Image
-            src="/landing/printed-option.webp"
+            src="/set/Set3.png"
             alt="Framed ultra-high-definition pet portrait print in a cozy living room"
-            width={1200}
-            height={1607}
+            width={1082}
+            height={1454}
             sizes="(max-width: 768px) 100vw, 600px"
             className="h-auto w-full"
-            style={{
-              maskImage: "linear-gradient(to left, transparent, black 15%)",
-              WebkitMaskImage:
-                "linear-gradient(to left, transparent, black 15%)",
-            }}
           />
+          {printedProduct && (
+            // Obra colgada en la pared vacía del set (el suelo arranca al ~78%
+            // de la altura). Presentación canvas fija (no según template): esta
+            // sección vende el "ready-to-hang", aunque el print sea un póster.
+            // La sombra es cálida y cae a la derecha (el sol entra por la
+            // izquierda), con una segunda sombra de contacto que ancla el
+            // cuadro a la pared; el filtro acerca el artwork a la temperatura
+            // de la escena.
+            <div className="absolute left-[29%] top-[13%] w-[40%]">
+              <div className="relative shadow-[10px_12px_26px_-10px_rgba(96,66,38,0.40),2px_3px_6px_-2px_rgba(96,66,38,0.30)]">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={printedProduct.img}
+                  alt={printedProduct.name}
+                  loading="lazy"
+                  decoding="async"
+                  className="block h-auto w-full"
+                  style={{
+                    filter: "brightness(0.98) saturate(0.94) sepia(0.06)",
+                  }}
+                />
+                <CanvasEdgeOverlay />
+                <div
+                  aria-hidden
+                  className="pointer-events-none absolute inset-0"
+                  style={setSunlightStyle}
+                />
+                <div
+                  aria-hidden
+                  className="pointer-events-none absolute inset-0"
+                  style={setAmbientStyle}
+                />
+              </div>
+            </div>
+          )}
         </div>
       </Container>
     </section>
