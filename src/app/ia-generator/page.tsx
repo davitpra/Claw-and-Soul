@@ -15,9 +15,13 @@ import {
 
 import { Style } from "@/entities/art-style/model/styles";
 import { getFormatPhysicalSize } from "@/entities/product/lib/formatPhysicalSize";
+import { normalizeTemplate } from "@/entities/product/lib/template";
 import { useCompatStyles } from "@/hooks/useCompatStyles";
 import { useAllStyles } from "@/hooks/useAllStyles";
 import { useFormatOptions } from "@/hooks/useFormatOptions";
+import { useGenerateImage, type GeneratePayload } from "@/hooks/useGenerateImage";
+import { useCredits } from "@/hooks/useCredits";
+import { useCart } from "@/context/CartContext";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001/api";
 
@@ -91,6 +95,15 @@ function IAGeneratorContent() {
   });
   const [styleSkipResolved, setStyleSkipResolved] = useState(false);
   const [generationId, setGenerationId] = useState<string | null>(null);
+  // Payload de la última generación disparada: permite reintentar desde
+  // IAThanksStep sin volver al paso de upload.
+  const [lastPayload, setLastPayload] = useState<GeneratePayload | null>(null);
+  const [retrying, setRetrying] = useState(false);
+  const [retryError, setRetryError] = useState<string | null>(null);
+
+  const { generate } = useGenerateImage();
+  const { refresh: refreshCredits } = useCredits();
+  const { addToCart, removeItem } = useCart();
 
   useEffect(() => {
     if (!styleIdFromUrl) return;
@@ -197,6 +210,50 @@ function IAGeneratorContent() {
     deepLinkTemplate,
   ]);
 
+  // Reintenta la generación fallida con el mismo payload, sin salir de la
+  // pantalla de "Thank you". Un nuevo generationId reinicia el polling.
+  const handleRetry = async () => {
+    if (!lastPayload) return;
+    setRetrying(true);
+    setRetryError(null);
+    try {
+      const g = await generate(lastPayload);
+      // La generación consumió 1 crédito: refrescamos el saldo del badge.
+      void refreshCredits();
+
+      // Producto físico: el item del carrito referenciaba el generationId que
+      // falló. Lo reemplazamos por el nuevo (mismo variantId) para que checkout
+      // y updateItemImage apunten a la generación buena. Digital/deep-link no
+      // van al carrito, así que se omiten.
+      const info = effectiveProductInfo;
+      const isDigital = normalizeTemplate(info?.template) === "Digital";
+      if (info && !isDigital) {
+        removeItem(info.shopifyVariantId);
+        addToCart({
+          id: g.id,
+          variantId: info.shopifyVariantId,
+          name: info.productTitle,
+          size: info.formatLabel,
+          style: resolvedStyle?.name ?? undefined,
+          price: parseFloat(info.price),
+          quantity: 1,
+          img: info.productImage,
+          generationId: g.id,
+        });
+      }
+
+      setGenerationId(g.id);
+    } catch (err) {
+      setRetryError(
+        err instanceof Error && err.message
+          ? err.message
+          : "Couldn't retry. Please try again.",
+      );
+    } finally {
+      setRetrying(false);
+    }
+  };
+
   return (
     <div className="bg-white text-slate-dark font-body min-h-screen flex flex-col transition-all duration-500">
       <IAHeader step={step} />
@@ -243,8 +300,9 @@ function IAGeneratorContent() {
               styleId={resolvedStyle?.id ?? null}
               productRefId={productRefId}
               formatId={formatId}
-              onNext={(genId) => {
+              onNext={(genId, payload) => {
                 setGenerationId(genId);
+                setLastPayload(payload);
                 setStep(4);
               }}
               productInfo={effectiveProductInfo}
@@ -260,6 +318,9 @@ function IAGeneratorContent() {
               formatWidth={effectiveProductInfo?.formatWidth}
               formatHeight={effectiveProductInfo?.formatHeight}
               template={effectiveProductInfo?.template}
+              onRetry={lastPayload ? handleRetry : undefined}
+              retrying={retrying}
+              retryError={retryError}
             />
           )}
         </>

@@ -1,4 +1,5 @@
 import type { SelectedProductInfo } from "../IAProductStep";
+import type { GeneratePayload } from "@/hooks/useGenerateImage";
 
 export interface PetPhoto {
   id: string;
@@ -28,7 +29,7 @@ export interface IAUploadStepProps {
   styleId: string | null;
   productRefId: string | null;
   formatId: string | null;
-  onNext: (generationId: string) => void;
+  onNext: (generationId: string, payload: GeneratePayload) => void;
   productInfo: SelectedProductInfo | null;
   styleName: string | null;
   userSelections?: Record<string, string | number>;

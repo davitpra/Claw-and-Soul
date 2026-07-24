@@ -33,7 +33,9 @@ function generationToProduct(generation: UserGeneration, img: string): Product {
     desc: generation.style?.displayName || "",
     price: "",
     img,
-    label: generationStatusBadge(generation.status).label,
+    label:
+      generation.style?.displayName ||
+      generationStatusBadge(generation.status).label,
   };
 }
 
@@ -255,8 +257,10 @@ export function AllArtWorks() {
   // Conservamos el índice global para el stagger de entrada y para variar el skeleton.
   const columnCount = useColumnCount();
   const columns = useMemo(() => {
-    const cols: { generation: UserGeneration; index: number }[][] =
-      Array.from({ length: columnCount }, () => []);
+    const cols: { generation: UserGeneration; index: number }[][] = Array.from(
+      { length: columnCount },
+      () => [],
+    );
     generations.forEach((generation, index) =>
       cols[index % columnCount].push({ generation, index }),
     );
@@ -294,7 +298,7 @@ export function AllArtWorks() {
               <span className="material-symbols-outlined text-[18px]">
                 refresh
               </span>
-              Retry
+              Sorry
             </button>
           </div>
         )}

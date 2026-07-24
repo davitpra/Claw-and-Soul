@@ -4,17 +4,25 @@ import { useState } from "react";
 import { Container } from "@/shared/ui/Container";
 import { useRouter } from "next/navigation";
 import { CanvasEdgeOverlay } from "@/entities/product/ui/CanvasEdgeOverlay";
-import {
-  toFrameStyle,
-  POSTER_FRAME,
-} from "@/entities/product/lib/frameStyle";
+import { toFrameStyle, POSTER_FRAME } from "@/entities/product/lib/frameStyle";
 import {
   setSunlightStyle,
   setAmbientStyle,
 } from "@/entities/product/lib/setLighting";
 import { useGenerationStatus } from "@/hooks/useGenerationStatus";
+import { useRotatingMessage } from "@/hooks/useRotatingMessage";
 import { useCart } from "@/context/CartContext";
 import { useShopifyCheckout } from "@/hooks/useShopifyCheckout";
+
+// Frases de espera que van rotando mientras la IA genera el arte (estilo status
+// ticker de Claude Code). Const a nivel de módulo → referencia estable para el hook.
+const CRAFTING_MESSAGES = [
+  "Sketching the first lines…",
+  "Mixing the perfect palette…",
+  "Capturing your pet's personality…",
+  "Adding brushstrokes of character…",
+  "Bringing your artwork to life…",
+];
 
 // Escala de la imagen del producto centrada según el formato elegido. Tuneables:
 const BASE_WIDTH_PCT = 90; // % del panel que ocupa el lado mayor del formato de referencia
@@ -27,6 +35,11 @@ interface IAThanksStepProps {
   formatWidth?: number | null;
   formatHeight?: number | null;
   template?: string | null;
+  // Reintenta la generación fallida (re-dispara la petición en el padre). Sin
+  // este handler no se muestra el botón de reintentar.
+  onRetry?: () => void;
+  retrying?: boolean;
+  retryError?: string | null;
 }
 
 export function IAThanksStep({
@@ -35,12 +48,18 @@ export function IAThanksStep({
   formatWidth,
   formatHeight,
   template,
+  onRetry,
+  retrying = false,
+  retryError,
 }: IAThanksStepProps) {
   const router = useRouter();
 
   // La presentación del cuadro (lienzo / póster / plano) se deriva del tipo de
   // producto, igual que en el resto de la app (ProductGallery, Hero, etc.).
   const frameStyle = toFrameStyle(template);
+  // El arte "art" (Digital/PBN) solo ofrece convertir a Paint by Numbers; el
+  // arte físico (canvas/poster) va a checkout y no muestra ese CTA.
+  const isArt = frameStyle === "art";
 
   // La petición de generación ya se disparó antes de llegar aquí; hacemos
   // polling hasta tener el resultado y lo mostramos en lugar del mockup.
@@ -49,6 +68,19 @@ export function IAThanksStep({
   // Sin generationId no hay nada que esperar; en "failed" el mockup queda
   // estático (el copy ya cubre el fallback por email).
   const isGenerating = !!generationId && !imageUrl && status !== "failed";
+  // En fallo ofrecemos reintentar en lugar de dejar los CTAs "cargando" para
+  // siempre; el botón de reintentar solo aparece si el padre pasó onRetry.
+  const isFailed = status === "failed";
+
+  // Mientras se genera, la frase rota cada ~3s; al terminar mostramos el copy final
+  // (o un fallback tranquilizador si la generación falló / se demoró).
+  const craftingMessage = useRotatingMessage(CRAFTING_MESSAGES, {
+    active: isGenerating,
+  });
+  const doneMessage =
+    status === "failed"
+      ? "This is taking a little longer than usual — we'll email your artwork and keep it in your profile."
+      : "Your artwork is ready — you'll find it anytime in your profile.";
 
   // El CTA de PBN queda en suspenso hasta que la imagen generada aparece en
   // pantalla (imageUrl del polling); solo entonces se puede convertir.
@@ -68,7 +100,7 @@ export function IAThanksStep({
   const [checkoutError, setCheckoutError] = useState<string | null>(null);
   // Solo ofrecemos checkout/carrito cuando la imagen generada ya está lista
   // (pbnReady) y hay algo en el carrito.
-  const showCheckout = cartCount > 0 && pbnReady;
+  const showCheckout = !isArt && cartCount > 0 && pbnReady;
 
   const handleCheckout = async () => {
     setCheckoutError(null);
@@ -176,30 +208,77 @@ export function IAThanksStep({
                   <div className="h-px flex-1 max-w-30 bg-[#E0DED9]" />
                 </div>
 
-                <p className="text-slate-dark/70 text-base leading-relaxed">
-                  We&apos;re crafting your artwork right now. As soon as
-                  it&apos;s ready, we&apos;ll send it to your email. You can
-                  also find it in your profile.
+                <p className="text-slate-dark/70 text-base leading-relaxed min-h-12">
+                  {isGenerating ? (
+                    <span
+                      key={craftingMessage}
+                      className="inline-block animate-in fade-in duration-700"
+                    >
+                      {craftingMessage}
+                    </span>
+                  ) : (
+                    doneMessage
+                  )}
                 </p>
 
                 <div className="flex flex-col items-center gap-3 mt-2 w-full">
-                  <button
-                    onClick={goToPbnStudio}
-                    disabled={!pbnReady}
-                    aria-busy={!pbnReady}
-                    className="w-full flex items-center justify-center gap-2 rounded-xl bg-primary hover:bg-primary-dark text-white px-6 py-3 text-sm font-bold transition-all shadow-sm hover:shadow-md hover:scale-105 disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:scale-100 disabled:hover:shadow-sm disabled:hover:bg-primary"
-                  >
-                    <span
-                      className={`material-symbols-outlined text-[18px] ${
-                        pbnReady ? "" : "animate-spin"
-                      }`}
-                    >
-                      {pbnReady ? "format_paint" : "progress_activity"}
-                    </span>
-                    {pbnReady
-                      ? "Turn into Paint by Numbers"
-                      : "Preparing your artwork…"}
-                  </button>
+                  {isFailed && onRetry && (
+                    <>
+                      <button
+                        onClick={onRetry}
+                        disabled={retrying}
+                        aria-busy={retrying}
+                        className="w-full flex items-center justify-center gap-2 rounded-xl bg-primary hover:bg-primary-dark text-white px-6 py-3 text-sm font-bold transition-all shadow-sm hover:shadow-md hover:scale-105 disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:scale-100 disabled:hover:shadow-sm disabled:hover:bg-primary"
+                      >
+                        <span
+                          className={`material-symbols-outlined text-[18px] ${
+                            retrying ? "animate-spin" : ""
+                          }`}
+                        >
+                          {retrying ? "progress_activity" : "refresh"}
+                        </span>
+                        {retrying ? "Retrying…" : "Retry"}
+                      </button>
+                      {retryError && (
+                        <p className="text-sm text-red-600 text-center">
+                          {retryError}
+                        </p>
+                      )}
+                    </>
+                  )}
+
+                  {isArt && (
+                    <>
+                      {!isFailed && (
+                        <button
+                          onClick={goToPbnStudio}
+                          disabled={!pbnReady}
+                          aria-busy={!pbnReady}
+                          className="w-full flex items-center justify-center gap-2 rounded-xl bg-primary hover:bg-primary-dark text-white px-6 py-3 text-sm font-bold transition-all shadow-sm hover:shadow-md hover:scale-105 disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:scale-100 disabled:hover:shadow-sm disabled:hover:bg-primary"
+                        >
+                          <span
+                            className={`material-symbols-outlined text-[18px] ${
+                              pbnReady ? "" : "animate-spin"
+                            }`}
+                          >
+                            {pbnReady ? "format_paint" : "progress_activity"}
+                          </span>
+                          {pbnReady
+                            ? "Turn into Paint by Numbers"
+                            : "Preparing your artwork…"}
+                        </button>
+                      )}
+                      <button
+                        onClick={() => router.push("/user/generations")}
+                        className="w-full flex items-center justify-center gap-2 rounded-xl bg-white border border-[#E0DED9] text-slate-dark hover:bg-gray-50 px-6 py-3 text-sm font-bold transition-all shadow-sm hover:shadow-md"
+                      >
+                        <span className="material-symbols-outlined text-[18px]">
+                          brush
+                        </span>
+                        See all my Artwork
+                      </button>
+                    </>
+                  )}
 
                   {showCheckout && (
                     <>
@@ -207,7 +286,7 @@ export function IAThanksStep({
                         onClick={handleCheckout}
                         disabled={isCheckingOut}
                         aria-busy={isCheckingOut}
-                        className="w-full flex items-center justify-center gap-2 rounded-xl bg-white border border-[#E0DED9] text-slate-dark hover:bg-gray-50 px-6 py-3 text-sm font-bold transition-all shadow-sm hover:shadow-md disabled:opacity-60 disabled:cursor-not-allowed"
+                        className="w-full flex items-center justify-center gap-2 rounded-xl bg-primary hover:bg-primary-dark text-white px-6 py-3 text-sm font-bold transition-all shadow-sm hover:shadow-md hover:scale-105 disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:scale-100 disabled:hover:shadow-sm disabled:hover:bg-primary"
                       >
                         <span
                           className={`material-symbols-outlined text-[18px] ${
@@ -222,7 +301,7 @@ export function IAThanksStep({
                       </button>
                       <button
                         onClick={() => router.push("/cart")}
-                        className="w-full flex items-center justify-center gap-2 rounded-xl bg-white border border-[#E0DED9] text-slate-dark hover:bg-gray-50 px-6 py-3 text-sm font-bold transition-all shadow-sm hover:shadow-md"
+                        className="w-full flex items-center justify-center gap-2 rounded-xl bg-primary hover:bg-primary-dark text-white px-6 py-3 text-sm font-bold transition-all shadow-sm hover:shadow-md hover:scale-105 disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:scale-100 disabled:hover:shadow-sm disabled:hover:bg-primary"
                       >
                         <span className="material-symbols-outlined text-[18px]">
                           shopping_cart
@@ -234,18 +313,17 @@ export function IAThanksStep({
                           {checkoutError}
                         </p>
                       )}
+                      <button
+                        onClick={() => router.push("/user/generations")}
+                        className="w-full flex items-center justify-center gap-2 rounded-xl bg-white border border-[#E0DED9] text-slate-dark hover:bg-gray-50 px-6 py-3 text-sm font-bold transition-all shadow-sm hover:shadow-md"
+                      >
+                        <span className="material-symbols-outlined text-[18px]">
+                          brush
+                        </span>
+                        See all my Artwork
+                      </button>
                     </>
                   )}
-
-                  <button
-                    onClick={() => router.push("/user")}
-                    className="w-full flex items-center justify-center gap-2 rounded-xl bg-white border border-[#E0DED9] text-slate-dark hover:bg-gray-50 px-6 py-3 text-sm font-bold transition-all shadow-sm hover:shadow-md"
-                  >
-                    <span className="material-symbols-outlined text-[18px]">
-                      person
-                    </span>
-                    Go to Profile
-                  </button>
                   <button
                     onClick={() => router.push("/")}
                     className="w-full flex items-center justify-center gap-2 rounded-xl bg-white border border-[#E0DED9] text-slate-dark hover:bg-gray-50 px-6 py-3 text-sm font-bold transition-all shadow-sm hover:shadow-md"

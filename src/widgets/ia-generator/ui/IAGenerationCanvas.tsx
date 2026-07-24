@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useEffect } from "react";
 import { GenerationStatus } from "@/hooks/useGenerationStatus";
+import { useRotatingMessage } from "@/hooks/useRotatingMessage";
 
 interface IAGenerationCanvasProps {
   status: GenerationStatus;
@@ -29,15 +29,9 @@ export function IAGenerationCanvas({
   error,
   onRetry,
 }: IAGenerationCanvasProps) {
-  const [msgIndex, setMsgIndex] = useState(0);
-
-  useEffect(() => {
-    if (status !== "processing") return;
-    const id = setInterval(() => {
-      setMsgIndex((i) => (i + 1) % PROCESSING_MESSAGES.length);
-    }, 3000);
-    return () => clearInterval(id);
-  }, [status]);
+  const processingMessage = useRotatingMessage(PROCESSING_MESSAGES, {
+    active: status === "processing",
+  });
 
   if (status === "completed" && imageUrl) {
     return (
@@ -105,9 +99,7 @@ export function IAGenerationCanvas({
         <div className="absolute inset-0 flex flex-col items-center justify-center gap-4 p-6">
           <div className="size-14 rounded-full border-4 border-primary border-t-transparent animate-spin" />
           <p className="text-slate-700 font-semibold text-lg text-center">
-            {isCreating
-              ? "Iniciando generación..."
-              : PROCESSING_MESSAGES[msgIndex]}
+            {isCreating ? "Iniciando generación..." : processingMessage}
           </p>
           {progress != null && (
             <div className="w-full max-w-xs h-2 bg-slate-200 rounded-full overflow-hidden">

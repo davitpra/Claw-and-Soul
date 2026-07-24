@@ -58,7 +58,7 @@ export function useGenerationStatus(
           status: "failed",
           progress: null,
           imageUrl: null,
-          error: "La generación está tardando más de lo normal. Intenta de nuevo.",
+          error: "This is taking longer than usual. Please try again.",
         });
         return;
       }
@@ -95,7 +95,7 @@ export function useGenerationStatus(
             status: "failed",
             progress: null,
             imageUrl: null,
-            error: "La generación falló. Por favor intenta de nuevo.",
+            error: "Generation failed. Please try again.",
           });
           return;
         }

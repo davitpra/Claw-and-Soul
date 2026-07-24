@@ -231,7 +231,9 @@ export function usePetUploadForm({
       try {
         const { petId, petPhotoId } = await savePet();
 
-        const generation = await generate({
+        // El payload se guarda para permitir reintentar la generación desde
+        // IAThanksStep sin volver a subir la mascota/fotos.
+        const payload = {
           petId,
           petPhotoId: petPhotoId ?? undefined,
           formatId,
@@ -240,7 +242,9 @@ export function usePetUploadForm({
             userSelections && Object.keys(userSelections).length > 0
               ? userSelections
               : undefined,
-        });
+        };
+
+        const generation = await generate(payload);
 
         // La generación consumió 1 crédito: refrescamos el saldo del badge.
         void refreshCredits();
@@ -269,7 +273,7 @@ export function usePetUploadForm({
           }
         }
 
-        onNext(generation.id);
+        onNext(generation.id, payload);
       } catch (err) {
         // Surface the backend message (e.g. the 402 "out of credits" error)
         // when available, falling back to a generic one.
