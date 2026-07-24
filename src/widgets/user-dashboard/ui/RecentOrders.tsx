@@ -1,10 +1,11 @@
 "use client";
 
 import Link from "next/link";
+import { useShopifyVariantImages } from "@/hooks/useShopifyVariantImages";
 import {
   formatOrderDate,
   formatPrice,
-  itemThumb,
+  resolveItemImage,
   statusBadge,
 } from "@/entities/order/lib/presentation";
 import type { UserOrderListItem } from "@/entities/order/types";
@@ -15,9 +16,12 @@ interface Props {
   error: string | null;
 }
 
-function thumbFor(order: UserOrderListItem) {
+function thumbFor(
+  order: UserOrderListItem,
+  variantImages: Record<string, string>,
+) {
   const item = order.items?.[0];
-  return item ? itemThumb(item) : null;
+  return item ? resolveItemImage(item, variantImages) : null;
 }
 
 function itemSummary(order: UserOrderListItem): string {
@@ -28,6 +32,11 @@ function itemSummary(order: UserOrderListItem): string {
 }
 
 export function RecentOrders({ orders, isLoading, error }: Props) {
+  // Imagen live de Shopify para ítems primarios sin imagen persistida (accesorios).
+  const variantImages = useShopifyVariantImages(
+    orders.map((o) => o.items?.[0]?.shopifyHandle),
+  );
+
   return (
     <section className="rounded-xl bg-white p-6">
       <div className="flex items-center justify-between">
@@ -73,7 +82,7 @@ export function RecentOrders({ orders, isLoading, error }: Props) {
           <ul className="space-y-3">
             {orders.map((order) => {
               const badge = statusBadge(order);
-              const thumb = thumbFor(order);
+              const thumb = thumbFor(order, variantImages);
               return (
                 <li key={order.id}>
                   <Link

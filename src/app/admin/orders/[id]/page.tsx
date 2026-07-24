@@ -30,8 +30,10 @@ import {
 } from "@/entities/admin/lib/financial-status";
 import { shopifyOrderUrl } from "@/entities/admin/lib/shopify-admin-url";
 import { fmtDate } from "@/entities/admin/lib/order-format";
-import { shopifyFetch } from "@/lib/shopify/client";
-import { GET_PRODUCT } from "@/lib/shopify/queries/products";
+import {
+  useShopifyVariantImages,
+  variantNumericId,
+} from "@/hooks/useShopifyVariantImages";
 import { OrderItemCard } from "./_components/OrderItemCard";
 import { CancelOrderModal } from "./_components/CancelOrderModal";
 import { CustomerCard } from "./_components/CustomerCard";
@@ -39,67 +41,24 @@ import { OrderTotalsCard } from "./_components/OrderTotalsCard";
 import { OrderEventsCard } from "./_components/OrderEventsCard";
 import { RawPayloadCard } from "./_components/RawPayloadCard";
 
-// Storefront ids are GIDs (gid://shopify/ProductVariant/123) but the order's
-// productVariant stores the bare numeric id — key by the numeric tail to match.
-const variantNumericId = (id: string) => id.split("/").pop() ?? id;
-
 export default function AdminOrderDetailPage() {
   const { id } = useParams<{ id: string }>();
   const [order, setOrder] = useState<AdminOrderDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [resyncing, setResyncing] = useState(false);
   const [cancelItemIds, setCancelItemIds] = useState<string[] | null>(null);
-  const [shopifyVariantImages, setShopifyVariantImages] = useState<
-    Record<string, string>
-  >({});
 
-  // Best-effort: fetch the live Shopify variant image for each distinct product
-  // handle in the order, keyed by numeric variant id (mismo patrón que la página
-  // de producto admin).
-  async function loadShopifyImages(order: AdminOrderDetail) {
-    const handles = Array.from(
-      new Set(
-        order.items
-          .map((i) => i.productRef?.shopifyHandle)
-          .filter((h): h is string => !!h),
-      ),
-    );
-    if (handles.length === 0) return;
-    const byVariant: Record<string, string> = {};
-    await Promise.all(
-      handles.map(async (handle) => {
-        try {
-          const { data } = await shopifyFetch<{
-            product: {
-              variants: {
-                edges: Array<{
-                  node: {
-                    id: string;
-                    image: { url: string } | null;
-                  };
-                }>;
-              };
-            } | null;
-          }>({ query: GET_PRODUCT, variables: { handle } });
-          for (const { node } of data.product?.variants.edges ?? []) {
-            if (node.image) {
-              byVariant[variantNumericId(node.id)] = node.image.url;
-            }
-          }
-        } catch {
-          // best-effort
-        }
-      }),
-    );
-    setShopifyVariantImages(byVariant);
-  }
+  // Best-effort: imagen live de Shopify de cada handle de producto de la orden,
+  // indexada por id numérico de variante (mismo hook que usa el storefront).
+  const shopifyVariantImages = useShopifyVariantImages(
+    (order?.items ?? []).map((i) => i.productRef?.shopifyHandle),
+  );
 
   async function load() {
     setLoading(true);
     try {
       const data = await adminApi.orders.detail(id);
       setOrder(data);
-      loadShopifyImages(data);
     } finally {
       setLoading(false);
     }
@@ -215,11 +174,9 @@ export default function AdminOrderDetailPage() {
                 userId={order.userId}
                 currency={order.currency}
                 shopifyImageUrl={
-                  item.productVariant?.shopifyVariantId
-                    ? (shopifyVariantImages[
-                        variantNumericId(item.productVariant.shopifyVariantId)
-                      ] ?? null)
-                    : null
+                  shopifyVariantImages[
+                    variantNumericId(item.productVariant?.shopifyVariantId) ?? ""
+                  ] ?? null
                 }
                 onUpdate={load}
                 onRequestCancel={setCancelItemIds}

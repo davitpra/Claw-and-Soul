@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { useAuthFetch } from "@/hooks/useAuthFetch";
+import { useShopifyVariantImages } from "@/hooks/useShopifyVariantImages";
 import { isNotFound } from "@/shared/lib/http";
 import SectionHeading from "@/shared/ui/SectionHeading";
 import {
@@ -45,6 +46,13 @@ export function OrderDetail({ id }: Props) {
   useEffect(() => {
     load();
   }, [load]);
+
+  // Resuelve, best-effort, la imagen live de Shopify de los ítems sin imagen
+  // persistida (accesorios). El hook se llama incondicionalmente (antes de los
+  // early returns) para respetar las reglas de hooks; con orden vacía es no-op.
+  const variantImages = useShopifyVariantImages(
+    (order?.items ?? []).map((item) => item.shopifyHandle),
+  );
 
   if (isLoading) {
     return (
@@ -193,7 +201,11 @@ export function OrderDetail({ id }: Props) {
           ) : (
             <ul className="mt-4 grid grid-cols-2 gap-4 sm:grid-cols-3">
               {items.map((item) => (
-                <OrderItemRow key={item.id} item={item} />
+                <OrderItemRow
+                  key={item.id}
+                  item={item}
+                  variantImages={variantImages}
+                />
               ))}
             </ul>
           )}

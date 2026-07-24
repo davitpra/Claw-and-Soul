@@ -1,6 +1,7 @@
 // Helpers de presentación para órdenes, compartidos por RecentOrders, AllOrders y
 // OrderDetail. Antes estaban duplicados en cada widget.
 
+import { variantNumericId } from "@/hooks/useShopifyVariantImages";
 import type { Address, OrderItemThumb, UserOrderListItem } from "../types";
 
 export function formatOrderDate(iso: string): string {
@@ -115,14 +116,29 @@ export function generationStatusBadge(status: string): StatusBadge {
   );
 }
 
-// Mejor imagen disponible para un item: thumbnail de generación → resultado → imagen.
+// Mejor imagen disponible para un item: thumbnail de generación → resultado →
+// imagen del item → imagen primaria del estilo (catálogo) como último fallback.
 export function itemThumb(item: OrderItemThumb): string | null {
   return (
     item.generation?.thumbnailUrl ||
     item.generation?.resultUrl ||
     item.imageUrl ||
+    item.productImageUrl ||
     null
   );
+}
+
+// Como `itemThumb`, pero con un último recurso: la imagen live de la variante de
+// Shopify (mapa `variantNumericId → url` de `useShopifyVariantImages`). Cubre
+// ítems sin ninguna imagen persistida, como accesorios sin estilo ni generación.
+export function resolveItemImage(
+  item: OrderItemThumb,
+  variantImages: Record<string, string>,
+): string | null {
+  const persisted = itemThumb(item);
+  if (persisted) return persisted;
+  const numericId = variantNumericId(item.shopifyVariantId);
+  return (numericId && variantImages[numericId]) || null;
 }
 
 // Aplana una dirección de envío (JSON libre de Shopify) a una sola línea legible.

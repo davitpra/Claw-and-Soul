@@ -3,11 +3,12 @@
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { useAuthFetch } from "@/hooks/useAuthFetch";
+import { useShopifyVariantImages } from "@/hooks/useShopifyVariantImages";
 import { ProductCard } from "@/entities/pet-product/ui/ProductCard";
 import type { Product } from "@/entities/pet-product/model/types";
 import {
   formatPrice,
-  itemThumb,
+  resolveItemImage,
   statusBadge,
 } from "@/entities/order/lib/presentation";
 import type {
@@ -19,13 +20,20 @@ import type {
 // Adapta una orden al shape `Product` que consume ProductCard: la imagen del
 // item principal hace de "poster", el número de orden de nombre y el total de
 // precio. El badge superpuesto reutiliza el estado de fulfillment de la orden.
-function orderToProduct(order: UserOrderListItem): Product {
+// `variantImages` resuelve la imagen live de Shopify cuando el item no tiene
+// ninguna imagen persistida (accesorios).
+function orderToProduct(
+  order: UserOrderListItem,
+  variantImages: Record<string, string>,
+): Product {
   const primary = order.items?.[0];
   return {
     name: `Order ${order.orderNumber}`,
     desc: "",
     price: formatPrice(order.totalAmount, order.currency),
-    img: (primary ? itemThumb(primary) : null) ?? "/placeholder-image.jpg",
+    img:
+      (primary ? resolveItemImage(primary, variantImages) : null) ??
+      "/placeholder-image.jpg",
     label: statusBadge(order).label,
   };
 }
@@ -80,6 +88,12 @@ export function AllOrders() {
   }, [loadPage]);
 
   const hasMore = page < totalPages;
+
+  // Resuelve, best-effort, la imagen live de Shopify de los ítems primarios que
+  // no tienen imagen persistida (p. ej. accesorios sin estilo ni generación).
+  const variantImages = useShopifyVariantImages(
+    orders.map((o) => o.items?.[0]?.shopifyHandle),
+  );
 
   return (
     <div className="space-y-6">
@@ -148,7 +162,7 @@ export function AllOrders() {
                 return (
                   <ProductCard
                     key={order.id}
-                    product={orderToProduct(order)}
+                    product={orderToProduct(order, variantImages)}
                     href={`/user/orders/${order.id}`}
                   />
                 );

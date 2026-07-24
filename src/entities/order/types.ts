@@ -33,6 +33,13 @@ export interface OrderItemThumb {
   // fulfillmentDisplayStatus), no estado por item. Aquí solo van datos de display.
   imageUrl: string | null;
   generation: { resultUrl: string | null; thumbnailUrl: string | null } | null;
+  // Imagen primaria del estilo del producto (catálogo). Último fallback cuando el
+  // item no trae arte de IA ni imageUrl propio — p. ej. productos sin generación.
+  productImageUrl: string | null;
+  // Datos de Shopify para resolver la imagen live del producto cuando no hay
+  // ninguna imagen persistida (accesorios sin estilo). Mismo mecanismo que el admin.
+  shopifyHandle: string | null;
+  shopifyVariantId: string | null;
 }
 
 export interface UserOrderListItem {
