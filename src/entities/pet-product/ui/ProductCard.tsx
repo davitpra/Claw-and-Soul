@@ -187,6 +187,21 @@ export function ProductCard({
           </div>
         )}
 
+        {/* Personalizar con IA se paga con saldo, no con dinero: 1 crédito por
+            obra. Se muestra junto al precio para dejar claro el costo del kit.
+            Los accesorios (foto de producto) y los propios packs de créditos no
+            se personalizan, así que se excluyen. */}
+        {showPrice &&
+          frameStyle !== "accessory" &&
+          frameStyle !== "credits" && (
+          <p className="flex items-center gap-1 text-xs font-semibold text-slate-dark/60">
+            <span className="material-symbols-outlined text-[14px] text-primary">
+              paid
+            </span>
+            1 credit
+          </p>
+        )}
+
         {cta}
       </div>
     </div>
