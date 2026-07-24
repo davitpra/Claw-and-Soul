@@ -50,16 +50,6 @@ export const GET_PRODUCT = `
     handle
     description
     descriptionHtml
-    thankYouImage: metafield(namespace: "custom", key: "thank_you_image") {
-      reference {
-        ... on MediaImage {
-          image {
-            url
-            altText
-          }
-        }
-      }
-    }
     relatedProducts: metafield(namespace: "shopify--discovery--product_recommendation", key: "related_products") {
       references(first: 12) {
         edges {

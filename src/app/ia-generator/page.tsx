@@ -14,7 +14,6 @@ import {
 } from "@/widgets/ia-generator";
 
 import { Style } from "@/entities/art-style/model/styles";
-import { getThankYouImage } from "@/entities/product/lib/getThankYouImage";
 import { getFormatPhysicalSize } from "@/entities/product/lib/formatPhysicalSize";
 import { useCompatStyles } from "@/hooks/useCompatStyles";
 import { useAllStyles } from "@/hooks/useAllStyles";
@@ -185,7 +184,6 @@ function IAGeneratorContent() {
       productTitle: deepLinkShopifyProduct.title,
       productImage: deepLinkShopifyProduct.images.edges[0]?.node.url ?? "",
       formatLabel: f.displayName,
-      thankYouImageUrl: getThankYouImage(deepLinkShopifyProduct),
       template: deepLinkTemplate,
       formatWidth: physicalSize?.width ?? null,
       formatHeight: physicalSize?.height ?? null,

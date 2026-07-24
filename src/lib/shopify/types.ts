@@ -58,9 +58,6 @@ export interface ShopifyProduct {
   productType?: string;
   /** Rich HTML body from the Shopify admin (sanitized by Shopify). */
   descriptionHtml?: string;
-  thankYouImage?: {
-    reference?: { image?: ShopifyImage } | null;
-  } | null;
   /** Curados en Shopify vía Search & Discovery (related_products). */
   relatedProducts?: ShopifyProductReferences | null;
   /** Curados a mano en el metafield custom.similar_products. */

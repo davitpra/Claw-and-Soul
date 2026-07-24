@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from "react";
 import { getProducts } from "@/lib/shopify";
-import { getThankYouImage } from "@/entities/product/lib/getThankYouImage";
 import { getFormatPhysicalSize } from "@/entities/product/lib/formatPhysicalSize";
 import { useFormatOptions } from "@/hooks/useFormatOptions";
 import { FormatSelector } from "./FormatSelector";
@@ -25,7 +24,6 @@ export type SelectedProductInfo = {
   productTitle: string;
   productImage: string;
   formatLabel: string;
-  thankYouImageUrl: string | null;
   // Formato de entrega del backend (Digital | Canvas | Poster…); "PBN" legacy.
   // Digital es gratuito: el flujo de generación lo usa para omitir el carrito.
   template: string | null;
@@ -100,7 +98,6 @@ export function IAProductStep({ onSelect }: IAProductStepProps) {
         productTitle: selectedProduct?.title ?? "",
         productImage: selectedProduct?.image ?? "",
         formatLabel: selectedFormat.displayName,
-        thankYouImageUrl: getThankYouImage(product),
         template,
         formatWidth: physicalSize?.width ?? null,
         formatHeight: physicalSize?.height ?? null,
