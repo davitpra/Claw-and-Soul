@@ -12,7 +12,7 @@ import type { UncontrolledProps } from "react-medium-image-zoom";
 import "react-medium-image-zoom/dist/styles.css";
 
 /** Presentation applied to the product image. Mirrors ProductGallery's FrameStyle. */
-type FrameStyle = "canvas" | "poster" | "art";
+type FrameStyle = "canvas" | "poster" | "art" | "accessory" | "credits";
 
 interface ImageZoomProps {
   children: ReactNode;
@@ -139,7 +139,9 @@ export function ImageZoom({
         a11yNameButtonZoom="Zoom image"
         a11yNameButtonUnzoom="Close zoomed image"
         ZoomContent={
-          frameStyle === "art" ? undefined : makeZoomContent(frameStyle)
+          frameStyle === "canvas" || frameStyle === "poster"
+            ? makeZoomContent(frameStyle)
+            : undefined
         }
       >
         {children}

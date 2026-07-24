@@ -1,13 +1,15 @@
 import type { CSSProperties } from "react";
 
 /** Presentation applied to the product image based on the product type. */
-export type FrameStyle = "canvas" | "poster" | "art";
+export type FrameStyle = "canvas" | "poster" | "art" | "accessory" | "credits";
 
-// Only an explicit "Canvas"/"Poster" template gets a framed presentation; any
-// other value (or an unknown one) stays flat ("art").
+// Only an explicit "Canvas"/"Poster"/"Accessory"/"Credits" template gets a
+// distinct presentation; any other value (or an unknown one) stays flat ("art").
 export function toFrameStyle(template?: string | null): FrameStyle {
   if (template === "Canvas") return "canvas";
   if (template === "Poster") return "poster";
+  if (template === "Accessory") return "accessory";
+  if (template === "Credits") return "credits";
   return "art";
 }
 
@@ -18,11 +20,16 @@ export const POSTER_FRAME = "bg-white border border-black/10 p-2";
 // Per-type presentation for the product image. "art" keeps the original flat
 // float; "canvas" adds a directional float (the wrap darkening is a separate
 // overlay, see `canvasEdgeStyle`); "poster" adds a white paper margin with a
-// hairline edge and a flatter shadow.
+// hairline edge and a flatter shadow; "accessory" is a product photo with a
+// soft, centered "resting on a surface" shadow (no frame, no overlay);
+// "credits" gets a bespoke floating-coin layout in ProductCard, so its entry
+// here is just an inert fallback (mirrors "art") for any other consumer.
 export const FRAME_SHADOWS: Record<FrameStyle, string> = {
   art: "shadow-[0_14px_32px_-12px_rgba(16,54,66,0.40)]",
   canvas: "shadow-[8px_10px_22px_-8px_rgba(16,54,66,0.45)]",
   poster: `${POSTER_FRAME} shadow-[0_8px_20px_-12px_rgba(16,54,66,0.30)]`,
+  accessory: "p-4 shadow-[0_12px_28px_-14px_rgba(16,54,66,0.28)]",
+  credits: "shadow-[0_14px_32px_-12px_rgba(16,54,66,0.40)]",
 };
 
 // The canvas "wrap" darkening. Box-shadow insets don't render over an <img>

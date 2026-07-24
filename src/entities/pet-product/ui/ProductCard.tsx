@@ -16,11 +16,16 @@ export const posterClasses =
 
 // Efecto por tipo de producto en la card (mismo lenguaje visual que la galería
 // del producto): "canvas" con sombra de canto + oscurecido interior de bordes;
-// "poster" con margen de papel blanco y línea hairline; "art" queda plano.
+// "poster" con margen de papel blanco y línea hairline; "accessory" es una foto
+// de producto con sombra suave apoyada; "art" queda plano.
 const FRAME_CLASS: Record<FrameStyle, string> = {
   art: "",
   canvas: "shadow-[6px_8px_16px_-8px_rgba(16,54,66,0.42)]",
   poster: "border border-black/10 p-2",
+  accessory: "p-4 shadow-[0_12px_28px_-14px_rgba(16,54,66,0.28)]",
+  // Los créditos usan un layout de "moneda flotante" propio (ver más abajo), no
+  // el <Card>, así que estas clases no se aplican.
+  credits: "",
 };
 
 interface ProductCardProps {
@@ -80,13 +85,20 @@ export function ProductCard({
     href ??
     (product.shopifyHandle ? `/product/${product.shopifyHandle}` : undefined);
 
+  // Los accesorios son fotos de producto: se sienten "apoyados", así que no
+  // reciben el lift al hover (translate + sombra profunda) del resto de tipos.
+  const hoverClasses =
+    frameStyle === "accessory"
+      ? "transition-all duration-300 ease-out"
+      : posterClasses;
+
   const poster = (
     <Card
       imageUrl={product.img}
       imageAlt={product.name}
       onImageError={onImageError}
       naturalAspect={naturalAspect}
-      className={`${posterClasses} ${FRAME_CLASS[frameStyle]}`}
+      className={`${hoverClasses} ${FRAME_CLASS[frameStyle]}`}
     >
       {/* Oscurecido interior de bordes del canvas (va primero para no teñir el
           badge, que se pinta encima). */}
@@ -114,28 +126,54 @@ export function ProductCard({
     </Card>
   );
 
+  // Los créditos no son una obra: son saldo. En vez del <Card> rectangular se
+  // presentan como una "moneda flotante" — imagen recortada a círculo con canto,
+  // resplandor teal y una sombra elíptica que late mientras la moneda flota en
+  // bucle (animaciones idle en globals.css, desactivadas con reduce-motion).
+  const coin = (
+    <div className="mx-auto w-3/4">
+      <div className="animate-coin-float aspect-square w-full">
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src={product.img}
+          alt={product.name}
+          loading="lazy"
+          decoding="async"
+          onError={onImageError}
+          className="h-full w-full rounded-full object-cover ring-4 ring-white outline outline-1 outline-primary/30 shadow-[0_14px_30px_-8px_rgba(16,54,66,0.45)]"
+        />
+      </div>
+      <div
+        aria-hidden
+        className="animate-coin-shadow mx-auto mt-2 h-3 w-1/2 rounded-[50%] bg-[rgba(16,54,66,0.28)] blur-md"
+      />
+    </div>
+  );
+
+  const media = frameStyle === "credits" ? coin : poster;
+
   return (
-    <div className="group flex w-full min-w-0 flex-col gap-4">
+    <div className="group flex w-full min-w-0 flex-col gap-2">
       {linkHref ? (
         <Link href={linkHref} className="block">
-          {poster}
+          {media}
         </Link>
       ) : zoomable ? (
         <ImageZoom alt={product.name} zoomSrc={zoomSrc}>
-          {poster}
+          {media}
         </ImageZoom>
       ) : (
-        poster
+        media
       )}
 
-      <div className="flex flex-col items-center gap-3">
+      <div className="flex flex-col items-center gap-1">
         <h3 className="font-display font-black text-slate-dark md:text-lg text-center">
           {product.name}
         </h3>
 
         {showPrice && product.price && (
-          <div className="flex items-center gap-2">
-            <span className="text-slate-dark">{product.price}</span>
+          <div className="flex items-center gap-2 font-semibold">
+            <span className="text-primary">{product.price}</span>
             {product.compareAtPrice && (
               <span className="text-slate-dark/50 line-through">
                 {product.compareAtPrice}

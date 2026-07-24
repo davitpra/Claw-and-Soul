@@ -67,6 +67,34 @@
     }
   }
 
+  /* Moneda flotante (productos de Credits en el catálogo): la moneda sube y baja
+     en bucle mientras su sombra en el suelo se encoge/atenúa al elevarse, dando
+     la sensación de que flota. Ambas comparten periodo (3s) para ir en sincronía. */
+  --animate-coin-float: coin-float 3s ease-in-out infinite;
+  --animate-coin-shadow: coin-shadow 3s ease-in-out infinite;
+
+  @keyframes coin-float {
+    0%,
+    100% {
+      transform: translateY(4px);
+    }
+    50% {
+      transform: translateY(-6px);
+    }
+  }
+
+  @keyframes coin-shadow {
+    0%,
+    100% {
+      transform: scaleX(1);
+      opacity: 0.35;
+    }
+    50% {
+      transform: scaleX(0.8);
+      opacity: 0.2;
+    }
+  }
+
   /* Selector de tamaño: el valor gira sobre el eje X como un rodillo. El
      sentido lo elige el componente según si se sube o se baja de talla. */
   --animate-size-spin-up: size-spin-up 0.42s cubic-bezier(0.2, 0.7, 0.3, 1)
@@ -193,6 +221,8 @@
 @media (prefers-reduced-motion: reduce) {
   .animate-fade-in-up,
   .animate-marquee,
+  .animate-coin-float,
+  .animate-coin-shadow,
   .waves-layer,
   .light-ray {
     animation: none;
