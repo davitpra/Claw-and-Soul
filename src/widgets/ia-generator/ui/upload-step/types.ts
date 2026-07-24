@@ -28,7 +28,7 @@ export interface IAUploadStepProps {
   styleId: string | null;
   productRefId: string | null;
   formatId: string | null;
-  onNext: () => void;
+  onNext: (generationId: string) => void;
   productInfo: SelectedProductInfo | null;
   styleName: string | null;
   userSelections?: Record<string, string | number>;

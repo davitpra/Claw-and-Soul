@@ -7,6 +7,7 @@ import {
   setSunlightStyle,
   setAmbientStyle,
 } from "@/entities/product/lib/setLighting";
+import { useGenerationStatus } from "@/hooks/useGenerationStatus";
 
 // Escala de la imagen del producto centrada según el formato elegido. Tuneables:
 const BASE_WIDTH_PCT = 90; // % del panel que ocupa el lado mayor del formato de referencia
@@ -14,17 +15,27 @@ const REFERENCE_MAX_CM = 50; // lado (cm) del formato que alcanza BASE_WIDTH_PCT
 const MIN_SCALE = 0.4; // el formato más pequeño nunca baja de esto
 
 interface IAThanksStepProps {
+  generationId?: string | null;
   productImage?: string | null;
   formatWidth?: number | null;
   formatHeight?: number | null;
 }
 
 export function IAThanksStep({
+  generationId,
   productImage,
   formatWidth,
   formatHeight,
 }: IAThanksStepProps) {
   const router = useRouter();
+
+  // La petición de generación ya se disparó antes de llegar aquí; hacemos
+  // polling hasta tener el resultado y lo mostramos en lugar del mockup.
+  const { status, imageUrl } = useGenerationStatus(generationId ?? null);
+  const displayImage = imageUrl ?? productImage;
+  // Sin generationId no hay nada que esperar; en "failed" el mockup queda
+  // estático (el copy ya cubre el fallback por email).
+  const isGenerating = !!generationId && !imageUrl && status !== "failed";
 
   // El cuadro adopta la proporción real del formato y escala con su tamaño
   // físico (lado mayor). Sin dimensiones válidas caemos al ancho base con la
@@ -53,7 +64,7 @@ export function IAThanksStep({
           <div className="flex-1 flex flex-col md:flex-row animate-in fade-in duration-700">
             <div className="w-full md:w-1/2 bg-white flex items-center justify-center min-h-72 md:min-h-0">
               <div className="relative flex items-center justify-center overflow-hidden bg-white w-full max-w-2xl aspect-3/4 max-h-screen">
-                {productImage && (
+                {displayImage && (
                   // Imagen del producto centrada y escalada a la proporción y al
                   // tamaño del formato elegido. Conserva sombra + lienzo + luz.
                   <div
@@ -65,15 +76,16 @@ export function IAThanksStep({
                   >
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img
-                      src={productImage}
+                      key={displayImage}
+                      src={displayImage}
                       alt="Your personalized artwork"
                       loading="lazy"
                       decoding="async"
-                      className={
+                      className={`animate-in fade-in duration-700 ${
                         aspectRatio
                           ? "block h-full w-full object-cover"
                           : "block h-auto w-full"
-                      }
+                      }`}
                       style={{
                         filter: "brightness(0.98) saturate(0.94) sepia(0.06)",
                       }}
@@ -89,6 +101,12 @@ export function IAThanksStep({
                       className="pointer-events-none absolute inset-0"
                       style={setAmbientStyle}
                     />
+                    {isGenerating && (
+                      <div
+                        aria-hidden
+                        className="pointer-events-none absolute inset-0 animate-pulse bg-white/40"
+                      />
+                    )}
                   </div>
                 )}
               </div>

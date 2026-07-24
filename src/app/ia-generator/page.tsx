@@ -90,6 +90,7 @@ function IAGeneratorContent() {
     }
   });
   const [styleSkipResolved, setStyleSkipResolved] = useState(false);
+  const [generationId, setGenerationId] = useState<string | null>(null);
 
   useEffect(() => {
     if (!styleIdFromUrl) return;
@@ -242,7 +243,10 @@ function IAGeneratorContent() {
               styleId={resolvedStyle?.id ?? null}
               productRefId={productRefId}
               formatId={formatId}
-              onNext={() => setStep(4)}
+              onNext={(genId) => {
+                setGenerationId(genId);
+                setStep(4);
+              }}
               productInfo={effectiveProductInfo}
               styleName={resolvedStyle?.name ?? null}
               userSelections={userSelections}
@@ -251,6 +255,7 @@ function IAGeneratorContent() {
 
           {step === 4 && (
             <IAThanksStep
+              generationId={generationId}
               productImage={effectiveProductInfo?.productImage}
               formatWidth={effectiveProductInfo?.formatWidth}
               formatHeight={effectiveProductInfo?.formatHeight}

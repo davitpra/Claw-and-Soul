@@ -269,7 +269,7 @@ export function usePetUploadForm({
           }
         }
 
-        onNext();
+        onNext(generation.id);
       } catch (err) {
         // Surface the backend message (e.g. the 402 "out of credits" error)
         // when available, falling back to a generic one.
