@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { getProducts } from "@/lib/shopify";
 import { getThankYouImage } from "@/entities/product/lib/getThankYouImage";
+import { getFormatPhysicalSize } from "@/entities/product/lib/formatPhysicalSize";
 import { useFormatOptions } from "@/hooks/useFormatOptions";
 import { FormatSelector } from "./FormatSelector";
 import { StepNavigation } from "./StepNavigation";
@@ -28,6 +29,11 @@ export type SelectedProductInfo = {
   // Formato de entrega del backend (Digital | Canvas | Poster…); "PBN" legacy.
   // Digital es gratuito: el flujo de generación lo usa para omitir el carrito.
   template: string | null;
+  // Dimensiones físicas del formato elegido, en cm (leídas del valor de la
+  // talla de Shopify, no de los píxeles del backend). Escalan la obra colgada
+  // en el paso de agradecimiento (IAThanksStep).
+  formatWidth: number | null;
+  formatHeight: number | null;
 };
 
 interface IAProductStepProps {
@@ -83,6 +89,10 @@ export function IAProductStep({ onSelect }: IAProductStepProps) {
   const handleContinue = () => {
     if (productRefId && selectedFormat) {
       const selectedProduct = products.find((p) => p.handle === selectedHandle);
+      const physicalSize = getFormatPhysicalSize(
+        product,
+        selectedFormat.shopifyVariantId,
+      );
       onSelect(productRefId, selectedFormat.formatId, {
         shopifyVariantId: selectedFormat.shopifyVariantId,
         price: selectedFormat.price,
@@ -92,6 +102,8 @@ export function IAProductStep({ onSelect }: IAProductStepProps) {
         formatLabel: selectedFormat.displayName,
         thankYouImageUrl: getThankYouImage(product),
         template,
+        formatWidth: physicalSize?.width ?? null,
+        formatHeight: physicalSize?.height ?? null,
       });
     }
   };

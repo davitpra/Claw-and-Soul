@@ -2,13 +2,6 @@ import Link from "next/link";
 import Image from "next/image";
 import { GenerationStatus } from "@/hooks/useGenerationStatus";
 
-const STEP_LABELS: Record<number, string> = {
-  1: "Elige tu estilo",
-  2: "Crea tu cuenta",
-  3: "Sube tu foto",
-  4: "¡Listo!",
-};
-
 const TOTAL_STEPS = 4;
 
 interface IAHeaderProps {
@@ -29,7 +22,7 @@ export function IAHeader({ step, generationStatus }: IAHeaderProps) {
         >
           <div className="size-10 relative bg-white rounded-full">
             <Image
-              src="/Logo.jpg"
+              src="/Logo.svg"
               alt="Claw and Soul Logo"
               fill
               className="object-contain"

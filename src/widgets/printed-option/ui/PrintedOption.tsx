@@ -6,7 +6,7 @@ import { Container } from "@/shared/ui/Container";
 import { useProductStyle } from "@/hooks/useProductStyle";
 import { useSameStyleProducts } from "@/hooks/useSameStyleProducts";
 import { CanvasEdgeOverlay } from "@/entities/product/ui/CanvasEdgeOverlay";
-import { setSunlightStyle, setAmbientStyle } from "./setLighting";
+import { setSunlightStyle, setAmbientStyle } from "@/entities/product/lib/setLighting";
 
 // Formatos físicos: fallback para datos legacy sin artKind asignado.
 const PRINTED_TEMPLATES = ["Poster", "Canvas"];

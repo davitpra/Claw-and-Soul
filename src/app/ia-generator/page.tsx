@@ -15,6 +15,7 @@ import {
 
 import { Style } from "@/entities/art-style/model/styles";
 import { getThankYouImage } from "@/entities/product/lib/getThankYouImage";
+import { getFormatPhysicalSize } from "@/entities/product/lib/formatPhysicalSize";
 import { useCompatStyles } from "@/hooks/useCompatStyles";
 import { useAllStyles } from "@/hooks/useAllStyles";
 import { useFormatOptions } from "@/hooks/useFormatOptions";
@@ -30,9 +31,13 @@ function IAGeneratorContent() {
   const styleIdFromUrl = searchParams.get("style_id");
   const selectionsFromUrl = searchParams.get("selections");
 
-  const [pickedProductRefId, setPickedProductRefId] = useState<string | null>(null);
+  const [pickedProductRefId, setPickedProductRefId] = useState<string | null>(
+    null,
+  );
   const [pickedFormatId, setPickedFormatId] = useState<string | null>(null);
-  const [productInfo, setProductInfo] = useState<SelectedProductInfo | null>(null);
+  const [productInfo, setProductInfo] = useState<SelectedProductInfo | null>(
+    null,
+  );
 
   const productRefId = productRefIdFromUrl ?? pickedProductRefId;
   const formatId = formatIdFromUrl ?? pickedFormatId;
@@ -70,7 +75,9 @@ function IAGeneratorContent() {
   const [step, setStep] = useState(1);
   const [photos, setPhotos] = useState<File[]>([]);
   const [selectedStyle, setSelectedStyle] = useState<Style | null>(null);
-  const [userSelections, setUserSelections] = useState<Record<string, string | number>>(() => {
+  const [userSelections, setUserSelections] = useState<
+    Record<string, string | number>
+  >(() => {
     if (!selectionsFromUrl) return {};
     try {
       const parsed = JSON.parse(selectionsFromUrl) as Record<string, unknown>;
@@ -99,8 +106,15 @@ function IAGeneratorContent() {
       setStep((prev) => (prev === 1 ? (isAuthenticated ? 3 : 2) : prev));
     }
     setStyleSkipResolved(true);
-  }, [styleIdFromUrl, needsProductSelection, isLoadingStyles, isAuthLoading,
-      preselectedStyle, isAuthenticated, styleSkipResolved]);
+  }, [
+    styleIdFromUrl,
+    needsProductSelection,
+    isLoadingStyles,
+    isAuthLoading,
+    preselectedStyle,
+    isAuthenticated,
+    styleSkipResolved,
+  ]);
 
   const handleStyleSelect = (style: Style) => {
     setSelectedStyle(style);
@@ -127,15 +141,21 @@ function IAGeneratorContent() {
   useEffect(() => {
     if (!productRefIdFromUrl || productInfo) return;
     let cancelled = false;
-    fetch(`${API_URL}/products/${productRefIdFromUrl}`, { credentials: "include" })
+    fetch(`${API_URL}/products/${productRefIdFromUrl}`, {
+      credentials: "include",
+    })
       .then((r) => r.json())
       .then((json) => {
         if (cancelled) return;
         const data = "data" in json ? json.data : json;
-        setResolvedHandle((data as { shopifyHandle?: string })?.shopifyHandle ?? null);
+        setResolvedHandle(
+          (data as { shopifyHandle?: string })?.shopifyHandle ?? null,
+        );
       })
       .catch(() => {});
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, [productRefIdFromUrl, productInfo]);
 
   const {
@@ -146,9 +166,18 @@ function IAGeneratorContent() {
 
   const effectiveProductInfo: SelectedProductInfo | null = useMemo(() => {
     if (productInfo) return productInfo;
-    if (!formatIdFromUrl || !deepLinkShopifyProduct || deepLinkFormats.length === 0) return null;
+    if (
+      !formatIdFromUrl ||
+      !deepLinkShopifyProduct ||
+      deepLinkFormats.length === 0
+    )
+      return null;
     const f = deepLinkFormats.find((x) => x.formatId === formatIdFromUrl);
     if (!f) return null;
+    const physicalSize = getFormatPhysicalSize(
+      deepLinkShopifyProduct,
+      f.shopifyVariantId,
+    );
     return {
       shopifyVariantId: f.shopifyVariantId,
       price: f.price,
@@ -158,8 +187,16 @@ function IAGeneratorContent() {
       formatLabel: f.displayName,
       thankYouImageUrl: getThankYouImage(deepLinkShopifyProduct),
       template: deepLinkTemplate,
+      formatWidth: physicalSize?.width ?? null,
+      formatHeight: physicalSize?.height ?? null,
     };
-  }, [productInfo, deepLinkFormats, deepLinkShopifyProduct, formatIdFromUrl, deepLinkTemplate]);
+  }, [
+    productInfo,
+    deepLinkFormats,
+    deepLinkShopifyProduct,
+    formatIdFromUrl,
+    deepLinkTemplate,
+  ]);
 
   return (
     <div className="bg-white text-slate-dark font-body min-h-screen flex flex-col transition-all duration-500">
@@ -215,7 +252,11 @@ function IAGeneratorContent() {
           )}
 
           {step === 4 && (
-            <IAThanksStep thanksUrl={effectiveProductInfo?.thankYouImageUrl} />
+            <IAThanksStep
+              productImage={effectiveProductInfo?.productImage}
+              formatWidth={effectiveProductInfo?.formatWidth}
+              formatHeight={effectiveProductInfo?.formatHeight}
+            />
           )}
         </>
       )}
