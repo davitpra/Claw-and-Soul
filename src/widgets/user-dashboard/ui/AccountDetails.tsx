@@ -76,12 +76,6 @@ export function AccountDetails({ user, address, isLoading }: Props) {
           <h2 className="font-display text-xl font-black text-text-main">
             Default Address
           </h2>
-          <Link
-            href="/user/orders"
-            className="text-sm font-bold text-primary hover:text-primary-dark"
-          >
-            Manage Address
-          </Link>
         </div>
 
         <div className="mt-4 text-sm">
