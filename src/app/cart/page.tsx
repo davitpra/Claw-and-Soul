@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { Navbar } from "@/widgets/navbar";
@@ -8,20 +8,13 @@ import { Footer } from "@/widgets/footer";
 import { shopifyFetch, GRAPHQL_QUERIES } from "@/lib/shopify";
 import { useCart } from "@/context/CartContext";
 import { useAuthFetch } from "@/hooks/useAuthFetch";
-import { useAuth } from "@/context/AuthContext";
+import { useShopifyCheckout } from "@/hooks/useShopifyCheckout";
 
 export default function CartPage() {
-  const {
-    items,
-    updateQuantity,
-    removeItem,
-    subtotal,
-    updateItemImage,
-    clearCart,
-  } = useCart();
+  const { items, updateQuantity, removeItem, subtotal, updateItemImage } =
+    useCart();
   const { authFetchJSON } = useAuthFetch();
-  const { user, isAuthenticated } = useAuth();
-  const [isCheckingOut, setIsCheckingOut] = useState(false);
+  const { startCheckout, buildLines, isCheckingOut } = useShopifyCheckout();
   // Automatic Shopify "Buy X Get Y" bundle discount, previewed live (see effect
   // below). null while unknown or when the cart doesn't qualify. `title` is the
   // discount's name in the Shopify admin; `byVariant` maps each discounted
@@ -32,40 +25,6 @@ export default function CartPage() {
     title: string | null;
     byVariant: Record<string, number>;
   } | null>(null);
-
-  // Build the Shopify cart lines from our local cart. Line attributes become
-  // Shopify order line-item `properties`, which the orders webhook
-  // (`ingestLineItem`) reads to re-associate the art. Accessories carry no
-  // generation/paint-by-numbers attributes, so they stay decoupled.
-  const buildLines = useCallback(() => {
-    return items
-      .map((item) => {
-        const attributes = [
-          { key: "Style", value: item.style || "Default" },
-          // _user_id (prefijo "_" → Shopify lo oculta al cliente) permite al
-          // webhook acreditar/vincular la orden a la cuenta correcta sin
-          // depender del email tecleado en el checkout.
-          ...(isAuthenticated && user
-            ? [{ key: "_user_id", value: user.id }]
-            : []),
-          ...(item.paintByNumbersId
-            ? [{ key: "paint_by_numbers_id", value: item.paintByNumbersId }]
-            : []),
-          ...(item.generationId
-            ? [{ key: "generation_id", value: item.generationId }]
-            : []),
-          ...(item.generationId && item.imageUrl
-            ? [{ key: "image_url", value: item.imageUrl }]
-            : []),
-        ];
-        return {
-          merchandiseId: item.variantId || "",
-          quantity: item.quantity,
-          attributes,
-        };
-      })
-      .filter((line) => line.merchandiseId !== "");
-  }, [items, isAuthenticated, user]);
 
   // Preview the automatic bundle discount by creating a throwaway Shopify cart
   // and reading its `discountAllocations`. Debounced so quick quantity edits
@@ -177,49 +136,17 @@ export default function CartPage() {
   }, []);
 
   const handleCheckout = async () => {
-    if (items.length === 0) return;
-
-    setIsCheckingOut(true);
-    try {
-      const lines = buildLines();
-
-      if (lines.length === 0) {
-        alert(
-          "To test checkout, you need real Shopify Product Variant IDs. Please add products to your Shopify store and update the items with their Variant IDs.",
-        );
-        setIsCheckingOut(false);
-        return;
-      }
-
-      const response = await shopifyFetch<{
-        cartCreate: {
-          cart: { checkoutUrl: string };
-          userErrors: { field?: string[]; message: string }[];
-        };
-      }>({
-        query: GRAPHQL_QUERIES.CREATE_CART,
-        variables: {
-          input: {
-            lines: lines,
-          },
-        },
-      });
-
-      const { cart, userErrors } = response.data.cartCreate;
-
-      if (userErrors && userErrors.length > 0) {
-        console.error("Shopify checkout errors:", userErrors);
-        alert(`Checkout error: ${userErrors[0].message}`);
-      } else if (cart?.checkoutUrl) {
-        // Shopify cart created — empty our cart before handing off to checkout
-        await clearCart();
-        window.location.href = cart.checkoutUrl;
-      }
-    } catch (error) {
-      console.error("Checkout failed:", error);
-      alert("An error occurred during checkout. Please try again.");
-    } finally {
-      setIsCheckingOut(false);
+    const result = await startCheckout();
+    if (result.status === "no-variants") {
+      alert(
+        "To test checkout, you need real Shopify Product Variant IDs. Please add products to your Shopify store and update the items with their Variant IDs.",
+      );
+    } else if (result.status === "error") {
+      alert(
+        result.message
+          ? `Checkout error: ${result.message}`
+          : "An error occurred during checkout. Please try again.",
+      );
     }
   };
 

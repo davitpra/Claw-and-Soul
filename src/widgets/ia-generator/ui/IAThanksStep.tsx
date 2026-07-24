@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { Container } from "@/shared/ui/Container";
 import { useRouter } from "next/navigation";
 import { CanvasEdgeOverlay } from "@/entities/product/ui/CanvasEdgeOverlay";
@@ -8,6 +9,8 @@ import {
   setAmbientStyle,
 } from "@/entities/product/lib/setLighting";
 import { useGenerationStatus } from "@/hooks/useGenerationStatus";
+import { useCart } from "@/context/CartContext";
+import { useShopifyCheckout } from "@/hooks/useShopifyCheckout";
 
 // Escala de la imagen del producto centrada según el formato elegido. Tuneables:
 const BASE_WIDTH_PCT = 90; // % del panel que ocupa el lado mayor del formato de referencia
@@ -36,6 +39,40 @@ export function IAThanksStep({
   // Sin generationId no hay nada que esperar; en "failed" el mockup queda
   // estático (el copy ya cubre el fallback por email).
   const isGenerating = !!generationId && !imageUrl && status !== "failed";
+
+  // El CTA de PBN queda en suspenso hasta que la imagen generada aparece en
+  // pantalla (imageUrl del polling); solo entonces se puede convertir.
+  const pbnReady = !!imageUrl;
+  const goToPbnStudio = () => {
+    if (!imageUrl) return;
+    const params = new URLSearchParams();
+    if (generationId) params.set("generationId", generationId);
+    params.set("imageUrl", imageUrl);
+    router.push(`/studio?${params.toString()}`);
+  };
+
+  // El arte no-Digital ya se agregó al carrito en el paso de upload; solo
+  // ofrecemos checkout cuando el carrito tiene items.
+  const { cartCount } = useCart();
+  const { startCheckout, isCheckingOut } = useShopifyCheckout();
+  const [checkoutError, setCheckoutError] = useState<string | null>(null);
+  // Solo ofrecemos checkout/carrito cuando la imagen generada ya está lista
+  // (pbnReady) y hay algo en el carrito.
+  const showCheckout = cartCount > 0 && pbnReady;
+
+  const handleCheckout = async () => {
+    setCheckoutError(null);
+    const result = await startCheckout();
+    if (result.status === "no-variants") {
+      setCheckoutError(
+        "This item isn't available for checkout yet. Please try from your cart.",
+      );
+    } else if (result.status === "error") {
+      setCheckoutError(
+        result.message ?? "Something went wrong. Please try again.",
+      );
+    }
+  };
 
   // El cuadro adopta la proporción real del formato y escala con su tamaño
   // físico (lado mayor). Sin dimensiones válidas caemos al ancho base con la
@@ -135,8 +172,62 @@ export function IAThanksStep({
 
                 <div className="flex flex-col items-center gap-3 mt-2 w-full">
                   <button
+                    onClick={goToPbnStudio}
+                    disabled={!pbnReady}
+                    aria-busy={!pbnReady}
+                    className="w-full flex items-center justify-center gap-2 rounded-xl bg-primary hover:bg-primary-dark text-white px-6 py-3 text-sm font-bold transition-all shadow-sm hover:shadow-md hover:scale-105 disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:scale-100 disabled:hover:shadow-sm disabled:hover:bg-primary"
+                  >
+                    <span
+                      className={`material-symbols-outlined text-[18px] ${
+                        pbnReady ? "" : "animate-spin"
+                      }`}
+                    >
+                      {pbnReady ? "format_paint" : "progress_activity"}
+                    </span>
+                    {pbnReady
+                      ? "Turn into Paint by Numbers"
+                      : "Preparing your artwork…"}
+                  </button>
+
+                  {showCheckout && (
+                    <>
+                      <button
+                        onClick={handleCheckout}
+                        disabled={isCheckingOut}
+                        aria-busy={isCheckingOut}
+                        className="w-full flex items-center justify-center gap-2 rounded-xl bg-white border border-[#E0DED9] text-slate-dark hover:bg-gray-50 px-6 py-3 text-sm font-bold transition-all shadow-sm hover:shadow-md disabled:opacity-60 disabled:cursor-not-allowed"
+                      >
+                        <span
+                          className={`material-symbols-outlined text-[18px] ${
+                            isCheckingOut ? "animate-spin" : ""
+                          }`}
+                        >
+                          {isCheckingOut
+                            ? "progress_activity"
+                            : "shopping_cart_checkout"}
+                        </span>
+                        {isCheckingOut ? "Redirecting…" : "Proceed to Checkout"}
+                      </button>
+                      <button
+                        onClick={() => router.push("/cart")}
+                        className="w-full flex items-center justify-center gap-2 rounded-xl bg-white border border-[#E0DED9] text-slate-dark hover:bg-gray-50 px-6 py-3 text-sm font-bold transition-all shadow-sm hover:shadow-md"
+                      >
+                        <span className="material-symbols-outlined text-[18px]">
+                          shopping_cart
+                        </span>
+                        View Cart
+                      </button>
+                      {checkoutError && (
+                        <p className="text-sm text-red-600 text-center">
+                          {checkoutError}
+                        </p>
+                      )}
+                    </>
+                  )}
+
+                  <button
                     onClick={() => router.push("/user")}
-                    className="w-full  flex items-center justify-center gap-2 rounded-xl bg-primary hover:bg-primary-dark text-white px-6 py-3 text-sm font-bold transition-all shadow-sm hover:shadow-md hover:scale-105"
+                    className="w-full flex items-center justify-center gap-2 rounded-xl bg-white border border-[#E0DED9] text-slate-dark hover:bg-gray-50 px-6 py-3 text-sm font-bold transition-all shadow-sm hover:shadow-md"
                   >
                     <span className="material-symbols-outlined text-[18px]">
                       person
