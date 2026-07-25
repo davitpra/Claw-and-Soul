@@ -19,7 +19,6 @@ import { RecentOrders } from "./RecentOrders";
 import { MyArtworks } from "./MyArtworks";
 import { MyPets } from "./MyPets";
 import { AccountDetails } from "./AccountDetails";
-import { TrustFeatures } from "./TrustFeatures";
 
 export function UserDashboard() {
   const { user } = useAuth();
@@ -126,20 +125,18 @@ export function UserDashboard() {
             error={artworksError}
           />
           <MyPets pets={pets} isLoading={petsLoading} error={petsError} />
-          <AccountDetails
-            user={profile}
-            address={address}
-            isLoading={addressLoading}
-          />
           <RecentOrders
             orders={orders}
             isLoading={ordersLoading}
             error={ordersError}
           />
+          <AccountDetails
+            user={profile}
+            address={address}
+            isLoading={addressLoading}
+          />
         </div>
       </Container>
-
-      <TrustFeatures />
     </>
   );
 }
