@@ -26,3 +26,9 @@ export function useMediaQuery(query: string): boolean {
  * governs the Paint by Numbers sidebar layout, so JS and CSS stay in sync.
  */
 export const useIsMobile = () => useMediaQuery("(max-width: 767.98px)");
+
+/**
+ * True por debajo del breakpoint `lg` (1024px) de Tailwind — el punto donde el
+ * navbar cambia a su layout móvil (menú hamburguesa).
+ */
+export const useIsBelowLg = () => useMediaQuery("(max-width: 1023.98px)");

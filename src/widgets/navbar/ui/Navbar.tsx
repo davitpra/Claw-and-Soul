@@ -8,20 +8,29 @@ import type { FormEvent } from "react";
 
 import { useCart } from "@/context/CartContext";
 import { useAuth } from "@/context/AuthContext";
+import { useIsBelowLg } from "@/hooks/useMediaQuery";
 import UserMenu from "./UserMenu";
 import CreditsBadge from "./CreditsBadge";
+
+/** Por debajo de este scroll el navbar se comporta como uno normal: nunca se oculta. */
+const HIDE_AFTER_SCROLL_Y = 80;
+/** Inactividad tras la que el navbar se retira solo en mobile. */
+const IDLE_HIDE_MS = 4000;
 
 export default function Navbar() {
   const pathname = usePathname();
   const router = useRouter();
   const { cartCount } = useCart();
   const { isAuthenticated, isLoading } = useAuth();
+  const isBelowLg = useIsBelowLg();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [elevated, setElevated] = useState(false);
   const [hidden, setHidden] = useState(false);
+  const headerRef = useRef<HTMLElement>(null);
   const lastScrollY = useRef(0);
   const idleTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const autoHideTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Navega a la tienda con el término como query param. Si está vacío, va a
   // /catalog sin filtro, para que enviar el buscador vacío también quite la búsqueda.
@@ -61,6 +70,20 @@ export default function Navbar() {
   useEffect(() => {
     if (mobileMenuOpen) return;
 
+    // En mobile el navbar también se retira solo tras IDLE_HIDE_MS sin scroll:
+    // recupera los 4rem de alto cuando el usuario deja de navegar. Si el foco
+    // está dentro del header (buscador, menú de usuario) se pospone en vez de
+    // ocultarse, para no arrancarle el input de debajo del dedo.
+    const scheduleAutoHide = () => {
+      autoHideTimer.current = setTimeout(() => {
+        if (headerRef.current?.contains(document.activeElement)) {
+          scheduleAutoHide();
+          return;
+        }
+        setHidden(true);
+      }, IDLE_HIDE_MS);
+    };
+
     const handleScroll = () => {
       const currentScrollY = window.scrollY;
 
@@ -71,10 +94,20 @@ export default function Navbar() {
       idleTimer.current = setTimeout(() => setElevated(false), 150);
 
       // Ocultar al bajar (después de pasar el navbar), mostrar al subir
-      if (currentScrollY > lastScrollY.current && currentScrollY > 80) {
+      if (
+        currentScrollY > lastScrollY.current &&
+        currentScrollY > HIDE_AFTER_SCROLL_Y
+      ) {
         setHidden(true);
       } else if (currentScrollY < lastScrollY.current) {
         setHidden(false);
+      }
+
+      // Cada evento de scroll reinicia la cuenta atrás. Cerca del tope no se
+      // arma nada: ahí el navbar se comporta como uno normal, siempre visible.
+      if (autoHideTimer.current) clearTimeout(autoHideTimer.current);
+      if (isBelowLg && currentScrollY > HIDE_AFTER_SCROLL_Y) {
+        scheduleAutoHide();
       }
 
       lastScrollY.current = currentScrollY;
@@ -83,8 +116,18 @@ export default function Navbar() {
     return () => {
       window.removeEventListener("scroll", handleScroll);
       if (idleTimer.current) clearTimeout(idleTimer.current);
+      if (autoHideTimer.current) clearTimeout(autoHideTimer.current);
     };
-  }, [mobileMenuOpen]);
+  }, [mobileMenuOpen, isBelowLg]);
+
+  // Al pasar a desktop el auto-ocultado deja de aplicar: si el navbar quedó
+  // escondido por el temporizador móvil, lo devolvemos a la vista (mismo patrón
+  // "setState during render" que el cierre del menú al cambiar de ruta).
+  const [prevIsBelowLg, setPrevIsBelowLg] = useState(isBelowLg);
+  if (prevIsBelowLg !== isBelowLg) {
+    setPrevIsBelowLg(isBelowLg);
+    if (!isBelowLg) setHidden(false);
+  }
 
   // Prevent body scroll when mobile menu is open
   useEffect(() => {
@@ -101,6 +144,7 @@ export default function Navbar() {
   return (
     <>
       <header
+        ref={headerRef}
         className={`sticky top-0 z-50 bg-white backdrop-blur-md  transition-all duration-300 ${
           elevated ? "border-[#E0DED9] shadow-md" : "border-transparent"
         } ${hidden && !mobileMenuOpen ? "-translate-y-full" : "translate-y-0"}`}
