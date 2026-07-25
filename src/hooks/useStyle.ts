@@ -20,21 +20,27 @@ interface UseStyleResult {
   error: string | null;
 }
 
+// El id resuelto se guarda junto al resultado: mientras no coincida con el
+// `styleId` pedido, la petición sigue en vuelo. Así `isLoading` y el reset al
+// cambiar de estilo son valores derivados y el efecto no llama setState de
+// forma síncrona (react-hooks/set-state-in-effect).
+interface StyleState {
+  id: string | null;
+  style: Style | null;
+  error: string | null;
+}
+
 export function useStyle(styleId: string | null): UseStyleResult {
-  const [style, setStyle] = useState<Style | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [state, setState] = useState<StyleState>({
+    id: null,
+    style: null,
+    error: null,
+  });
 
   useEffect(() => {
-    if (!styleId) {
-      setStyle(null);
-      setError(null);
-      return;
-    }
+    if (!styleId) return;
 
     let cancelled = false;
-    setIsLoading(true);
-    setError(null);
 
     fetch(`${API_URL}/styles/${styleId}`, { credentials: "include" })
       .then(async (res) => {
@@ -46,24 +52,24 @@ export function useStyle(styleId: string | null): UseStyleResult {
       })
       .then((data) => {
         if (cancelled) return;
-        setStyle({
-          id: data.id,
-          name: data.displayName,
-          img:
-            data.previewUrl ??
-            "https://placehold.co/400x500?text=Style",
-          thanksUrl: null,
-          templateVarOptions: data.templateVarOptions ?? null,
+        setState({
+          id: styleId,
+          style: {
+            id: data.id,
+            name: data.displayName,
+            img:
+              data.previewUrl ??
+              "https://placehold.co/400x500?text=Style",
+            thanksUrl: null,
+            templateVarOptions: data.templateVarOptions ?? null,
+          },
+          error: null,
         });
       })
       .catch((err) => {
         if (cancelled) return;
         console.error("useStyle error:", err);
-        setError("Failed to load style.");
-        setStyle(null);
-      })
-      .finally(() => {
-        if (!cancelled) setIsLoading(false);
+        setState({ id: styleId, style: null, error: "Failed to load style." });
       });
 
     return () => {
@@ -71,5 +77,11 @@ export function useStyle(styleId: string | null): UseStyleResult {
     };
   }, [styleId]);
 
-  return { style, isLoading, error };
+  const settled = styleId !== null && state.id === styleId;
+
+  return {
+    style: settled ? state.style : null,
+    isLoading: styleId !== null && !settled,
+    error: settled ? state.error : null,
+  };
 }

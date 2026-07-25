@@ -108,12 +108,10 @@ export interface ShopifyMetaobject {
   fields: {
     key: string;
     value: string;
-    reference?:
-      | {
-          image?: {
-            url: string;
-          };
-        }
-      | any;
+    reference?: {
+      image?: {
+        url: string;
+      };
+    };
   }[];
 }

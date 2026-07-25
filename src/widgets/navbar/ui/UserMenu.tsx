@@ -8,7 +8,7 @@ export default function UserMenu() {
   const [isOpen, setIsOpen] = useState(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
-  const { user, logout, isAdmin } = useAuth();
+  const { logout, isAdmin } = useAuth();
 
   // Close dropdown when clicking outside
   useEffect(() => {

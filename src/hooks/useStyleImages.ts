@@ -24,17 +24,20 @@ export function useStyleImages(styleId?: string | null): UseStyleImagesResult {
   const resolvedId =
     styleId === undefined ? NEW_COLLECTION_STYLE_ID : (styleId ?? null);
 
-  const [images, setImages] = useState<StyleImage[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  // El id resuelto viaja con el resultado: mientras `state.id` no coincida con
+  // `resolvedId`, la petición sigue en vuelo. `isLoading` y el vaciado de la
+  // lista al cambiar de estilo quedan derivados, así el efecto no llama
+  // setState de forma síncrona (react-hooks/set-state-in-effect).
+  const [state, setState] = useState<{
+    id: string | null;
+    images: StyleImage[];
+    error: string | null;
+  }>({ id: null, images: [], error: null });
 
   useEffect(() => {
     if (!resolvedId) return;
 
     let cancelled = false;
-    setIsLoading(true);
-    setImages([]);
-    setError(null);
 
     fetch(`${API_URL}/styles/${resolvedId}/images`, { credentials: "include" })
       .then(async (res) => {
@@ -46,16 +49,16 @@ export function useStyleImages(styleId?: string | null): UseStyleImagesResult {
       })
       .then((data) => {
         if (cancelled) return;
-        setImages(data);
+        setState({ id: resolvedId, images: data, error: null });
       })
       .catch((err) => {
         if (cancelled) return;
         console.error("useStyleImages error:", err);
-        setError("Failed to load images.");
-        setImages([]);
-      })
-      .finally(() => {
-        if (!cancelled) setIsLoading(false);
+        setState({
+          id: resolvedId,
+          images: [],
+          error: "Failed to load images.",
+        });
       });
 
     return () => {
@@ -63,5 +66,11 @@ export function useStyleImages(styleId?: string | null): UseStyleImagesResult {
     };
   }, [resolvedId]);
 
-  return { images, isLoading, error };
+  const settled = resolvedId !== null && state.id === resolvedId;
+
+  return {
+    images: settled ? state.images : [],
+    isLoading: resolvedId !== null && !settled,
+    error: settled ? state.error : null,
+  };
 }

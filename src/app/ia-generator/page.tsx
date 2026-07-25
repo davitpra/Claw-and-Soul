@@ -114,7 +114,6 @@ function IAGeneratorContent() {
     // estilos cargados de forma asíncrona hacia el estado de navegación. No es
     // un render derivado, por eso el setState dentro del efecto es intencional.
     if (preselectedStyle) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
       setSelectedStyle(preselectedStyle);
       setStep((prev) => (prev === 1 ? (isAuthenticated ? 3 : 2) : prev));
     }

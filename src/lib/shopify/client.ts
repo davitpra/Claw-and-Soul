@@ -3,13 +3,13 @@ export async function shopifyFetch<T>({
   variables = {},
 }: {
   query: string;
-  variables?: any;
+  variables?: Record<string, unknown>;
 }): Promise<{ data: T } | never> {
   try {
     const isServer = typeof window === "undefined";
 
     let url: string;
-    let headers: Record<string, string> = { "Content-Type": "application/json" };
+    const headers: Record<string, string> = { "Content-Type": "application/json" };
 
     if (isServer) {
       // En el servidor, llamar directamente a Shopify sin pasar por el proxy

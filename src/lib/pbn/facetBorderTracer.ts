@@ -11,7 +11,6 @@ export class FacetBorderTracer {
      */
     public static async buildFacetBorderPaths(facetResult: FacetResult, onUpdate: ((progress: number) => void) | null = null) {
         const yielder = createYielder(150);
-        let count = 0;
         const borderMask = new BooleanArray2D(facetResult.width, facetResult.height);
         // sort by biggest facets first
         const facetProcessingOrder = facetResult.facets.filter((f) => f != null).slice(0).sort((a, b) => b!.pointCount > a!.pointCount ? 1 : (b!.pointCount < a!.pointCount ? -1 : 0)).map((f) => f!.id);
@@ -66,7 +65,6 @@ export class FacetBorderTracer {
                     }
                 }
             }
-            count++;
         }
         if (onUpdate != null) {
             onUpdate(1);
@@ -79,7 +77,6 @@ export class FacetBorderTracer {
     private static getPath(pt: PathPoint, facetResult: FacetResult, f: Facet, borderMask: BooleanArray2D, xWall: BooleanArray2D, yWall: BooleanArray2D) {
         const debug = false;
         let finished = false;
-        const count = 0;
         const path: PathPoint[] = [];
         FacetBorderTracer.addPointToPath(path, pt, xWall, f, yWall);
         // check rotations first, then straight along the ouside and finally diagonally

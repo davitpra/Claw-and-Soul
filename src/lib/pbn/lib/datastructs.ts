@@ -11,7 +11,7 @@ export interface IHeapItem extends IComparable, IHashable {
 }
 
 export class Map<TValue> {
-    private obj: any;
+    private obj: Record<string, TValue>;
 
     constructor() {
         this.obj = {};
@@ -116,11 +116,11 @@ class Heap<T extends IHeapItem> {
     }
 
     private removeAt(idx: number): T {
-        const obj: any = this.array[idx];
+        const obj: T = this.array[idx];
         this.keyMap.remove(obj.getKey());
         const isLastElement: boolean = idx === this.array.length - 1;
         if (this.array.length > 0) {
-            const newobj: any = this.array.pop();
+            const newobj = this.array.pop() as T;
             if (!isLastElement && this.array.length > 0) {
                 this.replaceAt(idx, newobj);
             }
@@ -208,10 +208,6 @@ class Heap<T extends IHeapItem> {
         if (this.size() === 0) {
             return;
         }
-
-        const idx = 0;
-        const leftIdx = this.getLeftChildIndex(idx);
-        const rightIdx = leftIdx + 1;
 
         console.log(this.array);
         console.log("--- keymap ---");

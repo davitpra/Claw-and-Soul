@@ -11,25 +11,33 @@ interface UseProductStyleResult {
   error: string | null;
 }
 
+interface ProductStyleData {
+  styleId: string | null;
+  styleName: string | null;
+  difficulty: StyleDifficulty | null;
+}
+
+const EMPTY: ProductStyleData = {
+  styleId: null,
+  styleName: null,
+  difficulty: null,
+};
+
+// El handle resuelto se guarda junto al resultado: mientras no coincida con el
+// `handle` pedido, la petición sigue en vuelo. Eso hace derivables `isLoading`
+// y el reset al cambiar de producto, de modo que el efecto no llama setState
+// de forma síncrona (react-hooks/set-state-in-effect).
 export function useProductStyle(handle: string | null): UseProductStyleResult {
-  const [styleId, setStyleId] = useState<string | null>(null);
-  const [styleName, setStyleName] = useState<string | null>(null);
-  const [difficulty, setDifficulty] = useState<StyleDifficulty | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [state, setState] = useState<{
+    handle: string | null;
+    data: ProductStyleData;
+    error: string | null;
+  }>({ handle: null, data: EMPTY, error: null });
 
   useEffect(() => {
-    if (!handle) {
-      setStyleId(null);
-      setStyleName(null);
-      setDifficulty(null);
-      setError(null);
-      return;
-    }
+    if (!handle) return;
 
     let cancelled = false;
-    setIsLoading(true);
-    setError(null);
 
     fetch(`${API_URL}/products/${encodeURIComponent(handle)}/variants`, {
       credentials: "include",
@@ -42,20 +50,24 @@ export function useProductStyle(handle: string | null): UseProductStyleResult {
       })
       .then((style) => {
         if (cancelled) return;
-        setStyleId(style?.id ?? null);
-        setStyleName(style?.displayName ?? null);
-        setDifficulty(style?.difficulty ?? null);
+        setState({
+          handle,
+          data: {
+            styleId: style?.id ?? null,
+            styleName: style?.displayName ?? null,
+            difficulty: style?.difficulty ?? null,
+          },
+          error: null,
+        });
       })
       .catch((err) => {
         if (cancelled) return;
         console.error("useProductStyle error:", err);
-        setError("Failed to load product style.");
-        setStyleId(null);
-        setStyleName(null);
-        setDifficulty(null);
-      })
-      .finally(() => {
-        if (!cancelled) setIsLoading(false);
+        setState({
+          handle,
+          data: EMPTY,
+          error: "Failed to load product style.",
+        });
       });
 
     return () => {
@@ -63,5 +75,12 @@ export function useProductStyle(handle: string | null): UseProductStyleResult {
     };
   }, [handle]);
 
-  return { styleId, styleName, difficulty, isLoading, error };
+  const settled = handle !== null && state.handle === handle;
+  const data = settled ? state.data : EMPTY;
+
+  return {
+    ...data,
+    isLoading: handle !== null && !settled,
+    error: settled ? state.error : null,
+  };
 }
