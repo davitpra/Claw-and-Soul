@@ -20,24 +20,26 @@ interface CatalogTypeNavProps {
  */
 export function CatalogTypeNav({ sections, selected, onSelect }: CatalogTypeNavProps) {
   return (
-    <nav aria-label="Product types" className="flex gap-2 overflow-x-auto">
-      {sections.map((section) => {
-        const isActive = section.key === selected;
-        return (
-          <button
-            key={section.key}
-            onClick={() => onSelect(isActive ? null : section.key)}
-            aria-pressed={isActive}
-            className={`shrink-0 h-10 px-4 rounded-xl text-sm font-bold transition-all ${
-              isActive
-                ? "bg-primary text-white"
-                : "bg-white text-slate-dark shadow-sm hover:shadow-md"
-            }`}
-          >
-            {section.title}
-          </button>
-        );
-      })}
+    <nav aria-label="Product types" className="overflow-x-auto rounded-xl bg-white p-1">
+      <div className="flex flex-nowrap gap-1">
+        {sections.map((section) => {
+          const isActive = section.key === selected;
+          return (
+            <button
+              key={section.key}
+              onClick={() => onSelect(isActive ? null : section.key)}
+              aria-pressed={isActive}
+              className={`shrink-0 rounded-xl px-4 py-2.5 text-sm font-bold transition-all ${
+                isActive
+                  ? "bg-primary/10 text-primary"
+                  : "text-text-muted hover:bg-cream"
+              }`}
+            >
+              {section.title}
+            </button>
+          );
+        })}
+      </div>
     </nav>
   );
 }
