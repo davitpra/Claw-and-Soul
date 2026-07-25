@@ -4,6 +4,7 @@ import Link from "next/link";
 import { Card } from "@/shared/ui/Card";
 import { cloudinaryThumb } from "@/shared/lib/cloudinary";
 import type { UserPet } from "@/entities/order/types";
+import LightRays from "@/shared/ui/LightRays";
 
 interface Props {
   pets: UserPet[];
@@ -22,7 +23,7 @@ export function MyPets({ pets, isLoading, error }: Props) {
   const visiblePets = pets.slice(0, 4);
 
   return (
-    <section className="rounded-xl bg-white p-6">
+    <section className="relative overflow-hidden rounded-xl bg-white p-6">
       <div className="flex items-center justify-between">
         <h2 className="font-display text-xl font-black text-text-main">
           My Pets
@@ -97,6 +98,9 @@ export function MyPets({ pets, isLoading, error }: Props) {
           </div>
         )}
       </div>
+      {/* Rayos de luz decorativos; último hijo para pintar por encima de todo
+                            el contenido (imagen incluida) sin bloquear clics. */}
+      <LightRays />
     </section>
   );
 }

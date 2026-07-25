@@ -147,8 +147,7 @@ export default function CollectionSection({
           </div>
         )}
       </Container>
-      {/* Rayos de luz decorativos; último hijo para pintar por encima de todo
-                el contenido (imagen incluida) sin bloquear clics. */}
+      {/* Rayos de luz decorativos; último hijo para pintar por encima de todo el contenido (imagen incluida) sin bloquear clics. */}
       <LightRays />
     </section>
   );

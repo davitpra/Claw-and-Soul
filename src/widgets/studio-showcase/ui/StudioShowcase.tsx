@@ -2,6 +2,7 @@ import type { ReactNode } from "react";
 import Link from "next/link";
 import { Container } from "@/shared/ui/Container";
 import CompareSlider from "./CompareSlider";
+import LightRays from "@/shared/ui/LightRays";
 
 export interface ShowcaseFeature {
   text: string;
@@ -66,7 +67,7 @@ export default function StudioShowcase({
   secondaryCta = { href: "/catalog", label: "Browse finished pieces" },
 }: StudioShowcaseProps) {
   return (
-    <section className="w-full bg-cream py-20 md:py-28">
+    <section className="relative overflow-hidden w-full bg-cream py-20 md:py-28">
       <Container>
         <div className="grid items-center gap-12 lg:grid-cols-2 lg:gap-16">
           <div className="order-2 lg:order-1 items-center flex flex-col gap-4 text-center lg:items-start lg:text-left">
@@ -158,6 +159,8 @@ export default function StudioShowcase({
           </div>
         </div>
       </Container>
+      {/* Rayos de luz decorativos; último hijo para pintar por encima de todo el contenido (imagen incluida) sin bloquear clics. */}
+      <LightRays />
     </section>
   );
 }

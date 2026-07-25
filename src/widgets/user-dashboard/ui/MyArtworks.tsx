@@ -4,6 +4,7 @@ import Link from "next/link";
 import { ProductCard } from "@/entities/pet-product/ui/ProductCard";
 import type { Product } from "@/entities/pet-product/model/types";
 import type { UserGeneration } from "@/entities/order/types";
+import LightRays from "@/shared/ui/LightRays";
 
 interface Props {
   artworks: UserGeneration[];
@@ -13,7 +14,7 @@ interface Props {
 
 export function MyArtworks({ artworks, isLoading, error }: Props) {
   return (
-    <section className="rounded-xl bg-white p-6">
+    <section className="relative overflow-hidden rounded-xl bg-white p-6">
       <div className="flex items-center justify-between">
         <h2 className="font-display text-xl font-black text-text-main">
           My Artworks
@@ -78,6 +79,9 @@ export function MyArtworks({ artworks, isLoading, error }: Props) {
           </div>
         )}
       </div>
+      {/* Rayos de luz decorativos; último hijo para pintar por encima de todo
+                      el contenido (imagen incluida) sin bloquear clics. */}
+      <LightRays />
     </section>
   );
 }
