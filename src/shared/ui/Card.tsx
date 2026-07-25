@@ -34,7 +34,7 @@ export function Card({
 }: CardProps) {
   return (
     <div className={`relative overflow-hidden bg-white shadow-sm ${className}`}>
-      {naturalAspect ? (
+      {naturalAspect && imageUrl ? (
         // eslint-disable-next-line @next/next/no-img-element
         <img
           src={imageUrl}
@@ -45,9 +45,12 @@ export function Card({
           className="block w-full h-auto"
         />
       ) : (
+        // Sin imagen (o sin `naturalAspect`): caja con proporción fija. Un <img>
+        // sin src dispara un warning y colapsa sin alto, así que los ítems sin
+        // imagen caen siempre a este placeholder (bg-white con aspecto definido).
         <div
           className="aspect-2/3 w-full bg-cover bg-center"
-          style={{ backgroundImage: `url('${imageUrl}')` }}
+          style={imageUrl ? { backgroundImage: `url('${imageUrl}')` } : undefined}
           role={imageAlt ? "img" : undefined}
           aria-label={imageAlt || undefined}
         />

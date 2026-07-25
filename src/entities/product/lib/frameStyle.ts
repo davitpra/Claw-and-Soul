@@ -1,4 +1,5 @@
 import type { CSSProperties } from "react";
+import type { StyleData } from "@/entities/product/model/styleData";
 
 /** Presentation applied to the product image based on the product type. */
 export type FrameStyle = "canvas" | "poster" | "art" | "accessory" | "credits";
@@ -11,6 +12,27 @@ export function toFrameStyle(template?: string | null): FrameStyle {
   if (template === "Accessory") return "accessory";
   if (template === "Credits") return "credits";
   return "art";
+}
+
+// Resuelve el marco visual de una card a partir del `shopifyHandle` de un
+// producto, cruzándolo con el template del backend (`styleData`). Se usa donde el
+// dato no viene con el producto (ítems de orden), como el catálogo pero sin el
+// fallback al productType de Shopify. Sin dato → "art" plano. El aspecto natural
+// sigue la regla del catálogo (Digital recortado, el resto natural); un tipo
+// desconocido se mantiene recortado para no alterar el layout de esos casos.
+export function frameForHandle(
+  handle: string | null | undefined,
+  styleData: StyleData | null,
+): { frameStyle: FrameStyle; naturalAspect: boolean } {
+  const template = !handle
+    ? ""
+    : handle === styleData?.creditPackHandle
+      ? "Credits"
+      : (styleData?.templateByHandle.get(handle) ?? "");
+  return {
+    frameStyle: toFrameStyle(template),
+    naturalAspect: template !== "" && template !== "Digital",
+  };
 }
 
 // Paper margin (white mat + hairline) without a shadow, so it can be layered

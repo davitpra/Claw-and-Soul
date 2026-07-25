@@ -1,5 +1,5 @@
 import { normalizeTemplate } from "@/entities/product/lib/template";
-import { BackendProductLite, StyleData } from "./types";
+import { BackendProductLite, StyleData } from "@/entities/product/model/styleData";
 
 // URL base de la API del backend, donde se configura el estilo de arte de cada producto.
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001/api";

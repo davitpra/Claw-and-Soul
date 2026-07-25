@@ -6,6 +6,8 @@ import { useAuthFetch } from "@/hooks/useAuthFetch";
 import { useShopifyVariantImages } from "@/hooks/useShopifyVariantImages";
 import { ProductCard } from "@/entities/pet-product/ui/ProductCard";
 import type { Product } from "@/entities/pet-product/model/types";
+import { useStyleData } from "@/entities/product/api/useStyleData";
+import { frameForHandle } from "@/entities/product/lib/frameStyle";
 import {
   formatPrice,
   resolveItemImage,
@@ -95,6 +97,10 @@ export function AllOrders() {
     orders.map((o) => o.items?.[0]?.shopifyHandle),
   );
 
+  // Template/formato del backend por handle (mismo origen que el catálogo), para
+  // darle a cada card el marco visual de su tipo de producto.
+  const styleData = useStyleData();
+
   return (
     <div className="space-y-6">
       <section className="rounded-xl bg-white p-6 md:p-8">
@@ -159,11 +165,17 @@ export function AllOrders() {
           <>
             <div className="grid grid-cols-2 items-center gap-8 lg:grid-cols-3 xl:grid-cols-4">
               {orders.map((order) => {
+                const { frameStyle, naturalAspect } = frameForHandle(
+                  order.items?.[0]?.shopifyHandle,
+                  styleData,
+                );
                 return (
                   <ProductCard
                     key={order.id}
                     product={orderToProduct(order, variantImages)}
                     href={`/user/orders/${order.id}`}
+                    frameStyle={frameStyle}
+                    naturalAspect={naturalAspect}
                   />
                 );
               })}
