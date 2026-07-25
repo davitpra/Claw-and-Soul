@@ -3,7 +3,6 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import Accordion from "@/shared/ui/Accordion";
 import { ConfirmDialog } from "@/shared/ui/ConfirmDialog";
 import { DetailErrorState } from "@/shared/ui/DetailErrorState";
 import { DetailNotFound } from "@/shared/ui/DetailNotFound";
@@ -12,9 +11,36 @@ import { BackToGenerationsLink } from "@/entities/order/ui/BackToGenerationsLink
 import { GenerationImage } from "@/entities/order/ui/GenerationImage";
 import { GenerationStatusBadge } from "@/entities/order/ui/GenerationStatusBadge";
 import { formatOrderDate } from "@/entities/order/lib/presentation";
+import { templateLabel } from "@/entities/product/lib/template";
+import { artKindLabel } from "@/entities/product/model/artKind";
 
 interface Props {
   id: string;
+}
+
+function slugify(value: string) {
+  return value
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+}
+
+/** File name for the downloaded artwork: `<style>-<pet name>.<ext>`. */
+function buildDownloadName(
+  styleName: string | null | undefined,
+  petName: string | null | undefined,
+  url: string | null | undefined,
+) {
+  const parts = [styleName, petName]
+    .map((part) => (part ? slugify(part) : ""))
+    .filter(Boolean);
+  const base = parts.join("-") || "artwork";
+  const extension = url
+    ?.split("?")[0]
+    .match(/\.(jpe?g|png|webp|gif|avif)$/i)?.[1];
+  return `${base}.${extension?.toLowerCase() ?? "png"}`;
 }
 
 export function GenerationDetail({ id }: Props) {
@@ -34,10 +60,34 @@ export function GenerationDetail({ id }: Props) {
   } = useGenerationDetail(id);
 
   const [confirmingDelete, setConfirmingDelete] = useState(false);
+  const [downloading, setDownloading] = useState(false);
 
   async function handleDelete() {
     const ok = await deleteGeneration();
     if (ok) router.push("/user/generations");
+  }
+
+  async function handleDownload(url: string, fileName: string) {
+    setDownloading(true);
+    try {
+      // The image lives on a different origin, so `<a download>` is ignored:
+      // fetch it as a blob to control the file name.
+      const response = await fetch(url);
+      if (!response.ok) throw new Error("Download failed");
+      const blob = await response.blob();
+      const objectUrl = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = objectUrl;
+      link.download = fileName;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      URL.revokeObjectURL(objectUrl);
+    } catch {
+      window.open(url, "_blank", "noopener,noreferrer");
+    } finally {
+      setDownloading(false);
+    }
   }
 
   if (isLoading) {
@@ -50,8 +100,11 @@ export function GenerationDetail({ id }: Props) {
           <div className="h-4 w-24 animate-pulse rounded bg-cream" />
           <div className="h-10 w-56 animate-pulse rounded-xl bg-cream" />
           <div className="h-4 w-40 animate-pulse rounded bg-cream" />
-          <div className="mt-4 h-14 w-full animate-pulse rounded-full bg-cream" />
-          <div className="h-12 w-full animate-pulse rounded-xl bg-cream" />
+          <div className="mt-4 h-14 w-full animate-pulse rounded-xl bg-cream" />
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+            <div className="h-12 w-full animate-pulse rounded-xl bg-cream" />
+            <div className="h-12 w-full animate-pulse rounded-xl bg-cream" />
+          </div>
         </div>
       </div>
     );
@@ -84,6 +137,20 @@ export function GenerationDetail({ id }: Props) {
   const imageUrl = generation.resultUrl ?? generation.thumbnailUrl;
   const petName = generation.pet?.name ?? "Your artwork";
   const styleName = generation.style?.displayName ?? generation.style?.category;
+  const downloadName = buildDownloadName(
+    styleName,
+    generation.pet?.name,
+    imageUrl,
+  );
+  // Tipo de producto de cara al cliente: formato + contenido, ej. "Canvas Print ·
+  // Paint by Numbers". Mismo criterio que la ficha de producto (ProductInfo).
+  const productLabel =
+    [
+      templateLabel(generation.productRef?.template),
+      artKindLabel(generation.productRef?.artKind),
+    ]
+      .filter(Boolean)
+      .join(" · ") || "Personalized";
 
   return (
     <div className="flex flex-col gap-6">
@@ -104,9 +171,11 @@ export function GenerationDetail({ id }: Props) {
         <div className="flex flex-col lg:col-span-5">
           <div className="sticky top-24 flex flex-col gap-6">
             <div className="flex flex-col gap-3">
-              <span className="text-sm font-bold uppercase tracking-wider text-primary">
-                AI Artwork
-              </span>
+              {styleName && (
+                <span className="text-sm font-bold uppercase tracking-wider text-primary">
+                  {styleName}
+                </span>
+              )}
               <div className="flex flex-wrap items-center gap-3">
                 <h1 className="font-display text-4xl font-black leading-[1.1] tracking-tight text-text-main lg:text-5xl">
                   {petName}
@@ -114,15 +183,7 @@ export function GenerationDetail({ id }: Props) {
                 <GenerationStatusBadge status={status} />
               </div>
               <p className="flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-text-muted">
-                {styleName && (
-                  <>
-                    <span className="font-semibold text-text-main">
-                      {styleName}
-                    </span>
-                    <span className="text-text-muted/50">·</span>
-                  </>
-                )}
-                <span className="capitalize">{generation.type}</span>
+                <span>{productLabel}</span>
                 <span className="text-text-muted/50">·</span>
                 <span className="flex items-center gap-1">
                   <span className="material-symbols-outlined text-[16px]">
@@ -133,96 +194,68 @@ export function GenerationDetail({ id }: Props) {
               </p>
             </div>
 
-            <div className="h-px w-full bg-text-main/10" />
-
-            {(generation.prompt || generation.provider) && (
-              <Accordion
-                title="Details"
-                className="rounded-xl"
-                summaryClassName="py-1"
-                titleClassName="font-display text-lg font-black text-text-main"
-                iconClassName="text-text-muted"
-                contentClassName="pt-3 flex flex-col gap-3 text-sm text-text-muted"
-              >
-                {generation.prompt && (
-                  <div>
-                    <p className="font-bold text-text-main">Prompt</p>
-                    <p className="mt-1 leading-relaxed">{generation.prompt}</p>
-                  </div>
-                )}
-                {generation.provider && (
-                  <div>
-                    <p className="font-bold text-text-main">Provider</p>
-                    <p className="mt-1 capitalize">{generation.provider}</p>
-                  </div>
-                )}
-              </Accordion>
-            )}
-
             <div className="h-px w-full bg-linear-to-r from-text-main/15 via-text-main/5 to-transparent" />
 
             <span className="text-sm font-bold uppercase tracking-wider text-primary">
               Do more with this
             </span>
+            <div className="flex flex-col gap-3">
+              {/* CTA primario — Ordenar como print */}
+              <Link
+                href="/catalog"
+                className="flex h-14 w-full items-center justify-center gap-2 rounded-xl bg-primary text-lg font-bold text-white shadow-lg shadow-primary/20 transition-all hover:scale-[1.02] hover:bg-primary-dark hover:shadow-xl hover:shadow-primary/25 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:ring-offset-2 active:scale-100"
+              >
+                <span className="material-symbols-outlined text-[22px]">
+                  print
+                </span>
+                Order as a print
+              </Link>
 
-            {/* CTA primario — Ordenar como print */}
-            <Link
-              href="/catalog"
-              className="flex h-14 w-full items-center justify-center gap-2 rounded-full bg-primary text-lg font-bold text-white transition-all hover:-translate-y-0.5 hover:bg-primary-dark hover:shadow-lg active:translate-y-0"
-            >
-              <span className="material-symbols-outlined text-[22px]">
-                print
-              </span>
-              Order as a print
-            </Link>
+              {/* Acciones secundarias — PBN y descarga */}
+              {isReady && imageUrl && (
+                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                  <Link
+                    href={`/studio?generationId=${generation.id}&imageUrl=${encodeURIComponent(imageUrl)}${generation.style?.id ? `&styleId=${generation.style.id}` : ""}`}
+                    className="group flex h-12 items-center justify-center gap-2 rounded-xl border border-[#E0DED9] bg-white px-4 text-sm font-bold text-text-main shadow-sm transition-all hover:border-primary/40 hover:bg-gray-50 hover:text-primary hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:ring-offset-2 active:shadow-sm"
+                  >
+                    <span className="material-symbols-outlined text-[20px] text-text-muted transition-colors group-hover:text-primary">
+                      format_paint
+                    </span>
+                    Convert to PBN
+                  </Link>
 
-            <div className="flex flex-wrap gap-3">
-              {/* Favorito */}
+                  <button
+                    type="button"
+                    onClick={() => handleDownload(imageUrl, downloadName)}
+                    disabled={downloading}
+                    className="group flex h-12 items-center justify-center gap-2 rounded-xl border border-[#E0DED9] bg-white px-4 text-sm font-bold text-text-main shadow-sm transition-all hover:border-primary/40 hover:bg-gray-50 hover:text-primary hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:ring-offset-2 active:shadow-sm disabled:cursor-not-allowed disabled:opacity-60"
+                  >
+                    <span
+                      className={`material-symbols-outlined text-[20px] text-text-muted transition-colors group-hover:text-primary ${
+                        downloading ? "animate-pulse" : ""
+                      }`}
+                    >
+                      download
+                    </span>
+                    {downloading ? "Downloading…" : "Download image"}
+                  </button>
+                </div>
+              )}
+
+              {/* Borrar */}
+              <div className="mt-1 h-px w-full bg-text-main/10" />
               <button
                 type="button"
-                onClick={toggleFavorite}
-                disabled={savingFavorite}
-                aria-pressed={isFavorite}
-                className="flex flex-1 items-center justify-center gap-2 rounded-xl border border-[#E0DED9] bg-white px-5 py-3 text-sm font-bold text-text-main shadow-sm transition-all hover:bg-gray-50 hover:shadow-md disabled:opacity-60"
+                onClick={() => setConfirmingDelete(true)}
+                disabled={deleting}
+                className="w-full p-4 inline-flex items-center justify-center gap-1.5 self-center rounded-xl px-4 py-2 text-sm font-bold text-red-600 transition-all hover:bg-red-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500/40 focus-visible:ring-offset-2 active:bg-red-100 disabled:cursor-not-allowed disabled:opacity-60"
               >
-                <span
-                  className={`material-symbols-outlined text-[20px] ${
-                    isFavorite ? "text-primary" : ""
-                  }`}
-                  style={
-                    isFavorite ? { fontVariationSettings: "'FILL' 1" } : undefined
-                  }
-                >
-                  favorite
+                <span className="material-symbols-outlined text-[18px]">
+                  delete
                 </span>
-                {isFavorite ? "Favorited" : "Favorite"}
+                Delete artwork
               </button>
-
-              {/* Enviar a PBN */}
-              {isReady && imageUrl && (
-                <Link
-                  href={`/studio?generationId=${generation.id}&imageUrl=${encodeURIComponent(imageUrl)}${generation.style?.id ? `&styleId=${generation.style.id}` : ""}`}
-                  className="flex flex-1 items-center justify-center gap-2 rounded-xl border border-[#E0DED9] bg-white px-5 py-3 text-sm font-bold text-text-main shadow-sm transition-all hover:bg-gray-50 hover:shadow-md"
-                >
-                  <span className="material-symbols-outlined text-[20px]">
-                    format_paint
-                  </span>
-                  Send to PBN
-                </Link>
-              )}
             </div>
-
-            {/* Borrar */}
-            <button
-              type="button"
-              onClick={() => setConfirmingDelete(true)}
-              className="inline-flex items-center justify-center gap-1.5 self-center rounded-xl px-4 py-2 text-sm font-bold text-red-600 transition-colors hover:bg-red-50"
-            >
-              <span className="material-symbols-outlined text-[18px]">
-                delete
-              </span>
-              Delete artwork
-            </button>
           </div>
         </div>
       </div>

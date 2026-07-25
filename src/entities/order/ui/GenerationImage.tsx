@@ -5,6 +5,13 @@ import {
   SET_ARTWORK_SHADOW_HOVER,
 } from "@/entities/product/lib/setLighting";
 
+// La obra no debe pasar del alto de la ventana: se descuenta el navbar sticky
+// (4rem), el enlace de volver con su gap (3rem) y el padding vertical de este
+// panel (pt-4 + pb-10). Al ser <img> con w-full y alto automático, el navegador
+// reduce el ancho al recortar la altura, y el envoltorio (w-fit) se ajusta a la
+// imagen para que la sombra y la luz del set no queden más anchas que la obra.
+const ARTWORK_MAX_HEIGHT = "max-h-[calc(100dvh-11rem)]";
+
 interface GenerationImageProps {
   status: string;
   imageUrl: string | null;
@@ -34,20 +41,22 @@ export function GenerationImage({
         // el hover levanta el conjunto, no solo la imagen. El zoom abre la
         // versión limpia, sin filtro ni luz.
         <SetLighting
-          className={`w-full transition-all duration-300 ease-out hover:-translate-y-1.5 ${SET_ARTWORK_SHADOW_HOVER}`}
+          className={`w-fit max-w-full transition-all duration-300 ease-out hover:-translate-y-1.5 ${SET_ARTWORK_SHADOW_HOVER}`}
         >
           <ImageZoom alt={alt}>
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src={imageUrl}
               alt={alt}
-              className="block h-auto w-full bg-white"
+              className={`block h-auto w-full bg-white ${ARTWORK_MAX_HEIGHT}`}
               style={setArtworkFilter}
             />
           </ImageZoom>
         </SetLighting>
       ) : isFailed ? (
-        <div className="flex aspect-4/5 w-full flex-col items-center justify-center gap-3 rounded-xl bg-cream text-center text-text-muted">
+        <div
+          className={`flex aspect-4/5 w-full flex-col items-center justify-center gap-3 rounded-xl bg-cream text-center text-text-muted ${ARTWORK_MAX_HEIGHT}`}
+        >
           <span className="material-symbols-outlined text-[40px] text-red-500">
             error
           </span>
@@ -56,7 +65,9 @@ export function GenerationImage({
           </p>
         </div>
       ) : (
-        <div className="flex aspect-4/5 w-full flex-col items-center justify-center gap-3 rounded-xl bg-cream text-center text-text-muted">
+        <div
+          className={`flex aspect-4/5 w-full flex-col items-center justify-center gap-3 rounded-xl bg-cream text-center text-text-muted ${ARTWORK_MAX_HEIGHT}`}
+        >
           <div className="size-10 animate-spin rounded-full border-b-2 border-primary" />
           <p className="text-sm">Your artwork is still being created…</p>
         </div>

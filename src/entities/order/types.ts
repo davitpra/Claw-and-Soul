@@ -98,21 +98,29 @@ export interface DefaultAddressResponse {
 export interface UserGeneration {
   id: string;
   status: string;
+  // Medio de la generación ("image" | "video"), NO el producto. El tipo de
+  // producto sale de `productRef` (template + artKind).
   type: string;
   resultUrl: string | null;
   thumbnailUrl: string | null;
   createdAt: string;
   pet: { id: string; name: string; species?: string } | null;
   style: { id: string; displayName?: string } | null;
+  // Producto para el que se pidió la obra. null en generaciones legacy previas a
+  // que `productRefId` fuera obligatorio al crear.
+  productRef: {
+    id: string;
+    displayName?: string;
+    template?: string | null;
+    artKind?: string | null;
+  } | null;
 }
 
-// Respuesta de GET /generations/:id (user-scoped). El backend devuelve la
-// Generation completa con pet + style incluidos; aquí surfaceamos los campos
-// extra que la fila de lista (UserGeneration) no declara.
+// Respuesta de GET /generations/:id (user-scoped). El backend proyecta la
+// Generation con USER_GENERATION_SELECT: el prompt engineering (prompt,
+// negativePrompt, finalPrompt, provider, promptSnapshot, visionAnalysis…) es IP
+// del negocio y NO sale de las rutas admin — no lo agregues aquí.
 export interface UserGenerationDetail extends UserGeneration {
-  prompt: string | null;
-  negativePrompt: string | null;
-  provider: string | null;
   errorMessage: string | null;
   isFavorite: boolean;
   isPublic: boolean;
