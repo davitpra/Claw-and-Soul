@@ -1,21 +1,12 @@
-import type { CSSProperties } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { Container } from "@/shared/ui/Container";
+import LightRays from "@/shared/ui/LightRays";
 import {
   FRAME_SHADOWS,
   type FrameStyle,
 } from "@/entities/product/lib/frameStyle";
 import { CanvasEdgeOverlay } from "@/entities/product/ui/CanvasEdgeOverlay";
-
-/* Cada haz varía posición, grosor y ritmo para que el shimmer no sea síncrono.
-   Los delays negativos arrancan cada ciclo ya empezado (ver .light-ray). */
-const LIGHT_RAYS = [
-  { position: "left-[8%] w-16 md:w-24", duration: "9s", delay: "0s" },
-  { position: "left-[30%] w-12 md:w-16", duration: "12s", delay: "-3s" },
-  { position: "left-[55%] w-20 md:w-28", duration: "8s", delay: "-6s" },
-  { position: "left-[80%] w-14 md:w-20", duration: "13s", delay: "-1.5s" },
-];
 
 type HeroCta = {
   href: string;
@@ -195,23 +186,7 @@ export default function Hero({
       </Container>
       {/* Rayos de luz decorativos; último hijo para pintar por encima de todo
           el contenido (imagen incluida) sin bloquear clics. */}
-      <div
-        aria-hidden
-        className="pointer-events-none absolute inset-0 overflow-hidden"
-      >
-        {LIGHT_RAYS.map((ray) => (
-          <span
-            key={ray.position}
-            className={`light-ray absolute -top-[20%] h-[150%] -rotate-18 bg-linear-to-b from-white/50 via-white/15 to-transparent blur-md ${ray.position}`}
-            style={
-              {
-                "--ray-duration": ray.duration,
-                "--ray-delay": ray.delay,
-              } as CSSProperties
-            }
-          />
-        ))}
-      </div>
+      <LightRays />
     </section>
   );
 }

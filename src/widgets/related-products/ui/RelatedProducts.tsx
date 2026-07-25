@@ -4,6 +4,7 @@ import Link from "next/link";
 import { Container } from "@/shared/ui/Container";
 import { Carousel } from "@/shared/ui/Carousel";
 import { AccessoryUpsell, type AccessoryCard } from "@/features/pbn-purchase";
+import LightRays from "@/shared/ui/LightRays";
 
 interface RelatedProductsProps {
   /** Cards ya resueltas (p. ej. de `getRelatedAccessories`). */
@@ -28,7 +29,7 @@ export default function RelatedProducts({
   if (accessories.length === 0) return null;
 
   return (
-    <section className="py-20 bg-cream">
+    <section className="relative overflow-hidden py-20 bg-cream">
       <Container>
         <div className="flex flex-col items-center gap-5 mb-12">
           <span className="inline-flex items-center gap-2 rounded-full border border-[#E0DED9] bg-white px-4 py-1.5 text-primary">
@@ -82,6 +83,9 @@ export default function RelatedProducts({
           </Link>
         </div>
       </Container>
+      {/* Rayos de luz decorativos; último hijo para pintar por encima de todo
+                el contenido (imagen incluida) sin bloquear clics. */}
+      <LightRays />
     </section>
   );
 }

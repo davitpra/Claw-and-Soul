@@ -7,6 +7,7 @@ import {
   DIFFICULTY_LABELS,
   StyleDifficulty,
 } from "@/entities/art-style/model/difficulty";
+import LightRays from "@/shared/ui/LightRays";
 
 // Mismo "poster flotando" que las cards de CollectionSection.
 const posterClasses =
@@ -43,7 +44,10 @@ const STYLES: LandingStyle[] = [
 
 export default function LandingStyles() {
   return (
-    <section id="styles" className="w-full scroll-mt-24 bg-white py-20">
+    <section
+      id="styles"
+      className="relative w-full scroll-mt-24 overflow-hidden bg-white py-20"
+    >
       <Container>
         <div className="mb-14 text-center">
           <span className="mb-5 inline-flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-[0.18em] text-primary">
@@ -89,6 +93,9 @@ export default function LandingStyles() {
           </Link>
         </div>
       </Container>
+      {/* Rayos de luz decorativos; último hijo para pintar por encima de todo
+                el contenido (imagen incluida) sin bloquear clics. */}
+      <LightRays />
     </section>
   );
 }

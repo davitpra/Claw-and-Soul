@@ -10,6 +10,7 @@ import {
   type FrameStyle,
 } from "@/entities/product/lib/frameStyle";
 import { CanvasEdgeOverlay } from "@/entities/product/ui/CanvasEdgeOverlay";
+import LightRays from "@/shared/ui/LightRays";
 
 // Aspecto de "poster flotando": ligera elevación y sombra teñida en teal al hover.
 const posterClasses =
@@ -98,7 +99,7 @@ export default function CollectionSection({
   if (!isLoading && (error || images.length === 0)) return null;
 
   return (
-    <section className={`py-20 ${background}`}>
+    <section className={`relative overflow-hidden py-20 ${background}`}>
       <Container>
         <div className="flex flex-col items-center gap-5 mb-12">
           {eyebrow && (
@@ -146,6 +147,9 @@ export default function CollectionSection({
           </div>
         )}
       </Container>
+      {/* Rayos de luz decorativos; último hijo para pintar por encima de todo
+                el contenido (imagen incluida) sin bloquear clics. */}
+      <LightRays />
     </section>
   );
 }
