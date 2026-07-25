@@ -62,7 +62,7 @@ export default function LandingStyles() {
           </p>
         </div>
 
-        <Carousel gap="gap-8" perView={4} mobileOne>
+        <Carousel gap="gap-4 md:gap-8" perView={4} mobileSlides={2}>
           {STYLES.map((style) => (
             <div key={style.name} className="group flex flex-col gap-4 ">
               <Card

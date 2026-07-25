@@ -17,10 +17,11 @@ interface CarouselProps {
    */
   perView?: 3 | 4 | 5;
   /**
-   * En móvil (base) muestra una sola slide a ancho completo en vez de dejar
-   * asomar la siguiente. Requiere `perView`. Tablet/desktop no cambian.
+   * Slides visibles en móvil (base): 1 a ancho completo o 2 a mitad de ancho,
+   * en vez del comportamiento por defecto (dejar asomar la siguiente).
+   * Requiere `perView`. Tablet/desktop no cambian.
    */
-  mobileOne?: boolean;
+  mobileSlides?: 1 | 2;
   /**
    * Render opcional bajo el track (miniaturas, contador…). Recibe el estado de
    * navegación de Embla que el carrusel ya calcula para los dots.
@@ -44,11 +45,13 @@ const slideSizingByPerView: Record<
   5: "sm:[&>*]:flex-[0_0_45%] md:[&>*]:flex-[0_0_33%] lg:[&>*]:flex-[0_0_calc((100%-8rem)/5)]",
 };
 
-// Ancho base (móvil). Por defecto deja asomar la siguiente slide (72%);
-// con `mobileOne` ocupa el ancho completo para ver una sola a la vez.
+// Ancho base (móvil). Por defecto deja asomar la siguiente slide (72%); con
+// `mobileSlides` se ven exactamente 1 o 2 completas (la de 2 descuenta 1rem de
+// gap, así que el consumidor debe usar `gap-4` en base).
 const mobileSizing = {
   peek: "[&>*]:min-w-0 [&>*]:flex-[0_0_72%]",
-  full: "[&>*]:min-w-0 [&>*]:flex-[0_0_100%]",
+  1: "[&>*]:min-w-0 [&>*]:flex-[0_0_100%]",
+  2: "[&>*]:min-w-0 [&>*]:flex-[0_0_calc((100%-1rem)/2)]",
 };
 
 export function Carousel({
@@ -59,13 +62,13 @@ export function Carousel({
   autoplayMs = 0,
   loop = false,
   perView,
-  mobileOne = false,
+  mobileSlides,
   renderThumbs,
 }: CarouselProps) {
   const [emblaRef, emblaApi] = useEmblaCarousel({ align: "start", loop });
 
   const slideSizing = perView
-    ? `${mobileOne ? mobileSizing.full : mobileSizing.peek} ${slideSizingByPerView[perView]}`
+    ? `${mobileSizing[mobileSlides ?? "peek"]} ${slideSizingByPerView[perView]}`
     : "";
   const [canScrollPrev, setCanScrollPrev] = useState(false);
   const [canScrollNext, setCanScrollNext] = useState(true);
