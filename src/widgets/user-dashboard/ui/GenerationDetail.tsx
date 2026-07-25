@@ -1,91 +1,44 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useAuthFetch } from "@/hooks/useAuthFetch";
-import { isNotFound } from "@/shared/lib/http";
 import Accordion from "@/shared/ui/Accordion";
 import { ConfirmDialog } from "@/shared/ui/ConfirmDialog";
-import { ImageZoom } from "@/shared/ui/ImageZoom";
-import {
-  formatOrderDate,
-  generationStatusBadge,
-} from "@/entities/order/lib/presentation";
-import type { ApiEnvelope, UserGenerationDetail } from "@/entities/order/types";
+import { DetailErrorState } from "@/shared/ui/DetailErrorState";
+import { DetailNotFound } from "@/shared/ui/DetailNotFound";
+import { useGenerationDetail } from "@/entities/order/api/useGenerationDetail";
+import { BackToGenerationsLink } from "@/entities/order/ui/BackToGenerationsLink";
+import { GenerationImage } from "@/entities/order/ui/GenerationImage";
+import { GenerationStatusBadge } from "@/entities/order/ui/GenerationStatusBadge";
+import { formatOrderDate } from "@/entities/order/lib/presentation";
 
 interface Props {
   id: string;
 }
 
 export function GenerationDetail({ id }: Props) {
-  const { get, authFetchJSON, delete: del } = useAuthFetch();
   const router = useRouter();
+  const {
+    generation,
+    isLoading,
+    error,
+    notFound,
+    reload,
+    isFavorite,
+    savingFavorite,
+    toggleFavorite,
+    deleting,
+    deleteError,
+    deleteGeneration,
+  } = useGenerationDetail(id);
 
-  const [generation, setGeneration] = useState<UserGenerationDetail | null>(
-    null,
-  );
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [notFound, setNotFound] = useState(false);
-  const [isFavorite, setIsFavorite] = useState(false);
-  const [savingFavorite, setSavingFavorite] = useState(false);
   const [confirmingDelete, setConfirmingDelete] = useState(false);
-  const [deleting, setDeleting] = useState(false);
-  const [deleteError, setDeleteError] = useState<string | null>(null);
 
-  const load = useCallback(async () => {
-    setIsLoading(true);
-    setError(null);
-    setNotFound(false);
-    try {
-      const res = await get<ApiEnvelope<UserGenerationDetail>>(
-        `/generations/${id}`,
-      );
-      setGeneration(res.data ?? null);
-      setIsFavorite(res.data?.isFavorite ?? false);
-    } catch (err) {
-      if (isNotFound(err)) setNotFound(true);
-      else setError("Couldn't load this artwork. Please try again.");
-    } finally {
-      setIsLoading(false);
-    }
-  }, [get, id]);
-
-  useEffect(() => {
-    load();
-  }, [load]);
-
-  const toggleFavorite = useCallback(async () => {
-    if (savingFavorite) return;
-    const next = !isFavorite;
-    setIsFavorite(next); // optimista
-    setSavingFavorite(true);
-    try {
-      await authFetchJSON(`/generations/${id}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ isFavorite: next }),
-      });
-    } catch {
-      setIsFavorite(!next); // revertir en fallo
-    } finally {
-      setSavingFavorite(false);
-    }
-  }, [authFetchJSON, id, isFavorite, savingFavorite]);
-
-  const handleDelete = useCallback(async () => {
-    if (deleting) return;
-    setDeleting(true);
-    setDeleteError(null);
-    try {
-      await del(`/generations/${id}`);
-      router.push("/user/generations");
-    } catch {
-      setDeleting(false);
-      setDeleteError("Couldn't delete this artwork. Please try again.");
-    }
-  }, [del, id, router, deleting]);
+  async function handleDelete() {
+    const ok = await deleteGeneration();
+    if (ok) router.push("/user/generations");
+  }
 
   if (isLoading) {
     return (
@@ -106,99 +59,45 @@ export function GenerationDetail({ id }: Props) {
 
   if (notFound || (!generation && !error)) {
     return (
-      <section className="rounded-xl bg-white p-8 text-center md:p-12">
-        <span className="mx-auto flex size-16 items-center justify-center rounded-full bg-cream text-text-muted">
-          <span className="material-symbols-outlined text-[32px]">
-            image_not_supported
-          </span>
-        </span>
-        <h1 className="mt-4 font-display text-xl font-black text-text-main">
-          Artwork not found
-        </h1>
-        <p className="mt-1 text-sm text-text-muted">
-          We couldn&apos;t find this artwork in your account.
-        </p>
-        <Link
-          href="/user/generations"
-          className="mt-5 inline-flex items-center gap-2 rounded-xl bg-primary px-6 py-3 text-sm font-bold text-white shadow-sm transition-all hover:bg-primary-dark hover:shadow-md"
-        >
-          <span className="material-symbols-outlined text-[18px]">
-            arrow_back
-          </span>
-          Back to my artworks
-        </Link>
-      </section>
+      <DetailNotFound
+        icon="image_not_supported"
+        title="Artwork not found"
+        message="We couldn't find this artwork in your account."
+        backHref="/user/generations"
+        backLabel="Back to my artworks"
+      />
     );
   }
 
   if (error || !generation) {
     return (
-      <section className="rounded-xl bg-white p-6 md:p-8">
-        <BackLink />
-        <div className="mt-5 flex flex-col items-center rounded-xl bg-red-50 px-4 py-8 text-center">
-          <span className="flex size-12 items-center justify-center rounded-full bg-red-100 text-red-600">
-            <span className="material-symbols-outlined text-[26px]">error</span>
-          </span>
-          <p className="mt-3 text-sm text-red-700">
-            {error ?? "Couldn't load this artwork."}
-          </p>
-          <button
-            type="button"
-            onClick={load}
-            className="mt-3 inline-flex items-center gap-1.5 rounded-xl bg-red-600 px-5 py-2.5 text-sm font-bold text-white transition-colors hover:bg-red-700"
-          >
-            <span className="material-symbols-outlined text-[18px]">
-              refresh
-            </span>
-            Retry
-          </button>
-        </div>
-      </section>
+      <DetailErrorState
+        back={<BackToGenerationsLink />}
+        message={error ?? "Couldn't load this artwork."}
+        onRetry={reload}
+      />
     );
   }
 
   const status = generation.status;
-  const badge = generationStatusBadge(status);
   const isReady = status === "completed";
-  const isFailed = status === "failed";
   const imageUrl = generation.resultUrl ?? generation.thumbnailUrl;
   const petName = generation.pet?.name ?? "Your artwork";
   const styleName = generation.style?.displayName ?? generation.style?.category;
 
   return (
     <div className="flex flex-col gap-6">
-      <BackLink />
+      <BackToGenerationsLink />
 
       <div className="grid grid-cols-1 gap-8 lg:grid-cols-12 lg:gap-16">
         {/* IZQUIERDA — imagen flotante */}
         <div className="lg:col-span-7">
-          <div className="flex items-center justify-center px-4 pt-4 pb-10 md:px-8">
-            {isReady && imageUrl ? (
-              <ImageZoom alt={petName}>
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  src={imageUrl}
-                  alt={petName}
-                  className="h-auto w-full bg-white shadow-[0_14px_32px_-12px_rgba(16,54,66,0.40)] transition-all duration-300 ease-out hover:-translate-y-1.5 hover:shadow-[0_22px_40px_-14px_rgba(16,54,66,0.50)]"
-                />
-              </ImageZoom>
-            ) : isFailed ? (
-              <div className="flex aspect-4/5 w-full flex-col items-center justify-center gap-3 rounded-xl bg-cream text-center text-text-muted">
-                <span className="material-symbols-outlined text-[40px] text-red-500">
-                  error
-                </span>
-                <p className="px-6 text-sm">
-                  {generation.errorMessage ??
-                    "This generation failed to complete."}
-                </p>
-              </div>
-            ) : (
-              <div className="flex aspect-4/5 w-full flex-col items-center justify-center gap-3 rounded-xl bg-cream text-center text-text-muted">
-                <div className="size-10 animate-spin rounded-full border-b-2 border-primary" />
-                <p className="text-sm">Your artwork is still being created…</p>
-              </div>
-            )}
-          </div>
+          <GenerationImage
+            status={status}
+            imageUrl={imageUrl}
+            errorMessage={generation.errorMessage}
+            alt={petName}
+          />
         </div>
 
         {/* DERECHA — panel sticky */}
@@ -212,11 +111,7 @@ export function GenerationDetail({ id }: Props) {
                 <h1 className="font-display text-4xl font-black leading-[1.1] tracking-tight text-text-main lg:text-5xl">
                   {petName}
                 </h1>
-                <span
-                  className={`rounded-full px-3 py-1 text-xs font-bold ${badge.classes}`}
-                >
-                  {badge.label}
-                </span>
+                <GenerationStatusBadge status={status} />
               </div>
               <p className="flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-text-muted">
                 {styleName && (
@@ -295,9 +190,7 @@ export function GenerationDetail({ id }: Props) {
                     isFavorite ? "text-primary" : ""
                   }`}
                   style={
-                    isFavorite
-                      ? { fontVariationSettings: "'FILL' 1" }
-                      : undefined
+                    isFavorite ? { fontVariationSettings: "'FILL' 1" } : undefined
                   }
                 >
                   favorite
@@ -322,10 +215,7 @@ export function GenerationDetail({ id }: Props) {
             {/* Borrar */}
             <button
               type="button"
-              onClick={() => {
-                setDeleteError(null);
-                setConfirmingDelete(true);
-              }}
+              onClick={() => setConfirmingDelete(true)}
               className="inline-flex items-center justify-center gap-1.5 self-center rounded-xl px-4 py-2 text-sm font-bold text-red-600 transition-colors hover:bg-red-50"
             >
               <span className="material-symbols-outlined text-[18px]">
@@ -358,17 +248,5 @@ export function GenerationDetail({ id }: Props) {
         )}
       </ConfirmDialog>
     </div>
-  );
-}
-
-function BackLink() {
-  return (
-    <Link
-      href="/user/generations"
-      className="inline-flex items-center gap-1.5 text-sm font-bold text-text-muted transition-colors hover:text-primary"
-    >
-      <span className="material-symbols-outlined text-[18px]">arrow_back</span>
-      Back to my artworks
-    </Link>
   );
 }

@@ -47,16 +47,18 @@ interface UseBackendProductsResult {
  * devolver una lista de productos unificada para el frontend.
  */
 export function useBackendProducts(): UseBackendProductsResult {
-  // Estados para almacenar los productos, el estado de carga y posibles errores
-  const [products, setProducts] = useState<Product[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  // El resultado arranca en `null` y solo se rellena cuando la petición
+  // termina; `isLoading` es simplemente "todavía no hay resultado". Así el
+  // efecto no llama setState de forma síncrona
+  // (react-hooks/set-state-in-effect).
+  const [state, setState] = useState<{
+    products: Product[];
+    error: string | null;
+  } | null>(null);
 
   useEffect(() => {
     // Variable para evitar actualizaciones de estado si el componente se desmonta
     let cancelled = false;
-    setIsLoading(true);
-    setError(null);
 
     // Realizar ambas peticiones (backend local y Shopify) al mismo tiempo (en paralelo)
     Promise.all([
@@ -111,16 +113,12 @@ export function useBackendProducts(): UseBackendProductsResult {
           });
 
         // Actualizar el estado con los productos combinados
-        setProducts(merged);
+        setState({ products: merged, error: null });
       })
       .catch((err) => {
         if (cancelled) return;
         console.error("useBackendProducts error:", err);
-        setError("Failed to load products.");
-        setProducts([]);
-      })
-      .finally(() => {
-        if (!cancelled) setIsLoading(false);
+        setState({ products: [], error: "Failed to load products." });
       });
 
     // Función de limpieza para cancelar actualizaciones si el componente se desmonta antes de finalizar
@@ -129,5 +127,9 @@ export function useBackendProducts(): UseBackendProductsResult {
     };
   }, []);
 
-  return { products, isLoading, error };
+  return {
+    products: state?.products ?? [],
+    isLoading: state === null,
+    error: state?.error ?? null,
+  };
 }

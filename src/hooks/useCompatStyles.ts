@@ -23,21 +23,24 @@ export function useCompatStyles(
   productRefId: string | null,
   formatId: string | null,
 ): UseCompatStylesResult {
-  const [styles, setStyles] = useState<Style[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  // La combinación producto+formato se guarda junto al resultado: mientras
+  // `state.key` no coincida con la key actual, la petición sigue en vuelo.
+  // `isLoading` y el vaciado al cambiar de formato quedan derivados, así el
+  // efecto no llama setState de forma síncrona
+  // (react-hooks/set-state-in-effect).
+  const key =
+    productRefId && formatId ? `${productRefId}|${formatId}` : null;
+
+  const [state, setState] = useState<{
+    key: string | null;
+    styles: Style[];
+    error: string | null;
+  }>({ key: null, styles: [], error: null });
 
   useEffect(() => {
-    if (!productRefId || !formatId) {
-      setStyles([]);
-      setError(null);
-      setIsLoading(false);
-      return;
-    }
+    if (!productRefId || !formatId) return;
 
     let cancelled = false;
-    setIsLoading(true);
-    setError(null);
 
     fetch(
       `${API_URL}/compat/styles?product_id=${productRefId}&format_id=${formatId}`,
@@ -62,16 +65,20 @@ export function useCompatStyles(
           thanksUrl: s.thanksUrl ?? null,
           templateVarOptions: s.templateVarOptions ?? null,
         }));
-        setStyles(mapped);
+        setState({
+          key: `${productRefId}|${formatId}`,
+          styles: mapped,
+          error: null,
+        });
       })
       .catch((err) => {
         if (cancelled) return;
         console.error("useCompatStyles error:", err);
-        setError("Failed to load compatible styles.");
-        setStyles([]);
-      })
-      .finally(() => {
-        if (!cancelled) setIsLoading(false);
+        setState({
+          key: `${productRefId}|${formatId}`,
+          styles: [],
+          error: "Failed to load compatible styles.",
+        });
       });
 
     return () => {
@@ -79,5 +86,11 @@ export function useCompatStyles(
     };
   }, [productRefId, formatId]);
 
-  return { styles, isLoading, error };
+  const settled = key !== null && state.key === key;
+
+  return {
+    styles: settled ? state.styles : [],
+    isLoading: key !== null && !settled,
+    error: settled ? state.error : null,
+  };
 }

@@ -100,7 +100,7 @@ function CatalogContent() {
     : products.length;
 
   return (
-    <div className="relative flex min-h-screen w-full flex-col overflow-x-clip bg-cream">
+    <div className="relative flex min-h-screen w-full flex-col overflow-x-clip bg-white">
       <Navbar />
 
       <main className="grow w-full px-4 py-4">
@@ -145,14 +145,14 @@ function CatalogContent() {
               <div className="mb-6 flex flex-wrap items-center gap-x-4 gap-y-3">
                 <button
                   onClick={() => setFiltersOpen(true)}
-                  className="flex shrink-0 items-center gap-2 h-10 px-5 rounded-xl bg-white text-slate-dark text-sm font-bold shadow-sm hover:shadow-md transition-all"
+                  className="flex shrink-0 items-center gap-2 h-10 px-5 rounded-xl bg-primary text-white text-sm font-bold shadow-sm hover:bg-primary-dark hover:shadow-md transition-all"
                 >
                   <span className="material-symbols-outlined text-[20px]">
                     tune
                   </span>
                   Filters
                   {activeFilterCount > 0 && (
-                    <span className="flex items-center justify-center h-5 min-w-5 px-1.5 rounded-full bg-primary text-white text-[10px] font-bold">
+                    <span className="flex items-center justify-center h-5 min-w-5 px-1.5 rounded-full bg-white text-primary text-[10px] font-bold">
                       {activeFilterCount}
                     </span>
                   )}
@@ -160,7 +160,9 @@ function CatalogContent() {
 
                 <p className="order-2 md:order-3 ml-auto shrink-0 text-sm text-text-muted">
                   Showing{" "}
-                  <span className="font-bold text-slate-dark">{shownCount}</span>{" "}
+                  <span className="font-bold text-slate-dark">
+                    {shownCount}
+                  </span>{" "}
                   of {totalCount} {totalCount === 1 ? "product" : "products"}
                 </p>
 

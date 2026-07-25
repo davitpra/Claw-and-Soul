@@ -38,7 +38,7 @@ export class ColorReducer {
                 const r = kmeansImgData.data[idx++];
                 const g = kmeansImgData.data[idx++];
                 const b = kmeansImgData.data[idx++];
-                const a = kmeansImgData.data[idx++];
+                idx++; // canal alfa, no se usa pero hay que avanzar el índice
                 let currentColorIndex;
                 const color = r + "," + g + "," + b;
                 if (typeof colors[color] === "undefined") {
@@ -80,7 +80,7 @@ export class ColorReducer {
                 let r = imgData.data[idx++];
                 let g = imgData.data[idx++];
                 let b = imgData.data[idx++];
-                const a = imgData.data[idx++];
+                idx++; // canal alfa, no se usa pero hay que avanzar el índice
 
                 // small performance boost: reduce bitness of colors by chopping off the last bits
                 // this will group more colors with only slight variation in color together, reducing the size of the points
@@ -257,7 +257,7 @@ export class ColorReducer {
                     }
                 }
 
-                let pointRGB: number[] = v.tag;
+                const pointRGB = v.tag as number[];
 
                 // replace all pixels of the old color by the new centroid color
                 const pointColor = `${Math.floor(pointRGB[0])},${Math.floor(pointRGB[1])},${Math.floor(pointRGB[2])}`;

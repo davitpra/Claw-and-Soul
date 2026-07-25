@@ -7,7 +7,7 @@ export interface IMap<T> {
 
 export async function delay(ms: number): Promise<void> {
     if (typeof window !== "undefined") {
-        return new Promise<void>((exec) => (<any> window).setTimeout(exec, ms));
+        return new Promise<void>((exec) => window.setTimeout(exec, ms));
     } else {
         return new Promise<void>((exec) => exec());
     }

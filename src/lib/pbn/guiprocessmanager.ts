@@ -479,7 +479,6 @@ export class GUIProcessManager {
         svg.appendChild(strokeGroup);
 
         const yielder = createYielder(150);
-        let count = 0;
         for (const f of facetResult.facets) {
 
             const data = f != null ? buildFacetPathData(f, sizeMultiplier) : null;
@@ -524,8 +523,6 @@ export class GUIProcessManager {
                     }
                 }
             }
-
-            count++;
         }
 
         if (onUpdate != null) {

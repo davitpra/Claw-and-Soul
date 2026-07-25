@@ -53,18 +53,21 @@ interface UseCollectionProductsResult {
 export function useCollectionProducts(
   handle: string,
 ): UseCollectionProductsResult {
-  // Estados para almacenar los productos, el estado de carga y posibles errores
-  const [products, setProducts] = useState<Product[]>([]);
-  const [title, setTitle] = useState<string | null>(null);
-  const [description, setDescription] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  // El handle resuelto se guarda junto al resultado: mientras `state.handle` no
+  // coincida con el `handle` pedido, la petición sigue en vuelo. Eso hace
+  // derivable `isLoading` y evita que el efecto llame setState de forma
+  // síncrona (react-hooks/set-state-in-effect).
+  const [state, setState] = useState<{
+    handle: string;
+    products: Product[];
+    title: string | null;
+    description: string | null;
+    error: string | null;
+  } | null>(null);
 
   useEffect(() => {
     // Variable para evitar actualizaciones de estado si el componente se desmonta
     let cancelled = false;
-    setIsLoading(true);
-    setError(null);
 
     // Realizar ambas peticiones (backend local y colección de Shopify) en paralelo
     Promise.all([
@@ -83,10 +86,6 @@ export function useCollectionProducts(
     ])
       .then(([backendProducts, collection]) => {
         if (cancelled) return;
-
-        // Exponer el título y la descripción de la colección para la UI
-        setTitle(collection?.title ?? null);
-        setDescription(collection?.description ?? null);
 
         const shopifyNodes =
           (collection?.products.edges.map(
@@ -145,19 +144,26 @@ export function useCollectionProducts(
             };
           });
 
-        // Actualizar el estado con los productos combinados
-        setProducts(merged);
+        // Actualizar el estado con los productos combinados, más el título y la
+        // descripción de la colección que la UI necesita exponer
+        setState({
+          handle,
+          products: merged,
+          title: collection?.title ?? null,
+          description: collection?.description ?? null,
+          error: null,
+        });
       })
       .catch((err) => {
         if (cancelled) return;
         console.error("useCollectionProducts error:", err);
-        setError("Failed to load products.");
-        setProducts([]);
-        setTitle(null);
-        setDescription(null);
-      })
-      .finally(() => {
-        if (!cancelled) setIsLoading(false);
+        setState({
+          handle,
+          products: [],
+          title: null,
+          description: null,
+          error: "Failed to load products.",
+        });
       });
 
     // Función de limpieza para cancelar actualizaciones si el componente se desmonta antes de finalizar
@@ -166,5 +172,13 @@ export function useCollectionProducts(
     };
   }, [handle]);
 
-  return { products, title, description, isLoading, error };
+  const settled = state?.handle === handle ? state : null;
+
+  return {
+    products: settled?.products ?? [],
+    title: settled?.title ?? null,
+    description: settled?.description ?? null,
+    isLoading: settled === null,
+    error: settled?.error ?? null,
+  };
 }

@@ -1,7 +1,7 @@
 "use client";
 
 import { useAuthFetch } from "@/hooks/useAuthFetch";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import type { ApiEnvelope } from "@/entities/order/types";
 import { parseUserAgent } from "../lib/parse-user-agent";
 
@@ -21,11 +21,7 @@ export function ActiveSessions() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string>("");
 
-  useEffect(() => {
-    loadSessions();
-  }, []);
-
-  const loadSessions = async () => {
+  const loadSessions = useCallback(async () => {
     try {
       setLoading(true);
       const res = await get<ApiEnvelope<{ sessions: Session[]; total: number }>>(
@@ -39,7 +35,11 @@ export function ActiveSessions() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [get]);
+
+  useEffect(() => {
+    loadSessions();
+  }, [loadSessions]);
 
   const revokeSession = async (sessionId: string) => {
     try {

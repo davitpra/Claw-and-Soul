@@ -24,7 +24,7 @@ export function useAuthFetch() {
    * Make an authenticated JSON API request with automatic token refresh
    */
   const authFetchJSON = useCallback(
-    async <T = any>(endpoint: string, options: RequestInit = {}): Promise<T> => {
+    async <T = unknown>(endpoint: string, options: RequestInit = {}): Promise<T> => {
       const url = endpoint.startsWith('http') ? endpoint : `${API_URL}${endpoint}`;
       return fetchJSON<T>(url, options);
     },
@@ -35,14 +35,14 @@ export function useAuthFetch() {
    * Helper methods for common HTTP verbs
    */
   const get = useCallback(
-    async <T = any>(endpoint: string): Promise<T> => {
+    async <T = unknown>(endpoint: string): Promise<T> => {
       return authFetchJSON<T>(endpoint, { method: 'GET' });
     },
     [authFetchJSON]
   );
 
   const post = useCallback(
-    async <T = any>(endpoint: string, data?: any): Promise<T> => {
+    async <T = unknown>(endpoint: string, data?: unknown): Promise<T> => {
       return authFetchJSON<T>(endpoint, {
         method: 'POST',
         headers: {
@@ -55,7 +55,7 @@ export function useAuthFetch() {
   );
 
   const put = useCallback(
-    async <T = any>(endpoint: string, data?: any): Promise<T> => {
+    async <T = unknown>(endpoint: string, data?: unknown): Promise<T> => {
       return authFetchJSON<T>(endpoint, {
         method: 'PUT',
         headers: {
@@ -68,7 +68,7 @@ export function useAuthFetch() {
   );
 
   const del = useCallback(
-    async <T = any>(endpoint: string): Promise<T> => {
+    async <T = unknown>(endpoint: string): Promise<T> => {
       return authFetchJSON<T>(endpoint, { method: 'DELETE' });
     },
     [authFetchJSON]

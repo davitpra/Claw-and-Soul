@@ -17,7 +17,6 @@ export class FacetLabelPlacer {
      */
     public static async buildFacetLabelBounds(facetResult: FacetResult, onUpdate: ((progress: number) => void) | null = null) {
         const yielder = createYielder(150);
-        let count = 0;
         for (const f of facetResult.facets) {
             if (f != null) {
                 const polyRings: Point[][] = [];
@@ -53,7 +52,6 @@ export class FacetLabelPlacer {
                     }
                 }
             }
-            count++;
         }
         if (onUpdate != null) {
             onUpdate(1);

@@ -4,7 +4,6 @@ import { BoundingBox } from "./structs/boundingbox";
 import { Point } from "./structs/point";
 import { BooleanArray2D, Uint32Array2D, Uint8Array2D } from "./structs/typedarrays";
 import { FacetResult, Facet } from "./facetmanagement";
-import { FacetReducer } from "./facetReducer";
 
 export class FacetCreator {
     /**

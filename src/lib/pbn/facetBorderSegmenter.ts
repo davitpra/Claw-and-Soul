@@ -218,7 +218,6 @@ export class FacetBorderSegmenter {
             }
         }
         const yielder = createYielder(150);
-        let count = 0;
         // and now the fun begins to match segments from 1 facet to its neighbours and vice versa
         for (const f of facetResult.facets) {
             if (f != null) {
@@ -311,7 +310,6 @@ export class FacetBorderSegmenter {
                     }
                 }
             }
-            count++;
         }
         if (onUpdate != null) {
             onUpdate(1);

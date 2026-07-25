@@ -173,6 +173,9 @@ export function PetDetail({ petId }: Props) {
           <h1 className="font-display text-6xl font-black text-text-main text-center">
             {pet.name}
           </h1>
+          {details && (
+            <p className="mt-2 text-center text-text-muted">{details}</p>
+          )}
         </div>
         {/* Galería */}
         <div>

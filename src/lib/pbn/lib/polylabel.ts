@@ -66,8 +66,6 @@ export function polylabel(
     bestCell = bboxCell;
   }
 
-  let numProbes = cellQueue.size;
-
   while (cellQueue.size > 0) {
     // pick the most promising cell from the queue
     const cell = cellQueue.dequeue();
@@ -88,7 +86,6 @@ export function polylabel(
     cellQueue.enqueue(new Cell(cell.x + h, cell.y - h, h, polygon));
     cellQueue.enqueue(new Cell(cell.x - h, cell.y + h, h, polygon));
     cellQueue.enqueue(new Cell(cell.x + h, cell.y + h, h, polygon));
-    numProbes += 4;
   }
 
   return { pt: { x: bestCell.x, y: bestCell.y }, distance: bestCell.d };

@@ -36,22 +36,20 @@ interface UseBackendProductVariantsResult {
 export function useBackendProductVariants(
   handle: string | null,
 ): UseBackendProductVariantsResult {
-  const [product, setProduct] = useState<BackendProductWithVariants | null>(
-    null,
-  );
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  // El handle resuelto se guarda junto al resultado: mientras no coincida con
+  // el `handle` pedido, la petición sigue en vuelo. `isLoading` y el reset al
+  // cambiar de producto son derivados, así el efecto no llama setState de forma
+  // síncrona (react-hooks/set-state-in-effect).
+  const [state, setState] = useState<{
+    handle: string | null;
+    product: BackendProductWithVariants | null;
+    error: string | null;
+  }>({ handle: null, product: null, error: null });
 
   useEffect(() => {
-    if (!handle) {
-      setProduct(null);
-      setError(null);
-      return;
-    }
+    if (!handle) return;
 
     let cancelled = false;
-    setIsLoading(true);
-    setError(null);
 
     fetch(`${API_URL}/products/${encodeURIComponent(handle)}/variants`, {
       credentials: "include",
@@ -70,20 +68,19 @@ export function useBackendProductVariants(
       })
       .then((data) => {
         if (cancelled) return;
-        setProduct(data);
+        setState({ handle, product: data, error: null });
       })
       .catch((err) => {
         if (cancelled) return;
         console.error("useBackendProductVariants error:", err);
-        setError(
-          err.message === "not_found"
-            ? "This product is not available for personalization."
-            : "Failed to load product variants.",
-        );
-        setProduct(null);
-      })
-      .finally(() => {
-        if (!cancelled) setIsLoading(false);
+        setState({
+          handle,
+          product: null,
+          error:
+            err.message === "not_found"
+              ? "This product is not available for personalization."
+              : "Failed to load product variants.",
+        });
       });
 
     return () => {
@@ -91,10 +88,13 @@ export function useBackendProductVariants(
     };
   }, [handle]);
 
+  const settled = handle !== null && state.handle === handle;
+  const product = settled ? state.product : null;
+
   return {
     product,
     variants: product?.variants ?? [],
-    isLoading,
-    error,
+    isLoading: handle !== null && !settled,
+    error: settled ? state.error : null,
   };
 }

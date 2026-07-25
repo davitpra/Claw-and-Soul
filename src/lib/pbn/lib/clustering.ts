@@ -2,7 +2,7 @@ import { Random } from "../random";
 
 export class Vector {
 
-    public tag:any;
+    public tag: unknown;
     
     constructor(public values: number[], public weight: number = 1) { }
 

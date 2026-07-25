@@ -128,7 +128,7 @@ export function CircularCategory({
             className="flex w-20 flex-col items-center gap-2 transition-all focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-primary md:w-24"
           >
             <span
-              className={`flex size-16 shrink-0 items-center justify-center rounded-full bg-cream transition-all md:size-20 ${
+              className={`flex size-16 shrink-0 items-center justify-center rounded-full bg-white transition-all md:size-20 ${
                 isAllSelected
                   ? "ring-2 ring-primary ring-offset-2 ring-offset-cream"
                   : "ring-1 ring-[#E0DED9] hover:ring-primary/50"
@@ -175,7 +175,7 @@ export function CircularCategory({
                   />
                 </span>
                 <span
-                  className={`line-clamp-2 text-center text-xs leading-tight transition-all ${
+                  className={`line-clamp-2 text-center text-xs/5 font-semibold leading-tight transition-all ${
                     isSelected ? "font-bold text-primary" : "text-text-muted"
                   }`}
                 >

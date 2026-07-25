@@ -1,12 +1,13 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import Link from "next/link";
 import { useAuthFetch } from "@/hooks/useAuthFetch";
 import { useShopifyVariantImages } from "@/hooks/useShopifyVariantImages";
 import { useStyleData } from "@/entities/product/api/useStyleData";
 import { isNotFound } from "@/shared/lib/http";
 import SectionHeading from "@/shared/ui/SectionHeading";
+import { DetailErrorState } from "@/shared/ui/DetailErrorState";
+import { DetailNotFound } from "@/shared/ui/DetailNotFound";
 import {
   formatAddress,
   formatOrderDate,
@@ -90,54 +91,23 @@ export function OrderDetail({ id }: Props) {
 
   if (notFound || (!order && !error)) {
     return (
-      <section className="rounded-xl bg-white p-8 text-center md:p-12">
-        <span className="mx-auto flex size-16 items-center justify-center rounded-full bg-cream text-text-muted">
-          <span className="material-symbols-outlined text-[32px]">
-            receipt_long
-          </span>
-        </span>
-        <h1 className="mt-4 font-display text-xl font-black text-text-main">
-          Order not found
-        </h1>
-        <p className="mt-1 text-sm text-text-muted">
-          We couldn&apos;t find this order in your account.
-        </p>
-        <Link
-          href="/user/orders"
-          className="mt-5 inline-flex items-center gap-2 rounded-xl bg-primary px-6 py-3 text-sm font-bold text-white shadow-sm transition-all hover:bg-primary-dark hover:shadow-md"
-        >
-          <span className="material-symbols-outlined text-[18px]">
-            arrow_back
-          </span>
-          Back to orders
-        </Link>
-      </section>
+      <DetailNotFound
+        icon="receipt_long"
+        title="Order not found"
+        message="We couldn't find this order in your account."
+        backHref="/user/orders"
+        backLabel="Back to orders"
+      />
     );
   }
 
   if (error || !order) {
     return (
-      <section className="rounded-xl bg-white p-6 md:p-8">
-        <BackToOrdersLink />
-        <div className="mt-5 flex flex-col items-center rounded-xl bg-red-50 px-4 py-8 text-center">
-          <span className="flex size-12 items-center justify-center rounded-full bg-red-100 text-red-600">
-            <span className="material-symbols-outlined text-[26px]">error</span>
-          </span>
-          <p className="mt-3 text-sm text-red-700">
-            {error ?? "Couldn't load this order."}
-          </p>
-          <button
-            type="button"
-            onClick={load}
-            className="mt-3 inline-flex items-center gap-1.5 rounded-xl bg-red-600 px-5 py-2.5 text-sm font-bold text-white transition-colors hover:bg-red-700"
-          >
-            <span className="material-symbols-outlined text-[18px]">
-              refresh
-            </span>
-            Retry
-          </button>
-        </div>
-      </section>
+      <DetailErrorState
+        back={<BackToOrdersLink />}
+        message={error ?? "Couldn't load this order."}
+        onRetry={load}
+      />
     );
   }
 

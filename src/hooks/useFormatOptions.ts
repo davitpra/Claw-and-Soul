@@ -58,31 +58,39 @@ interface UseFormatOptionsResult {
  * Shopify Storefront API is used only for display data (price, availability).
  * Merge key is `shopifyVariantId` (GID), which backend normalizes.
  */
+interface FormatOptionsData {
+  productRefId: string | null;
+  styleId: string | null;
+  template: string | null;
+  formats: FormatOption[];
+  product: ShopifyProduct | null;
+}
+
+const EMPTY: FormatOptionsData = {
+  productRefId: null,
+  styleId: null,
+  template: null,
+  formats: [],
+  product: null,
+};
+
 export function useFormatOptions(
   productHandle: string | null,
 ): UseFormatOptionsResult {
-  const [productRefId, setProductRefId] = useState<string | null>(null);
-  const [styleId, setStyleId] = useState<string | null>(null);
-  const [template, setTemplate] = useState<string | null>(null);
-  const [formats, setFormats] = useState<FormatOption[]>([]);
-  const [product, setProduct] = useState<ShopifyProduct | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  // El handle resuelto se guarda junto al resultado: mientras `state.handle` no
+  // coincida con el `productHandle` pedido, la petición sigue en vuelo. Eso hace
+  // derivables `isLoading` y el reset al cambiar de producto, así el efecto no
+  // llama setState de forma síncrona (react-hooks/set-state-in-effect).
+  const [state, setState] = useState<{
+    handle: string | null;
+    data: FormatOptionsData;
+    error: string | null;
+  }>({ handle: null, data: EMPTY, error: null });
 
   useEffect(() => {
-    if (!productHandle) {
-      setProductRefId(null);
-      setStyleId(null);
-      setTemplate(null);
-      setFormats([]);
-      setProduct(null);
-      setError(null);
-      return;
-    }
+    if (!productHandle) return;
 
     let cancelled = false;
-    setIsLoading(true);
-    setError(null);
 
     Promise.all([
       fetch(
@@ -105,13 +113,20 @@ export function useFormatOptions(
       .then(([backendProduct, shopifyProduct]) => {
         if (cancelled) return;
 
+        // Error parcial: el backend sí conoce el producto, pero Shopify no lo
+        // devuelve. Se conservan los datos del backend junto con el error.
         if (!shopifyProduct) {
-          setError(`Product '${productHandle}' not found in Shopify`);
-          setProductRefId(backendProduct.productRefId);
-          setStyleId(backendProduct.style?.id ?? null);
-          setTemplate(backendProduct.template ?? null);
-          setFormats([]);
-          setProduct(null);
+          setState({
+            handle: productHandle,
+            data: {
+              productRefId: backendProduct.productRefId,
+              styleId: backendProduct.style?.id ?? null,
+              template: backendProduct.template ?? null,
+              formats: [],
+              product: null,
+            },
+            error: `Product '${productHandle}' not found in Shopify`,
+          });
           return;
         }
 
@@ -125,28 +140,29 @@ export function useFormatOptions(
           variantMap,
         );
 
-        setProductRefId(backendProduct.productRefId);
-        setStyleId(backendProduct.style?.id ?? null);
-        setTemplate(backendProduct.template ?? null);
-        setFormats(merged);
-        setProduct(shopifyProduct);
+        setState({
+          handle: productHandle,
+          data: {
+            productRefId: backendProduct.productRefId,
+            styleId: backendProduct.style?.id ?? null,
+            template: backendProduct.template ?? null,
+            formats: merged,
+            product: shopifyProduct,
+          },
+          error: null,
+        });
       })
       .catch((err) => {
         if (cancelled) return;
         console.error("useFormatOptions error:", err);
-        setError(
-          err.message === "not_found"
-            ? "This product is not available for personalization."
-            : "Failed to load format options. Please try again.",
-        );
-        setProductRefId(null);
-        setStyleId(null);
-        setTemplate(null);
-        setFormats([]);
-        setProduct(null);
-      })
-      .finally(() => {
-        if (!cancelled) setIsLoading(false);
+        setState({
+          handle: productHandle,
+          data: EMPTY,
+          error:
+            err.message === "not_found"
+              ? "This product is not available for personalization."
+              : "Failed to load format options. Please try again.",
+        });
       });
 
     return () => {
@@ -154,14 +170,12 @@ export function useFormatOptions(
     };
   }, [productHandle]);
 
+  const settled = productHandle !== null && state.handle === productHandle;
+
   return {
-    productRefId,
-    styleId,
-    template,
-    formats,
-    product,
-    isLoading,
-    error,
+    ...(settled ? state.data : EMPTY),
+    isLoading: productHandle !== null && !settled,
+    error: settled ? state.error : null,
   };
 }
 
