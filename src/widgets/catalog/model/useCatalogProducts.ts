@@ -3,8 +3,9 @@ import { normalizeTemplate } from "@/entities/product/lib/template";
 import { getProducts } from "@/lib/shopify";
 import { getCollectionProducts } from "@/lib/shopify/actions/collections";
 import { ShopifyProduct } from "@/lib/shopify/types";
-import { fetchStyles } from "./fetchStyles";
-import { CatalogProduct, StyleData } from "./types";
+import { fetchStyles } from "@/entities/product/api/fetchStyles";
+import { StyleData } from "@/entities/product/model/styleData";
+import { CatalogProduct } from "./types";
 
 // Formatea un monto como moneda (p. ej. "$42.00").
 function formatMoney(amount: string, currencyCode: string) {

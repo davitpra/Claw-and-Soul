@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { useAuthFetch } from "@/hooks/useAuthFetch";
 import { useShopifyVariantImages } from "@/hooks/useShopifyVariantImages";
+import { useStyleData } from "@/entities/product/api/useStyleData";
 import { isNotFound } from "@/shared/lib/http";
 import SectionHeading from "@/shared/ui/SectionHeading";
 import {
@@ -53,6 +54,10 @@ export function OrderDetail({ id }: Props) {
   const variantImages = useShopifyVariantImages(
     (order?.items ?? []).map((item) => item.shopifyHandle),
   );
+
+  // Template/formato del backend por handle (mismo origen que el catálogo), para
+  // darle a cada ítem el marco visual de su tipo de producto.
+  const styleData = useStyleData();
 
   if (isLoading) {
     return (
@@ -205,6 +210,7 @@ export function OrderDetail({ id }: Props) {
                   key={item.id}
                   item={item}
                   variantImages={variantImages}
+                  styleData={styleData}
                 />
               ))}
             </ul>
