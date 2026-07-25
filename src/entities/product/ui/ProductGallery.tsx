@@ -4,9 +4,14 @@ import { ShopifyProduct } from "@/lib/shopify";
 import Image from "next/image";
 import { Carousel } from "@/shared/ui/Carousel";
 import { ImageZoom } from "@/shared/ui/ImageZoom";
-import { FRAME_SHADOWS } from "@/entities/product/lib/frameStyle";
+import { FRAME_SHADOWS, POSTER_FRAME } from "@/entities/product/lib/frameStyle";
 import type { FrameStyle } from "@/entities/product/lib/frameStyle";
 import { CanvasEdgeOverlay } from "@/entities/product/ui/CanvasEdgeOverlay";
+import { SetLighting } from "@/entities/product/ui/SetLighting";
+import {
+  setArtworkFilter,
+  SET_ARTWORK_SHADOW_HOVER,
+} from "@/entities/product/lib/setLighting";
 
 interface ProductGalleryProps {
   product: ShopifyProduct;
@@ -33,24 +38,29 @@ export default function ProductGallery({
   const baseImageClassName =
     "w-full h-auto bg-white transition-all duration-300 ease-out";
   // The frame effect (canvas/poster/art) only applies to the primary product
-  // image; secondary catalog images stay neutral with the art float.
-  const primaryImageClassName = `${baseImageClassName} ${FRAME_SHADOWS[frameStyle]}`;
+  // image; secondary catalog images stay neutral with the art float. La sombra
+  // de la principal ya no va aquí: la pone SetLighting (cálida), así que del
+  // marco solo queda el margen de papel del póster.
+  const primaryImageClassName = `${baseImageClassName} ${
+    frameStyle === "poster" ? POSTER_FRAME : ""
+  }`;
   const secondaryImageClassName = `${baseImageClassName} ${FRAME_SHADOWS.art}`;
   // Only "art" deepens its shadow on hover; canvas/poster keep their base shadow
   // so the edge effect survives the hover state. The lift is on the wrapper so
   // the canvas darkening overlay travels together with the image.
-  const hoverShadowClass =
-    frameStyle === "art"
-      ? "hover:shadow-[0_22px_40px_-14px_rgba(16,54,66,0.50)]"
-      : "";
+  const hoverShadowClass = frameStyle === "art" ? SET_ARTWORK_SHADOW_HOVER : "";
   const sizes = "(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 600px";
 
   const isCarousel = uniqueImages.length > 1;
 
   // The primary image: width-scaled wrapper that lifts on hover and carries the
-  // optional canvas darkening overlay on top of the image.
+  // optional canvas darkening overlay on top of the image. La luz del set
+  // (sombra cálida + sol + penumbra) envuelve todo eso, así que se levanta junto
+  // con la imagen en el hover.
   const renderPrimary = (src: string) => (
-    <div className="relative transition-transform duration-300 ease-out hover:-translate-y-1.5">
+    <SetLighting
+      className={`transition-all duration-300 ease-out hover:-translate-y-1.5 ${hoverShadowClass}`}
+    >
       <ImageZoom zoomSrc={src} alt={product.title} frameStyle={frameStyle}>
         <Image
           src={src}
@@ -58,12 +68,15 @@ export default function ProductGallery({
           width={0}
           height={0}
           sizes={sizes}
-          className={`${primaryImageClassName} ${hoverShadowClass}`}
+          className={primaryImageClassName}
+          // Temperatura de la escena: solo en la principal, igual que el marco.
+          // El zoom abre la imagen a resolución completa y sin filtro ni luz.
+          style={setArtworkFilter}
           priority
         />
       </ImageZoom>
       {frameStyle === "canvas" && <CanvasEdgeOverlay />}
-    </div>
+    </SetLighting>
   );
 
   return (

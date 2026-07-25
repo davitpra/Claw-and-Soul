@@ -5,10 +5,12 @@ import Link from "next/link";
 import { StyleImage } from "@/hooks/useStyleImages";
 import { Container } from "@/shared/ui/Container";
 import { Card } from "@/shared/ui/Card";
+import { SetLighting } from "@/entities/product/ui/SetLighting";
+import { SET_ARTWORK_SHADOW_HOVER } from "@/entities/product/lib/setLighting";
 
-// Mismo aspecto de "poster flotando" que CollectionSection.
-const posterClasses =
-  "transition-all duration-300 ease-out hover:-translate-y-1.5 hover:shadow-[0_22px_40px_-14px_rgba(16,54,66,0.50)]";
+// "Poster flotando" como en CollectionSection, pero con la sombra cálida de
+// SetLighting, que al levantarse crece en la dirección de la luz.
+const posterClasses = `transition-all duration-300 ease-out hover:-translate-y-1.5 ${SET_ARTWORK_SHADOW_HOVER}`;
 
 // Mínimo de slides en media vuelta del marquee para que nunca se vea un hueco.
 const MIN_LOOP_ITEMS = 10;
@@ -155,13 +157,19 @@ export function StyleGallery({
 
           {featured && (
             <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-10">
-              <Card
+              {/* La luz va en el envoltorio para que la sombra y las capas de
+                  sol/penumbra se levanten junto al póster en el hover. */}
+              <SetLighting
                 key={featured.id}
-                imageUrl={featured.imageUrl}
-                imageAlt={featured.altImage ?? undefined}
-                naturalAspect
-                className={`w-72 md:w-88 shadow-[0_14px_32px_-12px_rgba(16,54,66,0.40)] animate-fade-in-up ${posterClasses}`}
-              />
+                className={`w-72 md:w-88 animate-fade-in-up ${posterClasses}`}
+              >
+                <Card
+                  imageUrl={featured.imageUrl}
+                  imageAlt={featured.altImage ?? undefined}
+                  naturalAspect
+                  className="w-full"
+                />
+              </SetLighting>
             </div>
           )}
         </div>

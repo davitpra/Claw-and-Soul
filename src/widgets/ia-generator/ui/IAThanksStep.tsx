@@ -4,11 +4,9 @@ import { useState } from "react";
 import { Container } from "@/shared/ui/Container";
 import { useRouter } from "next/navigation";
 import { CanvasEdgeOverlay } from "@/entities/product/ui/CanvasEdgeOverlay";
+import { SetLighting } from "@/entities/product/ui/SetLighting";
 import { toFrameStyle, POSTER_FRAME } from "@/entities/product/lib/frameStyle";
-import {
-  setSunlightStyle,
-  setAmbientStyle,
-} from "@/entities/product/lib/setLighting";
+import { setArtworkFilter } from "@/entities/product/lib/setLighting";
 import { useGenerationStatus } from "@/hooks/useGenerationStatus";
 import { useRotatingMessage } from "@/hooks/useRotatingMessage";
 import { useCart } from "@/context/CartContext";
@@ -146,10 +144,8 @@ export function IAThanksStep({
                 {displayImage && (
                   // Imagen del producto centrada y escalada a la proporción y al
                   // tamaño del formato elegido. Conserva sombra + lienzo + luz.
-                  <div
-                    className={`relative shadow-[10px_12px_26px_-10px_rgba(96,66,38,0.40),2px_3px_6px_-2px_rgba(96,66,38,0.30)] ${
-                      frameStyle === "poster" ? POSTER_FRAME : ""
-                    }`}
+                  <SetLighting
+                    className={frameStyle === "poster" ? POSTER_FRAME : ""}
                     style={{
                       width: `${widthPct}%`,
                       ...(aspectRatio ? { aspectRatio } : {}),
@@ -167,28 +163,16 @@ export function IAThanksStep({
                           ? "block h-full w-full object-cover"
                           : "block h-auto w-full"
                       }`}
-                      style={{
-                        filter: "brightness(0.98) saturate(0.94) sepia(0.06)",
-                      }}
+                      style={setArtworkFilter}
                     />
                     {frameStyle === "canvas" && <CanvasEdgeOverlay />}
-                    <div
-                      aria-hidden
-                      className="pointer-events-none absolute inset-0"
-                      style={setSunlightStyle}
-                    />
-                    <div
-                      aria-hidden
-                      className="pointer-events-none absolute inset-0"
-                      style={setAmbientStyle}
-                    />
                     {isGenerating && (
                       <div
                         aria-hidden
                         className="pointer-events-none absolute inset-0 animate-pulse bg-white/40"
                       />
                     )}
-                  </div>
+                  </SetLighting>
                 )}
               </div>
             </div>

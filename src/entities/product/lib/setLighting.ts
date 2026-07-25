@@ -21,3 +21,20 @@ export const setAmbientStyle: CSSProperties = {
     "linear-gradient(115deg, rgba(120,90,60,0) 45%, rgba(120,90,60,0.14))",
   mixBlendMode: "multiply",
 };
+
+// Sombra proyectada del cuadro colgado: cálida y caída a la derecha (el sol
+// entra por la izquierda), más una segunda sombra de contacto, corta y cerrada,
+// que ancla el cuadro a la pared en vez de dejarlo flotando.
+export const SET_ARTWORK_SHADOW =
+  "shadow-[10px_12px_26px_-10px_rgba(96,66,38,0.40),2px_3px_6px_-2px_rgba(96,66,38,0.30)]";
+
+// La misma sombra cuando el cuadro se levanta al hover: crece en la dirección
+// de la luz (sol por la izquierda) en vez de saltar al teal frío del catálogo.
+export const SET_ARTWORK_SHADOW_HOVER =
+  "hover:shadow-[14px_18px_40px_-12px_rgba(96,66,38,0.45),3px_4px_9px_-2px_rgba(96,66,38,0.30)]";
+
+// Acerca el artwork a la temperatura de la escena: lo baja un punto de brillo,
+// le quita saturación y le añade un velo sepia mínimo.
+export const setArtworkFilter: CSSProperties = {
+  filter: "brightness(0.98) saturate(0.94) sepia(0.06)",
+};
