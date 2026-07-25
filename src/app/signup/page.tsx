@@ -102,10 +102,10 @@ export default function SignUpPage() {
         <div
           className="absolute inset-0 bg-cover bg-center transition-transform duration-700 hover:scale-105"
           style={{
-            backgroundImage: `url("https://lh3.googleusercontent.com/aida-public/AB6AXuBnLbQiMdExM2MPf5-ytmXYmp3L_VRTpWfVfcrwMX2LVUpfH_nVYZZztbz1udhWTqZV0WBWE9M1uwdfVmXfVxXPso8ll7j7nsOWnBHLgMXvsVdU__MS5jjA9XAuw6bvQOrgEDf4oHbKvm2c9j7ahU_8FB_4pBNDdSlOyrKxkCfVJAB2Xyl8x0BNAPMH3sDIydmdAt1eWykNv0-g7FVFcigNkfIhc0kxXOBfJe3ulIp5PO4YMnKU02ioE0AerlRcdV3js9BwYR-j-gae")`,
+            backgroundImage: `url("/images/login-hero.webp")`,
           }}
           role="img"
-          aria-label="Happy golden retriever dog smiling with owner outdoors"
+          aria-label="Painterly portrait of a dog and cat cuddling together"
         />
         {/* Brand tint + gradient for legibility */}
         <div className="absolute inset-0 bg-primary/15 mix-blend-multiply" />
