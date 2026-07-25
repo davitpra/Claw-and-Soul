@@ -18,9 +18,10 @@ export default function Navbar() {
   const { isAuthenticated, isLoading } = useAuth();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
-  const [scrolled, setScrolled] = useState(false);
+  const [elevated, setElevated] = useState(false);
   const [hidden, setHidden] = useState(false);
   const lastScrollY = useRef(0);
+  const idleTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Navega a la tienda con el término como query param. Si está vacío, va a
   // /catalog sin filtro, para que enviar el buscador vacío también quite la búsqueda.
@@ -53,12 +54,21 @@ export default function Navbar() {
     { name: "Contact", href: "/contact" },
   ];
 
-  // Handle scroll effect: estilo al hacer scroll + ocultar/mostrar según dirección
+  // Handle scroll effect: estilo al hacer scroll + ocultar/mostrar según dirección.
+  // Con el menú móvil abierto no escuchamos: bloquear el scroll del body altera
+  // window.scrollY, y ese salto se leería como "el usuario está bajando", ocultando
+  // el header justo debajo del panel (que está anclado a top-16).
   useEffect(() => {
+    if (mobileMenuOpen) return;
+
     const handleScroll = () => {
       const currentScrollY = window.scrollY;
 
-      setScrolled(currentScrollY > 10);
+      // La sombra es feedback de actividad: se muestra mientras se hace scroll
+      // (y solo si ya despegamos del tope) y se retira al quedarse quieto.
+      setElevated(currentScrollY > 10);
+      if (idleTimer.current) clearTimeout(idleTimer.current);
+      idleTimer.current = setTimeout(() => setElevated(false), 150);
 
       // Ocultar al bajar (después de pasar el navbar), mostrar al subir
       if (currentScrollY > lastScrollY.current && currentScrollY > 80) {
@@ -70,8 +80,11 @@ export default function Navbar() {
       lastScrollY.current = currentScrollY;
     };
     window.addEventListener("scroll", handleScroll, { passive: true });
-    return () => window.removeEventListener("scroll", handleScroll);
-  }, []);
+    return () => {
+      window.removeEventListener("scroll", handleScroll);
+      if (idleTimer.current) clearTimeout(idleTimer.current);
+    };
+  }, [mobileMenuOpen]);
 
   // Prevent body scroll when mobile menu is open
   useEffect(() => {
@@ -88,11 +101,11 @@ export default function Navbar() {
   return (
     <>
       <header
-        className={`sticky top-0 z-50 bg-white backdrop-blur-md border-b transition-all duration-300 ${
-          scrolled ? "border-[#E0DED9] shadow-md" : "border-transparent"
-        } ${hidden ? "-translate-y-full" : "translate-y-0"}`}
+        className={`sticky top-0 z-50 bg-white backdrop-blur-md  transition-all duration-300 ${
+          elevated ? "border-[#E0DED9] shadow-md" : "border-transparent"
+        } ${hidden && !mobileMenuOpen ? "-translate-y-full" : "translate-y-0"}`}
       >
-        <nav className="container-site px-4 sm:px-6 lg:px-8">
+        <nav className="container-site px-4 sm:px-6 lg:px-8 ">
           <div className="flex items-center justify-between h-16 lg:h-20">
             {/* Logo */}
             <Link
@@ -102,8 +115,8 @@ export default function Navbar() {
               <Image
                 src="/Logo.svg"
                 alt="Claw & Soul Logo"
-                width={44}
-                height={44}
+                width={20}
+                height={20}
                 priority
                 className="size-9 lg:size-11 transition-transform group-hover:scale-105"
               />
@@ -118,7 +131,7 @@ export default function Navbar() {
                 <Link
                   key={link.name}
                   href={link.href}
-                  className={`text-sm font-medium leading-normal transition-all relative group ${
+                  className={`font-display leading-normal font-bold transition-all relative group ${
                     pathname === link.href
                       ? "text-primary"
                       : "text-slate-dark hover:text-primary"
@@ -137,13 +150,14 @@ export default function Navbar() {
             </div>
 
             {/* Right Side Actions */}
-            <div className="flex items-center gap-3 lg:gap-4">
-              {/* Search Bar - Desktop */}
+            <div className="flex flex-1 lg:flex-none items-center justify-end gap-2 sm:gap-3 lg:gap-4 min-w-0 ml-3 lg:ml-0">
+              {/* Search Bar (ocupa el espacio libre en mobile, ancho fijo en desktop) */}
               <form
                 onSubmit={handleSearch}
-                className="hidden lg:flex items-center"
+                className="flex flex-1 lg:flex-none items-center min-w-0"
+                role="search"
               >
-                <div className="relative group">
+                <div className="relative group w-full">
                   <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                     <span className="material-symbols-outlined text-[18px] text-text-muted group-focus-within:text-primary transition-colors">
                       search
@@ -153,22 +167,12 @@ export default function Navbar() {
                     type="search"
                     value={searchTerm}
                     onChange={(e) => handleSearchChange(e.target.value)}
-                    className="w-48 xl:w-64 h-10 pl-10 pr-4 rounded-xl border border-[#E0DED9] bg-white/50 focus:bg-white text-sm text-text-main placeholder:text-text-muted focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all"
-                    placeholder="Search gifts..."
+                    className="w-full lg:w-48 xl:w-64 h-10 pl-10 pr-3 rounded-xl border border-[#E0DED9] bg-white/50 focus:bg-white text-sm text-text-main placeholder:text-text-muted focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all"
+                    placeholder="Search..."
+                    aria-label="Search"
                   />
                 </div>
               </form>
-
-              {/* Search Icon - Mobile (abre el menú con el buscador) */}
-              <button
-                onClick={() => setMobileMenuOpen(true)}
-                className="lg:hidden flex items-center justify-center size-10 rounded-xl bg-white/50 hover:bg-white border border-transparent hover:border-[#E0DED9] text-text-main transition-all shadow-sm"
-                aria-label="Search"
-              >
-                <span className="material-symbols-outlined text-[20px]">
-                  search
-                </span>
-              </button>
 
               {/* Auth Buttons / User Menu */}
               {!isLoading && (
@@ -182,13 +186,13 @@ export default function Navbar() {
                     <div className="hidden md:flex gap-2">
                       <Link
                         href="/login"
-                        className="flex items-center justify-center rounded-xl h-10 px-5 bg-white hover:bg-gray-50 text-text-main border border-[#E0DED9] transition-all shadow-sm text-sm font-medium hover:shadow-md"
+                        className="font-display flex items-center justify-center rounded-xl h-10 px-5 bg-white hover:bg-gray-50 text-text-main border border-[#E0DED9] transition-all shadow-sm text-sm font-bold hover:shadow-md"
                       >
                         Login
                       </Link>
                       <Link
                         href="/signup"
-                        className="flex items-center justify-center rounded-xl h-10 px-5 bg-primary hover:bg-primary-dark text-white transition-all shadow-sm text-sm font-semibold hover:shadow-md hover:scale-105"
+                        className="font-display flex items-center justify-center rounded-xl h-10 px-5 bg-primary hover:bg-primary-dark text-white transition-all shadow-sm text-sm font-bold hover:shadow-md hover:scale-105"
                       >
                         Sign Up
                       </Link>
@@ -237,41 +241,26 @@ export default function Navbar() {
         />
       )}
 
-      {/* Mobile Menu */}
+      {/* Mobile Menu: se despliega desde arriba y se esconde detrás del header
+          (el header es opaco y tiene z-50, así que el panel cerrado queda tapado). */}
       <div
-        className={`lg:hidden fixed top-16 right-0 bottom-0 w-full max-w-sm bg-white z-40 shadow-2xl transform transition-transform duration-300 ease-in-out ${
-          mobileMenuOpen ? "translate-x-0" : "translate-x-full"
+        id="mobile-menu"
+        aria-hidden={!mobileMenuOpen}
+        className={`lg:hidden fixed top-16 inset-x-0 z-40 max-h-[calc(100dvh-4rem)] overflow-y-auto bg-white rounded-b-2xl shadow-2xl transform transition-transform duration-300 ease-in-out ${
+          mobileMenuOpen
+            ? "translate-y-0"
+            : "-translate-y-full pointer-events-none invisible"
         }`}
       >
-        <div className="flex flex-col h-full overflow-y-auto">
-          {/* Search Bar - Mobile */}
-          <form
-            onSubmit={handleSearch}
-            className="p-4 border-b border-[#E0DED9]"
-          >
-            <div className="relative">
-              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <span className="material-symbols-outlined text-[18px] text-text-muted">
-                  search
-                </span>
-              </div>
-              <input
-                type="search"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full h-11 pl-10 pr-4 rounded-xl border border-[#E0DED9] bg-white text-sm text-text-main placeholder:text-text-muted focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all"
-                placeholder="Search gifts..."
-              />
-            </div>
-          </form>
-
+        <div className="container-site px-4 sm:px-6 py-4">
           {/* Navigation Links */}
-          <nav className="flex-1 p-4 space-y-1">
+          <nav className="space-y-1">
             {navLinks.map((link) => (
               <Link
                 key={link.name}
                 href={link.href}
-                className={`block px-4 py-3 rounded-xl text-base font-medium transition-all ${
+                tabIndex={mobileMenuOpen ? undefined : -1}
+                className={`font-display block px-4 py-3 rounded-xl text-base font-bold transition-all ${
                   pathname === link.href
                     ? "bg-primary/10 text-primary"
                     : "text-text-main hover:bg-gray-50"
@@ -284,18 +273,20 @@ export default function Navbar() {
 
           {/* Auth Buttons - Mobile */}
           {!isLoading && !isAuthenticated && (
-            <div className="p-4 border-t border-[#E0DED9] space-y-3">
-              <Link
-                href="/signup"
-                className="flex items-center justify-center rounded-xl h-12 px-5 bg-primary hover:bg-primary-dark text-white transition-all shadow-sm text-base font-semibold w-full"
-              >
-                Sign Up
-              </Link>
+            <div className="mt-4 pt-4 border-t border-[#E0DED9] grid grid-cols-2 gap-3">
               <Link
                 href="/login"
-                className="flex items-center justify-center rounded-xl h-12 px-5 bg-white hover:bg-gray-50 text-text-main border border-[#E0DED9] transition-all shadow-sm text-base font-medium w-full"
+                tabIndex={mobileMenuOpen ? undefined : -1}
+                className="font-display flex items-center justify-center rounded-xl h-12 px-5 bg-white hover:bg-gray-50 text-text-main border border-[#E0DED9] transition-all shadow-sm text-base font-bold w-full"
               >
                 Login
+              </Link>
+              <Link
+                href="/signup"
+                tabIndex={mobileMenuOpen ? undefined : -1}
+                className="font-display flex items-center justify-center rounded-xl h-12 px-5 bg-primary hover:bg-primary-dark text-white transition-all shadow-sm text-base font-bold w-full"
+              >
+                Sign Up
               </Link>
             </div>
           )}

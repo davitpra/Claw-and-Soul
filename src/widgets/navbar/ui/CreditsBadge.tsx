@@ -22,7 +22,7 @@ export default function CreditsBadge() {
       href="/credits"
       title={`${label} left — buy more`}
       aria-label={`${label} left. Buy more credits.`}
-      className="inline-flex items-center gap-1.5 rounded-full bg-[#448da6]/10 px-3 h-10 text-sm font-medium text-[#448da6] transition-colors hover:bg-[#448da6]/20"
+      className="font-display inline-flex items-center gap-1.5 rounded-full bg-[#448da6]/10 px-3 h-10 text-sm font-medium text-[#448da6] transition-colors hover:bg-[#448da6]/20"
     >
       <span className="material-symbols-outlined text-base leading-none">
         auto_awesome

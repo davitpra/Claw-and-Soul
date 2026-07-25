@@ -90,7 +90,7 @@ export default function UserMenu() {
             <Link
               href="/user"
               onClick={closeMenu}
-              className="flex items-center gap-3 px-4 py-2.5 text-sm text-text-main hover:bg-cream transition-colors"
+              className="font-display flex items-center gap-3 px-4 py-2.5 text-sm text-text-main hover:bg-cream transition-colors"
               role="menuitem"
             >
               <span className="material-symbols-outlined text-[18px] text-text-muted">
@@ -102,7 +102,7 @@ export default function UserMenu() {
             <Link
               href="/user/generations"
               onClick={closeMenu}
-              className="flex items-center gap-3 px-4 py-2.5 text-sm text-text-main hover:bg-cream transition-colors"
+              className="font-display flex items-center gap-3 px-4 py-2.5 text-sm text-text-main hover:bg-cream transition-colors"
               role="menuitem"
             >
               <span className="material-symbols-outlined text-[18px] text-text-muted">
@@ -114,7 +114,7 @@ export default function UserMenu() {
             <Link
               href="/user/orders"
               onClick={closeMenu}
-              className="flex items-center gap-3 px-4 py-2.5 text-sm text-text-main hover:bg-cream transition-colors"
+              className="font-display flex items-center gap-3 px-4 py-2.5 text-sm text-text-main hover:bg-cream transition-colors"
               role="menuitem"
             >
               <span className="material-symbols-outlined text-[18px] text-text-muted">
@@ -132,7 +132,7 @@ export default function UserMenu() {
                 <Link
                   href="/admin"
                   onClick={closeMenu}
-                  className="flex items-center gap-3 px-4 py-2.5 text-sm text-primary font-semibold hover:bg-cream transition-colors"
+                  className="font-display flex items-center gap-3 px-4 py-2.5 text-sm text-primary font-semibold hover:bg-cream transition-colors"
                   role="menuitem"
                 >
                   <span className="material-symbols-outlined text-[18px]">
@@ -152,7 +152,7 @@ export default function UserMenu() {
             <button
               onClick={handleLogout}
               disabled={isLoggingOut}
-              className="flex items-center gap-3 px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 transition-colors w-full text-left disabled:opacity-50 disabled:cursor-not-allowed"
+              className="font-display flex items-center gap-3 px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 transition-colors w-full text-left disabled:opacity-50 disabled:cursor-not-allowed"
               role="menuitem"
             >
               <span className="material-symbols-outlined text-[18px]">
