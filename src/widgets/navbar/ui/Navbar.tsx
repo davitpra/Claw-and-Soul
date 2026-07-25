@@ -88,7 +88,7 @@ export default function Navbar() {
   return (
     <>
       <header
-        className={`sticky top-0 z-50 bg-white/95 backdrop-blur-md border-b transition-all duration-300 ${
+        className={`sticky top-0 z-50 bg-white backdrop-blur-md border-b transition-all duration-300 ${
           scrolled ? "border-[#E0DED9] shadow-md" : "border-transparent"
         } ${hidden ? "-translate-y-full" : "translate-y-0"}`}
       >
@@ -102,9 +102,10 @@ export default function Navbar() {
               <Image
                 src="/Logo.svg"
                 alt="Claw & Soul Logo"
-                width={50}
-                height={50}
-                className=""
+                width={44}
+                height={44}
+                priority
+                className="size-9 lg:size-11 transition-transform group-hover:scale-105"
               />
               <h2 className="font-display text-text-main text-lg lg:text-2xl font-black leading-tight tracking-[-0.015em] hidden sm:block">
                 Claw & Soul
