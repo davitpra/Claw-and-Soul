@@ -28,8 +28,9 @@ export default function SameStyleGallery({
   const { styleId, styleName } = useProductStyle(handle ?? null);
   const { products, isLoading, error } = useSameStyleProducts(styleId, handle);
 
-  // El acordeón necesita al menos 2 paneles para tener sentido visual.
-  if (isLoading || error || products.length < 2) return null;
+  // Con un solo hermano el acordeón sigue valiendo la pena: ExpandingGallery
+  // expande ese panel a todo el ancho. Solo se oculta si no hay ninguno.
+  if (isLoading || error || products.length === 0) return null;
 
   const items: ExpandingGalleryItem[] = products.slice(0, 3).map((p) => ({
     title: p.name,

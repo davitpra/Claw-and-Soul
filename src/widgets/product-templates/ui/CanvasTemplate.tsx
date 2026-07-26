@@ -13,29 +13,9 @@ import {
 import { getSimilarProducts } from "@/entities/product/lib/getSimilarProducts";
 import { SameStyleGallery } from "@/widgets/expanding-gallery";
 import { SimilarSouls } from "@/widgets/similar-souls";
-import { AIProcess, type ProcessStep } from "@/widgets/ai-process";
+import { AIProcess } from "@/widgets/ai-process";
 import WavesDivider from "@/shared/ui/WavesDivider";
-
-const CANVAS_STEPS: ProcessStep[] = [
-  {
-    img: "/process/2 approve.png",
-    alt: "Choose Style Illustration",
-    title: "1. Choose Your Style",
-    text: "Pick an art style for your pet, select size and click Personalize.",
-  },
-  {
-    img: "/process/1. Upload Picture.png",
-    alt: "Upload Illustration",
-    title: "Upload Pet Photo",
-    text: "Add a clear photo of your pet in JPG, PNG or WEBP format.",
-  },
-  {
-    img: "/process/3. Final Art.png",
-    alt: "Result Illustration",
-    title: "Get Your Masterpiece",
-    text: "Preview your masterpiece in seconds.",
-  },
-];
+import { PRODUCT_PROCESS_STEPS } from "../model/processSteps";
 
 export default function CanvasTemplate({
   product,
@@ -87,7 +67,7 @@ export default function CanvasTemplate({
             Try it free before you buy.
           </>
         }
-        steps={CANVAS_STEPS}
+        steps={PRODUCT_PROCESS_STEPS}
         background="cream"
       />
       <WavesDivider
@@ -97,15 +77,12 @@ export default function CanvasTemplate({
       />
       <SameStyleGallery handle={handle} />
       {similarProducts.length > 0 && (
-        <SimilarSouls products={similarProducts} />
-      )}
-      {isPaintable && relatedAccessories.length > 0 && (
         <>
           <WavesDivider
             waveColor="var(--color-cream)"
             fillColor="var(--color-cream)"
           />
-          <RelatedProducts accessories={relatedAccessories} />
+          <SimilarSouls products={similarProducts} />
           <WavesDivider
             waveColor="var(--color-cream)"
             fillColor="var(--color-cream)"
@@ -113,7 +90,25 @@ export default function CanvasTemplate({
           />
         </>
       )}
-      {isPaintable && <PrintedOption handle={handle} />}
+      {isPaintable && relatedAccessories.length > 0 && (
+        <>
+          <RelatedProducts accessories={relatedAccessories} />
+        </>
+      )}
+      {isPaintable && (
+        <>
+          <WavesDivider
+            waveColor="var(--color-cream)"
+            fillColor="var(--color-cream)"
+          />
+          <PrintedOption handle={handle} />
+          <WavesDivider
+            waveColor="var(--color-cream)"
+            fillColor="var(--color-cream)"
+            flip
+          />
+        </>
+      )}
       <ProductFAQ faqs={faqs} />
     </>
   );

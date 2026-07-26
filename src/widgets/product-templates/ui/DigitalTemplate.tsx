@@ -11,6 +11,8 @@ import ProductFAQ from "@/widgets/product-faq/ui/ProductFAQ";
 import { ProductTemplateProps } from "./ProductPageTemplate";
 import ProductDetails from "@/widgets/product-details/ui/ProductDetails";
 import WavesDivider from "@/shared/ui/WavesDivider";
+import { AIProcess } from "@/widgets/ai-process";
+import { PRODUCT_PROCESS_STEPS } from "../model/processSteps";
 
 /**
  * Storefront template for digital downloads: the downloadable paint-by-numbers
@@ -49,6 +51,28 @@ export default function DigitalTemplate({
       </div>
 
       <StyleCollection handle={handle} />
+      <WavesDivider
+        waveColor="var(--color-cream)"
+        fillColor="var(--color-cream)"
+      />
+      <AIProcess
+        eyebrow="HOW TO USE"
+        title="Get your custom pet portrait in 3 easy steps"
+        subtitle={
+          <>
+            Watch your pet become a masterpiece in seconds.
+            <br />
+            Try it free before you buy.
+          </>
+        }
+        steps={PRODUCT_PROCESS_STEPS}
+        background="cream"
+      />
+      <WavesDivider
+        waveColor="var(--color-cream)"
+        fillColor="var(--color-cream)"
+        flip
+      />
       <SameStyleGallery handle={handle} />
       {relatedAccessories.length > 0 && (
         <>

@@ -29,7 +29,7 @@ export default function RelatedProducts({
   if (accessories.length === 0) return null;
 
   return (
-    <section className="relative overflow-hidden py-20 bg-cream">
+    <section className="relative overflow-hidden py-20 bg-white">
       <Container>
         <div className="flex flex-col items-center gap-5 mb-12">
           <span className="inline-flex items-center gap-2 rounded-full border border-[#E0DED9] bg-white px-4 py-1.5 text-primary">

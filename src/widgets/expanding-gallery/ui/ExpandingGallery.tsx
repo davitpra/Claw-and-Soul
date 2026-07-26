@@ -57,8 +57,10 @@ export default function ExpandingGallery({
   if (items.length === 0) return null;
 
   // Anchos del acordeón como CSS vars para no depender de exactamente 3 items.
+  // Con un único panel no hay nada que colapsar: ocupa el ancho completo en
+  // vez de dejar el 40% vacío a la derecha.
   const widths = {
-    "--open-w": "60%",
+    "--open-w": items.length === 1 ? "100%" : "60%",
     "--closed-w": `${(40 / Math.max(items.length - 1, 1)).toFixed(4)}%`,
   } as CSSProperties;
 
