@@ -26,12 +26,8 @@ export default function ExportControls({
               exp.setPaperFormat(e.target.value as typeof exp.paperFormat)
             }
           >
-            <option value="a3">A3</option>
             <option value="a4">A4</option>
-            <option value="a5">A5</option>
             <option value="letter">Letter</option>
-            <option value="legal">Legal</option>
-            <option value="tabloid">Tabloid</option>
           </select>
         </label>
         <label className="flex flex-col gap-1.5">
