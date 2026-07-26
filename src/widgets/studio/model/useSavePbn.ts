@@ -1,5 +1,6 @@
 import { useCallback, useState } from "react";
 import { useAuthFetch } from "@/hooks/useAuthFetch";
+import { ApiError } from "@/lib/auth/fetch-with-refresh";
 import { RGB } from "@/lib/pbn/common";
 import type { MixRecipe } from "@/lib/pbn/paintMixing";
 
@@ -18,6 +19,12 @@ interface SavePbnArgs {
   config: Record<string, unknown>;
   /** Optional source AI generation this PBN was derived from. */
   generationId?: string | null;
+  /**
+   * PBN ya persistido que este guardado reemplaza. Con él la petición va a
+   * `PUT /paint-by-numbers/:id` en vez de crear una fila nueva: es lo que evita
+   * duplicar la obra al reeditarla desde `/studio?pbnId=…`.
+   */
+  pbnId?: string | null;
 }
 
 interface SavedPbn {
@@ -33,23 +40,27 @@ async function dataUrlToBlob(dataUrl: string): Promise<Blob> {
 
 /**
  * Serializes the client-rendered PBN artifacts (SVG + preview + palette +
- * source) and the config, then POSTs them as multipart to the backend so the
- * PBN can be listed and later ordered. Requires an authenticated session.
+ * source) and the config, then sends them as multipart to the backend so the
+ * PBN can be listed and later ordered: crea una fila nueva, o reemplaza la de
+ * `pbnId` cuando se está reeditando una obra ya guardada. Requires an
+ * authenticated session.
  */
 export function useSavePbn() {
   const { authFetchJSON } = useAuthFetch();
   const [saving, setSaving] = useState(false);
   const [savedId, setSavedId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [limitReached, setLimitReached] = useState(false);
 
   const save = useCallback(
     async (args: SavePbnArgs): Promise<SavedPbn | null> => {
       setSaving(true);
       setError(null);
+      setLimitReached(false);
       try {
         const svg = args.svgContainerRef.current?.querySelector("svg");
         if (!svg) {
-          throw new Error("Procesa una imagen antes de guardar");
+          throw new Error("Process an image before saving");
         }
 
         const form = new FormData();
@@ -106,17 +117,31 @@ export function useSavePbn() {
           form.append("generationId", args.generationId);
         }
 
-        const res = await authFetchJSON<{ data: SavedPbn }>(
-          "/paint-by-numbers",
-          { method: "POST", body: form },
-        );
+        // Con `pbnId` el backend pisa esa fila (y borra los artefactos viejos);
+        // si el PBN ya estaba comprado responde con una copia nueva, así que el
+        // id de la respuesta manda siempre sobre el que se mandó.
+        const res = args.pbnId
+          ? await authFetchJSON<{ data: SavedPbn }>(
+              `/paint-by-numbers/${args.pbnId}`,
+              { method: "PUT", body: form },
+            )
+          : await authFetchJSON<{ data: SavedPbn }>("/paint-by-numbers", {
+              method: "POST",
+              body: form,
+            });
         const saved = res.data;
         setSavedId(saved.id);
         return saved;
       } catch (err) {
         const message =
-          err instanceof Error ? err.message : "No se pudo guardar el PBN";
+          err instanceof Error
+            ? err.message
+            : "Couldn't save your Paint by Numbers";
         setError(message);
+        // 409 es el único conflicto que emiten los endpoints de PBN: la cuenta
+        // llegó al tope de obras guardadas. La UI lo usa para ofrecer el atajo a
+        // la galería en vez de un error a secas.
+        setLimitReached(err instanceof ApiError && err.status === 409);
         return null;
       } finally {
         setSaving(false);
@@ -125,5 +150,5 @@ export function useSavePbn() {
     [authFetchJSON],
   );
 
-  return { save, saving, savedId, error };
+  return { save, saving, savedId, error, limitReached };
 }

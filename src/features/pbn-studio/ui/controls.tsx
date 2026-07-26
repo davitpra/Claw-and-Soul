@@ -27,24 +27,37 @@ export function Toggle({
   checked,
   onChange,
   label,
+  disabled = false,
 }: {
   checked: boolean;
   onChange: (v: boolean) => void;
   label: ReactNode;
+  disabled?: boolean;
 }) {
   return (
-    <label className="flex cursor-pointer select-none items-center gap-3">
+    <label
+      className={`flex select-none items-center gap-3 ${
+        disabled ? "cursor-not-allowed" : "cursor-pointer"
+      }`}
+    >
       <span className="relative inline-block">
         <input
           type="checkbox"
           className="peer sr-only"
           checked={checked}
+          disabled={disabled}
           onChange={(e) => onChange(e.target.checked)}
         />
-        <span className="block h-6 w-11 rounded-full bg-slate-300 transition-colors peer-checked:bg-primary" />
+        <span className="block h-6 w-11 rounded-full bg-slate-300 transition-colors peer-checked:bg-primary peer-disabled:opacity-50" />
         <span className="absolute left-0.5 top-0.5 size-5 rounded-full bg-white shadow transition-transform peer-checked:translate-x-5" />
       </span>
-      <span className="text-sm font-medium text-slate-dark">{label}</span>
+      <span
+        className={`text-sm font-medium text-slate-dark ${
+          disabled ? "opacity-60" : ""
+        }`}
+      >
+        {label}
+      </span>
     </label>
   );
 }

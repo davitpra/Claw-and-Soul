@@ -12,6 +12,12 @@ interface ColorPaletteProps {
   selectedColor: number | null;
   /** Click a swatch to highlight/unhighlight its sections in the preview. */
   onSelectColor: (index: number) => void;
+  /**
+   * El overlay de resaltado se construye desde el `ProcessResult` del pipeline;
+   * con un PBN cargado desde su copia guardada no lo hay, así que los swatches
+   * quedan a la vista (son la paleta de la obra) pero sin acción.
+   */
+  selectionDisabled: boolean;
 }
 
 export default function ColorPalette({
@@ -22,6 +28,7 @@ export default function ColorPalette({
   mixingEnabled,
   selectedColor,
   onSelectColor,
+  selectionDisabled,
 }: ColorPaletteProps) {
   const hasSelection = selectedColor !== null;
   const showGuideButton = mixingEnabled && recipes && palette.length > 0;
@@ -31,7 +38,9 @@ export default function ColorPalette({
         Color palette ({palette.length})
       </strong>
       <p className="text-sm text-slate-500">
-        Click a color to highlight its sections in the preview.
+        {selectionDisabled
+          ? "Generate this painting again to highlight a color's sections."
+          : "Click a color to highlight its sections in the preview."}
       </p>
       <div className="mt-4 flex flex-wrap items-center gap-x-6 gap-y-3">
         <div className="flex flex-1 flex-wrap gap-2">
@@ -45,12 +54,15 @@ export default function ColorPalette({
                   isSelected
                     ? "border-primary ring-2 ring-primary ring-offset-2 scale-105"
                     : "border-black/10"
-                } ${hasSelection && !isSelected ? "opacity-45" : ""}`}
+                } ${hasSelection && !isSelected ? "opacity-45" : ""} ${
+                  selectionDisabled ? "cursor-not-allowed" : ""
+                }`}
                 style={{
                   backgroundColor: `rgb(${c[0]},${c[1]},${c[2]})`,
                 }}
                 title={`#${i} · rgb(${c[0]}, ${c[1]}, ${c[2]})`}
                 aria-pressed={isSelected}
+                disabled={selectionDisabled}
                 onClick={() => onSelectColor(i)}
               >
                 <span className="text-white mix-blend-difference">{i + 1}</span>

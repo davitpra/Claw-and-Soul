@@ -152,15 +152,15 @@ function StudioLayout({
     return () => window.removeEventListener("keydown", onKey);
   }, [showGuide]);
 
-  // `resetSaved` nace de useSavePbnFlow, que se declara más abajo porque
+  // `markDirty` nace de useSavePbnFlow, que se declara más abajo porque
   // necesita el output del pipeline: se llama por ref para no invertir el orden.
-  const resetSavedRef = useRef<(() => void) | null>(null);
+  const markDirtyRef = useRef<(() => void) | null>(null);
   const onProcessStart = useCallback(() => {
     setRecipes(null);
     // drop the highlight tied to the palette that's about to be replaced
     setSelectedColor(null);
-    // lo que se está regenerando ya no es el PBN con el que se abrió el estudio
-    resetSavedRef.current?.();
+    // lo que se está regenerando ya no es lo que hay guardado
+    markDirtyRef.current?.();
   }, [setRecipes]);
   const onComplete = useCallback(
     (colors: RGB[]) => {
@@ -181,9 +181,11 @@ function StudioLayout({
     svgContainerRef,
     processResultRef,
     compareImgs,
+    outputVersion,
     overall,
     palette,
     hasOutput,
+    hasPipelineResult,
     isProcessing,
     process,
     loadSaved,
@@ -259,11 +261,13 @@ function StudioLayout({
   const {
     handleSave,
     ensureSaved,
-    resetSaved,
+    markDirty,
     saving,
     savedId,
     saveError,
+    limitReached,
     savedPbn: savedRef,
+    isUpdate,
   } = useSavePbnFlow({
     svgContainerRef,
     guideRef,
@@ -278,16 +282,52 @@ function StudioLayout({
     initialSavedPbn: savedPbn,
   });
 
-  // Ver `resetSavedRef`: onProcessStart se define antes de este hook.
+  // Ver `markDirtyRef`: onProcessStart se define antes de este hook.
   useEffect(() => {
-    resetSavedRef.current = resetSaved;
-  }, [resetSaved]);
+    markDirtyRef.current = markDirty;
+  }, [markDirty]);
+
+  // Las opciones de render re-dibujan el SVG sin pasar por `process()` (ver el
+  // efecto de `useProcessing`), así que hay que invalidar aquí a mano: sin esto,
+  // sobre un PBN abierto con `?pbnId=…` el botón de guardar seguiría oculto y
+  // esos retoques no se podrían persistir. Se salta el primer render.
+  const didMountRenderOpts = useRef(false);
+  useEffect(() => {
+    if (!didMountRenderOpts.current) {
+      didMountRenderOpts.current = true;
+      return;
+    }
+    markDirty();
+  }, [
+    markDirty,
+    renderOptions.showLabels,
+    renderOptions.fillFacets,
+    renderOptions.showBorders,
+    renderOptions.sizeMultiplier,
+    renderOptions.labelFontSize,
+    renderOptions.labelFontColor,
+    renderOptions.fillOpacity,
+  ]);
+
+  // El recorte trabaja sobre una foto fija del SVG, así que al tocar las
+  // opciones de render desde ahí mismo hay que volver a hacerla. `outputVersion`
+  // sólo cambia cuando el SVG nuevo ya está en el DOM. `exp` queda fuera de las
+  // deps a propósito: refrescar cambia `exp.cropModal` y volveríamos a entrar.
+  useEffect(() => {
+    if (exp.cropModal) void exp.refreshCropPreview();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [outputVersion]);
 
   // Modals opened from the Instagram-style post ⋯ menu / action row.
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [downloadOpen, setDownloadOpen] = useState(false);
 
   const showResult = !!compareImgs && !isProcessing;
+
+  // Hay SVG en pantalla pero salió de `loadSaved` (`?pbnId=…`), no del pipeline:
+  // sin `ProcessResult` las opciones de render no repintan nada y el overlay de
+  // resaltado no se puede construir. Se ofrecen bloqueados hasta regenerar.
+  const renderLocked = hasOutput && !hasPipelineResult;
 
   const canSave = hasOutput && !isProcessing;
   const menuItems: PbnPostMenuItem[] = [
@@ -297,13 +337,13 @@ function StudioLayout({
       onClick: () => setSettingsOpen(true),
     },
     {
-      label: savedId ? "Saved" : "Save to my account",
-      icon: savedId ? "check_circle" : "bookmark_add",
+      label: isUpdate ? "Update this Paint by Numbers" : "Save to my account",
+      icon: "bookmark_add",
       onClick: handleSave,
-      // Abierto sobre un PBN de la cuenta y sin reprocesar todavía: guardar solo
-      // crearía un duplicado idéntico. `resetSaved` (en onProcessStart) lo
-      // devuelve en cuanto se regenera el resultado.
-      hidden: !canSave || (!!savedRef && !savedId),
+      // Lo que hay en pantalla ya está persistido tal cual: guardar no haría
+      // nada (y antes creaba un duplicado). `markDirty` devuelve la acción en
+      // cuanto se reprocesa o se toca una opción de render.
+      hidden: !canSave || !!savedRef,
     },
     {
       label: "Download",
@@ -421,8 +461,12 @@ function StudioLayout({
               highlightSrc={highlightSrc}
               menuItems={menuItems}
               saving={saving}
-              savedId={savedId}
+              // El aviso "Saved" sólo mientras el resultado en pantalla siga
+              // siendo el guardado: `savedId` es pegajoso y seguiría anunciando
+              // un guardado que ya no corresponde a lo que se ve.
+              savedId={savedRef ? savedId : null}
               saveError={saveError}
+              limitReached={limitReached}
               palette={palette}
               recipes={recipes}
               showGuide={showGuide}
@@ -431,6 +475,7 @@ function StudioLayout({
               onSelectColor={(i) =>
                 setSelectedColor((prev) => (prev === i ? null : i))
               }
+              renderLocked={renderLocked}
               onDownload={() => setDownloadOpen(true)}
               ensureSaved={ensureSaved}
             />
@@ -442,6 +487,9 @@ function StudioLayout({
           opts={renderOptions}
           open={settingsOpen}
           onClose={() => setSettingsOpen(false)}
+          locked={renderLocked}
+          isProcessing={isProcessing}
+          onGenerate={() => void process()}
         />
 
         {/* Download opened from the post ⋯ menu / action row. */}
@@ -508,6 +556,11 @@ function StudioLayout({
           imageHeight={exp.cropModal.h}
           aspect={getPaperAspect(exp.paperFormat, exp.paperOrientation)}
           title={`${PAPER_LABELS[exp.paperFormat]} ${exp.paperOrientation}`}
+          // Reutiliza el mismo panel de "Settings" (<RenderOptionsPane>): al ser
+          // un portal con z-100 se dibuja por encima del recorte (z-50).
+          onOpenRenderOptions={() => setSettingsOpen(true)}
+          renderOptionsOpen={settingsOpen}
+          busy={overall.state === "active" || exp.refreshingCrop}
           onCancel={() => exp.setCropModal(null)}
           onConfirm={exp.handleCropConfirm}
         />

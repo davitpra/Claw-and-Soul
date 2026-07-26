@@ -28,9 +28,11 @@ interface UseSavePbnFlowArgs {
   renderOptions: RenderOptions;
   exp: ExportControls;
   /**
-   * PBN ya persistido con el que se abrió el estudio (`/studio?pbnId=…`). Siembra
-   * la referencia para que la card de compra reutilice ese PBN en vez de guardar
-   * un duplicado idéntico. Deja de valer en cuanto se reprocesa: ver `resetSaved`.
+   * PBN ya persistido con el que se abrió el estudio (`/studio?pbnId=…`). Hace
+   * dos cosas: marca el resultado en pantalla como ya guardado (la card de
+   * compra lo reutiliza en vez de duplicarlo) y fija la fila que los guardados
+   * de esta sesión van a actualizar. Lo primero caduca al editar (`markDirty`);
+   * lo segundo no.
    */
   initialSavedPbn?: SavedPbnRef | null;
 }
@@ -68,6 +70,9 @@ function buildPbnConfig(
  * Orchestrates "save to my account" for the studio: gathers the rendered
  * artifacts + config, persists them via {@link useSavePbn}, and keeps a
  * reference so the purchase card can reuse the saved PBN instead of re-saving.
+ * Una vez hay fila (porque el estudio se abrió sobre un PBN o porque ya se
+ * guardó una vez), los guardados siguientes la reemplazan en vez de acumular
+ * copias de la misma obra.
  * Redirects to login (preserving the return path) when there's no session.
  */
 export function useSavePbnFlow({
@@ -85,8 +90,20 @@ export function useSavePbnFlow({
 }: UseSavePbnFlowArgs) {
   const router = useRouter();
   const { isAuthenticated } = useAuth();
-  const { save, saving, savedId, error: saveError } = useSavePbn();
+  const {
+    save,
+    saving,
+    savedId,
+    error: saveError,
+    limitReached,
+  } = useSavePbn();
   const [savedPbn, setSavedPbn] = useState<SavedPbnRef | null>(initialSavedPbn);
+  // Fila que esta sesión del estudio actualiza. A diferencia de `savedPbn`, no
+  // se pierde al editar: sin ella cada guardado tras un cambio crearía una copia
+  // de la misma obra (el bug de los PBN duplicados en la galería).
+  const [targetPbnId, setTargetPbnId] = useState<string | null>(
+    initialSavedPbn?.id ?? null,
+  );
 
   const handleSave = useCallback(async (): Promise<SavedPbnRef | null> => {
     if (!isAuthenticated) {
@@ -101,6 +118,7 @@ export function useSavePbnFlow({
       palette,
       recipes,
       generationId,
+      pbnId: targetPbnId,
       config: buildPbnConfig(inputOptions, renderOptions, exp),
     });
     if (!saved) return null;
@@ -109,6 +127,9 @@ export function useSavePbnFlow({
       previewUrl: (saved.previewUrl as string | undefined) ?? null,
     };
     setSavedPbn(savedRef);
+    // El id de la respuesta manda: si el PBN estaba comprado el backend forkeó
+    // una copia, y los siguientes guardados deben ir contra ella.
+    setTargetPbnId(saved.id);
     return savedRef;
   }, [
     isAuthenticated,
@@ -121,6 +142,7 @@ export function useSavePbnFlow({
     palette,
     recipes,
     generationId,
+    targetPbnId,
     inputOptions,
     renderOptions,
     exp,
@@ -133,17 +155,22 @@ export function useSavePbnFlow({
     [savedPbn, handleSave],
   );
 
-  // Tras reprocesar, el resultado en pantalla ya no es el PBN persistido: olvida
-  // la referencia para que el siguiente guardado (o compra) cree uno nuevo.
-  const resetSaved = useCallback(() => setSavedPbn(null), []);
+  // Lo que hay en pantalla dejó de coincidir con lo persistido (se reprocesó o
+  // cambió una opción de render): reaparece el botón de guardar. `targetPbnId`
+  // sobrevive, así que ese guardado actualiza la obra en vez de clonarla.
+  const markDirty = useCallback(() => setSavedPbn(null), []);
 
   return {
     handleSave,
     ensureSaved,
-    resetSaved,
+    markDirty,
     saving,
     savedId,
     saveError,
+    /** El guardado falló porque la cuenta llegó al tope de obras guardadas. */
+    limitReached,
     savedPbn,
+    /** Hay una fila que este guardado va a reemplazar (copy del botón). */
+    isUpdate: targetPbnId !== null,
   };
 }
