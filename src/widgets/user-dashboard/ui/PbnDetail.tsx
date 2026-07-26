@@ -218,26 +218,25 @@ export function PbnDetail({ id }: Props) {
             )}
 
             <div className="flex flex-col gap-3">
-              {/* Descargas: Cloudinary sirve el archivo como adjunto vía
-                  `fl_attachment`, así no hace falta traerlo por fetch. La
-                  plantilla es un SVG, así que va sin conversión de formato. */}
-              {pbn.outlineSvgUrl && (
-                <a
-                  href={cloudinaryDownloadUrl(
-                    pbn.outlineSvgUrl,
-                    null,
-                    downloadBase,
-                  )}
-                  download
-                  className={secondaryAction}
+              {/* Vuelta al estudio sobre este PBN: con `pbnId` el estudio abre
+                  el SVG guardado y sus ajustes sin reprocesar (imagen de origen y
+                  generación las resuelve del propio PBN). Espeja la CTA de
+                  `GenerationDetail`; sin `sourceImageUrl` (PBN antiguos) no hay
+                  nada que reabrir. */}
+              {pbn.sourceImageUrl && (
+                <Link
+                  href={`/studio?pbnId=${pbn.id}`}
+                  className="flex h-14 w-full items-center justify-center gap-2 rounded-xl bg-primary text-lg font-bold text-white shadow-lg shadow-primary/20 transition-all hover:scale-[1.02] hover:bg-primary-dark hover:shadow-xl hover:shadow-primary/25 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:ring-offset-2 active:scale-100"
                 >
-                  <span className="material-symbols-outlined text-[20px] text-text-muted transition-colors group-hover:text-primary">
-                    download
+                  <span className="material-symbols-outlined text-[20px] text-white">
+                    format_paint
                   </span>
-                  Download template (SVG)
-                </a>
+                  Convert to PBN
+                </Link>
               )}
 
+              {/* Descargas: Cloudinary sirve el archivo como adjunto vía
+                  `fl_attachment`, así no hace falta traerlo por fetch. */}
               {pbn.paletteUrl && (
                 <a
                   href={cloudinaryDownloadUrl(

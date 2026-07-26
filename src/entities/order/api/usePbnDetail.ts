@@ -9,17 +9,26 @@ import type { ApiEnvelope, UserPbnDetail } from "../types";
 // (GET/DELETE /paint-by-numbers/:id). Espeja `useGenerationDetail`: la
 // navegación tras borrar se deja en el componente para mantener
 // next/navigation fuera de la capa de entidades.
-export function usePbnDetail(id: string) {
+// `id` admite null porque el estudio monta el hook siempre (reglas de hooks)
+// aunque casi nunca llegue con un `pbnId` en la URL: sin id no hay petición.
+export function usePbnDetail(id: string | null) {
   const { get, delete: del } = useAuthFetch();
 
   const [pbn, setPbn] = useState<UserPbnDetail | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  // Sin id no hay nada que cargar: arranca en false para que quien lo use como
+  // gate de montaje no pinte un render vacío de más.
+  const [isLoading, setIsLoading] = useState(!!id);
   const [error, setError] = useState<string | null>(null);
   const [notFound, setNotFound] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [deleteError, setDeleteError] = useState<string | null>(null);
 
   const reload = useCallback(async () => {
+    if (!id) {
+      setPbn(null);
+      setIsLoading(false);
+      return;
+    }
     setIsLoading(true);
     setError(null);
     setNotFound(false);
@@ -43,7 +52,7 @@ export function usePbnDetail(id: string) {
   // Borra el PBN. Resuelve a `true` en éxito para que el componente navegue; en
   // fallo deja `deleteError` poblado y resuelve `false`.
   const deletePbn = useCallback(async () => {
-    if (deleting) return false;
+    if (!id || deleting) return false;
     setDeleting(true);
     setDeleteError(null);
     try {

@@ -17,10 +17,12 @@ import {
   usePaintMixing,
   useProcessing,
   useExport,
+  settingsToInputInit,
   type InputOptionsInit,
   type RenderOptionsInit,
 } from "@/features/pbn-studio";
-import { useSavePbnFlow } from "../model/useSavePbnFlow";
+import { usePbnDetail } from "@/entities/order/api/usePbnDetail";
+import { useSavePbnFlow, type SavedPbnRef } from "../model/useSavePbnFlow";
 import { useStylePbnConfig } from "../model/useStylePbnConfig";
 import {
   STOREFRONT_INITIAL_IMAGE,
@@ -46,25 +48,51 @@ import { card, stepTitle } from "@/features/pbn-studio/ui/pbnStyles";
 // artwork por query param para precargarla en el canvas; generationId liga el
 // PBN guardado a esa generación (ver handleSave) y styleId trae el default PBN
 // del estilo (Style.pbnConfig) con el que se seedean los paneles de opciones.
+// Con `pbnId` (volver a un PBN ya guardado desde /user/pbn) el estudio se abre
+// sobre ese PBN: imagen de origen, ajustes y el SVG persistido, sin reprocesar.
 export default function Studio() {
   const searchParams = useSearchParams();
   const generationId = searchParams.get("generationId");
   const initialImageUrl = searchParams.get("imageUrl");
   const styleId = searchParams.get("styleId");
+  const pbnId = searchParams.get("pbnId");
 
   // Los hooks de opciones solo leen su init en el primer render, así que el
-  // estudio no se monta hasta resolver el fetch (sin styleId resuelve al tiro).
+  // estudio no se monta hasta resolver los fetch (sin params resuelven al tiro).
   const { inputInit, renderInit, loading } = useStylePbnConfig(styleId);
-  if (loading) return null;
+  const { pbn, isLoading: pbnLoading } = usePbnDetail(pbnId);
+  if (loading || pbnLoading) return null;
+
+  // Sin sesión el fetch del PBN falla y `pbn` queda null: el estudio arranca
+  // como siempre. La config del PBN pisa la del estilo, campo a campo.
+  const savedPbn =
+    pbn && pbn.outlineSvgUrl
+      ? {
+          id: pbn.id,
+          previewUrl: pbn.previewUrl,
+          outlineSvgUrl: pbn.outlineSvgUrl,
+          palette: Array.isArray(pbn.config?.palette)
+            ? (pbn.config.palette as RGB[])
+            : undefined,
+        }
+      : null;
 
   return (
     <StudioLayout
-      generationId={generationId}
-      initialImageUrl={initialImageUrl ?? STOREFRONT_INITIAL_IMAGE}
-      inputInit={inputInit}
-      renderInit={renderInit}
+      generationId={pbn?.generationId ?? generationId}
+      initialImageUrl={
+        pbn?.sourceImageUrl ?? initialImageUrl ?? STOREFRONT_INITIAL_IMAGE
+      }
+      inputInit={settingsToInputInit(pbn?.config?.input) ?? inputInit}
+      renderInit={(pbn?.config?.render as RenderOptionsInit) ?? renderInit}
+      savedPbn={savedPbn}
     />
   );
+}
+
+interface StudioSavedPbn extends SavedPbnRef {
+  outlineSvgUrl: string;
+  palette?: RGB[];
 }
 
 function StudioLayout({
@@ -72,11 +100,13 @@ function StudioLayout({
   initialImageUrl,
   inputInit,
   renderInit,
+  savedPbn,
 }: {
   generationId: string | null;
   initialImageUrl: string | null;
   inputInit?: InputOptionsInit;
   renderInit?: RenderOptionsInit;
+  savedPbn: StudioSavedPbn | null;
 }) {
   const { log, clearLog } = useLog();
 
@@ -122,10 +152,15 @@ function StudioLayout({
     return () => window.removeEventListener("keydown", onKey);
   }, [showGuide]);
 
+  // `resetSaved` nace de useSavePbnFlow, que se declara más abajo porque
+  // necesita el output del pipeline: se llama por ref para no invertir el orden.
+  const resetSavedRef = useRef<(() => void) | null>(null);
   const onProcessStart = useCallback(() => {
     setRecipes(null);
     // drop the highlight tied to the palette that's about to be replaced
     setSelectedColor(null);
+    // lo que se está regenerando ya no es el PBN con el que se abrió el estudio
+    resetSavedRef.current?.();
   }, [setRecipes]);
   const onComplete = useCallback(
     (colors: RGB[]) => {
@@ -151,6 +186,7 @@ function StudioLayout({
     hasOutput,
     isProcessing,
     process,
+    loadSaved,
     cancel,
   } = useProcessing({
     buildSettings: inputOptions.buildSettings,
@@ -170,6 +206,24 @@ function StudioLayout({
     recipes,
     palette,
   });
+
+  // Al abrir un PBN ya guardado (`/studio?pbnId=…`): inyecta el SVG persistido en
+  // vez de reprocesar, una vez la imagen de origen está dibujada (así el
+  // comparador puede rasterizar el SVG contra el original). Si la descarga falla
+  // (p. ej. CORS) cae a regenerarlo. Mismo criterio que el estudio del admin.
+  const didLoadSaved = useRef(false);
+  useEffect(() => {
+    if (!savedPbn || !imageSrc || didLoadSaved.current) return;
+    didLoadSaved.current = true;
+    void (async () => {
+      const ok = await loadSaved(savedPbn.outlineSvgUrl, savedPbn.palette);
+      if (!ok) {
+        void process();
+      } else if (ENABLE_MIXING_GUIDE && savedPbn.palette?.length) {
+        void computeRecipes(savedPbn.palette);
+      }
+    })();
+  }, [savedPbn, imageSrc, loadSaved, process, computeRecipes]);
 
   // Overlay that spotlights the selected color's sections on the result. Rebuilt
   // when the color, palette (reprocessed) or the border/label render options
@@ -202,8 +256,15 @@ function StudioLayout({
   ]);
 
   // ---- Save to account ----
-  const { handleSave, ensureSaved, saving, savedId, saveError } =
-    useSavePbnFlow({
+  const {
+    handleSave,
+    ensureSaved,
+    resetSaved,
+    saving,
+    savedId,
+    saveError,
+    savedPbn: savedRef,
+  } = useSavePbnFlow({
       svgContainerRef,
       guideRef,
       originalImageRef,
@@ -214,7 +275,13 @@ function StudioLayout({
       inputOptions,
       renderOptions,
       exp,
+      initialSavedPbn: savedPbn,
     });
+
+  // Ver `resetSavedRef`: onProcessStart se define antes de este hook.
+  useEffect(() => {
+    resetSavedRef.current = resetSaved;
+  }, [resetSaved]);
 
   // Modals opened from the Instagram-style post ⋯ menu / action row.
   const [settingsOpen, setSettingsOpen] = useState(false);
@@ -233,7 +300,10 @@ function StudioLayout({
       label: savedId ? "Saved" : "Save to my account",
       icon: savedId ? "check_circle" : "bookmark_add",
       onClick: handleSave,
-      hidden: !canSave,
+      // Abierto sobre un PBN de la cuenta y sin reprocesar todavía: guardar solo
+      // crearía un duplicado idéntico. `resetSaved` (en onProcessStart) lo
+      // devuelve en cuanto se regenera el resultado.
+      hidden: !canSave || (!!savedRef && !savedId),
     },
     {
       label: "Download",

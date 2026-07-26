@@ -15,6 +15,7 @@
  */
 
 export * from "./model/constants";
+export * from "./model/inputConfig";
 export * from "./model/useLog";
 export * from "./model/useExport";
 export * from "./model/useImageInput";

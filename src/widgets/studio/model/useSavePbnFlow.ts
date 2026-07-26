@@ -27,6 +27,12 @@ interface UseSavePbnFlowArgs {
   inputOptions: InputOptions;
   renderOptions: RenderOptions;
   exp: ExportControls;
+  /**
+   * PBN ya persistido con el que se abrió el estudio (`/studio?pbnId=…`). Siembra
+   * la referencia para que la card de compra reutilice ese PBN en vez de guardar
+   * un duplicado idéntico. Deja de valer en cuanto se reprocesa: ver `resetSaved`.
+   */
+  initialSavedPbn?: SavedPbnRef | null;
 }
 
 /**
@@ -75,11 +81,12 @@ export function useSavePbnFlow({
   inputOptions,
   renderOptions,
   exp,
+  initialSavedPbn = null,
 }: UseSavePbnFlowArgs) {
   const router = useRouter();
   const { isAuthenticated } = useAuth();
   const { save, saving, savedId, error: saveError } = useSavePbn();
-  const [savedPbn, setSavedPbn] = useState<SavedPbnRef | null>(null);
+  const [savedPbn, setSavedPbn] = useState<SavedPbnRef | null>(initialSavedPbn);
 
   const handleSave = useCallback(async (): Promise<SavedPbnRef | null> => {
     if (!isAuthenticated) {
@@ -126,5 +133,17 @@ export function useSavePbnFlow({
     [savedPbn, handleSave],
   );
 
-  return { handleSave, ensureSaved, saving, savedId, saveError, savedPbn };
+  // Tras reprocesar, el resultado en pantalla ya no es el PBN persistido: olvida
+  // la referencia para que el siguiente guardado (o compra) cree uno nuevo.
+  const resetSaved = useCallback(() => setSavedPbn(null), []);
+
+  return {
+    handleSave,
+    ensureSaved,
+    resetSaved,
+    saving,
+    savedId,
+    saveError,
+    savedPbn,
+  };
 }
