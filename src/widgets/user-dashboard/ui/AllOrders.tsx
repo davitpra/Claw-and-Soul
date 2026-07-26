@@ -43,6 +43,24 @@ function orderToProduct(
 
 const PAGE_SIZE = 10;
 
+// Silueta de una <ProductCard> de orden: la imagen con su proporción por defecto
+// (aspect-2/3), el badge de estado superpuesto y el número de orden centrado
+// debajo. Al reproducir la misma estructura, la grilla no salta cuando llegan
+// las órdenes reales.
+function OrderCardSkeleton() {
+  return (
+    <div className="flex w-full min-w-0 animate-pulse flex-col gap-2">
+      <div className="relative aspect-2/3 w-full overflow-hidden rounded-xl bg-cream">
+        <div className="absolute left-3 top-3 h-5 w-20 rounded-full bg-white/70" />
+      </div>
+      <div className="mx-auto h-5 w-28 rounded-md bg-cream" />
+    </div>
+  );
+}
+
+// Una grilla llena en lg/xl, que es lo que devuelve la primera página (PAGE_SIZE).
+const SKELETON_COUNT = 8;
+
 export function AllOrders() {
   const { get } = useAuthFetch();
 
@@ -102,20 +120,28 @@ export function AllOrders() {
   // darle a cada card el marco visual de su tipo de producto.
   const styleData = useStyleData();
 
+  // El marco de cada card sale de `styleData`, que llega después de las órdenes.
+  // Pintando antes, todas caerían a "art" recortado y al resolverse cambiarían a
+  // proporción natural: la <Card> pasa de fondo a <img>, la imagen se recrea y la
+  // grilla salta. El skeleton cubre ambas cargas, que van en paralelo.
+  // `fetchStyles` nunca rechaza (devuelve mapas vacíos), así que null es
+  // estrictamente "cargando" y esto no puede quedarse colgado.
+  const showSkeleton = isLoading || (!error && orders.length > 0 && !styleData);
+
   return (
     <section className="relative overflow-hidden rounded-xl bg-white p-6 md:p-8 space-y-6">
-      {isLoading && (
-        <div className="grid grid-cols-2 gap-8 lg:grid-cols-3 xl:grid-cols-4">
-          {[0, 1, 2, 3].map((i) => (
-            <div
-              key={i}
-              className="aspect-3/4 not-only-of-type:animate-pulse rounded-xl bg-cream"
-            />
+      {showSkeleton && (
+        <div
+          aria-hidden
+          className="grid grid-cols-2 items-center gap-8 lg:grid-cols-3 xl:grid-cols-4"
+        >
+          {Array.from({ length: SKELETON_COUNT }, (_, i) => (
+            <OrderCardSkeleton key={i} />
           ))}
         </div>
       )}
 
-      {!isLoading && error && (
+      {!showSkeleton && error && (
         <div className="flex flex-col items-center rounded-xl bg-red-50 px-4 py-8 text-center">
           <span className="flex size-12 items-center justify-center rounded-full bg-red-100 text-red-600">
             <span className="material-symbols-outlined text-[26px]">error</span>
@@ -134,7 +160,7 @@ export function AllOrders() {
         </div>
       )}
 
-      {!isLoading && !error && orders.length === 0 && (
+      {!showSkeleton && !error && orders.length === 0 && (
         <div className="px-4 py-8 text-center">
           <span className="mx-auto flex size-16 items-center justify-center rounded-full bg-cream text-text-muted">
             <span className="material-symbols-outlined text-[32px]">
@@ -159,7 +185,7 @@ export function AllOrders() {
         </div>
       )}
 
-      {!isLoading && !error && orders.length > 0 && (
+      {!showSkeleton && !error && orders.length > 0 && (
         <>
           <div className="grid grid-cols-2 items-center gap-8 lg:grid-cols-3 xl:grid-cols-4">
             {orders.map((order) => {

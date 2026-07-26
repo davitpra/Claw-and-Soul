@@ -1,4 +1,5 @@
 import { ReactNode } from "react";
+import { NaturalImage } from "@/shared/ui/NaturalImage";
 
 interface CardProps {
   /** URL de la imagen que ocupa la card. */
@@ -35,22 +36,18 @@ export function Card({
   return (
     <div className={`relative overflow-hidden bg-white shadow-sm ${className}`}>
       {naturalAspect && imageUrl ? (
-        // eslint-disable-next-line @next/next/no-img-element
-        <img
-          src={imageUrl}
-          alt={imageAlt ?? ""}
-          loading="lazy"
-          decoding="async"
-          onError={onImageError}
-          className="block w-full h-auto"
-        />
+        // Reserva su caja antes de cargar: sin ella la card mide 0 de alto y la
+        // grilla salta cuando la imagen aparece (ver NaturalImage).
+        <NaturalImage src={imageUrl} alt={imageAlt} onError={onImageError} />
       ) : (
         // Sin imagen (o sin `naturalAspect`): caja con proporción fija. Un <img>
         // sin src dispara un warning y colapsa sin alto, así que los ítems sin
         // imagen caen siempre a este placeholder (bg-white con aspecto definido).
         <div
           className="aspect-2/3 w-full bg-cover bg-center"
-          style={imageUrl ? { backgroundImage: `url('${imageUrl}')` } : undefined}
+          style={
+            imageUrl ? { backgroundImage: `url('${imageUrl}')` } : undefined
+          }
           role={imageAlt ? "img" : undefined}
           aria-label={imageAlt || undefined}
         />
