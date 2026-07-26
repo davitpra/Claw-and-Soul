@@ -87,6 +87,22 @@ export async function fetchWithRefresh(
 }
 
 /**
+ * Error de una respuesta HTTP no-2xx, con el status conservado. Extiende `Error`,
+ * así que los `err instanceof Error` / `err.message` que ya existían siguen
+ * funcionando; lo que añade es poder distinguir un 409 de un 404 sin hacer regex
+ * sobre el mensaje.
+ */
+export class ApiError extends Error {
+  constructor(
+    message: string,
+    readonly status: number
+  ) {
+    super(message);
+    this.name = 'ApiError';
+  }
+}
+
+/**
  * Helper function for JSON API calls with automatic token refresh
  */
 export async function fetchJSON<T>(
@@ -97,7 +113,10 @@ export async function fetchJSON<T>(
 
   if (!response.ok) {
     const error = await response.json().catch(() => ({ message: 'Request failed' }));
-    throw new Error(error.message || `HTTP ${response.status}: ${response.statusText}`);
+    throw new ApiError(
+      error.message || `HTTP ${response.status}: ${response.statusText}`,
+      response.status
+    );
   }
 
   return response.json();
