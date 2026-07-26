@@ -32,6 +32,8 @@ import CropModal from "./ui/CropModal";
 import ImageCompareSlider from "./ui/ImageCompareSlider";
 import InputOptionsPane from "./ui/InputOptionsPane";
 import RenderOptionsPane from "./ui/RenderOptionsPane";
+import RenderOptionsFields from "./ui/RenderOptionsFields";
+import Modal from "@/shared/ui/Modal";
 import MixingGuide from "./ui/MixingGuide";
 import ExportControls from "./ui/ExportControls";
 
@@ -109,6 +111,8 @@ export default function AdminPbnStudio({
   const { recipes, setRecipes, computeRecipes } = usePaintMixing();
   const guideRef = useRef<HTMLDivElement>(null);
   const [showGuide, setShowGuide] = useState(false);
+  // Opciones de render abiertas desde el recorte previo a la descarga.
+  const [renderOptsOpen, setRenderOptsOpen] = useState(false);
   // Index of the palette color whose sections are highlighted on the result.
   const [selectedColor, setSelectedColor] = useState<number | null>(null);
 
@@ -146,6 +150,7 @@ export default function AdminPbnStudio({
     svgContainerRef,
     processResultRef,
     compareImgs,
+    outputVersion,
     overall,
     palette,
     hasOutput,
@@ -171,6 +176,15 @@ export default function AdminPbnStudio({
     recipes,
     palette,
   });
+
+  // El recorte trabaja sobre una foto fija del SVG, así que al tocar las
+  // opciones de render desde ahí mismo hay que volver a hacerla. `outputVersion`
+  // sólo cambia cuando el SVG nuevo ya está en el DOM. `exp` queda fuera de las
+  // deps a propósito: refrescar cambia `exp.cropModal` y volveríamos a entrar.
+  useEffect(() => {
+    if (exp.cropModal) void exp.refreshCropPreview();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [outputVersion]);
 
   // Overlay que resalta las secciones del color seleccionado sobre el resultado.
   // Se reconstruye al cambiar el color, la paleta (reproceso) o las opciones de
@@ -646,10 +660,29 @@ export default function AdminPbnStudio({
           imageHeight={exp.cropModal.h}
           aspect={getPaperAspect(exp.paperFormat, exp.paperOrientation)}
           title={`${PAPER_LABELS[exp.paperFormat]} ${exp.paperOrientation}`}
+          onOpenRenderOptions={() => setRenderOptsOpen(true)}
+          renderOptionsOpen={renderOptsOpen}
+          busy={overall.state === "active" || exp.refreshingCrop}
           onCancel={() => exp.setCropModal(null)}
           onConfirm={exp.handleCropConfirm}
         />
       )}
+
+      {/* Los mismos controles de render que la sección fija bajo el resultado,
+          pero accesibles desde el recorte: el Modal es un portal con z-100, así
+          que se dibuja por encima (el recorte es z-50). Sin paleta ni guía de
+          mezcla, que no pintan nada a la hora de recortar para imprimir. */}
+      <Modal
+        open={renderOptsOpen}
+        onClose={() => setRenderOptsOpen(false)}
+        title="Opciones de render"
+        maxWidth="max-w-lg"
+        label="Opciones de render"
+      >
+        <div className="p-6">
+          <RenderOptionsFields opts={renderOptions} />
+        </div>
+      </Modal>
 
       {/* intermediate-step canvases: kept in the DOM as draw targets for the
           pipeline, but never shown to the user */}

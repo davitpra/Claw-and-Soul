@@ -59,6 +59,11 @@ export function useProcessing({
   });
   const [palette, setPalette] = useState<RGB[]>([]);
   const [hasOutput, setHasOutput] = useState(false);
+  // Espejo reactivo de `processResultRef`, que al ser un ref no dispara render y la
+  // UI no puede leer. Distingue "hay SVG en pantalla" (`hasOutput`) de "hay pipeline
+  // detrás": con un PBN traído por `loadSaved` lo primero es cierto y lo segundo no,
+  // y sin él las opciones de render no tienen qué repintar.
+  const [hasPipelineResult, setHasPipelineResult] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   // bumped after every successful process so the compare-slider images rebuild
   // even when no render option changed (e.g. reprocessing with new image settings)
@@ -177,6 +182,7 @@ export function useProcessing({
         container.innerHTML = await res.text();
         if (savedPalette?.length) setPalette(savedPalette);
         setHasOutput(true);
+        setHasPipelineResult(false);
         // no updateOutput ran, so bump the version ourselves to drive the slider
         setOutputVersion((v) => v + 1);
         setOverall({ progress: 1, label: "Loaded", state: "complete" });
@@ -267,6 +273,9 @@ export function useProcessing({
         callbacks,
       );
       setHasOutput(true);
+      // Sólo en el camino de éxito: si `process` lanza, `processResultRef` conserva
+      // el resultado anterior y bajar el flag sería mentir sobre lo que hay.
+      setHasPipelineResult(true);
       // updateOutput bumps outputVersion so the compare-slider effect rebuilds
       await updateOutput(false);
       // auto-compute the mixing recipes guide for the new palette
@@ -341,9 +350,17 @@ export function useProcessing({
     processResultRef,
     // state
     compareImgs,
+    // bumped once a freshly rendered SVG is committed to the DOM: the signal
+    // consumers wait on before snapshotting the output (see useExport's
+    // refreshCropPreview)
+    outputVersion,
     overall,
     palette,
     hasOutput,
+    // false cuando el SVG en pantalla vino de `loadSaved`: no hay `ProcessResult`
+    // en memoria, así que ni las opciones de render ni el overlay de resaltado
+    // pueden repintar nada hasta que se vuelva a procesar.
+    hasPipelineResult,
     isProcessing,
     // actions
     process,

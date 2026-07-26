@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useCallback, useState } from "react";
 import { RGB } from "@/lib/pbn/common";
 import { ProcessResult } from "@/lib/pbn/guiprocessmanager";
 import {
@@ -45,6 +45,7 @@ export function useExport({
     w: number;
     h: number;
   } | null>(null);
+  const [refreshingCrop, setRefreshingCrop] = useState(false);
 
   const getSvg = () =>
     svgContainerRef.current?.querySelector("svg") as SVGSVGElement | null;
@@ -115,6 +116,27 @@ export function useExport({
     setCropModal({ src: dataUrl, w: width, h: height });
   };
 
+  /**
+   * The crop modal works on a still PNG of the SVG, so it goes stale as soon as
+   * a render option changes underneath it. Re-shoot it (keeping the modal open)
+   * once the caller knows a new SVG is in the DOM.
+   */
+  const refreshCropPreview = useCallback(async () => {
+    const svg = svgContainerRef.current?.querySelector("svg");
+    if (!svg) return;
+    setRefreshingCrop(true);
+    try {
+      const { dataUrl, width, height } = await svgToPngDataUrl(
+        svg as SVGSVGElement,
+      );
+      setCropModal((prev) =>
+        prev ? { src: dataUrl, w: width, h: height } : prev,
+      );
+    } finally {
+      setRefreshingCrop(false);
+    }
+  }, [svgContainerRef]);
+
   const handleCropConfirm = (crop: CropRect) => {
     if (cropModal) {
       // Append the on-screen mixing guide as extra page(s) when available.
@@ -142,6 +164,7 @@ export function useExport({
     paperFormat,
     paperOrientation,
     cropModal,
+    refreshingCrop,
     setPaperFormat,
     setPaperOrientation,
     setCropModal,
@@ -154,6 +177,7 @@ export function useExport({
     onPdfUnitChange,
     handleDownloadPDF,
     handleDownloadPDFStandard,
+    refreshCropPreview,
     handleCropConfirm,
   };
 }

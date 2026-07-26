@@ -9,7 +9,6 @@ import { DetailNotFound } from "@/shared/ui/DetailNotFound";
 import { Carousel } from "@/shared/ui/Carousel";
 import ImageCompareSlider from "@/shared/ui/ImageCompareSlider";
 import Modal from "@/shared/ui/Modal";
-import { cloudinaryDownloadUrl } from "@/shared/lib/cloudinary";
 import { slugify } from "@/shared/lib/slug";
 import { PAPER_LABELS, useExport, useSavedSvg } from "@/features/pbn-studio";
 import CropModal from "@/features/pbn-studio/ui/CropModal";
@@ -256,9 +255,9 @@ export function PbnDetail({ id }: Props) {
             <div className="flex flex-col gap-3">
               {/* Vuelta al estudio sobre este PBN: con `pbnId` el estudio abre
                   el SVG guardado y sus ajustes sin reprocesar (imagen de origen y
-                  generación las resuelve del propio PBN). Espeja la CTA de
-                  `GenerationDetail`; sin `sourceImageUrl` (PBN antiguos) no hay
-                  nada que reabrir. */}
+                  generación las resuelve del propio PBN), y al guardar reemplaza
+                  esta misma obra en vez de duplicarla. Sin `sourceImageUrl` (PBN
+                  antiguos) no hay nada que reabrir. */}
               {pbn.sourceImageUrl && (
                 <Link
                   href={`/studio?pbnId=${pbn.id}`}
@@ -267,7 +266,7 @@ export function PbnDetail({ id }: Props) {
                   <span className="material-symbols-outlined text-[20px] text-white">
                     format_paint
                   </span>
-                  Convert to PBN
+                  Edit in studio
                 </Link>
               )}
 
@@ -288,25 +287,6 @@ export function PbnDetail({ id }: Props) {
                   </span>
                   Download
                 </button>
-              )}
-
-              {/* La guía de mezclas ya está en Cloudinary: se sirve como
-                  adjunto vía `fl_attachment`, sin pasar por fetch. */}
-              {pbn.paletteUrl && (
-                <a
-                  href={cloudinaryDownloadUrl(
-                    pbn.paletteUrl,
-                    "png",
-                    `${downloadBase}-guide`,
-                  )}
-                  download
-                  className={secondaryAction}
-                >
-                  <span className="material-symbols-outlined text-[20px] text-text-muted transition-colors group-hover:text-primary">
-                    palette
-                  </span>
-                  Download mixing guide
-                </a>
               )}
 
               {pbn.generationId && (

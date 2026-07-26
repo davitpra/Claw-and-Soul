@@ -17,6 +17,14 @@ interface CropModalProps {
   /** Target crop aspect ratio (width / height) locked to the chosen paper. */
   aspect: number;
   title?: string;
+  /** When given, a "Render options" button opens the caller's options modal on
+   * top of the crop. */
+  onOpenRenderOptions?: () => void;
+  /** That modal is open above us, so Escape belongs to it, not to the crop. */
+  renderOptionsOpen?: boolean;
+  /** A new SVG is being rendered: the preview below is stale, so hold the
+   * export back until it's re-shot. */
+  busy?: boolean;
   onCancel: () => void;
   onConfirm: (crop: CropRect) => void;
 }
@@ -42,6 +50,9 @@ export default function CropModal({
   imageHeight,
   aspect,
   title,
+  onOpenRenderOptions,
+  renderOptionsOpen = false,
+  busy = false,
   onCancel,
   onConfirm,
 }: CropModalProps) {
@@ -73,14 +84,16 @@ export default function CropModal({
     return () => window.removeEventListener("resize", measure);
   }, [measure]);
 
-  // Escape to close.
+  // Escape to close — unless the render options modal is stacked on top, whose
+  // own Escape handler would otherwise close both layers at once.
   useEffect(() => {
+    if (renderOptionsOpen) return;
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "Escape") onCancel();
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [onCancel]);
+  }, [onCancel, renderOptionsOpen]);
 
   const clampMove = useCallback(
     (x: number, y: number, w: number, h: number): CropRect => ({
@@ -210,7 +223,11 @@ export default function CropModal({
           keeps the aspect ratio of the chosen paper.
         </p>
         <div className="flex flex-1 items-center justify-center overflow-auto p-6">
-          <div className="relative inline-block select-none">
+          <div
+            className={`relative inline-block select-none transition-opacity ${
+              busy ? "pointer-events-none opacity-50" : ""
+            }`}
+          >
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               ref={imgRef}
@@ -244,12 +261,24 @@ export default function CropModal({
             </div>
           </div>
         </div>
-        <div className="flex justify-end gap-3 border-t border-[#E0DED9] px-6 py-4">
-          <button className={btnSecondary} onClick={onCancel}>
+        <div className="flex flex-wrap justify-end gap-3 border-t border-[#E0DED9] px-6 py-4">
+          <button
+            className={`${btnSecondary} ${onOpenRenderOptions ? "mr-auto" : ""}`}
+            onClick={onCancel}
+          >
             Cancel
           </button>
+          {onOpenRenderOptions && (
+            <button className={btnSecondary} onClick={onOpenRenderOptions}>
+              <span className="material-symbols-outlined text-[18px]">
+                tune
+              </span>
+              Opciones de render
+            </button>
+          )}
           <button
             className={btnPrimary}
+            disabled={busy}
             onClick={() =>
               onConfirm({
                 x: Math.round(crop.x),
