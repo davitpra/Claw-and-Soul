@@ -26,7 +26,7 @@ export default function ColorPalette({
   const hasSelection = selectedColor !== null;
   const showGuideButton = mixingEnabled && recipes && palette.length > 0;
   return (
-    <section className="mt-6 rounded-xl border border-[#E0DED9] bg-white p-6 shadow-sm">
+    <section className="mt-6 rounded-xl  bg-white p-6 shadow-sm mx-4">
       <strong className="font-display font-black text-slate-dark">
         Color palette ({palette.length})
       </strong>
