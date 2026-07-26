@@ -154,9 +154,32 @@ export interface UserPbnDetail {
   isPublic: boolean;
   createdAt: string;
   config: PbnConfig | null;
+  /** Null en los PBNs guardados antes de heredar el pet de la generación. */
   pet: { id: string; name: string } | null;
   generation: {
     id: string;
+    pet: { id: string; name: string } | null;
+    style: { displayName?: string | null; category?: string | null } | null;
+  } | null;
+}
+
+// Respuesta de GET /paint-by-numbers (user-scoped, paginada). El backend proyecta
+// con USER_PBN_LIST_SELECT: como el detalle pero sin `config` ni las storage keys.
+export interface UserPbnListItem {
+  id: string;
+  sourceImageUrl: string | null;
+  previewUrl: string | null;
+  outlineSvgUrl: string | null;
+  paletteUrl: string | null;
+  colorCount: number | null;
+  /** saved | ordered */
+  status: string;
+  createdAt: string;
+  /** Casi siempre null: al guardar un PBN no se manda `petId`. Ver `generation.pet`. */
+  pet: { id: string; name: string } | null;
+  generation: {
+    id: string;
+    pet: { id: string; name: string } | null;
     style: { displayName?: string | null; category?: string | null } | null;
   } | null;
 }

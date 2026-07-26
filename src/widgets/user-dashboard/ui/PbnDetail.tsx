@@ -103,7 +103,10 @@ export function PbnDetail({ id }: Props) {
 
   const styleName =
     pbn.generation?.style?.displayName ?? pbn.generation?.style?.category;
-  const title = pbn.pet?.name ?? styleName ?? "Paint by Numbers";
+  // Los PBNs guardados antes de heredar el pet de la generación tienen `petId`
+  // nulo, así que la mascota se resuelve por la generación de origen.
+  const petName = pbn.pet?.name ?? pbn.generation?.pet?.name;
+  const title = petName ?? styleName ?? "Paint by Numbers";
   // `config` es una columna Json libre, así que la paleta se valida en runtime
   // (los PBN guardados desde el admin pueden no traerla).
   const palette: RGB[] = Array.isArray(pbn.config?.palette)
@@ -112,7 +115,7 @@ export function PbnDetail({ id }: Props) {
   const isOrdered = pbn.status === "ordered";
   // `<style>-<pet>`, con los mismos criterios que la descarga de una obra.
   const downloadBase =
-    [styleName, pbn.pet?.name]
+    [styleName, petName]
       .map((part) => (part ? slugify(part) : ""))
       .filter(Boolean)
       .join("-") || "paint-by-numbers";
