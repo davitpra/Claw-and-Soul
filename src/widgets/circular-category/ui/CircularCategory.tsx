@@ -4,7 +4,7 @@ import Image from "next/image";
 import { useEffect, useState } from "react";
 import { getCollectionsWithImage } from "@/lib/shopify/actions/collections";
 import { ShopifyCollectionSummary } from "@/lib/shopify/types";
-import { useScrollRail } from "@/hooks/useScrollRail";
+import { edgeMask, useScrollRail } from "@/hooks/useScrollRail";
 
 interface CircularCategoryProps {
   /** Handle de colección seleccionado ("" = All). */
@@ -19,14 +19,6 @@ interface CircularCategoryProps {
  * padding propio para que el primero y el último no queden pegados.
  */
 const BLEED = "-mx-6 px-6 lg:-mx-10 lg:px-10";
-
-/** Degradado de borde que insinúa el contenido que queda fuera de vista. */
-function edgeMask(left: boolean, right: boolean): string | undefined {
-  if (!left && !right) return undefined;
-  return `linear-gradient(to right, ${
-    left ? "transparent, black 6%" : "black, black 0%"
-  }, ${right ? "black 94%, transparent" : "black 100%, black"})`;
-}
 
 /**
  * Fila de categorías circulares tipo "stories": un avatar por colección de

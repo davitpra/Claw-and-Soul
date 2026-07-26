@@ -2,6 +2,8 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import type { MouseEvent } from "react";
+import { edgeMask, useScrollRail } from "@/hooks/useScrollRail";
 
 interface TabItem {
   label: string;
@@ -21,9 +23,37 @@ const tabs: TabItem[] = [
 export function DashboardTabs() {
   const pathname = usePathname();
 
+  // El rail vive dentro de la tarjeta: la máscara sólo desvanece las pestañas,
+  // el fondo blanco y las esquinas del <nav> quedan intactos.
+  const {
+    railRef,
+    canScrollLeft,
+    canScrollRight,
+    syncEdges,
+    dragHandlers,
+    dragging,
+    wasDragged,
+  } = useScrollRail<HTMLDivElement>();
+
+  // Al soltar tras arrastrar no se navega a la pestaña que quedó bajo el cursor.
+  const handleClick = (event: MouseEvent<HTMLAnchorElement>) => {
+    if (wasDragged()) event.preventDefault();
+  };
+
   return (
-    <nav className="overflow-x-auto rounded-xl bg-white p-1">
-      <div className="flex flex-nowrap gap-1">
+    <nav className="rounded-xl bg-white p-1">
+      <div
+        ref={railRef}
+        onScroll={syncEdges}
+        {...dragHandlers}
+        style={{
+          maskImage: edgeMask(canScrollLeft, canScrollRight),
+          WebkitMaskImage: edgeMask(canScrollLeft, canScrollRight),
+        }}
+        className={`flex select-none flex-nowrap gap-1 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden ${
+          dragging ? "cursor-grabbing" : "cursor-grab"
+        }`}
+      >
         {tabs.map((tab) => {
           // "/user" sólo activo en match exacto; el resto cubre sus subrutas
           // (p. ej. /user/pets/[id] marca "My Pets").
@@ -36,6 +66,8 @@ export function DashboardTabs() {
             <Link
               key={tab.href}
               href={tab.href}
+              onClick={handleClick}
+              draggable={false}
               className={`flex shrink-0 items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-bold transition-all ${
                 isActive
                   ? "bg-primary/10 text-primary"

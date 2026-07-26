@@ -12,6 +12,14 @@ import {
 /** Un gesto por debajo de este recorrido es un click, no un arrastre. */
 const CLICK_MAX_MOVEMENT = 5;
 
+/** Degradado de borde que insinúa el contenido que queda fuera de vista. */
+export function edgeMask(left: boolean, right: boolean): string | undefined {
+  if (!left && !right) return undefined;
+  return `linear-gradient(to right, ${
+    left ? "transparent, black 6%" : "black, black 0%"
+  }, ${right ? "black 94%, transparent" : "black 100%, black"})`;
+}
+
 interface ScrollRailDragHandlers<T extends HTMLElement> {
   onPointerDown: (event: ReactPointerEvent<T>) => void;
   onPointerMove: (event: ReactPointerEvent<T>) => void;
