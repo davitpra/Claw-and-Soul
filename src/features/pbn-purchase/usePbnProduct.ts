@@ -23,8 +23,12 @@ interface UsePbnProductResult {
  * Resolves the dedicated Paint-by-Numbers Shopify product: reads the configured
  * ProductReference (GET /products/pbn) for its handle, then loads the Shopify
  * product for its variants (sizes), prices and image.
+ *
+ * `enabled` lets a consumer that may not need the kit skip both requests — the
+ * artwork detail only falls back to the PBN kit when the generation's own
+ * product can't be sold, and by then it already knows.
  */
-export function usePbnProduct(): UsePbnProductResult {
+export function usePbnProduct(enabled = true): UsePbnProductResult {
   const { get } = useAuthFetch();
   const [product, setProduct] = useState<ShopifyProduct | null>(null);
   const [loading, setLoading] = useState(true);
@@ -50,8 +54,9 @@ export function usePbnProduct(): UsePbnProductResult {
   }, [get]);
 
   useEffect(() => {
+    if (!enabled) return;
     load();
-  }, [load]);
+  }, [enabled, load]);
 
   const variants =
     product?.variants.edges
@@ -59,5 +64,13 @@ export function usePbnProduct(): UsePbnProductResult {
       .filter((v) => v.availableForSale) ?? [];
   const defaultImage = product?.images.edges[0]?.node.url ?? null;
 
-  return { product, variants, defaultImage, loading, unavailable };
+  return {
+    product,
+    variants,
+    defaultImage,
+    // Apagado no hay nada en vuelo: `loading` arranca en true y sin el efecto
+    // nunca se apagaría, dejando a los consumidores esperando para siempre.
+    loading: enabled && loading,
+    unavailable,
+  };
 }

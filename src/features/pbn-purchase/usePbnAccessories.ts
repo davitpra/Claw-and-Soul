@@ -73,6 +73,12 @@ interface UsePbnAccessoriesResult {
   accessories: AccessoryCard[];
   loading: boolean;
   /**
+   * true once the PBN kit product resolved with at least one purchasable
+   * variant. Lets a consumer skip the whole cross-sell block when the store has
+   * neither kit nor accessories, instead of rendering an empty carousel.
+   */
+  kitAvailable: boolean;
+  /**
    * Discount actually configured in Shopify for kit + accessories, as a rounded
    * percentage. null when there is no automatic discount (or the probe failed),
    * in which case no promo copy should be shown.
@@ -88,18 +94,27 @@ interface UsePbnAccessoriesResult {
  * nothing is computed here: we create a throwaway Shopify cart (kit + every
  * available accessory) and read back the allocations, which keeps the promo copy
  * honest instead of hardcoding a promise.
+ *
+ * `enabled` turns the whole thing off — four requests, one of them a `cartCreate`
+ * mutation. The artwork detail shows the source product's own related products
+ * instead, and only needs this when it falls back to the kit.
  */
-export function usePbnAccessories(): UsePbnAccessoriesResult {
+export function usePbnAccessories(enabled = true): UsePbnAccessoriesResult {
   // Kit variant used to probe the bundle discount; the hook is also mounted by
   // PbnPurchaseCard on this view, so the duplicate fetch is cheap and keeps
   // this hook decoupled.
-  const { variants: kitVariants } = usePbnProduct();
+  const {
+    variants: kitVariants,
+    loading: kitLoading,
+    unavailable: kitUnavailable,
+  } = usePbnProduct(enabled);
   const kitVariantId = kitVariants[0]?.id ?? null;
   const [accessories, setAccessories] = useState<AccessoryCard[]>([]);
   const [loading, setLoading] = useState(true);
   const [bundlePercent, setBundlePercent] = useState<number | null>(null);
 
   useEffect(() => {
+    if (!enabled) return;
     let cancelled = false;
     getCollectionProducts(ACCESSORIES_COLLECTION_HANDLE, 12)
       .then((collection) => {
@@ -122,12 +137,12 @@ export function usePbnAccessories(): UsePbnAccessoriesResult {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [enabled]);
 
   useEffect(() => {
     // No sync state reset needed on the guards: bundlePercent starts null and
     // only ever gets a value after a successful probe below.
-    if (!kitVariantId || accessories.length === 0) return;
+    if (!enabled || !kitVariantId || accessories.length === 0) return;
     const available = accessories.filter((c) => c.available);
     if (available.length === 0) return;
     let cancelled = false;
@@ -191,7 +206,13 @@ export function usePbnAccessories(): UsePbnAccessoriesResult {
     return () => {
       cancelled = true;
     };
-  }, [kitVariantId, accessories]);
+  }, [enabled, kitVariantId, accessories]);
 
-  return { accessories, loading, bundlePercent };
+  return {
+    accessories,
+    // Apagado no hay peticiones en vuelo, así que nadie debe esperar por ellas.
+    loading: enabled && (loading || kitLoading),
+    kitAvailable: !kitUnavailable && kitVariantId !== null,
+    bundlePercent,
+  };
 }

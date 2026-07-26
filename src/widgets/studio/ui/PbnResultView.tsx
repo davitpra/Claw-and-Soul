@@ -107,7 +107,7 @@ export default function PbnResultView({
                   <PbnPurchaseCard
                     palette={palette}
                     previewUrl={compareImgs.processed}
-                    ensureSaved={ensureSaved}
+                    source={{ kind: "saved-pbn", ensureSaved }}
                   />
                 </div>
                 {/* Cross-sell: generic accessories (paints, brushes…). Plain line

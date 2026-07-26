@@ -11,8 +11,22 @@ import { BackToGenerationsLink } from "@/entities/order/ui/BackToGenerationsLink
 import { GenerationImage } from "@/entities/order/ui/GenerationImage";
 import { GenerationStatusBadge } from "@/entities/order/ui/GenerationStatusBadge";
 import { formatOrderDate } from "@/entities/order/lib/presentation";
-import { templateLabel } from "@/entities/product/lib/template";
+import {
+  normalizeTemplate,
+  templateLabel,
+} from "@/entities/product/lib/template";
 import { artKindLabel } from "@/entities/product/model/artKind";
+import { Carousel } from "@/shared/ui/Carousel";
+import {
+  AccessoryUpsell,
+  PbnPurchaseCard,
+  usePbnAccessories,
+} from "@/features/pbn-purchase";
+import {
+  GenerationProductCard,
+  useGenerationProduct,
+} from "@/features/generation-purchase";
+import { getRelatedAccessories } from "@/widgets/related-products";
 
 interface Props {
   id: string;
@@ -51,13 +65,33 @@ export function GenerationDetail({ id }: Props) {
     error,
     notFound,
     reload,
-    isFavorite,
-    savingFavorite,
-    toggleFavorite,
     deleting,
     deleteError,
     deleteGeneration,
   } = useGenerationDetail(id);
+
+  // Producto para el que se pidió la obra. Con formato digital ya se entregó el
+  // archivo, así que la card de compra sigue siendo el kit PBN y ni se resuelve
+  // el producto; con formato físico se vende ese producto con la obra impresa.
+  // Va antes de los early returns por las reglas de hooks.
+  const isDigital =
+    normalizeTemplate(generation?.productRef?.template) === "Digital";
+  const sourceProduct = useGenerationProduct({
+    productRefId: isDigital ? null : (generation?.productRef?.id ?? null),
+    formatId: generation?.formatId,
+  });
+
+  // El kit PBN y sus accesorios genéricos solo hacen falta cuando no hay producto
+  // de origen que vender: `unavailable` ya cubre obra digital, generación legacy
+  // sin productRef y producto desactivado o sin variantes. Mientras un producto
+  // físico resuelve el flag es false, así que no se dispara ninguna de las cuatro
+  // peticiones (una de ellas la mutación cartCreate del sondeo de descuento).
+  const {
+    accessories: kitAccessories,
+    loading: accessoriesLoading,
+    kitAvailable,
+    bundlePercent,
+  } = usePbnAccessories(sourceProduct.unavailable);
 
   const [confirmingDelete, setConfirmingDelete] = useState(false);
   const [downloading, setDownloading] = useState(false);
@@ -152,6 +186,20 @@ export function GenerationDetail({ id }: Props) {
       .filter(Boolean)
       .join(" · ") || "Personalized";
 
+  // Card principal del carrusel: el producto de origen si es físico y se pudo
+  // resolver, y si no el kit PBN (obra digital, generación legacy sin
+  // productRef, producto desactivado o handle que ya no existe en Shopify).
+  const showProductCard = !sourceProduct.unavailable && !!sourceProduct.product;
+  const showPbnCard = !showProductCard && kitAvailable;
+
+  // Los accesorios acompañan a la card principal: con producto de origen salen
+  // sus relacionados curados en Shopify (los mismos de su ficha, sin relleno si
+  // no hay ninguno); con el kit, la colección genérica pbn-accessories. El badge
+  // de descuento solo vale en la ruta del kit, que es donde se sondeó.
+  const accessories = showProductCard
+    ? getRelatedAccessories(sourceProduct.product)
+    : kitAccessories;
+
   return (
     <div className="flex flex-col gap-6">
       <BackToGenerationsLink />
@@ -167,9 +215,12 @@ export function GenerationDetail({ id }: Props) {
           />
         </div>
 
-        {/* DERECHA — panel sticky */}
+        {/* DERECHA — ficha + cross-sell. Sin `sticky`: con el carrusel del kit
+            esta columna es más alta que la imagen, así que fijarla no aporta
+            nada y hacía que el carrusel (posicionado) se pintara encima del
+            panel clavado al hacer scroll. */}
         <div className="flex flex-col lg:col-span-5">
-          <div className="sticky top-24 flex flex-col gap-6">
+          <div className="flex flex-col gap-6">
             <div className="flex flex-col gap-3">
               {styleName && (
                 <span className="text-sm font-bold uppercase tracking-wider text-primary">
@@ -193,32 +244,17 @@ export function GenerationDetail({ id }: Props) {
                 </span>
               </p>
             </div>
-
             <div className="h-px w-full bg-linear-to-r from-text-main/15 via-text-main/5 to-transparent" />
 
-            <span className="text-sm font-bold uppercase tracking-wider text-primary">
-              Do more with this
-            </span>
             <div className="flex flex-col gap-3">
-              {/* CTA primario — Ordenar como print */}
-              <Link
-                href="/catalog"
-                className="flex h-14 w-full items-center justify-center gap-2 rounded-xl bg-primary text-lg font-bold text-white shadow-lg shadow-primary/20 transition-all hover:scale-[1.02] hover:bg-primary-dark hover:shadow-xl hover:shadow-primary/25 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:ring-offset-2 active:scale-100"
-              >
-                <span className="material-symbols-outlined text-[22px]">
-                  print
-                </span>
-                Order as a print
-              </Link>
-
               {/* Acciones secundarias — PBN y descarga */}
               {isReady && imageUrl && (
-                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                <div className="grid grid-cols-1 gap-3">
                   <Link
                     href={`/studio?generationId=${generation.id}&imageUrl=${encodeURIComponent(imageUrl)}${generation.style?.id ? `&styleId=${generation.style.id}` : ""}`}
-                    className="group flex h-12 items-center justify-center gap-2 rounded-xl border border-[#E0DED9] bg-white px-4 text-sm font-bold text-text-main shadow-sm transition-all hover:border-primary/40 hover:bg-gray-50 hover:text-primary hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:ring-offset-2 active:shadow-sm"
+                    className="flex h-14 w-full items-center justify-center gap-2 rounded-xl bg-primary text-lg font-bold text-white shadow-lg shadow-primary/20 transition-all hover:scale-[1.02] hover:bg-primary-dark hover:shadow-xl hover:shadow-primary/25 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:ring-offset-2 active:scale-100"
                   >
-                    <span className="material-symbols-outlined text-[20px] text-text-muted transition-colors group-hover:text-primary">
+                    <span className="material-symbols-outlined text-[20px] text-white transition-colors group-hover:text-primary">
                       format_paint
                     </span>
                     Convert to PBN
@@ -256,6 +292,63 @@ export function GenerationDetail({ id }: Props) {
                 Delete artwork
               </button>
             </div>
+
+            {/* El kit y sus accesorios comparten un carrusel: una slide a ancho
+                completo cada uno. El padding horizontal deja sitio a las
+                flechas, que Embla dibuja fuera del viewport. Solo con la obra
+                terminada: no tiene sentido vender un kit de una generación que
+                falló o sigue procesando. */}
+            {isReady &&
+              imageUrl &&
+              !accessoriesLoading &&
+              !sourceProduct.loading &&
+              (showProductCard || showPbnCard || accessories.length > 0) && (
+                <div className="">
+                  <Carousel gap="gap-4" showDots>
+                    {/* Producto de origen: el canvas o póster que el cliente
+                        eligió antes de generar, con su obra impresa. */}
+                    {showProductCard && (
+                      <div className="min-w-0 flex-[0_0_100%]">
+                        <GenerationProductCard
+                          source={sourceProduct}
+                          generationId={generation.id}
+                          artworkUrl={imageUrl}
+                          productLabel={productLabel}
+                          styleName={styleName}
+                        />
+                      </div>
+                    )}
+                    {/* Kit PBN: aquí no hay PBN renderizado, así que la línea
+                        viaja con `generationId` y producción monta la plantilla
+                        desde la generación. */}
+                    {showPbnCard && (
+                      <div className="min-w-0 flex-[0_0_100%]">
+                        <PbnPurchaseCard
+                          previewUrl={imageUrl}
+                          source={{
+                            kind: "generation",
+                            generationId: generation.id,
+                          }}
+                        />
+                      </div>
+                    )}
+                    {/* Cross-sell: relacionados del producto, o los accesorios
+                        genéricos si la card principal es el kit. Líneas sueltas,
+                        sin acoplarse a la generación. */}
+                    {accessories.map((accessory) => (
+                      <div
+                        key={accessory.productId}
+                        className="min-w-0 flex-[0_0_100%]"
+                      >
+                        <AccessoryUpsell
+                          accessory={accessory}
+                          bundlePercent={showProductCard ? null : bundlePercent}
+                        />
+                      </div>
+                    ))}
+                  </Carousel>
+                </div>
+              )}
           </div>
         </div>
       </div>
