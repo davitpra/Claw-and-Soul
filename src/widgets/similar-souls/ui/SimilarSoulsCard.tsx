@@ -39,7 +39,7 @@ export function SimilarSoulsCard({ product }: SimilarSoulsCardProps) {
   );
 
   return (
-    <div className="group flex h-full w-full flex-col gap-4 rounded-2xl border-2 border-cream bg-white p-4 ">
+    <div className="group flex h-full w-full flex-col gap-4 rounded-2xl border-2 border-cream bg-[var(--section-contrast,#fff)] p-4 ">
       {href ? (
         <Link href={href} className="block" aria-label={product.name}>
           {framedImage}

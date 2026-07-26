@@ -1,9 +1,7 @@
 "use client";
 
-import { useProductStyle } from "@/hooks/useProductStyle";
-import { useSameStyleProducts } from "@/hooks/useSameStyleProducts";
-import { toFrameStyle } from "@/entities/product/lib/frameStyle";
-import ExpandingGallery, { ExpandingGalleryItem } from "./ExpandingGallery";
+import { useSameStyleItems } from "../model/useSameStyleItems";
+import ExpandingGallery from "./ExpandingGallery";
 
 interface SameStyleGalleryProps {
   /** Handle de Shopify del producto actual; se excluye de los resultados. */
@@ -11,37 +9,28 @@ interface SameStyleGalleryProps {
   eyebrow?: string;
   title?: string;
   description?: string;
+  background?: string;
 }
 
 /**
  * Muestra en el acordeón `ExpandingGallery` los productos que comparten
- * estilo con el producto actual. Es un wrapper delgado: resuelve el estilo
- * con `useProductStyle`, los productos con `useSameStyleProducts` y delega
- * el render en el componente presentacional.
+ * estilo con el producto actual. Es un wrapper delgado: resuelve los items con
+ * `useSameStyleItems` y delega el render en el componente presentacional.
+ *
+ * Dentro de un `SectionFlow` conviene usar `useSameStyleItems` +
+ * `ExpandingGallery` directamente, para que el padre sepa si hay contenido
+ * antes de repartir fondos.
  */
 export default function SameStyleGallery({
   handle,
   eyebrow,
   title = "More in this style",
   description,
+  background,
 }: SameStyleGalleryProps) {
-  const { styleId, styleName } = useProductStyle(handle ?? null);
-  const { products, isLoading, error } = useSameStyleProducts(styleId, handle);
+  const { items, styleName } = useSameStyleItems(handle);
 
-  // Con un solo hermano el acordeón sigue valiendo la pena: ExpandingGallery
-  // expande ese panel a todo el ancho. Solo se oculta si no hay ninguno.
-  if (isLoading || error || products.length === 0) return null;
-
-  const items: ExpandingGalleryItem[] = products.slice(0, 3).map((p) => ({
-    title: p.name,
-    description: p.desc || undefined,
-    cta: "View product",
-    href: `/product/${p.shopifyHandle}`,
-    imageUrl: p.img,
-    imageAlt: p.name,
-    tags: [p.template].filter((tag): tag is string => Boolean(tag)),
-    frameStyle: toFrameStyle(p.template),
-  }));
+  if (items.length === 0) return null;
 
   return (
     <ExpandingGallery
@@ -49,6 +38,7 @@ export default function SameStyleGallery({
       title={title}
       description={description}
       items={items}
+      background={background}
     />
   );
 }

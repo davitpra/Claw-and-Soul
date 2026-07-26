@@ -1,7 +1,10 @@
 "use client";
 
-import { StyleCollection } from "@/widgets/collection";
-import { SameStyleGallery } from "@/widgets/expanding-gallery";
+import { CollectionSection, useStyleCollection } from "@/widgets/collection";
+import {
+  ExpandingGallery,
+  useSameStyleItems,
+} from "@/widgets/expanding-gallery";
 import {
   RelatedProducts,
   getRelatedAccessories,
@@ -10,7 +13,7 @@ import { PrintedOption } from "@/widgets/printed-option";
 import ProductFAQ from "@/widgets/product-faq/ui/ProductFAQ";
 import { ProductTemplateProps } from "./ProductPageTemplate";
 import ProductDetails from "@/widgets/product-details/ui/ProductDetails";
-import WavesDivider from "@/shared/ui/WavesDivider";
+import SectionFlow from "@/shared/ui/SectionFlow";
 import { AIProcess } from "@/widgets/ai-process";
 import { PRODUCT_PROCESS_STEPS } from "../model/processSteps";
 
@@ -34,6 +37,11 @@ export default function DigitalTemplate({
 }: ProductTemplateProps) {
   const relatedAccessories = getRelatedAccessories(product);
 
+  // Resueltos acá para que SectionFlow sepa qué secciones van a tener contenido
+  // antes de repartir los fondos y los divisores.
+  const styleCollection = useStyleCollection(handle);
+  const { items: sameStyleItems, styleName } = useSameStyleItems(handle);
+
   return (
     <>
       <div className="flex justify-center py-6 md:py-10 px-4 md:px-10 lg:px-40">
@@ -50,46 +58,66 @@ export default function DigitalTemplate({
         </div>
       </div>
 
-      <StyleCollection handle={handle} />
-      <WavesDivider
-        waveColor="var(--color-cream)"
-        fillColor="var(--color-cream)"
+      <SectionFlow
+        start="white"
+        sections={[
+          {
+            id: "styles",
+            when: styleCollection.hasContent,
+            node: (
+              <CollectionSection
+                images={styleCollection.images}
+                isLoading={styleCollection.isLoading}
+                error={styleCollection.error}
+              />
+            ),
+          },
+          {
+            id: "process",
+            node: (
+              <AIProcess
+                eyebrow="HOW TO USE"
+                title="Get your custom pet portrait in 3 easy steps"
+                subtitle={
+                  <>
+                    Watch your pet become a masterpiece in seconds.
+                    <br />
+                    Try it free before you buy.
+                  </>
+                }
+                steps={PRODUCT_PROCESS_STEPS}
+              />
+            ),
+          },
+          {
+            id: "gallery",
+            when: sameStyleItems.length > 0,
+            node: (
+              <ExpandingGallery
+                eyebrow={styleName ?? "Same style"}
+                title="More in this style"
+                items={sameStyleItems}
+                background=""
+              />
+            ),
+          },
+          {
+            id: "accessories",
+            when: relatedAccessories.length > 0,
+            node: (
+              <RelatedProducts accessories={relatedAccessories} background="" />
+            ),
+          },
+          {
+            id: "printed",
+            node: <PrintedOption handle={handle} />,
+          },
+          {
+            id: "faq",
+            node: <ProductFAQ faqs={faqs} background="" />,
+          },
+        ]}
       />
-      <AIProcess
-        eyebrow="HOW TO USE"
-        title="Get your custom pet portrait in 3 easy steps"
-        subtitle={
-          <>
-            Watch your pet become a masterpiece in seconds.
-            <br />
-            Try it free before you buy.
-          </>
-        }
-        steps={PRODUCT_PROCESS_STEPS}
-        background="cream"
-      />
-      <WavesDivider
-        waveColor="var(--color-cream)"
-        fillColor="var(--color-cream)"
-        flip
-      />
-      <SameStyleGallery handle={handle} />
-      {relatedAccessories.length > 0 && (
-        <>
-          <WavesDivider
-            waveColor="var(--color-cream)"
-            fillColor="var(--color-cream)"
-          />
-          <RelatedProducts accessories={relatedAccessories} />
-          <WavesDivider
-            waveColor="var(--color-cream)"
-            fillColor="var(--color-cream)"
-            flip
-          />
-        </>
-      )}
-      <PrintedOption handle={handle} />
-      <ProductFAQ faqs={faqs} />
     </>
   );
 }

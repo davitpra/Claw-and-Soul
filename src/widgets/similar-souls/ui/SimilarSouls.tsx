@@ -29,10 +29,10 @@ export default function SimilarSouls({
   if (products.length === 0) return null;
 
   return (
-    <section className="py-20 bg-cream">
+    <section className="py-20">
       <Container>
         <div className="flex flex-col items-center gap-5 mb-12">
-          <span className="inline-flex items-center gap-2 rounded-full border border-[#E0DED9] bg-white px-4 py-1.5 text-primary">
+          <span className="inline-flex items-center gap-2 rounded-full border border-[#E0DED9] bg-[var(--section-contrast,#fff)] px-4 py-1.5 text-primary">
             <span className="material-symbols-outlined text-[16px]">
               favorite
             </span>

@@ -42,7 +42,7 @@ export default function PrintedOption({ handle }: PrintedOptionProps) {
     : "/catalog";
 
   return (
-    <section className="bg-cream">
+    <section>
       <Container className="flex flex-col items-center gap-8 py-16 md:flex-row md:gap-16 md:py-0">
         <div className="flex w-full flex-col gap-4 md:w-1/2">
           <h2 className="font-display text-4xl font-black text-[#103642] leading-[1.1] tracking-tight mb-2 lg:mb-8">

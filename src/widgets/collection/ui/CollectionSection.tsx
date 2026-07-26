@@ -92,7 +92,7 @@ export default function CollectionSection({
   ctaHref,
   ctaLabel,
   badgeLabel,
-  background,
+  background = "",
   altText = true,
   frameStyle = "art",
 }: CollectionSectionProps) {
@@ -103,7 +103,7 @@ export default function CollectionSection({
       <Container>
         <div className="flex flex-col items-center gap-5 mb-12">
           {eyebrow && (
-            <span className="inline-flex items-center gap-2 rounded-full border border-[#E0DED9] bg-white px-4 py-1.5 text-primary">
+            <span className="inline-flex items-center gap-2 rounded-full border border-[#E0DED9] bg-[var(--section-contrast,#fff)] px-4 py-1.5 text-primary">
               <span className="material-symbols-outlined text-[16px]">
                 pets
               </span>

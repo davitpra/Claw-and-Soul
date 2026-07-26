@@ -12,6 +12,8 @@ interface RelatedProductsProps {
   heading?: string;
   ctaHref?: string;
   ctaLabel?: string;
+  /** Clase de fondo. Dentro de un `SectionFlow` el color lo pone el wrapper. */
+  background?: string;
 }
 
 /**
@@ -25,14 +27,15 @@ export default function RelatedProducts({
   heading = "More souls, framed.",
   ctaHref = "/catalog",
   ctaLabel = "View all styles",
+  background = "bg-white",
 }: RelatedProductsProps) {
   if (accessories.length === 0) return null;
 
   return (
-    <section className="relative overflow-hidden py-20 bg-white">
+    <section className={`relative overflow-hidden py-20 ${background}`}>
       <Container>
         <div className="flex flex-col items-center gap-5 mb-12">
-          <span className="inline-flex items-center gap-2 rounded-full border border-[#E0DED9] bg-white px-4 py-1.5 text-primary">
+          <span className="inline-flex items-center gap-2 rounded-full border border-[#E0DED9] bg-[var(--section-contrast,#fff)] px-4 py-1.5 text-primary">
             <span className="material-symbols-outlined text-[16px]">
               favorite
             </span>

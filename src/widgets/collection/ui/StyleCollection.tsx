@@ -1,8 +1,7 @@
 "use client";
 
-import { useProductStyle } from "@/hooks/useProductStyle";
-import { useStyleImages } from "@/hooks/useStyleImages";
 import type { FrameStyle } from "@/entities/product/lib/frameStyle";
+import { useStyleCollection } from "../model/useStyleCollection";
 import CollectionSection from "./CollectionSection";
 
 interface StyleCollectionProps {
@@ -10,25 +9,21 @@ interface StyleCollectionProps {
   styleId?: string | null;
   showCta?: boolean;
   frameStyle?: FrameStyle;
+  background?: string;
 }
 
+/**
+ * Wrapper que resuelve los datos por su cuenta. Dentro de un `SectionFlow` el
+ * padre necesita saber de antemano si hay contenido, así que ahí conviene usar
+ * `useStyleCollection` + `CollectionSection` directamente.
+ */
 export default function StyleCollection({
   handle,
-  styleId: styleIdProp,
+  styleId,
   frameStyle,
+  background,
 }: StyleCollectionProps) {
-  const { styleId: derivedStyleId, isLoading: styleLoading } = useProductStyle(
-    styleIdProp ? null : (handle ?? null),
-  );
-
-  const resolvedStyleId = styleIdProp ?? derivedStyleId;
-  const {
-    images,
-    isLoading: imagesLoading,
-    error,
-  } = useStyleImages(resolvedStyleId);
-
-  const isLoading = (styleIdProp ? false : styleLoading) || imagesLoading;
+  const { images, isLoading, error } = useStyleCollection(handle, styleId);
 
   return (
     <CollectionSection
@@ -36,6 +31,7 @@ export default function StyleCollection({
       isLoading={isLoading}
       error={error}
       frameStyle={frameStyle}
+      background={background}
     />
   );
 }
