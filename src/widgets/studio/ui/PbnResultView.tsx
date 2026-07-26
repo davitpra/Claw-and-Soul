@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { RGB } from "@/lib/pbn/common";
 import type { MixRecipe } from "@/lib/pbn/paintMixing";
 import {
@@ -8,9 +9,9 @@ import {
   usePbnAccessories,
 } from "@/features/pbn-purchase";
 import { Carousel } from "@/shared/ui/Carousel";
+import ImageCompareSlider from "@/shared/ui/ImageCompareSlider";
 import { ENABLE_MIXING_GUIDE } from "@/features/pbn-studio";
 import type { SavedPbnRef } from "../model/useSavePbnFlow";
-import ImageCompareSlider from "./ImageCompareSlider";
 import PbnPostHeader from "./PbnPostHeader";
 import { PbnPostMenuItem } from "./PbnPostMenu";
 import ColorPalette from "./ColorPalette";
@@ -74,9 +75,9 @@ export default function PbnResultView({
               <div className="absolute bottom-3 left-1/2 z-10 -translate-x-1/2 rounded-full bg-white/90 px-4 py-1.5 shadow-md backdrop-blur">
                 <p className="font-body text-sm text-background-dark">
                   Saved.{" "}
-                  <a href="/user/pbn" className="font-semibold underline">
+                  <Link href="/user/pbn" className="font-semibold underline">
                     View my Paint by Numbers
-                  </a>
+                  </Link>
                 </p>
               </div>
             )}

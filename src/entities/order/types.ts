@@ -1,5 +1,8 @@
 // Tipos para el dashboard de cuenta de usuario. Reflejan las respuestas de los
-// endpoints user-scoped del backend (orders / generations / users/me).
+// endpoints user-scoped del backend (orders / generations / paint-by-numbers /
+// users/me).
+
+import type { PbnConfig } from "@/lib/pbn/config";
 
 // El backend envuelve todas las respuestas con un Transform interceptor global.
 export interface ApiEnvelope<T> {
@@ -129,6 +132,33 @@ export interface UserGenerationDetail extends UserGeneration {
   productRefId: string | null;
   pet: { id: string; name: string; species?: string; breed?: string | null } | null;
   style: { id: string; displayName?: string; category?: string } | null;
+}
+
+// Respuesta de GET /paint-by-numbers/:id (user-scoped). El backend proyecta con
+// USER_PBN_SELECT: fuera `userId` y las storage keys, y de la generación de
+// origen sólo viaja el estilo — el prompt engineering es IP y no sale de las
+// rutas admin.
+export interface UserPbnDetail {
+  id: string;
+  generationId: string | null;
+  petId: string | null;
+  sourceImageUrl: string | null;
+  outlineSvgUrl: string | null;
+  previewUrl: string | null;
+  paletteUrl: string | null;
+  colorCount: number | null;
+  /** customer | admin */
+  origin: string;
+  /** saved | ordered */
+  status: string;
+  isPublic: boolean;
+  createdAt: string;
+  config: PbnConfig | null;
+  pet: { id: string; name: string } | null;
+  generation: {
+    id: string;
+    style: { displayName?: string | null; category?: string | null } | null;
+  } | null;
 }
 
 export interface UserPetPhoto {

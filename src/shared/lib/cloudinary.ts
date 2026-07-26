@@ -28,12 +28,14 @@ export type DownloadFormat = "png" | "jpg" | "webp" | "pdf";
 
 /**
  * Devuelve una URL de Cloudinary que descarga la imagen convertida a `format`
- * en alta calidad, como adjunto con nombre `filename`. Si la URL no es de
- * Cloudinary se devuelve sin cambios (se descargará el original tal cual).
+ * en alta calidad, como adjunto con nombre `filename`. Con `format: null` se
+ * descarga el original sin convertir — necesario para vectores (SVG), que
+ * cualquier `f_<raster>` rasterizaría. Si la URL no es de Cloudinary se
+ * devuelve sin cambios (se descargará el original tal cual).
  */
 export function cloudinaryDownloadUrl(
   url: string | null,
-  format: DownloadFormat,
+  format: DownloadFormat | null,
   filename: string,
 ): string {
   if (!url || !url.includes("res.cloudinary.com")) return url ?? "";
@@ -43,6 +45,8 @@ export function cloudinaryDownloadUrl(
   if (idx === -1) return url;
 
   const safeName = filename.replace(/[^a-zA-Z0-9_-]/g, "_");
-  const transform = `f_${format},q_100,fl_attachment:${safeName}/`;
+  const transform = format
+    ? `f_${format},q_100,fl_attachment:${safeName}/`
+    : `fl_attachment:${safeName}/`;
   return `${url.slice(0, idx + marker.length)}${transform}${url.slice(idx + marker.length)}`;
 }

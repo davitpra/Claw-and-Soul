@@ -17,6 +17,12 @@ interface ImageCompareSliderProps {
    * post, where the image and footer share one card).
    */
   framed?: boolean;
+  /**
+   * By default the slider sizes itself from the image (`w-fit`, 80dvh tall),
+   * which is what the studio canvas wants. With `fill` it stretches to its
+   * parent instead, so a caller can box it (e.g. `aspect-4/5 w-full`).
+   */
+  fill?: boolean;
 }
 
 export default function ImageCompareSlider({
@@ -26,6 +32,7 @@ export default function ImageCompareSlider({
   leftLabel,
   rightLabel,
   framed = true,
+  fill = false,
 }: ImageCompareSliderProps) {
   const wrapperRef = useRef<HTMLDivElement>(null);
   const [pos, setPos] = useState(50);
@@ -66,18 +73,20 @@ export default function ImageCompareSlider({
   return (
     <div
       ref={wrapperRef}
-      className={`relative mx-auto w-fit max-w-full cursor-ew-resize touch-none select-none overflow-hidden h-[calc(80dvh)] ${
-        framed ? "rounded-xl border-4 border-white shadow-xl" : ""
-      }`}
+      className={`relative mx-auto max-w-full cursor-ew-resize touch-none select-none overflow-hidden ${
+        fill ? "h-full w-full" : "h-[calc(80dvh)] w-fit"
+      } ${framed ? "rounded-xl border-4 border-white shadow-xl" : ""}`}
       onPointerDown={onPointerDown}
       onPointerMove={onPointerMove}
       onPointerUp={onPointerUp}
       onContextMenu={(e) => e.preventDefault()}
     >
-      {/* base = processed, defines the rendered size */}
+      {/* base = processed; defines the rendered size unless the parent does */}
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img
-        className="block h-full max-w-full w-auto object-cover"
+        className={`block h-full max-w-full object-cover ${
+          fill ? "w-full" : "w-auto"
+        }`}
         src={processedSrc}
         alt=""
         draggable={false}

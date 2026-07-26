@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { ConfirmDialog } from "@/shared/ui/ConfirmDialog";
 import { DetailErrorState } from "@/shared/ui/DetailErrorState";
 import { DetailNotFound } from "@/shared/ui/DetailNotFound";
+import { slugify } from "@/shared/lib/slug";
 import { useGenerationDetail } from "@/entities/order/api/useGenerationDetail";
 import { BackToGenerationsLink } from "@/entities/order/ui/BackToGenerationsLink";
 import { GenerationImage } from "@/entities/order/ui/GenerationImage";
@@ -30,15 +31,6 @@ import { getRelatedAccessories } from "@/widgets/related-products";
 
 interface Props {
   id: string;
-}
-
-function slugify(value: string) {
-  return value
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-+|-+$/g, "");
 }
 
 /** File name for the downloaded artwork: `<style>-<pet name>.<ext>`. */

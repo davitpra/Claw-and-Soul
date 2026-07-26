@@ -1,3 +1,5 @@
+import type { PbnConfig } from '@/lib/pbn/config';
+
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api';
 
 export interface Paginated<T> {
@@ -156,14 +158,9 @@ export interface AdminOrderItem {
   } | null;
 }
 
-// Config JSON persisted with a PBN. Loosely typed: `input`/`render` mirror the
-// studio hooks' raw option values so they can rehydrate them on reopen.
-export interface PbnConfig {
-  input?: Record<string, unknown>;
-  render?: Record<string, unknown>;
-  paper?: Record<string, unknown>;
-  palette?: number[][];
-}
+// Config JSON persisted with a PBN. Vive en `lib/pbn` porque también la lee el
+// dashboard de usuario; se reexporta aquí para no romper los imports de admin.
+export type { PbnConfig };
 
 export interface AdminPaintByNumbers {
   id: string;
