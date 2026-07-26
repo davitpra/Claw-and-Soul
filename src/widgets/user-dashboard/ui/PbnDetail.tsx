@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useState } from "react";
+import { useCallback, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { ConfirmDialog } from "@/shared/ui/ConfirmDialog";
@@ -8,8 +8,14 @@ import { DetailErrorState } from "@/shared/ui/DetailErrorState";
 import { DetailNotFound } from "@/shared/ui/DetailNotFound";
 import { Carousel } from "@/shared/ui/Carousel";
 import ImageCompareSlider from "@/shared/ui/ImageCompareSlider";
+import Modal from "@/shared/ui/Modal";
 import { cloudinaryDownloadUrl } from "@/shared/lib/cloudinary";
 import { slugify } from "@/shared/lib/slug";
+import { PAPER_LABELS, useExport, useSavedSvg } from "@/features/pbn-studio";
+import CropModal from "@/features/pbn-studio/ui/CropModal";
+import ExportControls from "@/features/pbn-studio/ui/ExportControls";
+import { getPaperAspect } from "@/lib/pbn/svgExport";
+import type { ProcessResult } from "@/lib/pbn/guiprocessmanager";
 import { usePbnDetail } from "@/entities/order/api/usePbnDetail";
 import { BackToPbnLink } from "@/entities/order/ui/BackToPbnLink";
 import { formatOrderDate } from "@/entities/order/lib/presentation";
@@ -44,6 +50,7 @@ export function PbnDetail({ id }: Props) {
   } = usePbnAccessories();
 
   const [confirmingDelete, setConfirmingDelete] = useState(false);
+  const [downloadOpen, setDownloadOpen] = useState(false);
 
   // El PBN ya está persistido, así que "asegurar guardado" es devolver su
   // referencia: `PbnPurchaseCard` no necesita otro tipo de source.
@@ -53,6 +60,46 @@ export function PbnDetail({ id }: Props) {
     async () => (pbnId ? { id: pbnId, previewUrl } : null),
     [pbnId, previewUrl],
   );
+
+  // Los nombres se derivan aquí arriba (y no junto al JSX) porque `useExport`
+  // necesita el slug como argumento y los hooks van antes de los early returns.
+  const styleName =
+    pbn?.generation?.style?.displayName ?? pbn?.generation?.style?.category;
+  // Los PBNs guardados antes de heredar el pet de la generación tienen `petId`
+  // nulo, así que la mascota se resuelve por la generación de origen.
+  const petName = pbn?.pet?.name ?? pbn?.generation?.pet?.name;
+  // `<style>-<pet>`, con los mismos criterios que la descarga de una obra.
+  const downloadBase = useMemo(
+    () =>
+      [styleName, petName]
+        .map((part) => (part ? slugify(part) : ""))
+        .filter(Boolean)
+        .join("-") || "paint-by-numbers",
+    [styleName, petName],
+  );
+
+  // Descarga del PDF imprimible: el mismo flujo del estudio (papel → recorte →
+  // PDF), que exporta desde un `<svg>` vivo. Aquí ese SVG no lo produce el
+  // pipeline sino que se trae el ya persistido (`outlineSvgUrl`) a un
+  // contenedor oculto, y sólo al abrir el diálogo.
+  const guideRef = useRef<HTMLDivElement>(null);
+  const processResultRef = useRef<ProcessResult | null>(null);
+  const {
+    svgContainerRef,
+    ready: svgReady,
+    error: svgError,
+    load: loadSvg,
+  } = useSavedSvg(pbn?.outlineSvgUrl ?? null);
+  // Sin `recipes` no se anexan páginas de guía de mezclas al PDF: la guía
+  // conserva su propio botón de descarga.
+  const exp = useExport({
+    svgContainerRef,
+    guideRef,
+    processResultRef,
+    recipes: null,
+    palette: [],
+    filename: downloadBase,
+  });
 
   async function handleDelete() {
     const ok = await deletePbn();
@@ -101,11 +148,6 @@ export function PbnDetail({ id }: Props) {
     );
   }
 
-  const styleName =
-    pbn.generation?.style?.displayName ?? pbn.generation?.style?.category;
-  // Los PBNs guardados antes de heredar el pet de la generación tienen `petId`
-  // nulo, así que la mascota se resuelve por la generación de origen.
-  const petName = pbn.pet?.name ?? pbn.generation?.pet?.name;
   const title = petName ?? styleName ?? "Paint by Numbers";
   // `config` es una columna Json libre, así que la paleta se valida en runtime
   // (los PBN guardados desde el admin pueden no traerla).
@@ -113,12 +155,6 @@ export function PbnDetail({ id }: Props) {
     ? pbn.config.palette.filter((c) => Array.isArray(c) && c.length >= 3)
     : [];
   const isOrdered = pbn.status === "ordered";
-  // `<style>-<pet>`, con los mismos criterios que la descarga de una obra.
-  const downloadBase =
-    [styleName, petName]
-      .map((part) => (part ? slugify(part) : ""))
-      .filter(Boolean)
-      .join("-") || "paint-by-numbers";
 
   const secondaryAction =
     "group flex h-12 items-center justify-center gap-2 rounded-xl border border-[#E0DED9] bg-white px-4 text-sm font-bold text-text-main shadow-sm transition-all hover:border-primary/40 hover:bg-gray-50 hover:text-primary hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:ring-offset-2 active:shadow-sm";
@@ -235,8 +271,27 @@ export function PbnDetail({ id }: Props) {
                 </Link>
               )}
 
-              {/* Descargas: Cloudinary sirve el archivo como adjunto vía
-                  `fl_attachment`, así no hace falta traerlo por fetch. */}
+              {/* PDF imprimible: mismo diálogo que el estudio. Los PBN
+                  antiguos pueden no tener el SVG maestro, y sin él no hay nada
+                  que exportar. */}
+              {pbn.outlineSvgUrl && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setDownloadOpen(true);
+                    void loadSvg();
+                  }}
+                  className={secondaryAction}
+                >
+                  <span className="material-symbols-outlined text-[20px] text-text-muted transition-colors group-hover:text-primary">
+                    download
+                  </span>
+                  Download
+                </button>
+              )}
+
+              {/* La guía de mezclas ya está en Cloudinary: se sirve como
+                  adjunto vía `fl_attachment`, sin pasar por fetch. */}
               {pbn.paletteUrl && (
                 <a
                   href={cloudinaryDownloadUrl(
@@ -307,6 +362,58 @@ export function PbnDetail({ id }: Props) {
             )}
           </div>
         </div>
+      </div>
+
+      {/* Diálogo de descarga. A diferencia del estudio, aquí el SVG llega por
+          red al abrirlo, así que hay estados de carga y de error. */}
+      <Modal
+        open={downloadOpen}
+        onClose={() => setDownloadOpen(false)}
+        title="Download"
+        maxWidth="max-w-lg"
+        label="Download"
+      >
+        <div className="p-6">
+          {svgError ? (
+            <div className="flex flex-col items-start gap-3">
+              <p className="text-sm text-text-muted">{svgError}</p>
+              <button
+                type="button"
+                onClick={() => void loadSvg()}
+                className={secondaryAction}
+              >
+                Try again
+              </button>
+            </div>
+          ) : svgReady ? (
+            <ExportControls
+              exp={exp}
+              hasOutput
+              onClose={() => setDownloadOpen(false)}
+            />
+          ) : (
+            <div className="h-24 w-full animate-pulse rounded-xl bg-cream" />
+          )}
+        </div>
+      </Modal>
+
+      {/* El recorte se abre después de cerrar el diálogo, por eso vive fuera. */}
+      {exp.cropModal && (
+        <CropModal
+          imageSrc={exp.cropModal.src}
+          imageWidth={exp.cropModal.w}
+          imageHeight={exp.cropModal.h}
+          aspect={getPaperAspect(exp.paperFormat, exp.paperOrientation)}
+          title={`${PAPER_LABELS[exp.paperFormat]} ${exp.paperOrientation}`}
+          onCancel={() => exp.setCropModal(null)}
+          onConfirm={exp.handleCropConfirm}
+        />
+      )}
+
+      {/* Destino del SVG persistido: nunca se muestra, sólo existe para que la
+          exportación tenga un `<svg>` vivo del que partir. */}
+      <div hidden>
+        <div ref={svgContainerRef} />
       </div>
 
       <ConfirmDialog

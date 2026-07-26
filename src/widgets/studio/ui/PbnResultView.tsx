@@ -11,6 +11,7 @@ import {
 import { Carousel } from "@/shared/ui/Carousel";
 import ImageCompareSlider from "@/shared/ui/ImageCompareSlider";
 import { ENABLE_MIXING_GUIDE } from "@/features/pbn-studio";
+import { btnSecondary } from "@/features/pbn-studio/ui/pbnStyles";
 import type { SavedPbnRef } from "../model/useSavePbnFlow";
 import PbnPostHeader from "./PbnPostHeader";
 import { PbnPostMenuItem } from "./PbnPostMenu";
@@ -29,6 +30,7 @@ interface PbnResultViewProps {
   onToggleGuide: () => void;
   selectedColor: number | null;
   onSelectColor: (i: number) => void;
+  onDownload: () => void;
   ensureSaved: () => Promise<SavedPbnRef | null>;
 }
 
@@ -50,6 +52,7 @@ export default function PbnResultView({
   onToggleGuide,
   selectedColor,
   onSelectColor,
+  onDownload,
   ensureSaved,
 }: PbnResultViewProps) {
   const { accessories, bundlePercent } = usePbnAccessories();
@@ -98,6 +101,18 @@ export default function PbnResultView({
               selectedColor={selectedColor}
               onSelectColor={onSelectColor}
             />
+            {/* Atajo de descarga sólo en móvil: ahí el mismo botón del sidebar
+                queda detrás de la hoja inferior de ajustes, así que se repite
+                bajo el resultado. En escritorio el sidebar ya está a la vista.
+                `md:hidden` es el mismo corte que `useIsMobile`. Este componente
+                sólo se monta con un resultado listo, así que no hace falta
+                comprobar `hasOutput` ni `isProcessing`. */}
+            <div className="mt-4 px-5 md:hidden">
+              <button className={`${btnSecondary} w-full`} onClick={onDownload}>
+                <span className="material-symbols-outlined">download</span>
+                Download
+              </button>
+            </div>
             {/* The kit and its accessories share one carousel: one full-width
                 slide each. Horizontal padding leaves room for the arrows, which
                 Embla renders outside the viewport. */}

@@ -21,6 +21,8 @@ interface UseExportArgs {
   processResultRef: React.RefObject<ProcessResult | null>;
   recipes: MixRecipe[] | null;
   palette: RGB[];
+  /** Base name (no extension) for the exported files. */
+  filename?: string;
 }
 
 /** PDF/paper options and every download action (SVG / PNG / palette / PDF). */
@@ -30,6 +32,7 @@ export function useExport({
   processResultRef,
   recipes,
   palette,
+  filename = "paintbynumbers",
 }: UseExportArgs) {
   const [pdfUnit, setPdfUnit] = useState<"cm" | "in">("cm");
   const [pdfWidth, setPdfWidth] = useState<number>(21);
@@ -48,11 +51,11 @@ export function useExport({
 
   const handleDownloadSVG = () => {
     const svg = getSvg();
-    if (svg) downloadSVG(svg);
+    if (svg) downloadSVG(svg, `${filename}.svg`);
   };
   const handleDownloadPNG = () => {
     const svg = getSvg();
-    if (svg) void downloadPNG(svg);
+    if (svg) void downloadPNG(svg, `${filename}.png`);
   };
   const handleDownloadPalette = () => {
     // Prefer capturing the on-screen mixing guide so the download matches it
@@ -98,11 +101,11 @@ export function useExport({
   const handleDownloadPDF = () => {
     const svg = getSvg();
     if (svg)
-      void downloadPDF(svg, {
-        unit: pdfUnit,
-        width: pdfWidth,
-        height: pdfHeight,
-      } as PdfSize);
+      void downloadPDF(
+        svg,
+        { unit: pdfUnit, width: pdfWidth, height: pdfHeight } as PdfSize,
+        `${filename}.pdf`,
+      );
   };
 
   const handleDownloadPDFStandard = async () => {
@@ -124,7 +127,7 @@ export function useExport({
         crop,
         paperFormat,
         paperOrientation,
-        "paintbynumbers.pdf",
+        `${filename}.pdf`,
         guideNode,
       );
     }

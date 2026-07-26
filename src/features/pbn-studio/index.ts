@@ -12,6 +12,12 @@
  * The shared Tailwind class constants live in `./ui/pbnStyles` and are imported
  * from there directly: their names (`card`, `btnPrimary`, …) are too generic to
  * re-export through this barrel.
+ *
+ * Same for `./ui/ExportControls` and `./ui/CropModal` (the download modal body
+ * and the crop step, shared by the studio and the saved-PBN detail): the
+ * component would collide with the `ExportControls` *type* that
+ * `./model/useExport` already exports through here, so both are imported
+ * directly from their files.
  */
 
 export * from "./model/constants";
@@ -23,6 +29,7 @@ export * from "./model/useInputOptions";
 export * from "./model/usePaintMixing";
 export * from "./model/useProcessing";
 export * from "./model/useRenderOptions";
+export * from "./model/useSavedSvg";
 
 export { default as ProgressBar } from "./ui/ProgressBar";
 export { HelpTip, Toggle, Segmented } from "./ui/controls";

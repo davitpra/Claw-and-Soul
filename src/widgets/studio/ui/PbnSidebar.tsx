@@ -18,6 +18,7 @@ interface PbnSidebarProps {
   isProcessing: boolean;
   onProcess: () => void;
   onCancel: () => void;
+  onDownload: () => void;
 }
 
 /**
@@ -28,9 +29,11 @@ interface PbnSidebarProps {
 export default function PbnSidebar({
   imageInput,
   inputOptions,
+  hasOutput,
   isProcessing,
   onProcess,
   onCancel,
+  onDownload,
 }: PbnSidebarProps) {
   const { imageSrc } = imageInput;
 
@@ -48,8 +51,10 @@ export default function PbnSidebar({
       <ProcessButtons
         isProcessing={isProcessing}
         hasImage={!!imageSrc}
+        hasOutput={hasOutput}
         onProcess={onProcess}
         onCancel={onCancel}
+        onDownload={onDownload}
       />
     </div>
   );

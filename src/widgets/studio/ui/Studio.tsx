@@ -29,8 +29,9 @@ import {
   STOREFRONT_INPUT_DEFAULTS,
   STOREFRONT_RENDER_DEFAULTS,
 } from "../model/defaults";
+import CropModal from "@/features/pbn-studio/ui/CropModal";
+import ExportControls from "@/features/pbn-studio/ui/ExportControls";
 import DropZone from "./DropZone";
-import CropModal from "./CropModal";
 import Modal from "@/shared/ui/Modal";
 import RenderOptionsPane from "./RenderOptionsPane";
 import { PbnPostMenuItem } from "./PbnPostMenu";
@@ -40,7 +41,6 @@ import ProcessButtons from "./ProcessButtons";
 import PbnSidebar from "./PbnSidebar";
 import PbnImageStep from "./PbnImageStep";
 import PbnSettingsDrawer from "./PbnSettingsDrawer";
-import ExportControls from "./ExportControls";
 import PbnResultView from "./PbnResultView";
 import { card, stepTitle } from "@/features/pbn-studio/ui/pbnStyles";
 
@@ -265,18 +265,18 @@ function StudioLayout({
     saveError,
     savedPbn: savedRef,
   } = useSavePbnFlow({
-      svgContainerRef,
-      guideRef,
-      originalImageRef,
-      compareImgs,
-      palette,
-      recipes,
-      generationId,
-      inputOptions,
-      renderOptions,
-      exp,
-      initialSavedPbn: savedPbn,
-    });
+    svgContainerRef,
+    guideRef,
+    originalImageRef,
+    compareImgs,
+    palette,
+    recipes,
+    generationId,
+    inputOptions,
+    renderOptions,
+    exp,
+    initialSavedPbn: savedPbn,
+  });
 
   // Ver `resetSavedRef`: onProcessStart se define antes de este hook.
   useEffect(() => {
@@ -332,6 +332,7 @@ function StudioLayout({
       isProcessing={isProcessing}
       onProcess={() => void process()}
       onCancel={cancel}
+      onDownload={() => setDownloadOpen(true)}
     />
   );
 
@@ -404,8 +405,10 @@ function StudioLayout({
                   <ProcessButtons
                     isProcessing={isProcessing}
                     hasImage={!!imageSrc}
+                    hasOutput={hasOutput}
                     onProcess={() => void process()}
                     onCancel={cancel}
+                    onDownload={() => setDownloadOpen(true)}
                   />
                 </div>
               </section>
@@ -428,6 +431,7 @@ function StudioLayout({
               onSelectColor={(i) =>
                 setSelectedColor((prev) => (prev === i ? null : i))
               }
+              onDownload={() => setDownloadOpen(true)}
               ensureSaved={ensureSaved}
             />
           )}
