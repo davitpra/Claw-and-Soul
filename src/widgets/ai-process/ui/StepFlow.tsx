@@ -1,54 +1,42 @@
 "use client";
 
 import Image from "next/image";
-import { Fragment } from "react";
+import { Fragment, type CSSProperties } from "react";
 import { useInView } from "@/hooks/useInView";
 import type { ProcessStep } from "../model/types";
 
-// Cada paso entra 0.16s después del anterior y la flecha que lo precede cae a
-// mitad de camino, así el recorrido se lee de izquierda a derecha (arriba→abajo
-// en móvil) en vez de aparecer todo de golpe.
+// En desktop la fila es horizontal: los pasos entran en viewport a la vez, así
+// que el stagger es lo que hace que el recorrido se lea de izquierda a derecha.
+// En móvil cada paso se dispara por su propia intersección al hacer scroll.
 const STEP_STAGGER = 0.16;
-// Los puntos empiezan a latir cuando la flecha ya terminó de entrar.
-const FLOW_START = 0.35;
-const DOT_STAGGER = 0.1;
 const DOTS = [0, 1, 2, 3, 4];
 
 export function StepFlow({ steps }: { steps: ProcessStep[] }) {
-  const { ref, inView } = useInView<HTMLDivElement>();
-
   return (
-    <div ref={ref} className="flex flex-col lg:flex-row items-stretch gap-0">
+    <div className="flex flex-col lg:flex-row items-stretch gap-0">
       {steps.map((step, i) => (
         <Fragment key={step.title}>
-          {i > 0 && (
-            <DottedArrow
-              delay={i * STEP_STAGGER - STEP_STAGGER / 2}
-              revealed={inView}
-            />
-          )}
-          <Step step={step} delay={i * STEP_STAGGER} revealed={inView} />
+          {i > 0 && <DottedArrow />}
+          <Step step={step} delay={i * STEP_STAGGER} />
         </Fragment>
       ))}
     </div>
   );
 }
 
-function Step({
-  step,
-  delay,
-  revealed,
-}: {
-  step: ProcessStep;
-  delay: number;
-  revealed: boolean;
-}) {
+function Step({ step, delay }: { step: ProcessStep; delay: number }) {
+  // Cada paso observa su propio nodo: aparece cuando él entra en pantalla, no
+  // cuando lo hace la fila entera.
+  const { ref, inView } = useInView<HTMLDivElement>();
+
   return (
     <div
+      ref={ref}
       className={`group relative flex-1 ${
-        revealed ? "animate-step-in" : "opacity-0"
+        inView ? "animate-step-in" : "opacity-0"
       }`}
-      style={{ animationDelay: `${delay}s` }}
+      // El delay solo se aplica en desktop (ver `--step-delay` en globals.css).
+      style={{ "--step-delay": `${delay}s` } as CSSProperties}
     >
       <div className="flex flex-col items-center gap-5 h-full">
         {/* rounded-full solo da un círculo si la caja es cuadrada: aspect-square
@@ -75,45 +63,20 @@ function Step({
   );
 }
 
-function DottedArrow({
-  delay,
-  revealed,
-}: {
-  delay: number;
-  revealed: boolean;
-}) {
+function DottedArrow() {
   return (
-    <div
-      className={`flex items-center justify-center py-6 lg:py-0 lg:px-2 shrink-0 ${
-        revealed ? "animate-arrow-in" : "opacity-0"
-      }`}
-      style={{ animationDelay: `${delay}s` }}
-    >
+    <div className="flex items-center justify-center py-6 lg:py-0 lg:px-2 shrink-0">
       <div className="flex items-center gap-0.5 rotate-90 lg:rotate-0">
         {DOTS.map((i) => (
           <div
             key={i}
-            className={`size-1 rounded-full bg-slate-300 ${
-              revealed ? "animate-flow-dot" : ""
-            }`}
-            // La opacidad inline es el estado en reposo (y el único visible con
-            // reduced motion); la animación la pisa mientras corre.
-            style={{
-              opacity: 0.4 + i * 0.12,
-              animationDelay: `${delay + FLOW_START + i * DOT_STAGGER}s`,
-            }}
+            className="size-1 rounded-full bg-slate-300"
+            // Degradado de opacidad hacia la punta, para que el recorrido se lea
+            // en dirección al paso siguiente.
+            style={{ opacity: 0.4 + i * 0.12 }}
           />
         ))}
-        <div
-          className={`ml-0.5 text-slate-400 ${
-            revealed ? "animate-flow-tip" : ""
-          }`}
-          style={{
-            animationDelay: `${
-              delay + FLOW_START + DOTS.length * DOT_STAGGER
-            }s`,
-          }}
-        >
+        <div className="ml-0.5 text-slate-400">
           <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
             <path
               d="M1 5h8M5.5 1.5L9 5l-3.5 3.5"

@@ -132,16 +132,9 @@
     }
   }
 
-  /* Proceso "cómo funciona" (widgets/ai-process): al entrar la fila en viewport
-     los pasos suben escalonados y las flechas aparecen entre medias. Ya visible,
-     los puntos de cada flecha laten en cadena (onda) para marcar el recorrido de
-     un paso al siguiente. `flow-dot` y `flow-tip` comparten periodo (1.8s) para
-     que la punta remate justo cuando la onda llega al final.
-     El componente fija el `animation-delay` de cada elemento. */
+  /* Proceso "cómo funciona" (widgets/ai-process): cada paso sube al entrar él
+     mismo en viewport. Las flechas entre pasos son estáticas. */
   --animate-step-in: step-in 0.6s cubic-bezier(0.2, 0.7, 0.3, 1) both;
-  --animate-arrow-in: arrow-in 0.5s cubic-bezier(0.2, 0.7, 0.3, 1) both;
-  --animate-flow-dot: flow-dot 1.8s ease-in-out infinite;
-  --animate-flow-tip: flow-tip 1.8s ease-in-out infinite;
 
   @keyframes step-in {
     from {
@@ -153,41 +146,15 @@
       transform: none;
     }
   }
+}
 
-  @keyframes arrow-in {
-    from {
-      opacity: 0;
-      transform: scale(0.5);
-    }
-    to {
-      opacity: 1;
-      transform: none;
-    }
-  }
-
-  @keyframes flow-dot {
-    0%,
-    55%,
-    100% {
-      opacity: 0.35;
-      transform: scale(1);
-    }
-    20% {
-      opacity: 1;
-      transform: scale(1.6);
-    }
-  }
-
-  @keyframes flow-tip {
-    0%,
-    100% {
-      opacity: 0.5;
-      transform: translateX(0);
-    }
-    55% {
-      opacity: 1;
-      transform: translateX(3px);
-    }
+/* El stagger (`--step-delay`, lo fija el componente) solo tiene sentido en
+   desktop, donde la fila es horizontal y todos los pasos entran en viewport a
+   la vez; en móvil el escalonado ya lo marca el scroll y un delay solo haría
+   que el paso llegue tarde. */
+@media (width >= 64rem) {
+  .animate-step-in {
+    animation-delay: var(--step-delay, 0s);
   }
 }
 
@@ -283,9 +250,6 @@
   .animate-coin-float,
   .animate-coin-shadow,
   .animate-step-in,
-  .animate-arrow-in,
-  .animate-flow-dot,
-  .animate-flow-tip,
   .waves-layer,
   .light-ray {
     animation: none;
