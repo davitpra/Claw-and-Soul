@@ -120,13 +120,20 @@ export function PetDetail({ petId }: Props) {
 
   if (isLoading) {
     return (
-      <section className="rounded-xl bg-white p-8">
-        <div className="grid grid-cols-1 gap-8 md:grid-cols-[1fr_1fr]">
-          <div className="aspect-4/5 animate-pulse rounded-xl bg-cream" />
-          <div className="space-y-4">
-            <div className="h-8 w-1/2 animate-pulse rounded-xl bg-cream" />
-            <div className="h-4 w-1/3 animate-pulse rounded-xl bg-cream" />
-            <div className="h-24 w-full animate-pulse rounded-xl bg-cream" />
+      <section className="flex h-[calc(100svh-4rem)] flex-col rounded-xl bg-white p-8">
+        <div className="mx-auto flex min-h-0 w-full max-w-2xl flex-1 flex-col">
+          <div className="h-10 w-1/3 shrink-0 animate-pulse rounded-xl bg-cream" />
+          <div className="mt-3 h-4 w-1/4 shrink-0 animate-pulse rounded-xl bg-cream" />
+          <div className="mt-5 flex min-h-0 flex-1 gap-4 border-t border-[#E0DED9] pt-5">
+            <div className="flex w-16 shrink-0 flex-col gap-3 sm:w-20">
+              {Array.from({ length: 4 }).map((_, i) => (
+                <div
+                  key={i}
+                  className="aspect-square w-full shrink-0 animate-pulse rounded-xl bg-cream"
+                />
+              ))}
+            </div>
+            <div className="aspect-2/3 h-full animate-pulse bg-cream" />
           </div>
         </div>
       </section>
@@ -156,10 +163,13 @@ export function PetDetail({ petId }: Props) {
   const details = [pet.breed, pet.species].filter(Boolean).join(" · ");
 
   return (
-    <section className="rounded-xl bg-white p-8">
+    // h-[calc(100svh-4rem)]: alto de pantalla menos la navbar sticky (4rem), para
+    // que la galería llene el viewport sin desbordarlo. `svh` evita el salto por
+    // la barra de direcciones en móvil.
+    <section className="flex h-[calc(100svh-4rem)] flex-col rounded-xl bg-white p-8">
       <Link
         href="/user/pets"
-        className="inline-flex items-center gap-1 text-sm font-bold text-primary hover:text-primary-dark"
+        className="inline-flex shrink-0 items-center gap-1 text-sm font-bold text-primary hover:text-primary-dark"
       >
         <span className="material-symbols-outlined text-[18px]">
           arrow_back
@@ -167,37 +177,22 @@ export function PetDetail({ petId }: Props) {
         Back to My Pets
       </Link>
 
-      <div className="mt-6 grid grid-cols-1 gap-8 max-w-3xl mx-auto">
-        {/* Detalles */}
-        <div>
-          <h1 className="font-display text-6xl font-black text-text-main text-center">
-            {pet.name}
-          </h1>
-          {details && (
-            <p className="mt-2 text-center text-text-muted">{details}</p>
-          )}
-        </div>
-        {/* Galería */}
-        <div>
-          {activePhoto ? (
-            <Card
-              imageUrl={cloudinaryThumb(activePhoto, 800)}
-              imageAlt={pet.name}
-            />
-          ) : (
-            <div className="flex aspect-4/5 flex-col items-center justify-center gap-2 rounded-xl bg-cream">
-              <span className="material-symbols-outlined text-[48px] text-text-muted">
-                pets
-              </span>
-              <p className="text-text-muted">No photos yet.</p>
-            </div>
-          )}
+      <div className="mx-auto mt-6 flex min-h-0 w-full max-w-2xl flex-1 flex-col">
+        {/* Encabezado */}
+        <h1 className="shrink-0 font-display text-4xl font-black text-text-main">
+          {pet.name}
+        </h1>
+        {details && (
+          <p className="mt-1 shrink-0 text-text-muted">{details}</p>
+        )}
 
-          <div className="mt-4 grid grid-cols-4 gap-3">
+        {/* Galería: tira de miniaturas + foto activa */}
+        <div className="mt-5 flex min-h-0 flex-1 gap-4 border-t border-[#E0DED9] pt-5">
+          <div className="flex w-16 shrink-0 flex-col gap-3 overflow-y-auto sm:w-20">
             {photos.map((photo) => {
               const isActive = photo.photoUrl === activePhoto;
               return (
-                <div key={photo.id} className="group relative">
+                <div key={photo.id} className="group relative shrink-0">
                   <button
                     type="button"
                     onClick={() => setActivePhoto(photo.photoUrl)}
@@ -217,10 +212,10 @@ export function PetDetail({ petId }: Props) {
                       setDeleteError(null);
                       setPendingDelete(photo);
                     }}
-                    className="absolute right-1.5 top-1.5 flex h-7 w-7 items-center justify-center rounded-full bg-black/60 text-white opacity-0 transition-all hover:bg-red-600 focus-visible:opacity-100 group-hover:opacity-100"
+                    className="absolute right-1 top-1 flex h-6 w-6 items-center justify-center rounded-full bg-black/60 text-white opacity-0 transition-all hover:bg-red-600 focus-visible:opacity-100 group-hover:opacity-100"
                     aria-label={`Delete photo of ${pet.name}`}
                   >
-                    <span className="material-symbols-outlined text-[16px]">
+                    <span className="material-symbols-outlined text-[14px]">
                       delete
                     </span>
                   </button>
@@ -228,40 +223,56 @@ export function PetDetail({ petId }: Props) {
               );
             })}
 
-            {Array.from({ length: MAX_PHOTOS - photos.length }).map((_, i) => (
+            {photos.length < MAX_PHOTOS && (
               <button
-                key={`placeholder-${i}`}
                 type="button"
                 onClick={() => fileInputRef.current?.click()}
                 disabled={uploading}
-                className="flex aspect-square w-full items-center justify-center rounded-xl border-2 border-dashed border-[#E0DED9] text-text-muted transition-all hover:border-primary hover:text-primary disabled:opacity-60"
+                className="flex aspect-square w-full shrink-0 items-center justify-center rounded-xl border-2 border-dashed border-[#E0DED9] text-text-muted transition-all hover:border-primary hover:text-primary disabled:opacity-60"
                 aria-label="Upload photo"
               >
-                <span className="material-symbols-outlined text-[24px]">
-                  {uploading && i === 0 ? "progress_activity" : "add_a_photo"}
+                <span className="material-symbols-outlined text-[22px]">
+                  {uploading ? "progress_activity" : "add_a_photo"}
                 </span>
               </button>
-            ))}
+            )}
           </div>
 
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept="image/*"
-            className="hidden"
-            onChange={(e) => {
-              const file = e.target.files?.[0];
-              if (file) handleUploadPhoto(file);
-              e.target.value = "";
-            }}
-          />
-
-          {uploadError && (
-            <p className="mt-3 rounded-xl bg-red-50 px-4 py-3 text-sm text-red-600">
-              {uploadError}
-            </p>
+          {/* `aspect-2/3 h-full`: el alto manda y el ancho se deriva, así la foto
+              crece con el viewport en vez de con el ancho del contenedor. */}
+          {activePhoto ? (
+            <Card
+              className="aspect-2/3 h-full"
+              imageUrl={cloudinaryThumb(activePhoto, 800)}
+              imageAlt={pet.name}
+            />
+          ) : (
+            <div className="flex aspect-2/3 h-full flex-col items-center justify-center gap-2 rounded-xl bg-cream">
+              <span className="material-symbols-outlined text-[48px] text-text-muted">
+                pets
+              </span>
+              <p className="text-text-muted">No photos yet.</p>
+            </div>
           )}
         </div>
+
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept="image/*"
+          className="hidden"
+          onChange={(e) => {
+            const file = e.target.files?.[0];
+            if (file) handleUploadPhoto(file);
+            e.target.value = "";
+          }}
+        />
+
+        {uploadError && (
+          <p className="mt-3 shrink-0 rounded-xl bg-red-50 px-4 py-3 text-sm text-red-600">
+            {uploadError}
+          </p>
+        )}
       </div>
 
       {pendingDelete && (
@@ -277,7 +288,7 @@ export function PetDetail({ petId }: Props) {
             onClick={(e) => e.stopPropagation()}
           >
             <div
-              className="aspect-4/5 w-full rounded-xl bg-cover bg-center"
+              className="mx-auto aspect-square w-40 rounded-xl bg-cover bg-center"
               style={{
                 backgroundImage: `url('${cloudinaryThumb(pendingDelete.photoUrl, 400)}')`,
               }}
