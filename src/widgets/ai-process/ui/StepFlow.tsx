@@ -18,10 +18,7 @@ export function StepFlow({ steps }: { steps: ProcessStep[] }) {
   const { ref, inView } = useInView<HTMLDivElement>();
 
   return (
-    <div
-      ref={ref}
-      className="flex flex-col lg:flex-row items-stretch gap-0"
-    >
+    <div ref={ref} className="flex flex-col lg:flex-row items-stretch gap-0">
       {steps.map((step, i) => (
         <Fragment key={step.title}>
           {i > 0 && (
@@ -54,13 +51,15 @@ function Step({
       style={{ animationDelay: `${delay}s` }}
     >
       <div className="flex flex-col items-center gap-5 h-full">
-        <div className="flex-1 flex items-center justify-center bg-[var(--section-contrast,#fff)] rounded-full">
+        {/* rounded-full solo da un círculo si la caja es cuadrada: aspect-square
+            evita que flex-1 la estire y la convierta en elipse. */}
+        <div className="w-full max-w-56 aspect-square flex items-center justify-center bg-white rounded-full">
           <Image
             src={step.img}
             alt={step.alt}
             width={200}
             height={150}
-            className="transition-all group-hover:scale-105"
+            className="w-4/5 h-auto object-contain transition-all group-hover:scale-105"
           />
         </div>
         <div className="text-center">
