@@ -1,6 +1,6 @@
 "use client";
 
-import { CollectionSection, useStyleCollection } from "@/widgets/collection";
+import { StyleShowcase, useStyleCollection } from "@/widgets/collection";
 import {
   ExpandingGallery,
   useSameStyleItems,
@@ -64,13 +64,7 @@ export default function DigitalTemplate({
           {
             id: "styles",
             when: styleCollection.hasContent,
-            node: (
-              <CollectionSection
-                images={styleCollection.images}
-                isLoading={styleCollection.isLoading}
-                error={styleCollection.error}
-              />
-            ),
+            node: <StyleShowcase collection={styleCollection} />,
           },
           {
             id: "process",

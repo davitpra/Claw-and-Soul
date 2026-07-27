@@ -1,7 +1,7 @@
 "use client";
 
 import ProductDetails from "@/widgets/product-details/ui/ProductDetails";
-import { CollectionSection, useStyleCollection } from "@/widgets/collection";
+import { StyleShowcase, useStyleCollection } from "@/widgets/collection";
 import ProductFAQ from "@/widgets/product-faq/ui/ProductFAQ";
 import { ProductTemplateProps } from "./ProductPageTemplate";
 import { PrintedOption } from "@/widgets/printed-option";
@@ -68,10 +68,8 @@ export default function CanvasTemplate({
             id: "styles",
             when: styleCollection.hasContent,
             node: (
-              <CollectionSection
-                images={styleCollection.images}
-                isLoading={styleCollection.isLoading}
-                error={styleCollection.error}
+              <StyleShowcase
+                collection={styleCollection}
                 frameStyle={frameStyle}
               />
             ),

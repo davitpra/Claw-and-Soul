@@ -16,9 +16,11 @@ export function useStyleCollection(
   handle?: string | null,
   styleIdProp?: string | null,
 ) {
-  const { styleId: derivedStyleId, isLoading: styleLoading } = useProductStyle(
-    styleIdProp ? null : (handle ?? null),
-  );
+  const {
+    styleId: derivedStyleId,
+    styleName,
+    isLoading: styleLoading,
+  } = useProductStyle(styleIdProp ? null : (handle ?? null));
 
   const resolvedStyleId = styleIdProp ?? derivedStyleId;
   const { images, isLoading: imagesLoading, error } = useStyleImages(
@@ -31,5 +33,7 @@ export function useStyleCollection(
   // como visible; solo desaparece cuando se confirma que no hay nada que mostrar.
   const hasContent = isLoading || (!error && images.length > 0);
 
-  return { images, isLoading, error, hasContent };
+  // `styleName` solo se resuelve por handle: con `styleIdProp` no hay a quién
+  // preguntarle el nombre, así que el consumidor cae a su propio default.
+  return { images, isLoading, error, hasContent, styleName };
 }

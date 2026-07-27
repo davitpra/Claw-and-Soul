@@ -3,7 +3,7 @@
 import ProductDetails from "@/widgets/product-details/ui/ProductDetails";
 import ProductFAQ from "@/widgets/product-faq/ui/ProductFAQ";
 import { ProductTemplateProps } from "./ProductPageTemplate";
-import { CollectionSection, useStyleCollection } from "@/widgets/collection";
+import { StyleShowcase, useStyleCollection } from "@/widgets/collection";
 import { PrintedOption } from "@/widgets/printed-option";
 import {
   ExpandingGallery,
@@ -52,10 +52,8 @@ export default function PosterTemplate({
             id: "styles",
             when: styleCollection.hasContent,
             node: (
-              <CollectionSection
-                images={styleCollection.images}
-                isLoading={styleCollection.isLoading}
-                error={styleCollection.error}
+              <StyleShowcase
+                collection={styleCollection}
                 frameStyle={frameStyle}
               />
             ),

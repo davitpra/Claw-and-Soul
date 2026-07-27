@@ -98,29 +98,37 @@ export default function CollectionSection({
 }: CollectionSectionProps) {
   if (!isLoading && (error || images.length === 0)) return null;
 
+  // Sin nada que mostrar el bloque entero se va: si no, el `mb-12` deja un hueco
+  // vertical en los consumos sin encabezado (p. ej. `StyleCollection` en el IA).
+  const hasHeader = Boolean(eyebrow || title || description);
+
   return (
     <section className={`relative overflow-hidden py-20 ${background}`}>
       <Container>
-        <div className="flex flex-col items-center gap-5 mb-12">
-          {eyebrow && (
-            <span className="inline-flex items-center gap-2 rounded-full border border-[#E0DED9] bg-[var(--section-contrast,#fff)] px-4 py-1.5 text-primary">
-              <span className="material-symbols-outlined text-[16px]">
-                pets
+        {hasHeader && (
+          <div className="flex flex-col items-center gap-5 mb-12">
+            {eyebrow && (
+              <span className="inline-flex items-center gap-2 rounded-full border border-[#E0DED9] bg-white px-4 py-1.5 text-primary">
+                <span className="material-symbols-outlined text-[16px]">
+                  pets
+                </span>
+                <span className="text-xs font-bold tracking-wider uppercase">
+                  {eyebrow}
+                </span>
               </span>
-              <span className="text-xs font-bold tracking-wider uppercase">
-                {eyebrow}
-              </span>
-            </span>
-          )}
-          <h2 className="font-display text-4xl md:text-5xl font-black text-text-main leading-[1.1] tracking-tight text-center max-w-2xl whitespace-pre-line">
-            {title}
-          </h2>
-          {description && (
-            <p className="text-center text-text-muted max-w-xl leading-relaxed">
-              {description}
-            </p>
-          )}
-        </div>
+            )}
+            {title && (
+              <h2 className="font-display text-4xl md:text-5xl font-black text-text-main leading-[1.1] tracking-tight text-center max-w-2xl whitespace-pre-line">
+                {title}
+              </h2>
+            )}
+            {description && (
+              <p className="text-center text-text-muted max-w-xl leading-relaxed">
+                {description}
+              </p>
+            )}
+          </div>
+        )}
 
         <Carousel gap="gap-4 md:gap-8" perView={4} mobileSlides={2}>
           {isLoading
