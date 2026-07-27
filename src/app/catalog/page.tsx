@@ -5,12 +5,16 @@ import { Footer } from "@/widgets/footer";
 import { Suspense, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import {
-  DEFAULT_CATALOG_TYPE,
+  CATALOG_FORMATS,
+  CATALOG_INTENTS,
+  DEFAULT_CATALOG_FORMAT,
+  DEFAULT_CATALOG_INTENT,
   CatalogFiltersModal,
   CatalogSection,
   CatalogTypeNav,
   groupIntoSections,
   catalogSectionId,
+  productIntent,
   useCatalogFilters,
   useCatalogProducts,
 } from "@/widgets/catalog";
@@ -62,42 +66,77 @@ function CatalogContent() {
   // tamaños: no hay rail fijo en desktop.
   const [filtersOpen, setFiltersOpen] = useState(false);
 
-  // Tipo elegido en la barra de chips; null muestra todas las secciones y
-  // DEFAULT_CATALOG_TYPE es lo que se ve al entrar. La selección se guarda junto
-  // con el contexto (búsqueda + colección) en que se hizo: si el contexto
-  // cambia trae otro catálogo y se vuelve al tipo por defecto.
+  // Selección de la barra de chips: familia (fila 1) y formato (fila 2), ambas
+  // null cuando no acotan nada. Se guarda junto con el contexto (búsqueda +
+  // colección) en que se hizo: si el contexto cambia trae otro catálogo y se
+  // vuelve a los valores por defecto.
   const typeContext = `${searchQuery}|${collectionHandle}`;
-  const [typeSelection, setTypeSelection] = useState<{
+  const [selection, setSelection] = useState<{
     context: string;
-    type: string | null;
-  }>({ context: typeContext, type: DEFAULT_CATALOG_TYPE });
-  const selectedType =
-    typeSelection.context === typeContext
-      ? typeSelection.type
-      : DEFAULT_CATALOG_TYPE;
-  const selectType = (type: string | null) =>
-    setTypeSelection({ context: typeContext, type });
+    intent: string | null;
+    format: string | null;
+  }>({
+    context: typeContext,
+    intent: DEFAULT_CATALOG_INTENT,
+    format: DEFAULT_CATALOG_FORMAT,
+  });
+  const current =
+    selection.context === typeContext
+      ? selection
+      : {
+          context: typeContext,
+          intent: DEFAULT_CATALOG_INTENT,
+          format: DEFAULT_CATALOG_FORMAT,
+        };
+  // Cambiar de familia no resetea el formato: si el nuevo contexto no lo ofrece,
+  // `activeFormat` lo ignora por su cuenta y el chip vuelve al elegir una familia
+  // que sí lo tenga.
+  const selectIntent = (intent: string | null) =>
+    setSelection({ ...current, context: typeContext, intent });
+  const selectFormat = (format: string | null) =>
+    setSelection({ ...current, context: typeContext, format });
 
-  // Los productos filtrados se agrupan por tipo en secciones ordenadas
-  // (PBN → Canvas → Poster → Accessories → Credits → Other). La barra siempre
-  // recibe todas las secciones; el grid solo la del tipo elegido. Si los
-  // filtros dejan sin productos al tipo elegido, se ignora la selección.
-  const allSections = groupIntoSections(filteredProducts);
-  const activeType = allSections.some((s) => s.key === selectedType)
-    ? selectedType
+  // Familias con productos tras los filtros del modal. Si la elegida se queda
+  // vacía se ignora la selección y se muestra el catálogo completo, en vez de
+  // dejar la pantalla en blanco.
+  const intents = CATALOG_INTENTS.filter((intent) =>
+    filteredProducts.some((p) => productIntent(p) === intent.key),
+  );
+  const activeIntent = intents.some((i) => i.key === current.intent)
+    ? current.intent
     : null;
-  const sections = activeType
-    ? allSections.filter((s) => s.key === activeType)
+  const intentProducts = activeIntent
+    ? filteredProducts.filter((p) => productIntent(p) === activeIntent)
+    : filteredProducts;
+
+  // Formatos con productos dentro de la familia activa. Las familias sin soporte
+  // físico (Accessories, Credits) dejan la lista vacía y la fila se colapsa.
+  const formats = CATALOG_FORMATS.map((format) => ({
+    key: format.key,
+    label: format.short,
+    count: intentProducts.filter((p) => p.productType === format.key).length,
+  })).filter((format) => format.count > 0);
+  const activeFormat = formats.some((f) => f.key === current.format)
+    ? current.format
+    : null;
+
+  // Los productos de la familia activa se agrupan por formato en secciones
+  // ordenadas (Canvas → Poster → Digital → Accessories → Credits → Other); con un
+  // formato elegido queda una sola.
+  const allSections = groupIntoSections(intentProducts);
+  const sections = activeFormat
+    ? allSections.filter((s) => s.key === activeFormat)
     : allSections;
 
-  // Contadores del "Showing X of Y". El total sigue al chip elegido: con un tipo
-  // seleccionado cuenta los productos de ese tipo sin filtrar, para que se lea
-  // contra lo que la barra tiene marcado y no contra todo el catálogo.
+  // Contadores del "Showing X of Y". El total sigue a los chips: cuenta los
+  // productos que casan con la familia y el formato marcados sin aplicar los
+  // filtros del modal, para que se lea contra lo que la barra tiene marcado.
   const shownCount = sections.reduce((n, s) => n + s.products.length, 0);
-  const totalCount = activeType
-    ? (groupIntoSections(products).find((s) => s.key === activeType)?.products
-        .length ?? products.length)
-    : products.length;
+  const totalCount = products.filter(
+    (p) =>
+      (!activeIntent || productIntent(p) === activeIntent) &&
+      (!activeFormat || p.productType === activeFormat),
+  ).length;
 
   return (
     <div className="relative flex min-h-screen w-full flex-col overflow-x-clip bg-white">
@@ -140,43 +179,41 @@ function CatalogContent() {
             </div>
           ) : (
             <div className="w-full min-w-0">
-              {/* Toolbar filters. En mobile son dos filas (botón + contador
-                  arriba, chips scrolleables abajo); en md+ una sola fila. */}
-              <div className="mb-6 flex flex-wrap items-center gap-x-4 gap-y-3">
-                <button
-                  onClick={() => setFiltersOpen(true)}
-                  className="flex shrink-0 items-center gap-2 h-10 px-5 rounded-xl bg-primary text-white text-sm font-bold shadow-sm hover:bg-primary-dark hover:shadow-md transition-all"
-                >
-                  <span className="material-symbols-outlined text-[20px]">
-                    tune
-                  </span>
-                  Filters
-                  {activeFilterCount > 0 && (
-                    <span className="flex items-center justify-center h-5 min-w-5 px-1.5 rounded-full bg-white text-primary text-[10px] font-bold">
-                      {activeFilterCount}
-                    </span>
-                  )}
-                </button>
+              {/* Toolbar: la barra de familia + formato lleva dentro el botón de
+                  Filters, y el contador de resultados va debajo. */}
+              <div className="mb-6">
+                <CatalogTypeNav
+                  intents={[...intents]}
+                  selectedIntent={activeIntent}
+                  onSelectIntent={selectIntent}
+                  formats={formats}
+                  selectedFormat={activeFormat}
+                  onSelectFormat={selectFormat}
+                  leading={
+                    <button
+                      onClick={() => setFiltersOpen(true)}
+                      className="flex shrink-0 items-center gap-2 h-10 px-5 rounded-xl bg-primary text-white text-sm font-bold shadow-sm hover:bg-primary-dark hover:shadow-md transition-all"
+                    >
+                      <span className="material-symbols-outlined text-[20px]">
+                        tune
+                      </span>
+                      Filters
+                      {activeFilterCount > 0 && (
+                        <span className="flex items-center justify-center h-5 min-w-5 px-1.5 rounded-full bg-white text-primary text-[10px] font-bold">
+                          {activeFilterCount}
+                        </span>
+                      )}
+                    </button>
+                  }
+                />
 
-                <p className="order-2 md:order-3 ml-auto shrink-0 text-sm text-text-muted">
+                <p className="mt-3 text-end text-sm text-text-muted">
                   Showing{" "}
                   <span className="font-bold text-slate-dark">
                     {shownCount}
                   </span>{" "}
                   of {totalCount} {totalCount === 1 ? "product" : "products"}
                 </p>
-
-                {/* Barra para filtrar los productos por product type.
-                    min-w-0 permite que el overflow-x-auto del nav actúe. */}
-                {allSections.length > 1 && (
-                  <div className="order-3 md:order-2 w-full min-w-0 md:w-auto md:flex-1">
-                    <CatalogTypeNav
-                      sections={allSections}
-                      selected={activeType}
-                      onSelect={selectType}
-                    />
-                  </div>
-                )}
               </div>
 
               <CatalogFiltersModal

@@ -6,6 +6,12 @@ export { useCatalogFilters } from "./model/useCatalogFilters";
 export {
   groupIntoSections,
   CATALOG_SECTIONS,
-  DEFAULT_CATALOG_TYPE,
+  CATALOG_FORMATS,
+  DEFAULT_CATALOG_FORMAT,
 } from "./model/sections";
+export {
+  CATALOG_INTENTS,
+  DEFAULT_CATALOG_INTENT,
+  productIntent,
+} from "./model/intents";
 export type { CatalogProduct } from "./model/types";

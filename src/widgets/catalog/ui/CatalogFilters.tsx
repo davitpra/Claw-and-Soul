@@ -1,5 +1,4 @@
 import { DIFFICULTY_LABELS } from "@/entities/art-style/model/difficulty";
-import { artKindLabel } from "@/entities/product/model/artKind";
 import { PRICE_RANGES } from "../model/priceRanges";
 import { CatalogFilters as CatalogFiltersState } from "../model/useCatalogFilters";
 import { FilterGroup } from "./FilterGroup";
@@ -7,17 +6,10 @@ import { FilterOption } from "./FilterOption";
 
 // Cuerpo del modal de filtros del catálogo (el título, el cierre y las acciones los
 // pone CatalogFiltersModal). Los grupos fluyen en dos columnas desde `sm:` para
-// acortar el scroll. La colección no vive aquí: la elige CircularCategory.
+// acortar el scroll. Tres ejes no viven aquí: la colección la elige
+// CircularCategory, y la familia y el formato son las dos filas de CatalogTypeNav.
 export function CatalogFilters({ filters }: { filters: CatalogFiltersState }) {
   const {
-    productTypes,
-    productTypeCounts,
-    selectedProductTypes,
-    toggleProductType,
-    artKinds,
-    artKindCounts,
-    selectedArtKinds,
-    toggleArtKind,
     styles,
     styleCounts,
     stylesByCategory,
@@ -39,35 +31,6 @@ export function CatalogFilters({ filters }: { filters: CatalogFiltersState }) {
     // pb-0: el margen inferior del último grupo ya hace de padding, y `last:`
     // no es fiable dentro de un contenedor multi-columna.
     <div className="columns-1 sm:columns-2 gap-8 px-6 pt-6 pb-0">
-      {productTypes.length > 0 && (
-        <FilterGroup title="Product Type">
-          {productTypes.map((type) => (
-            <FilterOption
-              key={type}
-              label={type}
-              count={productTypeCounts.get(type) ?? 0}
-              checked={selectedProductTypes.includes(type)}
-              onChange={() => toggleProductType(type)}
-            />
-          ))}
-        </FilterGroup>
-      )}
-
-      {/* Contenido de la obra: coloreable para pintar vs arte terminado. */}
-      {artKinds.length > 0 && (
-        <FilterGroup title="Artwork Type">
-          {artKinds.map((kind) => (
-            <FilterOption
-              key={kind}
-              label={artKindLabel(kind) ?? kind}
-              count={artKindCounts.get(kind) ?? 0}
-              checked={selectedArtKinds.includes(kind)}
-              onChange={() => toggleArtKind(kind)}
-            />
-          ))}
-        </FilterGroup>
-      )}
-
       {styles.length > 0 && (
         <FilterGroup title="Style">
           {stylesByCategory.map(({ category, styleNames }) => (
