@@ -2,11 +2,9 @@
 
 import { ComponentType } from "react";
 import { ShopifyProduct } from "@/lib/shopify";
-import CanvasTemplate from "./CanvasTemplate";
-import PosterTemplate from "./PosterTemplate";
+import ArtProductTemplate from "./ArtProductTemplate";
 import CreditsTemplate from "./CreditsTemplate";
 import AccessoryTemplate from "./AccessoryTemplate";
-import DigitalTemplate from "./DigitalTemplate";
 import { toFrameStyle } from "@/entities/product/lib/frameStyle";
 import { normalizeTemplate } from "@/entities/product/lib/template";
 import type { FrameStyle } from "@/entities/product/lib/frameStyle";
@@ -26,12 +24,14 @@ export interface ProductTemplateProps {
   artKind?: string | null;
 }
 
-// Un template por formato de entrega. El contenido (coloreable vs arte
-// terminado) llega aparte en `artKind` y condiciona bloques dentro de cada uno.
+// Los tres formatos de arte comparten una sola página: ArtProductTemplate ya
+// resuelve sus diferencias a partir de `template` y `artKind` (ver
+// `model/artTemplateConfig.ts`). Credits y Accessory no entran al flujo de
+// personalización y tienen layout propio, así que siguen aparte.
 const TEMPLATE_MAP: Record<string, ComponentType<ProductTemplateProps>> = {
-  Digital: DigitalTemplate,
-  Canvas: CanvasTemplate,
-  Poster: PosterTemplate,
+  Digital: ArtProductTemplate,
+  Canvas: ArtProductTemplate,
+  Poster: ArtProductTemplate,
   Credits: CreditsTemplate,
   Accessory: AccessoryTemplate,
 };
@@ -44,7 +44,7 @@ export default function ProductPageTemplate({
 }) {
   // normalizeTemplate absorbe el valor legacy "PBN" (alias de "Digital").
   const template = normalizeTemplate(templateOverride);
-  const Template = TEMPLATE_MAP[template] ?? CanvasTemplate;
+  const Template = TEMPLATE_MAP[template] ?? ArtProductTemplate;
   return (
     <Template {...props} template={template} frameStyle={toFrameStyle(template)} />
   );

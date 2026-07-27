@@ -47,7 +47,7 @@ export const PRODUCT_PBN_PROCESS_STEPS: ProcessStep[] = [
     img: "/process/4. Paint your art.png",
     alt: "Painting a numbered pet portrait with a brush and palette",
     title: "4. Paint Your Art",
-    text: "We turn your art into a PBN and sent it to you.",
+    text: "We turn your art into a paint-by-numbers and ship it to your door",
   },
 ];
 

@@ -5,7 +5,6 @@ import { StyleShowcase, useStyleCollection } from "@/widgets/collection";
 import ProductFAQ from "@/widgets/product-faq/ui/ProductFAQ";
 import { ProductTemplateProps } from "./ProductPageTemplate";
 import { PrintedOption } from "@/widgets/printed-option";
-
 import {
   RelatedProducts,
   getRelatedAccessories,
@@ -18,9 +17,18 @@ import {
 import { SimilarSouls } from "@/widgets/similar-souls";
 import { AIProcess } from "@/widgets/ai-process";
 import SectionFlow from "@/shared/ui/SectionFlow";
-import { PRODUCT_PROCESS_STEPS } from "../model/processSteps";
+import { getProcessSteps, isPaintableProduct } from "../model/artTemplateConfig";
 
-export default function CanvasTemplate({
+/**
+ * Storefront template de los productos de arte: los tres formatos de entrega
+ * (Digital, Canvas, Poster) comparten la misma página —ficha + este orden de
+ * secciones— y solo se diferencian en qué bloques aparecen.
+ *
+ * Dos ejes deciden esas diferencias: `template` (el formato) y `artKind` (si la
+ * obra es coloreable o arte terminado). Las reglas están en
+ * `model/artTemplateConfig.ts`; acá solo se aplican.
+ */
+export default function ArtProductTemplate({
   product,
   selectedVariantId,
   setSelectedVariantId,
@@ -34,9 +42,10 @@ export default function CanvasTemplate({
 }: ProductTemplateProps) {
   const similarProducts = getSimilarProducts(product);
   const relatedAccessories = getRelatedAccessories(product);
-  // Un canvas puede llevar el coloreable (para pintar) o arte terminado; los
-  // bloques de pintura (accesorios, alternativa impresa) solo aplican al primero.
-  const isPaintable = artKind === "pbn";
+  // Los bloques de pintura (accesorios, alternativa impresa) solo aplican a la
+  // obra coloreable.
+  const isPaintable = isPaintableProduct(template, artKind);
+  const processSteps = getProcessSteps(template, isPaintable);
 
   // Los datos de estas dos secciones se resuelven acá y no dentro de su widget:
   // SectionFlow necesita saber cuáles van a tener contenido antes de repartir
@@ -79,7 +88,9 @@ export default function CanvasTemplate({
             node: (
               <AIProcess
                 eyebrow="HOW TO USE"
-                title="Get your custom pet portrait in 3 easy steps"
+                // Derivado de los pasos: el coloreable suma un cuarto y el copy
+                // no puede quedarse en "3".
+                title={`Get your custom pet portrait in ${processSteps.length} easy steps`}
                 subtitle={
                   <>
                     Watch your pet become a masterpiece in seconds.
@@ -87,7 +98,7 @@ export default function CanvasTemplate({
                     Try it free before you buy.
                   </>
                 }
-                steps={PRODUCT_PROCESS_STEPS}
+                steps={processSteps}
               />
             ),
           },
