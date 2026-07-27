@@ -1,4 +1,5 @@
 import type { ProcessStep } from "@/widgets/ai-process";
+import { resolveArtKind } from "@/entities/product/model/artKind";
 import {
   PRODUCT_PROCESS_STEPS,
   PRODUCT_PBN_PROCESS_STEPS,
@@ -14,18 +15,18 @@ import {
  * Un producto es "coloreable" si su obra es un paint-by-numbers: eso habilita
  * los accesorios de pintura y la alternativa impresa.
  *
- * Cuando el backend no manda `artKind` solo Digital y Poster se asumen
- * coloreables, que es lo que renderizaban antes de unificar los templates.
- * Canvas mantiene el gate estricto que ya tenía, y un template desconocido
- * (producto sin `template` en el backend, que cae al fallback del router)
- * también: sin saber qué es, no se le ofrecen bloques de pintura.
+ * La derivación para los productos sin `artKind` vive en `resolveArtKind`
+ * (entities/product): solo Digital y Poster se asumen coloreables, que es lo
+ * que renderizaban antes de unificar los templates. Canvas mantiene el gate
+ * estricto que ya tenía, y un template desconocido (producto sin `template` en
+ * el backend, que cae al fallback del router) también: sin saber qué es, no se
+ * le ofrecen bloques de pintura.
  */
 export function isPaintableProduct(
   template: string,
   artKind?: string | null,
 ): boolean {
-  if (artKind) return artKind === "pbn";
-  return template === "Digital" || template === "Poster";
+  return resolveArtKind(template, artKind) === "pbn";
 }
 
 /**

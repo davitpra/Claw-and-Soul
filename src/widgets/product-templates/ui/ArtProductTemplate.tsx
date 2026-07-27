@@ -12,6 +12,7 @@ import {
 import { getSimilarProducts } from "@/entities/product/lib/getSimilarProducts";
 import {
   ExpandingGallery,
+  sameStyleGalleryTitle,
   useSameStyleItems,
 } from "@/widgets/expanding-gallery";
 import { SimilarSouls } from "@/widgets/similar-souls";
@@ -51,7 +52,11 @@ export default function ArtProductTemplate({
   // SectionFlow necesita saber cuáles van a tener contenido antes de repartir
   // los fondos, o la alternancia queda corrida y sobra un divisor.
   const styleCollection = useStyleCollection(handle);
-  const { items: sameStyleItems, styleName } = useSameStyleItems(handle);
+  const {
+    items: sameStyleItems,
+    styleName,
+    artKind: galleryArtKind,
+  } = useSameStyleItems(handle, { template, artKind });
 
   return (
     <>
@@ -108,7 +113,7 @@ export default function ArtProductTemplate({
             node: (
               <ExpandingGallery
                 eyebrow={styleName ?? "Same style"}
-                title="More in this style"
+                title={sameStyleGalleryTitle(galleryArtKind)}
                 items={sameStyleItems}
                 background=""
               />
