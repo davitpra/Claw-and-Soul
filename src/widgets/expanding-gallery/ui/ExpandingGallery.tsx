@@ -10,6 +10,7 @@ import {
 import { CanvasEdgeOverlay } from "@/entities/product/ui/CanvasEdgeOverlay";
 
 export interface ExpandingGalleryItem {
+  /** Titular de la card; también es el alt por defecto de la imagen. */
   title: string;
   /** Texto secundario bajo el título en el panel abierto. */
   description?: string;
@@ -17,10 +18,13 @@ export interface ExpandingGalleryItem {
   cta?: string;
   /** Destino del link; toda la card es clickeable. */
   href: string;
+  /** Miniatura del panel; solo se muestra desde el breakpoint `md`. */
   imageUrl: string;
+  /** Alt de la miniatura; si se omite se usa `title`. */
   imageAlt?: string;
   /** Wordmark opcional; se fuerza a blanco sobre el panel oscuro. */
   logoUrl?: string;
+  /** Alt del wordmark; vacío por defecto porque el logo es decorativo. */
   logoAlt?: string;
   /** Badges superiores de la card. */
   tags?: string[];
@@ -31,9 +35,13 @@ export interface ExpandingGalleryItem {
 interface ExpandingGalleryProps {
   /** Diseñado para 3 items (60/20/20); soporta n repartiendo el 40% restante. */
   items: ExpandingGalleryItem[];
+  /** Etiqueta corta en la píldora con icono sobre el título de la sección. */
   eyebrow?: string;
+  /** Titular de la sección; respeta los saltos de línea del string. */
   title?: string;
+  /** Bajada centrada bajo el título (encabezado de la sección, no del item). */
   description?: string;
+  /** Clase Tailwind de fondo del `<section>`. */
   background?: string;
 }
 
@@ -42,7 +50,8 @@ interface ExpandingGalleryProps {
  * y el resto colapsa con blur; hover/focus cambian el activo. El JS solo fija
  * `data-state`; la animación es CSS puro vía variantes `data-[state]`.
  * En tablet los paneles se apilan a lo ancho y en móvil quedan como cards
- * compactas sin imagen.
+ * compactas sin imagen. El encabezado se omite por completo si no llega
+ * ninguno de `eyebrow`, `title` o `description`.
  */
 export default function ExpandingGallery({
   items,
@@ -72,7 +81,7 @@ export default function ExpandingGallery({
         {hasHeader && (
           <div className="flex flex-col items-center gap-5 mb-12">
             {eyebrow && (
-              <span className="inline-flex items-center gap-2 rounded-full border border-cream bg-[var(--section-contrast,#fff)] px-4 py-1.5 text-primary">
+              <span className="inline-flex items-center gap-2 rounded-full border border-cream bg-white px-4 py-1.5 text-primary">
                 <span className="material-symbols-outlined text-[16px]">
                   pets
                 </span>
@@ -115,7 +124,7 @@ export default function ExpandingGallery({
                 <div className="absolute -inset-[50%] hidden h-[200%] w-[200%] md:block lg:group-data-[state=closed]:blur-sm">
                   <div className="absolute top-[calc(25%+40px)] right-[calc(50%+40px)] aspect-square h-[calc(50%+40px)]">
                     <div
-                      className={`relative h-full w-full overflow-clip rounded-xl ${
+                      className={`relative h-full w-full overflow-clip ${
                         item.frameStyle === "poster" ? POSTER_THUMB_FRAME : ""
                       }`}
                     >
