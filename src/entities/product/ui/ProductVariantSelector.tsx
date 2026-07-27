@@ -60,9 +60,12 @@ export default function ProductVariantSelector({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedVariantId]);
 
-  // `set` nunca se expone; `size` lo renderiza ProductSizeSelector.
+  // `set` nunca se expone; `size` y `type` tienen componente propio
+  // (ProductSizeSelector y ProductTypeSelector). Aquí queda cualquier otra
+  // opción del producto (color, marco…).
+  const hiddenOptionNames = ["set", "size", "type"];
   const visibleOptionNames = optionNames.filter(
-    (n) => n.toLowerCase() !== "set" && n.toLowerCase() !== "size",
+    (n) => !hiddenOptionNames.includes(n.toLowerCase()),
   );
 
   if (variants.length <= 1 || visibleOptionNames.length === 0) return null;

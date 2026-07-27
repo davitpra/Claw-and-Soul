@@ -1,4 +1,9 @@
 import type { ShopifyProduct, ShopifyVariant } from "@/lib/shopify";
+import {
+  buildOptionValues,
+  findVariantForOption,
+  getOptionName,
+} from "@/entities/product/lib/variantOptions";
 
 /** Nombre de la opción de Shopify que representa el tamaño del cuadro. */
 export const SIZE_OPTION_NAME = "size";
@@ -29,36 +34,7 @@ function parseDimensions(
 
 /** Nombre real (con su capitalización) de la opción de tamaño, si el producto la tiene. */
 export function getSizeOptionName(product: ShopifyProduct): string | null {
-  const names = product.variants.edges[0]?.node.selectedOptions ?? [];
-  return (
-    names.find((o) => o.name.toLowerCase() === SIZE_OPTION_NAME)?.name ?? null
-  );
-}
-
-function optionsOf(variant: ShopifyVariant | undefined) {
-  const result: Record<string, string> = {};
-  variant?.selectedOptions.forEach((o) => {
-    result[o.name] = o.value;
-  });
-  return result;
-}
-
-/**
- * Un producto puede combinar tamaño con otras opciones (color, marco…). Sólo
- * son tallas elegibles las variantes que coinciden con la seleccionada en todo
- * *menos* el tamaño; si no, cambiar de talla saltaría también de color.
- */
-function matchesSiblings(
-  variant: ShopifyVariant,
-  current: Record<string, string>,
-  sizeOptionName: string,
-) {
-  return variant.selectedOptions.every(
-    (o) =>
-      o.name === sizeOptionName ||
-      current[o.name] === undefined ||
-      current[o.name] === o.value,
-  );
+  return getOptionName(product, SIZE_OPTION_NAME);
 }
 
 /**
@@ -73,29 +49,18 @@ export function buildSizeOptions(
   const sizeOptionName = getSizeOptionName(product);
   if (!sizeOptionName) return [];
 
-  const current = optionsOf(selectedVariant);
-  const seen = new Set<string>();
-  const options: SizeOption[] = [];
-
-  for (const { node } of product.variants.edges) {
-    const value = node.selectedOptions.find(
-      (o) => o.name === sizeOptionName,
-    )?.value;
-    if (!value || seen.has(value)) continue;
-    if (!matchesSiblings(node, current, sizeOptionName)) continue;
-
-    seen.add(value);
-    const dims = parseDimensions(value);
-    options.push({
-      value,
-      label: value,
-      width: dims?.width,
-      height: dims?.height,
-      disabled: !node.availableForSale,
-    });
-  }
-
-  return options;
+  return buildOptionValues(product, selectedVariant, sizeOptionName).map(
+    ({ value, disabled }) => {
+      const dims = parseDimensions(value);
+      return {
+        value,
+        label: value,
+        width: dims?.width,
+        height: dims?.height,
+        disabled,
+      };
+    },
+  );
 }
 
 /** Variante que corresponde a una talla manteniendo el resto de opciones. */
@@ -107,14 +72,5 @@ export function findVariantForSize(
   const sizeOptionName = getSizeOptionName(product);
   if (!sizeOptionName) return null;
 
-  const current = optionsOf(selectedVariant);
-
-  return (
-    product.variants.edges.find(
-      ({ node }) =>
-        node.selectedOptions.some(
-          (o) => o.name === sizeOptionName && o.value === size,
-        ) && matchesSiblings(node, current, sizeOptionName),
-    )?.node ?? null
-  );
+  return findVariantForOption(product, selectedVariant, sizeOptionName, size);
 }

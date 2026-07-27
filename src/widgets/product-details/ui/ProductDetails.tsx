@@ -5,6 +5,7 @@ import ProductGallery from "@/entities/product/ui/ProductGallery";
 import ProductInfo from "@/entities/product/ui/ProductInfo";
 import ProductVariantSelector from "@/entities/product/ui/ProductVariantSelector";
 import ProductSizeSelector from "@/entities/product/ui/ProductSizeSelector";
+import ProductTypeSelector from "@/entities/product/ui/ProductTypeSelector";
 import ProductBreadcrumb from "@/entities/product/ui/ProductBreadcrumb";
 import ProductPerks from "@/entities/product/ui/ProductPerks";
 import PersonalizeButton from "@/features/personalize/ui/PersonalizeButton";
@@ -17,6 +18,11 @@ import {
   findVariantForSize,
   getSizeOptionName,
 } from "@/entities/product/lib/sizeOptions";
+import {
+  buildTypeOptions,
+  findVariantForType,
+  getTypeOptionName,
+} from "@/entities/product/lib/typeOptions";
 import type { FrameStyle } from "@/entities/product/lib/frameStyle";
 
 interface ProductDetailsProps {
@@ -96,6 +102,23 @@ export default function ProductDetails({
     selectedVariant?.selectedOptions.find((o) => o.name === sizeOptionName)
       ?.value ?? "";
 
+  // `Type` (Rolled | Wrapped | Framed) tiene su propio selector, que además
+  // explica el acabado elegido.
+  const typeOptionName = getTypeOptionName(product);
+  const typeOptions = useMemo(
+    () => buildTypeOptions(product, selectedVariant),
+    [product, selectedVariant],
+  );
+
+  const handleTypeChange = (type: string) => {
+    const variant = findVariantForType(product, selectedVariant, type);
+    if (variant) setSelectedVariantId(variant.id);
+  };
+
+  const selectedType =
+    selectedVariant?.selectedOptions.find((o) => o.name === typeOptionName)
+      ?.value ?? "";
+
   const { style: detailedStyle } = useStyle(styleId ?? null);
   const [selectionsState, setSelectionsState] = useState<{
     styleId: string | null;
@@ -152,6 +175,15 @@ export default function ProductDetails({
               options={sizeOptions}
               value={selectedSize}
               onChange={handleSizeChange}
+            />
+          )}
+
+          {typeOptionName && (
+            <ProductTypeSelector
+              label={typeOptionName}
+              options={typeOptions}
+              value={selectedType}
+              onChange={handleTypeChange}
             />
           )}
 
