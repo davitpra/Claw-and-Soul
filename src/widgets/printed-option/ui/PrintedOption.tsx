@@ -58,7 +58,7 @@ export default function PrintedOption({ handle }: PrintedOptionProps) {
             {[
               { icon: "print", label: "Museum-quality print" },
               { icon: "high_quality", label: "Ultra-high definition" },
-              { icon: "palette", label: "Same signature style" },
+              { icon: "palette", label: "Same Art" },
             ].map(({ icon, label }) => (
               <div
                 key={label}
