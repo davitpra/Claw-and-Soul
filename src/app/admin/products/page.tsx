@@ -65,7 +65,6 @@ export default function AdminProductsPage() {
     null,
   );
   const [savingTemplate, setSavingTemplate] = useState<string | null>(null);
-  const [savingArtKind, setSavingArtKind] = useState<string | null>(null);
   const [savingPbn, setSavingPbn] = useState(false);
   const [savingCreditPack, setSavingCreditPack] = useState(false);
   const [imageMap, setImageMap] = useState<Record<string, string>>({});
@@ -205,22 +204,6 @@ export default function AdminProductsPage() {
       loadProducts();
     } finally {
       setSavingTemplate(null);
-    }
-  };
-
-  const handleArtKindChange = async (productId: string, value: string) => {
-    const artKind = value || null;
-    setSavingArtKind(productId);
-    setProducts((prev) =>
-      prev.map((p) => (p.id === productId ? { ...p, artKind } : p)),
-    );
-    try {
-      await adminApi.products.update(productId, { artKind });
-    } catch (e: unknown) {
-      setError((e as Error).message);
-      loadProducts();
-    } finally {
-      setSavingArtKind(null);
     }
   };
 
@@ -430,13 +413,11 @@ export default function AdminProductsPage() {
                 savingStyle={savingStyle}
                 savingFulfillment={savingFulfillment}
                 savingTemplate={savingTemplate}
-                savingArtKind={savingArtKind}
                 toggling={toggling}
                 onRowClick={(id) => router.push(`/admin/products/${id}`)}
                 onStyleChange={handleStyleChange}
                 onFulfillmentChange={handleFulfillmentChange}
                 onTemplateChange={handleTemplateChange}
-                onArtKindChange={handleArtKindChange}
                 onToggleActive={handleToggle}
                 onDelete={setDeletingTarget}
               />
@@ -456,13 +437,11 @@ export default function AdminProductsPage() {
                 savingStyle={savingStyle}
                 savingFulfillment={savingFulfillment}
                 savingTemplate={savingTemplate}
-                savingArtKind={savingArtKind}
                 toggling={toggling}
                 onRowClick={(id) => router.push(`/admin/products/${id}`)}
                 onStyleChange={handleStyleChange}
                 onFulfillmentChange={handleFulfillmentChange}
                 onTemplateChange={handleTemplateChange}
-                onArtKindChange={handleArtKindChange}
                 onToggleActive={handleToggle}
                 onDelete={setDeletingTarget}
               />

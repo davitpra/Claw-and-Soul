@@ -1,7 +1,8 @@
 // Eje "contenido" de un producto de arte, independiente de su formato de
 // entrega (template Digital | Canvas | Poster): "pbn" es un coloreable para
-// pintar y "print" es arte terminado listo para colgar. El valor vive en el
-// backend (ProductReference.artKind) y llega vacío si no está asignado.
+// pintar y "print" es arte terminado listo para colgar. Su fuente de verdad es
+// el metafield `custom.art_kind` de Shopify; el sync lo baja a
+// ProductReference.artKind y de ahí llega al front, vacío si no está asignado.
 export type ArtKind = "pbn" | "print";
 
 export const ART_KIND_ORDER: ArtKind[] = ["pbn", "print"];

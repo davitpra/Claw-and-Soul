@@ -14,10 +14,13 @@ import {
 import { DeleteIcon, ImageIcon } from "@shopify/polaris-icons";
 import { AdminProduct, AdminStyle } from "@/entities/admin/api";
 import { normalizeTemplate } from "@/entities/product/lib/template";
+import { artKindLabel } from "@/entities/product/model/artKind";
 
 // El template es el formato de entrega del storefront: Digital es la descarga
 // del coloreable; Canvas/Poster son los físicos. El contenido (coloreable vs
-// arte terminado) se elige aparte en la columna "Contenido" (artKind).
+// arte terminado) es el otro eje, artKind, y se muestra en la columna
+// "Contenido" en solo lectura: su fuente de verdad es el metafield
+// `custom.art_kind` de Shopify.
 export const TEMPLATE_OPTIONS = [
   { label: "Por defecto", value: "" },
   { label: "Digital (descarga)", value: "Digital" },
@@ -33,12 +36,6 @@ export const ACCESSORY_TEMPLATE = "Accessory";
 // Formatos que llevan una obra de arte y por tanto admiten contenido (artKind);
 // Credits y Accessory no aplican.
 const ART_TEMPLATES = new Set(["Digital", "Canvas", "Poster"]);
-
-export const ART_KIND_OPTIONS = [
-  { label: "Sin asignar", value: "" },
-  { label: "Paint by Numbers", value: "pbn" },
-  { label: "Print art", value: "print" },
-];
 
 /** Valores de template que el Select acepta (sin la opción vacía "Por defecto"). */
 const VALID_TEMPLATES = new Set(
@@ -73,13 +70,11 @@ interface ProductsTableProps {
   savingStyle: string | null;
   savingFulfillment: string | null;
   savingTemplate: string | null;
-  savingArtKind: string | null;
   toggling: string | null;
   onRowClick: (id: string) => void;
   onStyleChange: (productId: string, styleId: string) => void;
   onFulfillmentChange: (productId: string, value: string) => void;
   onTemplateChange: (productId: string, value: string) => void;
-  onArtKindChange: (productId: string, value: string) => void;
   onToggleActive: (product: AdminProduct) => void;
   onDelete: (product: AdminProduct) => void;
 }
@@ -97,13 +92,11 @@ export function ProductsTable({
   savingStyle,
   savingFulfillment,
   savingTemplate,
-  savingArtKind,
   toggling,
   onRowClick,
   onStyleChange,
   onFulfillmentChange,
   onTemplateChange,
-  onArtKindChange,
   onToggleActive,
   onDelete,
 }: ProductsTableProps) {
@@ -224,23 +217,18 @@ export function ProductsTable({
 
           <IndexTable.Cell>
             {/* Contenido de la obra (coloreable vs arte terminado): solo aplica
-                a los formatos con obra (Digital/Canvas/Poster). */}
+                a los formatos con obra (Digital/Canvas/Poster). Es de solo
+                lectura — se edita en el metafield custom.art_kind de Shopify y
+                el sync lo baja a la DB. */}
             {ART_TEMPLATES.has(resolveTemplate(p, productTypeMap)) ? (
-              <div onClick={(e) => e.stopPropagation()}>
-                <InlineStack gap="200" blockAlign="center">
-                  <div style={{ minWidth: 160 }}>
-                    <Select
-                      label=""
-                      labelHidden
-                      disabled={savingArtKind === p.id}
-                      value={p.artKind ?? ""}
-                      onChange={(value) => onArtKindChange(p.id, value)}
-                      options={ART_KIND_OPTIONS}
-                    />
-                  </div>
-                  {savingArtKind === p.id && <Spinner size="small" />}
-                </InlineStack>
-              </div>
+              <BlockStack gap="0">
+                <Text variant="bodyMd" as="span">
+                  {artKindLabel(p.artKind) ?? "Sin asignar"}
+                </Text>
+                <Text variant="bodySm" tone="subdued" as="span">
+                  Se edita en Shopify
+                </Text>
+              </BlockStack>
             ) : (
               <Text variant="bodySm" tone="subdued" as="span">
                 —
