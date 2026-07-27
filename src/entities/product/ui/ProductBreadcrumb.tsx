@@ -3,6 +3,7 @@ import { ShopifyProduct } from "@/lib/shopify";
 
 interface ProductBreadcrumbProps {
   product: ShopifyProduct;
+  className?: string;
 }
 
 interface Crumb {
@@ -10,7 +11,10 @@ interface Crumb {
   href?: string;
 }
 
-export default function ProductBreadcrumb({ product }: ProductBreadcrumbProps) {
+export default function ProductBreadcrumb({
+  product,
+  className = "",
+}: ProductBreadcrumbProps) {
   // La primera colección con handle es la que sirve como categoría; si el
   // producto no está en ninguna, el rastro queda en Home › Catalog › título.
   const collection = product.collections?.edges?.find(
@@ -32,7 +36,7 @@ export default function ProductBreadcrumb({ product }: ProductBreadcrumbProps) {
   ];
 
   return (
-    <nav aria-label="breadcrumb">
+    <nav aria-label="breadcrumb" className={className}>
       <ol className="flex flex-wrap items-center gap-1.5 font-body text-sm">
         {crumbs.map((crumb, i) => (
           <li key={crumb.label} className="flex items-center gap-1.5">

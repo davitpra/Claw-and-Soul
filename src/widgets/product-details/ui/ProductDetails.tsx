@@ -123,6 +123,9 @@ export default function ProductDetails({
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-16">
+      {/* En mobile el rastro va arriba de la imagen; en lg+ lo toma el de la
+          columna derecha, para que quede pegado al título. */}
+      <ProductBreadcrumb product={product} className="lg:hidden" />
       <ProductGallery
         product={product}
         mainImage={mainImage}
@@ -132,7 +135,7 @@ export default function ProductDetails({
 
       <div className="lg:col-span-5 flex flex-col h-full">
         <div className="sticky top-24 flex flex-col gap-6">
-          <ProductBreadcrumb product={product} />
+          <ProductBreadcrumb product={product} className="hidden lg:block" />
 
           <ProductInfo
             product={product}

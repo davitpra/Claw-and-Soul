@@ -45,7 +45,7 @@ export default function DigitalTemplate({
   return (
     <>
       <div className="flex justify-center py-6 md:py-10 px-4 md:px-10 lg:px-40">
-        <div className="layout-content-container flex flex-col max-w-300 w-full gap-8">
+        <div className="max-w-300 w-full gap-8">
           <ProductDetails
             product={product}
             selectedVariantId={selectedVariantId}
