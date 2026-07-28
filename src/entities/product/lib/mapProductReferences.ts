@@ -1,5 +1,6 @@
 import { ShopifyProduct, ShopifyProductReferences } from "@/lib/shopify";
 import { Product } from "@/entities/pet-product/model/types";
+import { normalizeArtKind } from "../model/artKind";
 
 /**
  * Mapea un metafield list.product_reference (ya resuelto con `references`)
@@ -32,6 +33,9 @@ export function mapProductReferences(
         shopifyHandle: node.handle,
         productRefId: node.id,
         template: node.productType,
+        // El label crudo de Shopify se normaliza acá, en el borde, para que el
+        // resto del front vea siempre la forma del backend ("pbn" | "print").
+        artKind: normalizeArtKind(node.artKind?.value),
       } satisfies Product;
     });
 }

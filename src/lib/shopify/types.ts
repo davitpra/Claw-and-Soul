@@ -30,6 +30,12 @@ export interface ShopifyProductReference {
   productType?: string;
   /** Solo lo piden los queries que muestran la referencia como card de compra. */
   description?: string;
+  /**
+   * Metafield `custom.art_kind` de la referencia, con el label crudo de Shopify
+   * ("PBN", "Print art"): solo lo pide el query que necesita distinguir el
+   * contenido de la obra. Normalizarlo con `normalizeArtKind` antes de usarlo.
+   */
+  artKind?: { value: string } | null;
   images: { edges: { node: ShopifyImage }[] };
   priceRange: { minVariantPrice: ShopifyPrice };
   /** Primera variante, para add-to-cart directo; solo la pide el query de related. */
@@ -62,6 +68,11 @@ export interface ShopifyProduct {
   relatedProducts?: ShopifyProductReferences | null;
   /** Curados a mano en el metafield custom.similar_products. */
   similarProducts?: ShopifyProductReferences | null;
+  /**
+   * La misma obra en el otro tipo de contenido, curada a mano en el metafield
+   * custom.alternative_products. Única fuente de la sección ArtKindAlternative.
+   */
+  alternativeProducts?: ShopifyProductReferences | null;
   priceRange?: {
     minVariantPrice: ShopifyPrice;
   };

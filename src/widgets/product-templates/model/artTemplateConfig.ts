@@ -13,7 +13,7 @@ import {
 
 /**
  * Un producto es "coloreable" si su obra es un paint-by-numbers: eso habilita
- * los accesorios de pintura y la alternativa impresa.
+ * los accesorios de pintura y el paso de pintar en el "how to use".
  *
  * La derivación para los productos sin `artKind` vive en `resolveArtKind`
  * (entities/product): solo Digital y Poster se asumen coloreables, que es lo

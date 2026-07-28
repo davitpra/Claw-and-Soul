@@ -120,6 +120,38 @@ export const GET_PRODUCT = `
         }
       }
     }
+    alternativeProducts: metafield(namespace: "custom", key: "alternative_products") {
+      references(first: 12) {
+        edges {
+          node {
+            ... on Product {
+              id
+              title
+              handle
+              productType
+              description
+              artKind: metafield(namespace: "custom", key: "art_kind") {
+                value
+              }
+              images(first: 1) {
+                edges {
+                  node {
+                    url
+                    altText
+                  }
+                }
+              }
+              priceRange {
+                minVariantPrice {
+                  amount
+                  currencyCode
+                }
+              }
+            }
+          }
+        }
+      }
+    }
     collections(first: 3) {
       edges {
         node {

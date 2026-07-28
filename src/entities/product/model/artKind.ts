@@ -15,6 +15,22 @@ export const ART_KIND_LABELS: Record<ArtKind, string> = {
   print: "Print Art",
 };
 
+// El metafield de Shopify guarda labels humanos ("PBN", "Print art"); el sync
+// del backend los baja normalizados, pero cuando el valor llega directo de la
+// Storefront API (las referencias de custom.alternative_products) hay que
+// traducirlos acá o `resolveArtKind` los descartaría y caería al template.
+const ART_KIND_ALIASES: Record<string, ArtKind> = {
+  pbn: "pbn",
+  "paint by numbers": "pbn",
+  print: "print",
+  "print art": "print",
+};
+
+/** Art kind normalizado desde cualquiera de sus escrituras; null si no se reconoce. */
+export function normalizeArtKind(value?: string | null): ArtKind | null {
+  return ART_KIND_ALIASES[value?.trim().toLowerCase() ?? ""] ?? null;
+}
+
 /** Label visible para un artKind; undefined si el valor falta o no es conocido. */
 export function artKindLabel(value?: string | null): string | undefined {
   return value && value in ART_KIND_LABELS
@@ -45,6 +61,9 @@ export function resolveArtKind(
   template?: string | null,
   artKind?: string | null,
 ): ArtKind | null {
-  if (artKind === "pbn" || artKind === "print") return artKind;
-  return ART_KIND_BY_TEMPLATE[normalizeTemplate(template)] ?? null;
+  return (
+    normalizeArtKind(artKind) ??
+    ART_KIND_BY_TEMPLATE[normalizeTemplate(template)] ??
+    null
+  );
 }

@@ -4,7 +4,10 @@ import ProductDetails from "@/widgets/product-details/ui/ProductDetails";
 import { StyleShowcase, useStyleCollection } from "@/widgets/collection";
 import ProductFAQ from "@/widgets/product-faq/ui/ProductFAQ";
 import { ProductTemplateProps } from "./ProductPageTemplate";
-import { PrintedOption } from "@/widgets/printed-option";
+import {
+  ArtKindAlternative,
+  getArtKindAlternative,
+} from "@/widgets/art-kind-alternative";
 import {
   RelatedProducts,
   getRelatedAccessories,
@@ -43,8 +46,10 @@ export default function ArtProductTemplate({
 }: ProductTemplateProps) {
   const similarProducts = getSimilarProducts(product);
   const relatedAccessories = getRelatedAccessories(product);
-  // Los bloques de pintura (accesorios, alternativa impresa) solo aplican a la
-  // obra coloreable.
+  // Curado en Shopify y ya incluido en el producto: no hace falta esperar red
+  // para saber si la sección tiene contenido.
+  const alternative = getArtKindAlternative(product);
+  // Los accesorios de pintura solo aplican a la obra coloreable.
   const isPaintable = isPaintableProduct(template, artKind);
   const processSteps = getProcessSteps(template, isPaintable);
 
@@ -132,9 +137,14 @@ export default function ArtProductTemplate({
             ),
           },
           {
-            id: "printed",
-            when: isPaintable,
-            node: <PrintedOption handle={handle} />,
+            id: "alternative",
+            when: alternative.target != null && alternative.options.length > 0,
+            node: (
+              <ArtKindAlternative
+                options={alternative.options}
+                target={alternative.target!}
+              />
+            ),
           },
           {
             id: "faq",

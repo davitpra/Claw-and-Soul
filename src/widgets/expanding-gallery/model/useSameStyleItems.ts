@@ -29,9 +29,9 @@ export function sameStyleGalleryTitle(artKind: ArtKind | null): string {
  *
  * Los dos ejes: el estilo lo filtra `useSameStyleProducts`, y el artKind acá,
  * porque desde un coloreable no interesa el arte terminado del mismo estilo
- * —eso ya lo vende `PrintedOption`— ni al revés. Los productos legacy sin
- * artKind entran igual: `resolveArtKind` lo deduce del template a los dos
- * lados de la comparación.
+ * —eso ya lo vende `ArtKindAlternative`, que hace el filtro espejo— ni al revés.
+ * Los productos legacy sin artKind entran igual: `resolveArtKind` lo deduce del
+ * template a los dos lados de la comparación.
  *
  * Vive aparte de `SameStyleGallery` para que el padre pueda decidir si la
  * sección se muestra: `ExpandingGallery` se oculta solo cuando no hay items, y
