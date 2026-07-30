@@ -5,6 +5,7 @@ import {
   AdminStyle,
   SyncStatus,
 } from "@/entities/admin/api";
+import { resolveArtKind } from "@/entities/product/model/artKind";
 import {
   ACCESSORY_TEMPLATE,
   resolveTemplate,
@@ -222,24 +223,41 @@ export function useProductsList(productTypeMap: Record<string, string>) {
   const creditPackProduct = products.find((p) => p.isCreditPack) ?? null;
 
   // Los productos asignados a un rol especial se muestran en su card y se
-  // excluyen de la tabla principal para no duplicarlos. Un producto es accesorio
-  // cuando su template efectivo es "Accessory", que sale del metafield
-  // `custom.art_kind` de Shopify (sync → `isAccessory`) o, para los productos
-  // legacy, del template guardado / el productType; el resto van a estilo.
-  const { styleProducts, accessoryProducts } = useMemo(() => {
-    const specialIds = new Set(
-      [pbnProduct?.id, creditPackProduct?.id].filter(Boolean),
-    );
-    const listProducts = products.filter((p) => !specialIds.has(p.id));
-    return {
-      styleProducts: listProducts.filter(
-        (p) => resolveTemplate(p, productTypeMap) !== ACCESSORY_TEMPLATE,
-      ),
-      accessoryProducts: listProducts.filter(
-        (p) => resolveTemplate(p, productTypeMap) === ACCESSORY_TEMPLATE,
-      ),
-    };
-  }, [products, productTypeMap, pbnProduct?.id, creditPackProduct?.id]);
+  // excluyen de las tablas para no duplicarlos. El resto se reparte en dos
+  // pasos: primero por formato (un producto es accesorio cuando su template
+  // efectivo es "Accessory", que sale del metafield `custom.art_kind` de Shopify
+  // —sync → `isAccessory`— o, para los legacy, del template guardado / el
+  // productType) y después por contenido (`resolveArtKind`, que cae al template
+  // para los legacy sin metafield). Lo que no se puede clasificar —template
+  // vacío o "Credits"— va a su propia lista en vez de desaparecer, para que un
+  // producto mal etiquetado en Shopify se note.
+  const { pbnProducts, printProducts, unclassifiedProducts, accessoryProducts } =
+    useMemo(() => {
+      const specialIds = new Set(
+        [pbnProduct?.id, creditPackProduct?.id].filter(Boolean),
+      );
+      const buckets = {
+        pbnProducts: [] as AdminProduct[],
+        printProducts: [] as AdminProduct[],
+        unclassifiedProducts: [] as AdminProduct[],
+        accessoryProducts: [] as AdminProduct[],
+      };
+
+      for (const p of products) {
+        if (specialIds.has(p.id)) continue;
+        const template = resolveTemplate(p, productTypeMap);
+        if (template === ACCESSORY_TEMPLATE) {
+          buckets.accessoryProducts.push(p);
+          continue;
+        }
+        const artKind = resolveArtKind(template, p.artKind);
+        if (artKind === "pbn") buckets.pbnProducts.push(p);
+        else if (artKind === "print") buckets.printProducts.push(p);
+        else buckets.unclassifiedProducts.push(p);
+      }
+
+      return buckets;
+    }, [products, productTypeMap, pbnProduct?.id, creditPackProduct?.id]);
 
   return {
     // data
@@ -248,7 +266,9 @@ export function useProductsList(productTypeMap: Record<string, string>) {
     syncStatus,
     pbnProduct,
     creditPackProduct,
-    styleProducts,
+    pbnProducts,
+    printProducts,
+    unclassifiedProducts,
     accessoryProducts,
     // status
     loading,

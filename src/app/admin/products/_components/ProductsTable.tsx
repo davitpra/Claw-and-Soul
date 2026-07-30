@@ -17,14 +17,12 @@ import {
   normalizeTemplate,
   templateLabel,
 } from "@/entities/product/lib/template";
-import { artKindLabel } from "@/entities/product/model/artKind";
 import { SortColumn, useTableSort } from "@/hooks/useTableSort";
 
 // El template es el formato de entrega del storefront: Digital es la descarga
 // del coloreable; Canvas/Poster son los físicos. El contenido (coloreable vs
-// arte terminado) es el otro eje, artKind, y se muestra en la columna
-// "Contenido" en solo lectura: su fuente de verdad es el metafield
-// `custom.art_kind` de Shopify.
+// arte terminado) es el otro eje, artKind; no tiene columna propia porque la
+// página ya reparte los productos en una tabla por artKind.
 export const TEMPLATE_OPTIONS = [
   { label: "Por defecto", value: "" },
   { label: "Digital (descarga)", value: "Digital" },
@@ -40,10 +38,6 @@ export const TEMPLATE_OPTIONS = [
  * template para los productos legacy marcados a mano o vía `productType`.
  */
 export const ACCESSORY_TEMPLATE = "Accessory";
-
-// Formatos que llevan una obra de arte y por tanto admiten contenido (artKind);
-// Credits y Accessory no aplican.
-const ART_TEMPLATES = new Set(["Digital", "Canvas", "Poster"]);
 
 /** Valores de template que el Select acepta (sin la opción vacía "Por defecto"). */
 const VALID_TEMPLATES = new Set(
@@ -126,7 +120,6 @@ export function ProductsTable({
       : []),
     { title: "Fulfillment", sortBy: (p) => p.fulfillmentMethod ?? "in_house" },
     { title: "Template", sortBy: (p) => resolveTemplate(p, productTypeMap) },
-    { title: "Contenido", sortBy: (p) => artKindLabel(p.artKind) },
     {
       title: "Estado",
       sortBy: (p) => p.isActive,
@@ -256,27 +249,6 @@ export function ProductsTable({
                   {savingTemplate === p.id && <Spinner size="small" />}
                 </InlineStack>
               </div>
-            )}
-          </IndexTable.Cell>
-
-          <IndexTable.Cell>
-            {/* Contenido de la obra (coloreable vs arte terminado): solo aplica
-                a los formatos con obra (Digital/Canvas/Poster). Es de solo
-                lectura — se edita en el metafield custom.art_kind de Shopify y
-                el sync lo baja a la DB. */}
-            {ART_TEMPLATES.has(resolveTemplate(p, productTypeMap)) ? (
-              <BlockStack gap="0">
-                <Text variant="bodyMd" as="span">
-                  {artKindLabel(p.artKind) ?? "Sin asignar"}
-                </Text>
-                <Text variant="bodySm" tone="subdued" as="span">
-                  Se edita en Shopify
-                </Text>
-              </BlockStack>
-            ) : (
-              <Text variant="bodySm" tone="subdued" as="span">
-                —
-              </Text>
             )}
           </IndexTable.Cell>
 

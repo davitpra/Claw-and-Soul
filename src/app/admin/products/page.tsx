@@ -12,7 +12,8 @@ import {
 } from "@shopify/polaris";
 import { RefreshIcon } from "@shopify/polaris-icons";
 import { DeleteProductModal } from "@/app/admin/_components/DeleteProductModal";
-import { ProductsTable } from "./_components/ProductsTable";
+import { ART_KIND_LABELS } from "@/entities/product/model/artKind";
+import { ProductsTableCard } from "./_components/ProductsTableCard";
 import { SpecialRoleCard } from "./_components/SpecialRoleCard";
 import { SyncStatusCard } from "./_components/SyncStatusCard";
 import { useProductsList } from "./useProductsList";
@@ -27,7 +28,9 @@ export default function AdminProductsPage() {
     syncStatus,
     pbnProduct,
     creditPackProduct,
-    styleProducts,
+    pbnProducts,
+    printProducts,
+    unclassifiedProducts,
     accessoryProducts,
     loading,
     error,
@@ -90,6 +93,49 @@ export default function AdminProductsPage() {
           </Banner>
         )}
 
+        {loading ? (
+          <Card>
+            <InlineStack align="center" gap="300">
+              <Spinner size="small" />
+              <Text as="span" tone="subdued">
+                Cargando productos…
+              </Text>
+            </InlineStack>
+          </Card>
+        ) : (
+          <>
+            <ProductsTableCard
+              {...tableProps}
+              title={ART_KIND_LABELS.pbn}
+              helpText="Productos cuyo contenido es un coloreable para pintar."
+              products={pbnProducts}
+              showStyleColumn
+            />
+
+            <ProductsTableCard
+              {...tableProps}
+              title={ART_KIND_LABELS.print}
+              helpText="Productos cuyo contenido es arte terminado, listo para colgar."
+              products={printProducts}
+              showStyleColumn
+            />
+
+            <ProductsTableCard
+              {...tableProps}
+              title="Sin clasificar"
+              helpText="Sin contenido asignado: define el metafield custom.art_kind en Shopify y vuelve a sincronizar."
+              products={unclassifiedProducts}
+              showStyleColumn
+              hideWhenEmpty
+            />
+
+            <ProductsTableCard
+              {...tableProps}
+              title="Accesorios"
+              products={accessoryProducts}
+            />
+          </>
+        )}
         {!loading && (
           <>
             <SpecialRoleCard
@@ -117,42 +163,6 @@ export default function AdminProductsPage() {
             />
           </>
         )}
-
-        {loading ? (
-          <Card>
-            <InlineStack align="center" gap="300">
-              <Spinner size="small" />
-              <Text as="span" tone="subdued">
-                Cargando productos…
-              </Text>
-            </InlineStack>
-          </Card>
-        ) : (
-          <>
-            <Card padding="0">
-              <div style={{ padding: "var(--p-space-400)" }}>
-                <Text variant="headingSm" as="h2">
-                  Productos
-                </Text>
-              </div>
-              <ProductsTable
-                {...tableProps}
-                products={styleProducts}
-                showStyleColumn
-              />
-            </Card>
-
-            <Card padding="0">
-              <div style={{ padding: "var(--p-space-400)" }}>
-                <Text variant="headingSm" as="h2">
-                  Accesorios
-                </Text>
-              </div>
-              <ProductsTable {...tableProps} products={accessoryProducts} />
-            </Card>
-          </>
-        )}
-
         {syncStatus && <SyncStatusCard syncStatus={syncStatus} />}
       </BlockStack>
 
