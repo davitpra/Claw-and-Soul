@@ -96,8 +96,9 @@ Estas reglas existen para que no se repitan los archivos gigantes que ya tenemos
 
 **Triple guard de acceso** (cualquiera basta para bloquear, pero coexisten):
 
-1. `src/middleware.ts` — servidor. Decodifica el JWT de la cookie httpOnly y exige
-   `role === 'admin'` para `/admin/*`; si no, redirige.
+1. `src/proxy.ts` — servidor. Decodifica el JWT de la cookie httpOnly y exige
+   `role === 'admin'` para `/admin/*`; si no, redirige. (Next 16 renombró
+   `middleware.ts` → `proxy.ts` y `middleware()` → `proxy()`.)
 2. `admin/layout.tsx` — cliente. Usa `useAuth().isAdmin`; muestra spinner mientras
    carga y redirige si no es admin. Envuelve en `PolarisProvider` + `AdminSidebar`.
 3. `AuthContext` — `isAdmin = user?.role === 'admin'`, con el `role` de `GET /users/me`.

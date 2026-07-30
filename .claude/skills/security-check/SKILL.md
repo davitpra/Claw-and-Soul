@@ -1,6 +1,6 @@
 ---
 name: security-check
-description: Checkeo de seguridad paso a paso del frontend (Next.js 16 App Router + React 19). Usa esta skill cuando el usuario pida un checkeo/revisión/auditoría de seguridad, "security check", "security review", "revisar seguridad" o quiera saber si el frontend es seguro. Guía un análisis de código completo (exposición de secretos, XSS, proxy Shopify, middleware, tokens, open redirects) y produce un reporte por severidades SIN modificar código.
+description: Checkeo de seguridad paso a paso del frontend (Next.js 16 App Router + React 19). Usa esta skill cuando el usuario pida un checkeo/revisión/auditoría de seguridad, "security check", "security review", "revisar seguridad" o quiera saber si el frontend es seguro. Guía un análisis de código completo (exposición de secretos, XSS, proxy Shopify, proxy (middleware), tokens, open redirects) y produce un reporte por severidades SIN modificar código.
 ---
 
 # Security Check — Frontend (Next.js App Router)
@@ -18,7 +18,7 @@ Auditoría de seguridad guiada del frontend de Claw & Soul. **Esta skill es de s
 - Next.js 16 App Router, Feature-Sliced Design bajo `src/` (`app`, `entities`, `features`, `widgets`, `shared`, `context`, `hooks`, `lib`).
 - Auth: cookies httpOnly emitidas por el backend NestJS (access 15min / refresh 7d); `AuthContext` + `useAuthFetch` con auto-refresh.
 - Shopify Storefront API se consume server-side vía `src/app/api/shopify/proxy/route.ts`.
-- `src/middleware.ts` protege `/user/*` y `/admin/*` decodificando el JWT **sin verificar firma** (solo UI-gating).
+- `src/proxy.ts` protege `/user/*` y `/admin/*` decodificando el JWT **sin verificar firma** (solo UI-gating). Next 16 renombró `middleware.ts` → `proxy.ts` y `middleware()` → `proxy()`.
 
 ## Paso 1 — Exposición de secretos
 
@@ -41,11 +41,11 @@ Lee `src/app/api/shopify/proxy/route.ts` completo:
 - URLs controladas por el usuario en `href`/`src` (imágenes de mascotas, links de perfil): esquema `javascript:` o data-URLs no validadas = ALTO.
 - Grep de `eval(`, `new Function(`, `document.write` = ALTO si procesan datos externos.
 
-## Paso 4 — Frontera de seguridad del middleware
+## Paso 4 — Frontera de seguridad del proxy
 
-- `src/middleware.ts` decodifica el payload JWT en base64 **sin verificar la firma**: cualquiera puede fabricar una cookie con `role: 'admin'` y pasar el middleware. Esto es aceptable **solo** si es puro UI-gating.
-- Verifica que ninguna página `/admin` ni ruta `/user` confíe en haber "pasado el middleware": todo dato sensible debe venir de llamadas al backend que revalidan el JWT con firma. Busca Server Components o route handlers bajo `src/app/admin/**` y `src/app/user/**` que devuelvan datos sensibles sin llamar al backend autenticado = CRÍTICO.
-- Documenta en el reporte (BAJO, informativo) que el middleware es UI-gating y que la frontera real es el backend — para que nadie construya sobre la suposición contraria.
+- `src/proxy.ts` decodifica el payload JWT en base64 **sin verificar la firma**: cualquiera puede fabricar una cookie con `role: 'admin'` y pasar el proxy. Esto es aceptable **solo** si es puro UI-gating.
+- Verifica que ninguna página `/admin` ni ruta `/user` confíe en haber "pasado el proxy": todo dato sensible debe venir de llamadas al backend que revalidan el JWT con firma. Busca Server Components o route handlers bajo `src/app/admin/**` y `src/app/user/**` que devuelvan datos sensibles sin llamar al backend autenticado = CRÍTICO.
+- Documenta en el reporte (BAJO, informativo) que el proxy es UI-gating y que la frontera real es el backend — para que nadie construya sobre la suposición contraria.
 
 ## Paso 5 — Route handlers y Server Actions
 
@@ -61,7 +61,7 @@ Lee `src/app/api/shopify/proxy/route.ts` completo:
 
 ## Paso 7 — Open redirects
 
-- Grep de `redirect`, `returnUrl`, `callbackUrl`, `next=` en login y middleware.
+- Grep de `redirect`, `returnUrl`, `callbackUrl`, `next=` en login y `src/proxy.ts`.
 - Todo redirect post-login construido desde query params debe validarse: solo rutas relativas internas (`startsWith('/')` y no `//` ni `https:`). Redirect a URL absoluta controlada por el atacante = MEDIO (phishing con dominio legítimo).
 
 ## Paso 8 — Datos sensibles en el cliente
