@@ -9,6 +9,7 @@ import type { FormEvent } from "react";
 import { useCart } from "@/context/CartContext";
 import { useAuth } from "@/context/AuthContext";
 import { useIsBelowLg } from "@/hooks/useMediaQuery";
+import { MAIN_NAV } from "@/shared/config/navigation";
 import UserMenu from "./UserMenu";
 import CreditsBadge from "./CreditsBadge";
 
@@ -56,12 +57,6 @@ export default function Navbar() {
     setPrevPathname(pathname);
     setMobileMenuOpen(false);
   }
-
-  const navLinks = [
-    { name: "Studio", href: "/studio" },
-    { name: "Catalog", href: "/catalog" },
-    { name: "Contact", href: "/contact" },
-  ];
 
   // Handle scroll effect: estilo al hacer scroll + ocultar/mostrar según dirección.
   // Con el menú móvil abierto no escuchamos: bloquear el scroll del body altera
@@ -171,9 +166,9 @@ export default function Navbar() {
 
             {/* Desktop Navigation */}
             <div className="hidden lg:flex items-center gap-8 absolute left-1/2 -translate-x-1/2">
-              {navLinks.map((link) => (
+              {MAIN_NAV.map((link) => (
                 <Link
-                  key={link.name}
+                  key={link.href}
                   href={link.href}
                   className={`font-display leading-normal font-bold transition-all relative group ${
                     pathname === link.href
@@ -181,7 +176,7 @@ export default function Navbar() {
                       : "text-slate-dark hover:text-primary"
                   }`}
                 >
-                  {link.name}
+                  {link.label}
                   <span
                     className={`absolute -bottom-1 left-0 h-0.5 bg-primary transition-all duration-300 ${
                       pathname === link.href
@@ -299,9 +294,9 @@ export default function Navbar() {
         <div className="container-site px-4 sm:px-6 py-4">
           {/* Navigation Links */}
           <nav className="space-y-1">
-            {navLinks.map((link) => (
+            {MAIN_NAV.map((link) => (
               <Link
-                key={link.name}
+                key={link.href}
                 href={link.href}
                 tabIndex={mobileMenuOpen ? undefined : -1}
                 className={`font-display block px-4 py-3 rounded-xl text-base font-bold transition-all ${
@@ -310,7 +305,7 @@ export default function Navbar() {
                     : "text-text-main hover:bg-gray-50"
                 }`}
               >
-                {link.name}
+                {link.label}
               </Link>
             ))}
           </nav>

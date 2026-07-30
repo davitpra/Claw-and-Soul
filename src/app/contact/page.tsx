@@ -1,6 +1,7 @@
 import { FacebookIcon, InstagramIcon } from "@/shared/ui/SocialIcons";
 import { Navbar } from "@/widgets/navbar";
 import { Footer } from "@/widgets/footer";
+import { BRAND } from "@/shared/config/navigation";
 
 export default function Contact() {
   return (
@@ -119,27 +120,10 @@ export default function Contact() {
                         </span>
                         <a
                           className="text-base text-text-muted hover:text-primary transition-colors"
-                          href="mailto:hello@clawandsoul.com"
+                          href={`mailto:${BRAND.email}`}
                         >
-                          hello@clawandsoul.com
+                          {BRAND.email}
                         </a>
-                      </div>
-                    </div>
-                    <div className="flex items-start gap-4">
-                      <div className="flex items-center justify-center size-10 rounded-full bg-white text-primary shadow-sm shrink-0">
-                        <span className="material-symbols-outlined">
-                          location_on
-                        </span>
-                      </div>
-                      <div className="flex flex-col">
-                        <span className="text-sm font-bold text-text-main">
-                          Headquarters
-                        </span>
-                        <span className="text-base text-text-muted">
-                          123 Paws Avenue
-                          <br />
-                          Pet City, CA 90210
-                        </span>
                       </div>
                     </div>
                   </div>
@@ -151,14 +135,14 @@ export default function Contact() {
                       <a
                         aria-label="Facebook"
                         className="size-10 flex items-center justify-center rounded-full bg-text-main text-white hover:bg-primary transition-colors"
-                        href="#"
+                        href={BRAND.facebookUrl}
                       >
                         <FacebookIcon className="size-5" />
                       </a>
                       <a
                         aria-label="Instagram"
                         className="size-10 flex items-center justify-center rounded-full bg-text-main text-white hover:bg-primary transition-colors"
-                        href="#"
+                        href={BRAND.instagramUrl}
                       >
                         <InstagramIcon className="size-5" />
                       </a>
