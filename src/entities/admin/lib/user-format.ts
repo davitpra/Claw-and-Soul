@@ -51,6 +51,11 @@ export function fmtAbsoluteDate(dateStr: string): string {
   });
 }
 
+/** Días transcurridos desde una fecha; para la tarjeta de estadísticas. */
+export function daysSince(dateStr: string): number {
+  return Math.floor((Date.now() - new Date(dateStr).getTime()) / 86400000);
+}
+
 /**
  * Antigüedad en lenguaje natural para columnas de actividad. Pasada una semana
  * deja de ser útil el "hace N días" y se muestra la fecha corta.

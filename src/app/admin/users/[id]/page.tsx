@@ -1,121 +1,54 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import Link from "next/link";
+import { useState } from "react";
 import { useParams } from "next/navigation";
 import {
-  Page,
-  Layout,
-  Card,
-  Avatar,
   Badge,
-  Button,
   Banner,
-  Spinner,
-  Text,
-  InlineStack,
   BlockStack,
   Box,
-  Divider,
+  Card,
+  InlineStack,
+  Layout,
+  Page,
+  Spinner,
   Tabs,
-  Thumbnail,
-  Pagination,
-  EmptyState,
-  Grid,
+  Text,
 } from "@shopify/polaris";
-import {
-  adminApi,
-  AdminUserDetail,
-  AdminUserGeneration,
-  AdminUserOrderListItem,
-  CustomerExpenses,
-  Paginated,
-} from "@/entities/admin/api";
-import { PRODUCTION_STATUS_LABELS } from "@/entities/admin/lib/production-status";
-import {
-  fmtAbsoluteDate,
-  getHandle,
-  getInitials,
-  roleBadgeTone,
-} from "@/entities/admin/lib/user-format";
+import { getHandle, roleBadgeTone } from "@/entities/admin/lib/user-format";
+import { useUserDetail } from "./useUserDetail";
+import { GenerationsPanel } from "./_components/GenerationsPanel";
 import { GrantCreditsCard } from "./_components/GrantCreditsCard";
+import { PetsPanel } from "./_components/PetsPanel";
+import { PhotosPanel } from "./_components/PhotosPanel";
+import { UserExpensesCard } from "./_components/UserExpensesCard";
+import { UserOrdersPanel } from "./_components/UserOrdersPanel";
+import { UserProfileCard } from "./_components/UserProfileCard";
+import { UserStatsCard } from "./_components/UserStatsCard";
 
-const EXPENSE_CATEGORY_LABELS: Record<string, string> = {
-  pod_production: "Producción (Pictorem)",
-  image_generation: "Generación de imagen",
-  image_upscale: "Agrandar imagen",
-  manual: "Manual",
-};
-
-function fmtCurrency(amount: number, currency: string) {
-  return new Intl.NumberFormat("es-ES", {
-    style: "currency",
-    currency,
-    minimumFractionDigits: 2,
-  }).format(amount);
-}
-
-function daysSince(dateStr: string): number {
-  return Math.floor((Date.now() - new Date(dateStr).getTime()) / 86400000);
-}
-
-const GEN_STATUS_TONES: Record<
-  string,
-  "success" | "critical" | "warning" | "enabled"
-> = {
-  completed: "success",
-  failed: "critical",
-  processing: "warning",
-  pending: "enabled",
-};
+const TABS = [
+  { id: "mascotas", content: "Mascotas", panelID: "panel-mascotas" },
+  { id: "imagenes", content: "Imágenes", panelID: "panel-imagenes" },
+  { id: "ia", content: "Resultados IA", panelID: "panel-ia" },
+  { id: "pedidos", content: "Pedidos", panelID: "panel-pedidos" },
+];
 
 export default function AdminUserDetailPage() {
   const { id } = useParams<{ id: string }>();
-  const [user, setUser] = useState<AdminUserDetail | null>(null);
-  const [gens, setGens] = useState<Paginated<AdminUserGeneration> | null>(null);
-  const [genPage, setGenPage] = useState(1);
-  const [loading, setLoading] = useState(true);
-  // `gensLoading` derivado: evita el setState síncrono dentro del efecto.
-  const gensKey = `${id}|${genPage}`;
-  const [gensLoadedKey, setGensLoadedKey] = useState<string | null>(null);
-  const gensLoading = gensLoadedKey !== gensKey;
-  const [error, setError] = useState<string | null>(null);
+  const {
+    user,
+    loading,
+    error,
+    allPhotos,
+    expenses,
+    loadingExpenses,
+    gens,
+    gensLoading,
+    genPage,
+    setGenPage,
+    applyGrant,
+  } = useUserDetail(id);
   const [selectedTab, setSelectedTab] = useState(0);
-  const [expenses, setExpenses] = useState<CustomerExpenses | null>(null);
-  const [loadingExpenses, setLoadingExpenses] = useState(true);
-
-  useEffect(() => {
-    adminApi.users
-      .detail(id)
-      .then(setUser)
-      .catch((e: Error) => setError(e.message))
-      .finally(() => setLoading(false));
-  }, [id]);
-
-  useEffect(() => {
-    let alive = true;
-    adminApi.users
-      .expenses(id)
-      .then((data) => { if (alive) { setExpenses(data); setLoadingExpenses(false); } })
-      .catch(() => { if (alive) setLoadingExpenses(false); });
-    return () => { alive = false; };
-  }, [id]);
-
-  useEffect(() => {
-    let alive = true;
-    adminApi.users
-      .generations(id, genPage)
-      .then((data) => {
-        if (alive) setGens(data);
-      })
-      .catch(() => {})
-      .finally(() => {
-        if (alive) setGensLoadedKey(gensKey);
-      });
-    return () => {
-      alive = false;
-    };
-  }, [id, genPage, gensKey]);
 
   if (loading) {
     return (
@@ -141,18 +74,6 @@ export default function AdminUserDetailPage() {
     );
   }
 
-  const allPhotos = user.pets.flatMap((p) =>
-    p.photos.map((ph) => ({ ...ph, petName: p.name, petSpecies: p.species }))
-  );
-
-  const tabs = [
-    { id: "resumen", content: "Resumen", panelID: "panel-resumen" },
-    { id: "mascotas", content: "Mascotas", panelID: "panel-mascotas" },
-    { id: "imagenes", content: "Imágenes", panelID: "panel-imagenes" },
-    { id: "ia", content: "Resultados IA", panelID: "panel-ia" },
-    { id: "pedidos", content: "Pedidos", panelID: "panel-pedidos" },
-  ];
-
   return (
     <Page
       backAction={{ url: "/admin/users", content: "Usuarios" }}
@@ -160,9 +81,7 @@ export default function AdminUserDetailPage() {
       subtitle={user.email}
       titleMetadata={
         <InlineStack gap="200">
-          <Badge tone={roleBadgeTone(user.role)}>
-            {user.role}
-          </Badge>
+          <Badge tone={roleBadgeTone(user.role)}>{user.role}</Badge>
           <Badge tone={user.isActive ? "success" : "enabled"}>
             {user.isActive ? "Activo" : "Inactivo"}
           </Badge>
@@ -172,616 +91,44 @@ export default function AdminUserDetailPage() {
       <Layout>
         <Layout.Section variant="oneThird">
           <BlockStack gap="400">
-            {/* Profile card */}
-            <Card>
-              <BlockStack gap="400">
-                <InlineStack align="center">
-                  <Avatar
-                    size="xl"
-                    initials={getInitials(user.fullName, user.email)}
-                    name={user.fullName ?? user.email}
-                  />
-                </InlineStack>
-                <BlockStack gap="200">
-                  <InlineStack gap="200" align="center">
-                    <Badge tone={roleBadgeTone(user.role)}>
-                      {user.role}
-                    </Badge>
-                    <Badge tone={user.isActive ? "success" : "enabled"}>
-                      {user.isActive ? "Activo" : "Inactivo"}
-                    </Badge>
-                  </InlineStack>
-                  <Divider />
-                  <BlockStack gap="100">
-                    <Text variant="bodySm" tone="subdued" as="span">
-                      Email
-                    </Text>
-                    <Text variant="bodyMd" as="span">
-                      {user.email}
-                    </Text>
-                  </BlockStack>
-                  <BlockStack gap="100">
-                    <Text variant="bodySm" tone="subdued" as="span">
-                      Email verificado
-                    </Text>
-                    <Badge tone={user.emailVerified ? "success" : "critical"}>
-                      {user.emailVerified ? "Verificado" : "No verificado"}
-                    </Badge>
-                  </BlockStack>
-                  {user.lastLoginAt && (
-                    <BlockStack gap="100">
-                      <Text variant="bodySm" tone="subdued" as="span">
-                        Último acceso
-                      </Text>
-                      <Text variant="bodyMd" as="span">
-                        {fmtAbsoluteDate(user.lastLoginAt)}
-                      </Text>
-                    </BlockStack>
-                  )}
-                  <BlockStack gap="100">
-                    <Text variant="bodySm" tone="subdued" as="span">
-                      Miembro desde
-                    </Text>
-                    <Text variant="bodyMd" as="span">
-                      {fmtAbsoluteDate(user.createdAt)}
-                    </Text>
-                  </BlockStack>
-                </BlockStack>
-              </BlockStack>
-            </Card>
-
-            {/* Stats */}
-            <Card>
-              <BlockStack gap="300">
-                <Text variant="headingSm" as="h2">
-                  Estadísticas
-                </Text>
-                <Grid columns={{ xs: 2 }}>
-                  {[
-                    { label: "Mascotas", value: user.pets.length },
-                    { label: "Imágenes", value: allPhotos.length },
-                    { label: "Generaciones IA", value: gens?.meta.total ?? "—" },
-                    { label: "Días desde alta", value: daysSince(user.createdAt) },
-                  ].map((stat) => (
-                    <div
-                      key={stat.label}
-                      style={{
-                        background: "#f6f6f7",
-                        borderRadius: 8,
-                        padding: "12px",
-                        textAlign: "center",
-                      }}
-                    >
-                      <Text variant="headingLg" as="p">
-                        {typeof stat.value === "number"
-                          ? stat.value.toLocaleString()
-                          : stat.value}
-                      </Text>
-                      <Text variant="bodySm" tone="subdued" as="span">
-                        {stat.label}
-                      </Text>
-                    </div>
-                  ))}
-                </Grid>
-              </BlockStack>
-            </Card>
-
-            {/* Acreditar créditos */}
+            <UserProfileCard user={user} />
+            <UserStatsCard
+              user={user}
+              photoCount={allPhotos.length}
+              generationCount={gens?.meta.total ?? null}
+            />
             <GrantCreditsCard
               userId={id}
               balance={user.generationCredits}
-              onGranted={(newBalance) =>
-                setUser((prev) =>
-                  prev ? { ...prev, generationCredits: newBalance } : prev
-                )
-              }
+              onGranted={applyGrant}
             />
-
-            {/* Gastos del cliente */}
-            <Card>
-              <BlockStack gap="300">
-                <Text variant="headingSm" as="h2">
-                  Gastos acumulados
-                </Text>
-                {loadingExpenses && <Spinner size="small" />}
-                {!loadingExpenses && expenses && (
-                  <BlockStack gap="200">
-                    {Object.entries(expenses.byCategory).map(([cat, total]) => (
-                      <InlineStack key={cat} align="space-between" blockAlign="center">
-                        <Text as="span" tone="subdued">
-                          {EXPENSE_CATEGORY_LABELS[cat] ?? cat}
-                        </Text>
-                        <Text as="span">
-                          ≈ {fmtCurrency(total, expenses.baseCurrency)}
-                        </Text>
-                      </InlineStack>
-                    ))}
-                    {Object.keys(expenses.byCategory).length > 0 && <Divider />}
-                    <InlineStack align="space-between" blockAlign="center">
-                      <Text as="span" fontWeight="semibold">
-                        Total gastos
-                      </Text>
-                      <Text as="span" fontWeight="semibold">
-                        ≈ {fmtCurrency(expenses.grandTotal, expenses.baseCurrency)}
-                      </Text>
-                    </InlineStack>
-                    {expenses.items.length === 0 && (
-                      <Text as="p" tone="subdued">
-                        Sin gastos registrados aún.
-                      </Text>
-                    )}
-                  </BlockStack>
-                )}
-              </BlockStack>
-            </Card>
+            <UserExpensesCard
+              expenses={expenses}
+              loading={loadingExpenses}
+            />
           </BlockStack>
         </Layout.Section>
 
         <Layout.Section>
           <Card padding="0">
-            <Tabs
-              tabs={tabs}
-              selected={selectedTab}
-              onSelect={setSelectedTab}
-            >
+            <Tabs tabs={TABS} selected={selectedTab} onSelect={setSelectedTab}>
               <Box padding="400">
-                {selectedTab === 0 && (
-                  <BlockStack gap="500">
-                    {/* Photos preview */}
-                    <BlockStack gap="300">
-                      <InlineStack align="space-between">
-                        <Text variant="headingMd" as="h2">
-                          Fotos de mascotas ({allPhotos.length})
-                        </Text>
-                        {allPhotos.length > 9 && (
-                          <Button
-                            variant="plain"
-                            onClick={() => setSelectedTab(2)}
-                          >
-                            Ver todas →
-                          </Button>
-                        )}
-                      </InlineStack>
-                      {allPhotos.length === 0 ? (
-                        <Text as="p" tone="subdued">
-                          Sin fotos subidas.
-                        </Text>
-                      ) : (
-                        <div
-                          style={{
-                            display: "grid",
-                            gridTemplateColumns:
-                              "repeat(auto-fill, minmax(60px, 1fr))",
-                            gap: 8,
-                          }}
-                        >
-                          {allPhotos.slice(0, 9).map((ph) => (
-                            <div
-                              key={ph.id}
-                              style={{
-                                aspectRatio: "1",
-                                borderRadius: 8,
-                                overflow: "hidden",
-                                border: ph.isPrimary
-                                  ? "2px solid #448da6"
-                                  : "2px solid #e3e3e3",
-                              }}
-                            >
-                              {/* eslint-disable-next-line @next/next/no-img-element */}
-                              <img
-                                src={ph.photoUrl}
-                                alt={ph.petName}
-                                style={{
-                                  width: "100%",
-                                  height: "100%",
-                                  objectFit: "cover",
-                                }}
-                                loading="lazy"
-                              />
-                            </div>
-                          ))}
-                        </div>
-                      )}
-                    </BlockStack>
-
-                    {/* Generations preview */}
-                    <BlockStack gap="300">
-                      <InlineStack align="space-between">
-                        <Text variant="headingMd" as="h2">
-                          Resultados IA ({gens?.meta.total ?? 0})
-                        </Text>
-                        {gens && gens.meta.total > 6 && (
-                          <Button
-                            variant="plain"
-                            onClick={() => setSelectedTab(3)}
-                          >
-                            Ver todos →
-                          </Button>
-                        )}
-                      </InlineStack>
-                      <GenerationsGrid
-                        gens={gens}
-                        loading={gensLoading}
-                        preview={6}
-                      />
-                    </BlockStack>
-                  </BlockStack>
-                )}
-
-                {selectedTab === 1 && (
-                  <BlockStack gap="400">
-                    <Text variant="headingMd" as="h2">
-                      Mascotas ({user.pets.length})
-                    </Text>
-                    {user.pets.length === 0 ? (
-                      <EmptyState heading="Sin mascotas registradas" image="https://cdn.shopify.com/s/files/1/0262/4071/2726/files/emptystate-files.png">
-                        <Text as="p" tone="subdued">
-                          Este usuario no tiene mascotas.
-                        </Text>
-                      </EmptyState>
-                    ) : (
-                      user.pets.map((pet) => (
-                        <Card key={pet.id}>
-                          <BlockStack gap="300">
-                            <InlineStack gap="200" blockAlign="center">
-                              <Text variant="headingSm" as="h3">
-                                {pet.name}
-                              </Text>
-                              <Text variant="bodySm" tone="subdued" as="span">
-                                {pet.species}
-                                {pet.breed ? ` · ${pet.breed}` : ""}
-                              </Text>
-                              {!pet.isActive && (
-                                <Badge tone="enabled">Inactiva</Badge>
-                              )}
-                            </InlineStack>
-                            {pet.photos.length === 0 ? (
-                              <Text as="p" tone="subdued" variant="bodySm">
-                                Sin fotos subidas.
-                              </Text>
-                            ) : (
-                              <div
-                                style={{
-                                  display: "grid",
-                                  gridTemplateColumns:
-                                    "repeat(auto-fill, minmax(60px, 1fr))",
-                                  gap: 8,
-                                }}
-                              >
-                                {pet.photos.map((ph) => (
-                                  <div
-                                    key={ph.id}
-                                    style={{
-                                      aspectRatio: "1",
-                                      borderRadius: 8,
-                                      overflow: "hidden",
-                                      border: ph.isPrimary
-                                        ? "2px solid #448da6"
-                                        : "2px solid #e3e3e3",
-                                    }}
-                                  >
-                                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                                    <img
-                                      src={ph.photoUrl}
-                                      alt={pet.name}
-                                      style={{
-                                        width: "100%",
-                                        height: "100%",
-                                        objectFit: "cover",
-                                      }}
-                                      loading="lazy"
-                                    />
-                                  </div>
-                                ))}
-                              </div>
-                            )}
-                          </BlockStack>
-                        </Card>
-                      ))
-                    )}
-                  </BlockStack>
-                )}
-
+                {selectedTab === 0 && <PetsPanel pets={user.pets} />}
+                {selectedTab === 1 && <PhotosPanel photos={allPhotos} />}
                 {selectedTab === 2 && (
-                  <BlockStack gap="300">
-                    <Text variant="headingMd" as="h2">
-                      Imágenes subidas ({allPhotos.length})
-                    </Text>
-                    {allPhotos.length === 0 ? (
-                      <EmptyState heading="Sin imágenes" image="https://cdn.shopify.com/s/files/1/0262/4071/2726/files/emptystate-files.png">
-                        <Text as="p" tone="subdued">
-                          Sin fotos subidas.
-                        </Text>
-                      </EmptyState>
-                    ) : (
-                      <div
-                        style={{
-                          display: "grid",
-                          gridTemplateColumns:
-                            "repeat(auto-fill, minmax(60px, 1fr))",
-                          gap: 8,
-                        }}
-                      >
-                        {allPhotos.map((ph) => (
-                          <div
-                            key={ph.id}
-                            style={{
-                              position: "relative",
-                              aspectRatio: "1",
-                              borderRadius: 8,
-                              overflow: "hidden",
-                              border: ph.isPrimary
-                                ? "2px solid #448da6"
-                                : "2px solid #e3e3e3",
-                            }}
-                          >
-                            {/* eslint-disable-next-line @next/next/no-img-element */}
-                            <img
-                              src={ph.photoUrl}
-                              alt={ph.petName}
-                              style={{
-                                width: "100%",
-                                height: "100%",
-                                objectFit: "cover",
-                              }}
-                              loading="lazy"
-                            />
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </BlockStack>
+                  <GenerationsPanel
+                    gens={gens}
+                    loading={gensLoading}
+                    page={genPage}
+                    onPageChange={setGenPage}
+                  />
                 )}
-
-                {selectedTab === 3 && (
-                  <BlockStack gap="400">
-                    <Text variant="headingMd" as="h2">
-                      Resultados IA ({gens?.meta.total ?? 0})
-                    </Text>
-                    <GenerationsGrid gens={gens} loading={gensLoading} />
-                    {gens && gens.meta.totalPages > 1 && (
-                      <InlineStack align="center">
-                        <Pagination
-                          hasPrevious={genPage > 1}
-                          hasNext={genPage < gens.meta.totalPages}
-                          onPrevious={() => setGenPage((p) => p - 1)}
-                          onNext={() => setGenPage((p) => p + 1)}
-                          label={`Pág. ${gens.meta.page} / ${gens.meta.totalPages}`}
-                        />
-                      </InlineStack>
-                    )}
-                  </BlockStack>
-                )}
-
-                {selectedTab === 4 && <UserOrdersList userId={id} />}
+                {selectedTab === 3 && <UserOrdersPanel userId={id} />}
               </Box>
             </Tabs>
           </Card>
         </Layout.Section>
       </Layout>
     </Page>
-  );
-}
-
-function GenerationsGrid({
-  gens,
-  loading,
-  preview,
-}: {
-  gens: Paginated<AdminUserGeneration> | null;
-  loading: boolean;
-  preview?: number;
-}) {
-  if (loading) {
-    return (
-      <InlineStack gap="300" blockAlign="center">
-        <Spinner size="small" />
-        <Text as="span" tone="subdued">
-          Cargando generaciones…
-        </Text>
-      </InlineStack>
-    );
-  }
-
-  const items = preview ? gens?.data.slice(0, preview) : gens?.data;
-
-  if (!items || items.length === 0) {
-    return (
-      <Text as="p" tone="subdued">
-        Este usuario no tiene generaciones.
-      </Text>
-    );
-  }
-
-  return (
-    <div
-      style={{
-        display: "grid",
-        gridTemplateColumns: "repeat(auto-fill, minmax(120px, 1fr))",
-        gap: 12,
-      }}
-    >
-      {items.map((g) => {
-        const imgUrl = g.thumbnailUrl ?? g.resultUrl;
-        return (
-          <Card key={g.id} padding="200">
-            <BlockStack gap="200">
-              <div
-                style={{
-                  aspectRatio: "1",
-                  borderRadius: 6,
-                  overflow: "hidden",
-                  background: "#f6f6f7",
-                }}
-              >
-                {imgUrl ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img
-                    src={imgUrl}
-                    alt={g.style?.displayName ?? "Generación"}
-                    style={{
-                      width: "100%",
-                      height: "100%",
-                      objectFit: "cover",
-                    }}
-                    loading="lazy"
-                  />
-                ) : (
-                  <div
-                    style={{
-                      width: "100%",
-                      height: "100%",
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                    }}
-                  >
-                    <Text as="span" tone="subdued">
-                      —
-                    </Text>
-                  </div>
-                )}
-              </div>
-              <BlockStack gap="050">
-                <Text variant="bodySm" as="span" truncate>
-                  {g.style?.displayName ?? "—"}
-                </Text>
-                <Text variant="bodySm" tone="subdued" as="span" truncate>
-                  {g.pet?.name ?? "—"}
-                </Text>
-                <Badge
-                  tone={GEN_STATUS_TONES[g.status] ?? "enabled"}
-                  size="small"
-                >
-                  {g.status}
-                </Badge>
-              </BlockStack>
-            </BlockStack>
-          </Card>
-        );
-      })}
-    </div>
-  );
-}
-
-function UserOrdersList({ userId }: { userId: string }) {
-  const [orders, setOrders] = useState<Paginated<AdminUserOrderListItem> | null>(null);
-  const [page, setPage] = useState(1);
-
-  // `loading` derivado: evita el setState síncrono dentro del efecto.
-  const requestKey = `${userId}|${page}`;
-  const [loadedKey, setLoadedKey] = useState<string | null>(null);
-  const loading = loadedKey !== requestKey;
-
-  useEffect(() => {
-    let alive = true;
-    adminApi.users
-      .orders(userId, page)
-      .then((data) => {
-        if (alive) setOrders(data);
-      })
-      .finally(() => {
-        if (alive) setLoadedKey(requestKey);
-      });
-    return () => {
-      alive = false;
-    };
-  }, [userId, page, requestKey]);
-
-  if (loading) {
-    return (
-      <InlineStack gap="300" blockAlign="center">
-        <Spinner size="small" />
-        <Text as="span" tone="subdued">
-          Cargando pedidos…
-        </Text>
-      </InlineStack>
-    );
-  }
-
-  if (!orders?.data.length) {
-    return (
-      <EmptyState heading="Sin pedidos registrados" image="https://cdn.shopify.com/s/files/1/0262/4071/2726/files/emptystate-files.png">
-        <Text as="p" tone="subdued">
-          No se encontraron pedidos para este usuario.
-        </Text>
-      </EmptyState>
-    );
-  }
-
-  return (
-    <BlockStack gap="300">
-      {orders.data.map((order) => {
-        const thumb =
-          order.items[0]?.generation?.resultUrl ?? order.items[0]?.imageUrl;
-        return (
-          <Link
-            key={order.id}
-            href={`/admin/orders/${order.id}`}
-            style={{ textDecoration: "none" }}
-          >
-            <Card>
-              <InlineStack gap="400" blockAlign="center">
-                <div style={{ flexShrink: 0 }}>
-                  {thumb ? (
-                    <Thumbnail source={thumb} alt="" size="small" />
-                  ) : (
-                    <div
-                      style={{
-                        width: 40,
-                        height: 40,
-                        borderRadius: 6,
-                        background: "#f6f6f7",
-                        border: "1px solid #e3e3e3",
-                      }}
-                    />
-                  )}
-                </div>
-                <BlockStack gap="0">
-                  <Text variant="bodyMd" fontWeight="semibold" as="span">
-                    {order.orderNumber}
-                  </Text>
-                  <Text variant="bodySm" tone="subdued" as="span">
-                    {new Date(order.shopifyCreatedAt).toLocaleDateString(
-                      "es-ES",
-                      { day: "2-digit", month: "short", year: "numeric" }
-                    )}{" "}
-                    · {order.items.length} item(s)
-                  </Text>
-                </BlockStack>
-                <BlockStack gap="100" inlineAlign="end">
-                  <Text variant="bodyMd" fontWeight="semibold" as="span">
-                    {new Intl.NumberFormat("es-ES", {
-                      style: "currency",
-                      currency: order.currency,
-                    }).format(order.totalAmount)}
-                  </Text>
-                  <InlineStack gap="100">
-                    {[
-                      ...new Set(order.items.map((i) => i.productionStatus)),
-                    ].map((s) => (
-                      <Badge key={s} size="small" tone="enabled">
-                        {PRODUCTION_STATUS_LABELS[s] ?? s}
-                      </Badge>
-                    ))}
-                  </InlineStack>
-                </BlockStack>
-              </InlineStack>
-            </Card>
-          </Link>
-        );
-      })}
-
-      {orders.meta.totalPages > 1 && (
-        <InlineStack align="center">
-          <Pagination
-            hasPrevious={page > 1}
-            hasNext={page < orders.meta.totalPages}
-            onPrevious={() => setPage((p) => p - 1)}
-            onNext={() => setPage((p) => p + 1)}
-          />
-        </InlineStack>
-      )}
-    </BlockStack>
   );
 }
