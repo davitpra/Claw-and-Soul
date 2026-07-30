@@ -7,12 +7,17 @@
    clase dentro de `@layer base`, las utilidades de Tailwind (`text-*`,
    `leading-*`) vuelven a ganar y 24px sigue siendo el default sin tamaño.
    El .woff2 se sirve desde gstatic; si algún día cambia la versión (v361),
-   volver a pedir el CSS a fonts.googleapis.com y actualizar la URL. */
+   volver a pedir el CSS a fonts.googleapis.com y actualizar la URL, y de paso
+   el `rel="preload"` que la acompaña en layout.tsx.
+   `font-display: block` (no `swap`): mientras la fuente viaja, el navegador
+   pinta el texto invisible en vez de mostrar la ligadura literal — con `swap`
+   se veían las palabras "palette", "search" o "shopping_cart" dentro de los
+   botones hasta que llegaba el archivo, y luego saltaban a glifos. */
 @font-face {
   font-family: "Material Symbols Outlined";
   font-style: normal;
   font-weight: 100 700;
-  font-display: swap;
+  font-display: block;
   src: url(https://fonts.gstatic.com/s/materialsymbolsoutlined/v361/kJEPBvYX7BgnkSrUwT8OhrdQw4oELdPIeeII9v6oDMzBwG-RpA6RzaxHMPdY40KH8nGzv3fzfVJO1Q.woff2)
     format("woff2");
 }
@@ -35,6 +40,15 @@
   }
 }
 
+/* `inline` para que las utilidades (font-display / font-body) lleven el valor
+   resuelto en lugar de `var(--font-display)`: así el var() de next/font se
+   sustituye en el propio elemento y el par no se rompe si las clases
+   `.variable` dejan de estar en <html>. */
+@theme inline {
+  --font-display: var(--font-epilogue), ui-sans-serif, system-ui;
+  --font-body: var(--font-lato), ui-sans-serif, system-ui;
+}
+
 @theme {
   --color-primary: #448da6;
   --color-primary-dark: #367a8f;
@@ -46,9 +60,6 @@
   --color-slate-dark: #103642;
   --color-cream: #f0eee9;
   --color-faq-bg: #eae7e1;
-
-  --font-display: var(--font-epilogue), ui-sans-serif, system-ui;
-  --font-body: var(--font-lato), ui-sans-serif, system-ui;
 
   --container-max-w: 90rem;
   --container-padding-x: 1.5rem;
