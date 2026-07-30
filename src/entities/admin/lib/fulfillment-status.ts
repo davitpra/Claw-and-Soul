@@ -63,32 +63,3 @@ export function fulfillmentLabel(status: string): string {
 export function fulfillmentTone(status: string): BadgeProps["tone"] {
   return FULFILLMENT_DISPLAY_TONES[status] ?? "enabled";
 }
-
-// --- Pestañas de la cola por estado de Shopify -----------------------------
-
-/** 4 grupos que cubren los 7 estados de display. */
-export const FULFILLMENT_STAGES: {
-  key: "unfulfilled" | "in_progress" | "on_hold" | "fulfilled";
-  label: string;
-}[] = [
-  { key: "unfulfilled", label: "Unfulfilled" },
-  { key: "in_progress", label: "In progress" },
-  { key: "on_hold", label: "On hold" },
-  { key: "fulfilled", label: "Fulfilled" },
-];
-
-/** Mapea un estado de display a la pestaña en que se agrupa el pedido. */
-export function stageForFulfillment(
-  status: string,
-): "unfulfilled" | "in_progress" | "on_hold" | "fulfilled" {
-  if (status === "on_hold") return "on_hold";
-  if (status === "fulfilled" || status === "restocked") return "fulfilled";
-  if (
-    status === "in_progress" ||
-    status === "scheduled" ||
-    status === "partially_fulfilled"
-  ) {
-    return "in_progress";
-  }
-  return "unfulfilled";
-}

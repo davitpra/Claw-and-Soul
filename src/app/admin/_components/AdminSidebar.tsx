@@ -9,7 +9,6 @@ import {
   TeamIcon,
   GiftCardIcon,
   OrderIcon,
-  PrintIcon,
   PaintBrushFlatIcon,
   ColorIcon,
   InventoryIcon,
@@ -22,11 +21,10 @@ const navItems = [
   { label: "Pedidos", href: "/admin/orders", icon: OrderIcon },
   { label: "Productos", href: "/admin/products", icon: InventoryIcon },
   { label: "Estilos", href: "/admin/styles", icon: PaintBrushFlatIcon },
-  { label: "Producción", href: "/admin/production", icon: PrintIcon },
+  { label: "PBN", href: "/admin/pbn", icon: ColorIcon },
   { label: "Usuarios", href: "/admin/users", icon: TeamIcon },
   { label: "Créditos", href: "/admin/credits", icon: GiftCardIcon },
   { label: "Gastos", href: "/admin/expenses", icon: ReceiptIcon },
-  { label: "PBN", href: "/admin/pbn", icon: ColorIcon },
 ];
 
 export default function AdminSidebar() {
