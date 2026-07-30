@@ -1,7 +1,7 @@
 "use client";
 
-import Link from "next/link";
 import {
+  BlockStack,
   Box,
   Button,
   EmptyState,
@@ -36,6 +36,7 @@ interface StylesTableProps {
   styles: AdminStyle[];
   /** Id del estilo cuyo toggle está en vuelo. */
   toggling: string | null;
+  onRowClick: (id: string) => void;
   onToggle: (style: AdminStyle) => void;
   onDelete: (style: AdminStyle) => void;
 }
@@ -43,6 +44,7 @@ interface StylesTableProps {
 export function StylesTable({
   styles,
   toggling,
+  onRowClick,
   onToggle,
   onDelete,
 }: StylesTableProps) {
@@ -74,6 +76,7 @@ export function StylesTable({
           key={s.id}
           position={index}
           tone={s.isActive ? undefined : "subdued"}
+          onClick={() => onRowClick(s.id)}
         >
           <IndexTable.Cell>
             <Thumbnail
@@ -83,18 +86,14 @@ export function StylesTable({
             />
           </IndexTable.Cell>
           <IndexTable.Cell>
-            <Link
-              href={`/admin/styles/${s.id}`}
-              style={{ textDecoration: "none", color: "inherit" }}
-            >
+            <BlockStack gap="0">
               <Text variant="bodyMd" fontWeight="semibold" as="span">
                 {s.displayName}
               </Text>
-            </Link>
-            <br />
-            <Text variant="bodySm" tone="subdued" as="span">
-              {s.name}
-            </Text>
+              <Text variant="bodySm" tone="subdued" as="span">
+                {s.name}
+              </Text>
+            </BlockStack>
           </IndexTable.Cell>
           <IndexTable.Cell>
             <Text as="span" tone="subdued">
@@ -105,29 +104,28 @@ export function StylesTable({
             <Text as="span">{s.images.length}</Text>
           </IndexTable.Cell>
           <IndexTable.Cell>
-            <ActiveToggleBadge
-              isActive={s.isActive}
-              loading={toggling === s.id}
-              onToggle={() => onToggle(s)}
-              resourceLabel="estilo"
-            />
+            <div onClick={(e) => e.stopPropagation()}>
+              <ActiveToggleBadge
+                isActive={s.isActive}
+                loading={toggling === s.id}
+                onToggle={() => onToggle(s)}
+                resourceLabel="estilo"
+              />
+            </div>
           </IndexTable.Cell>
           <IndexTable.Cell>
-            <InlineStack gap="200" blockAlign="center">
-              <Link href={`/admin/styles/${s.id}`}>
-                <Button variant="plain" size="slim">
-                  Ver
-                </Button>
-              </Link>
-              <Button
-                variant="plain"
-                tone="critical"
-                size="slim"
-                icon={DeleteIcon}
-                accessibilityLabel={`Eliminar ${s.displayName}`}
-                onClick={() => onDelete(s)}
-              />
-            </InlineStack>
+            <div onClick={(e) => e.stopPropagation()}>
+              <InlineStack gap="200" blockAlign="center">
+                <Button
+                  variant="plain"
+                  tone="critical"
+                  size="slim"
+                  icon={DeleteIcon}
+                  accessibilityLabel={`Eliminar ${s.displayName}`}
+                  onClick={() => onDelete(s)}
+                />
+              </InlineStack>
+            </div>
           </IndexTable.Cell>
         </IndexTable.Row>
       ))}

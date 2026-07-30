@@ -1,5 +1,6 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import { Page, Card, Banner, BlockStack } from "@shopify/polaris";
 import { LoadingCard } from "@/app/admin/_components/LoadingCard";
 import { DeleteStyleModal } from "./_components/DeleteStyleModal";
@@ -7,6 +8,7 @@ import { StylesTable } from "./_components/StylesTable";
 import { useStylesList } from "./useStylesList";
 
 export default function AdminStylesPage() {
+  const router = useRouter();
   const {
     styles,
     generationCount,
@@ -40,6 +42,7 @@ export default function AdminStylesPage() {
             <StylesTable
               styles={styles}
               toggling={toggling}
+              onRowClick={(id) => router.push(`/admin/styles/${id}`)}
               onToggle={handleToggle}
               onDelete={setDeletingTarget}
             />
