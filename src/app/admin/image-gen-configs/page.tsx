@@ -6,15 +6,15 @@ import {
   Page,
   Card,
   IndexTable,
-  Badge,
   Banner,
-  Spinner,
+  BlockStack,
   Text,
-  InlineStack,
   Button,
 } from "@shopify/polaris";
 import { adminApi, AdminImageGenConfig } from "@/entities/admin/api";
 import { SortColumn, useTableSort } from "@/hooks/useTableSort";
+import { ActiveToggleBadge } from "@/app/admin/_components/ActiveToggleBadge";
+import { LoadingCard } from "@/app/admin/_components/LoadingCard";
 
 const COLUMNS: SortColumn<AdminImageGenConfig>[] = [
   { title: "Nombre", sortBy: (c) => c.name },
@@ -56,7 +56,7 @@ export default function AdminImageGenConfigsPage() {
       });
       load();
     } catch (e: unknown) {
-      alert((e as Error).message);
+      setError((e as Error).message);
     } finally {
       setToggling(null);
     }
@@ -71,7 +71,7 @@ export default function AdminImageGenConfigsPage() {
         url: "/admin/image-gen-configs/new",
       }}
     >
-      <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+      <BlockStack gap="400">
         {error && (
           <Banner tone="critical" onDismiss={() => setError(null)}>
             {error}
@@ -79,14 +79,7 @@ export default function AdminImageGenConfigsPage() {
         )}
 
         {loading ? (
-          <Card>
-            <InlineStack align="center" gap="300">
-              <Spinner size="small" />
-              <Text as="span" tone="subdued">
-                Cargando configs…
-              </Text>
-            </InlineStack>
-          </Card>
+          <LoadingCard message="Cargando configs…" />
         ) : (
           <Card padding="0">
             <IndexTable
@@ -130,35 +123,12 @@ export default function AdminImageGenConfigsPage() {
                     </Text>
                   </IndexTable.Cell>
                   <IndexTable.Cell>
-                    <InlineStack gap="200" blockAlign="center">
-                      <button
-                        type="button"
-                        onClick={() => handleToggle(c)}
-                        disabled={toggling === c.id}
-                        aria-label={
-                          c.isActive
-                            ? "Desactivar image gen config"
-                            : "Activar image gen config"
-                        }
-                        title={
-                          c.isActive
-                            ? "Click para desactivar"
-                            : "Click para activar"
-                        }
-                        style={{
-                          background: "transparent",
-                          border: "none",
-                          padding: 0,
-                          cursor: toggling === c.id ? "wait" : "pointer",
-                          opacity: toggling === c.id ? 0.6 : 1,
-                        }}
-                      >
-                        <Badge tone={c.isActive ? "success" : "enabled"}>
-                          {c.isActive ? "Activo" : "Inactivo"}
-                        </Badge>
-                      </button>
-                      {toggling === c.id && <Spinner size="small" />}
-                    </InlineStack>
+                    <ActiveToggleBadge
+                      isActive={c.isActive}
+                      loading={toggling === c.id}
+                      onToggle={() => handleToggle(c)}
+                      resourceLabel="image gen config"
+                    />
                   </IndexTable.Cell>
                   <IndexTable.Cell>
                     <Link href={`/admin/image-gen-configs/${c.id}`}>
@@ -172,7 +142,7 @@ export default function AdminImageGenConfigsPage() {
             </IndexTable>
           </Card>
         )}
-      </div>
+      </BlockStack>
     </Page>
   );
 }

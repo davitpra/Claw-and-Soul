@@ -2,7 +2,6 @@
 
 import {
   IndexTable,
-  Badge,
   Button,
   Spinner,
   Text,
@@ -13,6 +12,7 @@ import {
 } from "@shopify/polaris";
 import { DeleteIcon, ImageIcon } from "@shopify/polaris-icons";
 import { AdminProduct, AdminStyle } from "@/entities/admin/api";
+import { ActiveToggleBadge } from "@/app/admin/_components/ActiveToggleBadge";
 import {
   normalizeTemplate,
   templateLabel,
@@ -254,31 +254,12 @@ export function ProductsTable({
 
           <IndexTable.Cell>
             <div onClick={(e) => e.stopPropagation()}>
-              <InlineStack gap="200" blockAlign="center">
-                <button
-                  type="button"
-                  onClick={() => onToggleActive(p)}
-                  disabled={toggling === p.id}
-                  aria-label={
-                    p.isActive ? "Desactivar producto" : "Activar producto"
-                  }
-                  title={
-                    p.isActive ? "Click para desactivar" : "Click para activar"
-                  }
-                  style={{
-                    background: "transparent",
-                    border: "none",
-                    padding: 0,
-                    cursor: toggling === p.id ? "wait" : "pointer",
-                    opacity: toggling === p.id ? 0.6 : 1,
-                  }}
-                >
-                  <Badge tone={p.isActive ? "success" : "enabled"}>
-                    {p.isActive ? "Activo" : "Inactivo"}
-                  </Badge>
-                </button>
-                {toggling === p.id && <Spinner size="small" />}
-              </InlineStack>
+              <ActiveToggleBadge
+                isActive={p.isActive}
+                loading={toggling === p.id}
+                onToggle={() => onToggleActive(p)}
+                resourceLabel="producto"
+              />
             </div>
           </IndexTable.Cell>
 
