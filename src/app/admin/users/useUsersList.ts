@@ -14,22 +14,37 @@ import {
 // `sort`/`order` del endpoint paginado.
 //
 // "Acciones" no es ordenable, y tampoco lo es ninguna columna sin `sortKey`.
+//
+// No hay columna "Correo": el email vive bajo el nombre, dentro de "Usuario".
+// Con eso se pierde el sort por email puro, pero el backend resuelve `name` como
+// `fullName (nulls last) → email`, así que los usuarios sin nombre siguen
+// ordenados por email; y la búsqueda ya filtra por ambos campos.
 const COLUMNS: ServerSortColumn[] = [
   { title: "Usuario", sortKey: "name" },
-  { title: "Correo", sortKey: "email" },
-  { title: "Mascotas", sortKey: "pets", defaultSortDirection: "descending" },
+  {
+    title: "Mascotas",
+    sortKey: "pets",
+    defaultSortDirection: "descending",
+    alignment: "end",
+  },
   {
     title: "Generaciones",
     sortKey: "generations",
     defaultSortDirection: "descending",
+    alignment: "end",
   },
-  { title: "Créditos", sortKey: "credits", defaultSortDirection: "descending" },
+  {
+    title: "Créditos",
+    sortKey: "credits",
+    defaultSortDirection: "descending",
+    alignment: "end",
+  },
   {
     title: "Última actividad",
     sortKey: "lastActivity",
     defaultSortDirection: "descending",
   },
-  { title: "" },
+  { title: "Acciones", alignment: "end" },
 ];
 
 interface UsersList {

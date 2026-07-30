@@ -28,6 +28,8 @@ interface ColumnBase {
   title: string;
   /** Dirección del primer click sobre la columna. Polaris usa "descending". */
   defaultSortDirection?: SortDirection;
+  /** Alineación del encabezado. `"end"` para las columnas numéricas. */
+  alignment?: "start" | "center" | "end";
 }
 
 export interface SortColumn<T> extends ColumnBase {
@@ -112,6 +114,7 @@ function useSortState(
       columns.map((c) => ({
         title: c.title,
         defaultSortDirection: c.defaultSortDirection,
+        alignment: c.alignment,
       })) as IndexTableProps["headings"],
     [columns],
   );

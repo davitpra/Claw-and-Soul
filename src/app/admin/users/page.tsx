@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import {
   Page,
   Card,
@@ -20,6 +21,7 @@ import { UsersTable } from "./_components/UsersTable";
 import { useUsersList } from "./useUsersList";
 
 export default function AdminUsersPage() {
+  const router = useRouter();
   const {
     result,
     loading,
@@ -85,6 +87,7 @@ export default function AdminUsersPage() {
               users={result?.data ?? []}
               headings={headings}
               sortProps={sortProps}
+              onRowClick={(id) => router.push(`/admin/users/${id}`)}
               onGrantCredits={setGrantTarget}
             />
           )}

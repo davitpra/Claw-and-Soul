@@ -32,7 +32,12 @@ import {
   Paginated,
 } from "@/entities/admin/api";
 import { PRODUCTION_STATUS_LABELS } from "@/entities/admin/lib/production-status";
-import { getHandle, getInitials } from "@/entities/admin/lib/user-format";
+import {
+  fmtAbsoluteDate,
+  getHandle,
+  getInitials,
+  roleBadgeTone,
+} from "@/entities/admin/lib/user-format";
 import { GrantCreditsCard } from "./_components/GrantCreditsCard";
 
 const EXPENSE_CATEGORY_LABELS: Record<string, string> = {
@@ -53,25 +58,6 @@ function fmtCurrency(amount: number, currency: string) {
 function daysSince(dateStr: string): number {
   return Math.floor((Date.now() - new Date(dateStr).getTime()) / 86400000);
 }
-
-function fmtDate(d: string) {
-  return new Date(d).toLocaleDateString("es-ES", {
-    year: "numeric",
-    month: "short",
-    day: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-  });
-}
-
-const ROLE_TONES: Record<
-  string,
-  "attention" | "warning" | "info"
-> = {
-  admin: "attention",
-  premium: "warning",
-  user: "info",
-};
 
 const GEN_STATUS_TONES: Record<
   string,
@@ -174,7 +160,7 @@ export default function AdminUserDetailPage() {
       subtitle={user.email}
       titleMetadata={
         <InlineStack gap="200">
-          <Badge tone={ROLE_TONES[user.role] ?? "enabled"}>
+          <Badge tone={roleBadgeTone(user.role)}>
             {user.role}
           </Badge>
           <Badge tone={user.isActive ? "success" : "enabled"}>
@@ -198,7 +184,7 @@ export default function AdminUserDetailPage() {
                 </InlineStack>
                 <BlockStack gap="200">
                   <InlineStack gap="200" align="center">
-                    <Badge tone={ROLE_TONES[user.role] ?? "enabled"}>
+                    <Badge tone={roleBadgeTone(user.role)}>
                       {user.role}
                     </Badge>
                     <Badge tone={user.isActive ? "success" : "enabled"}>
@@ -228,7 +214,7 @@ export default function AdminUserDetailPage() {
                         Último acceso
                       </Text>
                       <Text variant="bodyMd" as="span">
-                        {fmtDate(user.lastLoginAt)}
+                        {fmtAbsoluteDate(user.lastLoginAt)}
                       </Text>
                     </BlockStack>
                   )}
@@ -237,7 +223,7 @@ export default function AdminUserDetailPage() {
                       Miembro desde
                     </Text>
                     <Text variant="bodyMd" as="span">
-                      {fmtDate(user.createdAt)}
+                      {fmtAbsoluteDate(user.createdAt)}
                     </Text>
                   </BlockStack>
                 </BlockStack>

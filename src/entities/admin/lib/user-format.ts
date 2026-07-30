@@ -24,6 +24,33 @@ export function getHandle(email: string): string {
   return "@" + email.split("@")[0];
 }
 
+/** Tonos del `<Badge>` de rol. Cualquier rol desconocido cae en el neutro. */
+const ROLE_TONES: Record<string, "attention" | "warning" | "info"> = {
+  admin: "attention",
+  premium: "warning",
+  user: "info",
+};
+
+export function roleBadgeTone(
+  role: string,
+): "attention" | "warning" | "info" | "enabled" {
+  return ROLE_TONES[role] ?? "enabled";
+}
+
+/**
+ * Fecha absoluta con hora. Es el complemento de `fmtRelativeTime`: la lista la
+ * usa en el tooltip y el detalle la muestra directamente.
+ */
+export function fmtAbsoluteDate(dateStr: string): string {
+  return new Date(dateStr).toLocaleDateString("es-ES", {
+    year: "numeric",
+    month: "short",
+    day: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+}
+
 /**
  * Antigüedad en lenguaje natural para columnas de actividad. Pasada una semana
  * deja de ser útil el "hace N días" y se muestra la fecha corta.
