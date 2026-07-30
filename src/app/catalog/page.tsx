@@ -22,6 +22,11 @@ import type { CatalogProduct } from "@/widgets/catalog";
 import { CircularCategory } from "@/widgets/circular-category";
 import { Container } from "@/shared/ui/Container";
 
+// Valor de `?intent=` / `?format=` que significa "sin acotar". Hace falta un
+// sentinel porque el param ausente ya significa otra cosa: los valores por
+// defecto de la barra.
+const ALL_CHIPS = "all";
+
 // Solo los productos con rol dedicado en el admin ("Producto Paint by Numbers" y
 // "Producto Credit Pack") tienen su propia landing en vez de la página genérica
 // /product/{handle}. El resto de los PBN por estilo mantienen su página normal.
@@ -51,15 +56,23 @@ function CatalogContent() {
   );
   const { filteredProducts, activeFilterCount, clearFilters } = filters;
 
+  const pushParams = (params: URLSearchParams) => {
+    const query = params.toString();
+    router.replace(query ? `/catalog?${query}` : "/catalog", { scroll: false });
+  };
+
   // Elegir categoría reemplaza la búsqueda: son dos formas de acotar el catálogo
-  // y la Storefront API no permite combinarlas en una sola consulta.
+  // y la Storefront API no permite combinarlas en una sola consulta. Traer otro
+  // catálogo también devuelve la barra de chips a sus valores por defecto: lo
+  // que estuviera marcado puede no existir en el nuevo contexto.
   const selectCollection = (handle: string) => {
     const params = new URLSearchParams(searchParams);
     params.delete("q");
+    params.delete("intent");
+    params.delete("format");
     if (handle) params.set("collection", handle);
     else params.delete("collection");
-    const query = params.toString();
-    router.replace(query ? `/catalog?${query}` : "/catalog", { scroll: false });
+    pushParams(params);
   };
 
   // Los filtros viven en un modal detrás del botón "Filters" en todos los
@@ -67,34 +80,29 @@ function CatalogContent() {
   const [filtersOpen, setFiltersOpen] = useState(false);
 
   // Selección de la barra de chips: familia (fila 1) y formato (fila 2), ambas
-  // null cuando no acotan nada. Se guarda junto con el contexto (búsqueda +
-  // colección) en que se hizo: si el contexto cambia trae otro catálogo y se
-  // vuelve a los valores por defecto.
-  const typeContext = `${searchQuery}|${collectionHandle}`;
-  const [selection, setSelection] = useState<{
-    context: string;
-    intent: string | null;
-    format: string | null;
-  }>({
-    context: typeContext,
-    intent: DEFAULT_CATALOG_INTENT,
-    format: DEFAULT_CATALOG_FORMAT,
-  });
-  const current =
-    selection.context === typeContext
-      ? selection
-      : {
-          context: typeContext,
-          intent: DEFAULT_CATALOG_INTENT,
-          format: DEFAULT_CATALOG_FORMAT,
-        };
+  // null cuando no acotan nada. Vive en la URL para que el catálogo sea
+  // enlazable (el footer entra directo a "Canvas Prints", "Accessories"…) y
+  // sobreviva a un refresh. Param ausente → valor por defecto; el sentinel
+  // "all" es el "sin filtro" que antes representaba el estado null.
+  const readChip = (key: string, fallback: string) => {
+    const value = searchParams.get(key);
+    if (value === null) return fallback;
+    return value === ALL_CHIPS ? null : value;
+  };
+  const current = {
+    intent: readChip("intent", DEFAULT_CATALOG_INTENT),
+    format: readChip("format", DEFAULT_CATALOG_FORMAT),
+  };
+  const selectChip = (key: string, value: string | null) => {
+    const params = new URLSearchParams(searchParams);
+    params.set(key, value ?? ALL_CHIPS);
+    pushParams(params);
+  };
   // Cambiar de familia no resetea el formato: si el nuevo contexto no lo ofrece,
   // `activeFormat` lo ignora por su cuenta y el chip vuelve al elegir una familia
   // que sí lo tenga.
-  const selectIntent = (intent: string | null) =>
-    setSelection({ ...current, context: typeContext, intent });
-  const selectFormat = (format: string | null) =>
-    setSelection({ ...current, context: typeContext, format });
+  const selectIntent = (intent: string | null) => selectChip("intent", intent);
+  const selectFormat = (format: string | null) => selectChip("format", format);
 
   // Familias con productos tras los filtros del modal. Si la elegida se queda
   // vacía se ignora la selección y se muestra el catálogo completo, en vez de
