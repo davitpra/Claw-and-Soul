@@ -22,7 +22,17 @@ import {
   AdminCreditTransaction,
   Paginated,
 } from "@/entities/admin/api";
+import { ServerSortColumn, useServerSort } from "@/hooks/useTableSort";
 import { GrantCreditsModal } from "../_components/GrantCreditsModal";
+
+const COLUMNS: ServerSortColumn[] = [
+  { title: "Fecha", sortKey: "date", defaultSortDirection: "descending" },
+  // Ordena por el `reason` crudo, no por su label traducido: agrupa los
+  // movimientos del mismo tipo, que es para lo que sirve la columna.
+  { title: "Motivo", sortKey: "reason" },
+  { title: "Nota", sortKey: "note" },
+  { title: "Monto", sortKey: "amount", defaultSortDirection: "descending" },
+];
 
 const REASON_LABELS: Record<string, string> = {
   signup_bonus: "Bono de registro",
@@ -60,11 +70,15 @@ export default function AdminUserCreditsPage() {
   const [error, setError] = useState<string | null>(null);
   const [grantOpen, setGrantOpen] = useState(false);
 
+  const { sortKey, sortOrder, headings, sortProps } = useServerSort(COLUMNS, {
+    onSortChange: () => setPage(1),
+  });
+
   // `loading` derivado: hay carga en curso mientras la request ya resuelta no
   // coincida con la actual. Evita el setState síncrono dentro del efecto.
   // `reloadToken` fuerza un refetch de la misma página tras un grant.
   const [reloadToken, setReloadToken] = useState(0);
-  const requestKey = `${userId}|${page}|${reloadToken}`;
+  const requestKey = `${userId}|${page}|${sortKey}|${sortOrder}|${reloadToken}`;
   const [loadedKey, setLoadedKey] = useState<string | null>(null);
   const loading = loadedKey !== requestKey;
 
@@ -72,7 +86,10 @@ export default function AdminUserCreditsPage() {
     let cancelled = false;
     Promise.all([
       adminApi.users.detail(userId),
-      adminApi.users.creditTransactions(userId, page),
+      adminApi.users.creditTransactions(userId, page, {
+        sort: sortKey,
+        order: sortOrder,
+      }),
     ])
       .then(([d, txns]) => {
         if (cancelled) return;
@@ -88,11 +105,11 @@ export default function AdminUserCreditsPage() {
     return () => {
       cancelled = true;
     };
-  }, [userId, page, requestKey]);
+  }, [userId, page, sortKey, sortOrder, requestKey]);
 
   const handleGranted = (newBalance: number) => {
     setDetail((prev) =>
-      prev ? { ...prev, generationCredits: newBalance } : prev
+      prev ? { ...prev, generationCredits: newBalance } : prev,
     );
     // Un grant crea un nuevo movimiento admin_grant: recargar el historial.
     if (page === 1) setReloadToken((t) => t + 1);
@@ -109,7 +126,9 @@ export default function AdminUserCreditsPage() {
 
   return (
     <Page
-      title={detail ? detail.fullName || detail.email : "Movimientos de créditos"}
+      title={
+        detail ? detail.fullName || detail.email : "Movimientos de créditos"
+      }
       subtitle={detail ? detail.email : undefined}
       backAction={{ content: "Créditos", url: "/admin/credits" }}
       titleMetadata={
@@ -144,12 +163,8 @@ export default function AdminUserCreditsPage() {
             <IndexTable
               resourceName={{ singular: "movimiento", plural: "movimientos" }}
               itemCount={result?.data.length ?? 0}
-              headings={[
-                { title: "Fecha" },
-                { title: "Motivo" },
-                { title: "Nota" },
-                { title: "Monto" },
-              ]}
+              headings={headings}
+              {...sortProps}
               selectable={false}
               emptyState={
                 <Box padding="600">
@@ -189,11 +204,7 @@ export default function AdminUserCreditsPage() {
           )}
 
           {result && result.meta.totalPages > 1 && (
-            <Box
-              padding="400"
-              borderBlockStartWidth="025"
-              borderColor="border"
-            >
+            <Box padding="400" borderBlockStartWidth="025" borderColor="border">
               <InlineStack align="center">
                 <Pagination
                   hasPrevious={page > 1}

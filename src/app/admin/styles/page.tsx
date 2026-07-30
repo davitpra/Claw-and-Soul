@@ -19,6 +19,25 @@ import {
 } from "@shopify/polaris";
 import { DeleteIcon } from "@shopify/polaris-icons";
 import { adminApi, AdminStyle } from "@/entities/admin/api";
+import { SortColumn, useTableSort } from "@/hooks/useTableSort";
+
+const COLUMNS: SortColumn<AdminStyle>[] = [
+  { title: "Vista previa" },
+  { title: "Nombre", sortBy: (s) => s.displayName },
+  { title: "Categoría", sortBy: (s) => s.category },
+  {
+    title: "Imágenes",
+    sortBy: (s) => s.images.length,
+    defaultSortDirection: "descending",
+  },
+  {
+    title: "Estado",
+    sortBy: (s) => s.isActive,
+    defaultSortDirection: "descending",
+  },
+  { title: "Eliminar" },
+  { title: "Acciones" },
+];
 
 export default function AdminStylesPage() {
   const [styles, setStyles] = useState<AdminStyle[]>([]);
@@ -28,6 +47,8 @@ export default function AdminStylesPage() {
   const [deletingTarget, setDeletingTarget] = useState<AdminStyle | null>(null);
   const [deleting, setDeleting] = useState(false);
   const [forceConfirm, setForceConfirm] = useState(false);
+
+  const { rows, headings, sortProps } = useTableSort(styles, COLUMNS);
 
   const genCount = deletingTarget?._count?.generations ?? 0;
 
@@ -103,11 +124,12 @@ export default function AdminStylesPage() {
           <Card padding="0">
             <IndexTable
               resourceName={{ singular: "estilo", plural: "estilos" }}
-              itemCount={styles.length}
-              headings={[{ title: "Vista previa" }, { title: "Nombre" }, { title: "Categoría" }, { title: "Imágenes" }, { title: "Estado" }, { title: "Eliminar" }, { title: "Acciones" }]}
+              itemCount={rows.length}
+              headings={headings}
+              {...sortProps}
               selectable={false}
             >
-              {styles.map((s, index) => (
+              {rows.map((s, index) => (
                 <IndexTable.Row
                   id={s.id}
                   key={s.id}
@@ -141,7 +163,10 @@ export default function AdminStylesPage() {
                     )}
                   </IndexTable.Cell>
                   <IndexTable.Cell>
-                    <Link href={`/admin/styles/${s.id}`} style={{ textDecoration: "none", color: "inherit" }}>
+                    <Link
+                      href={`/admin/styles/${s.id}`}
+                      style={{ textDecoration: "none", color: "inherit" }}
+                    >
                       <Text variant="bodyMd" fontWeight="semibold" as="span">
                         {s.displayName}
                       </Text>
@@ -165,8 +190,14 @@ export default function AdminStylesPage() {
                         type="button"
                         onClick={() => handleToggle(s)}
                         disabled={toggling === s.id}
-                        aria-label={s.isActive ? "Desactivar estilo" : "Activar estilo"}
-                        title={s.isActive ? "Click para desactivar" : "Click para activar"}
+                        aria-label={
+                          s.isActive ? "Desactivar estilo" : "Activar estilo"
+                        }
+                        title={
+                          s.isActive
+                            ? "Click para desactivar"
+                            : "Click para activar"
+                        }
                         style={{
                           background: "transparent",
                           border: "none",

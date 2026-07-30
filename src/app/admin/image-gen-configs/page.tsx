@@ -14,12 +14,26 @@ import {
   Button,
 } from "@shopify/polaris";
 import { adminApi, AdminImageGenConfig } from "@/entities/admin/api";
+import { SortColumn, useTableSort } from "@/hooks/useTableSort";
+
+const COLUMNS: SortColumn<AdminImageGenConfig>[] = [
+  { title: "Nombre", sortBy: (c) => c.name },
+  { title: "Modelo", sortBy: (c) => c.model },
+  {
+    title: "Estado",
+    sortBy: (c) => c.isActive,
+    defaultSortDirection: "descending",
+  },
+  { title: "Acciones" },
+];
 
 export default function AdminImageGenConfigsPage() {
   const [configs, setConfigs] = useState<AdminImageGenConfig[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [toggling, setToggling] = useState<string | null>(null);
+
+  const { rows, headings, sortProps } = useTableSort(configs, COLUMNS);
 
   const load = () => {
     setLoading(true);
@@ -80,16 +94,12 @@ export default function AdminImageGenConfigsPage() {
                 singular: "image gen config",
                 plural: "image gen configs",
               }}
-              itemCount={configs.length}
-              headings={[
-                { title: "Nombre" },
-                { title: "Modelo" },
-                { title: "Estado" },
-                { title: "Acciones" },
-              ]}
+              itemCount={rows.length}
+              headings={headings}
+              {...sortProps}
               selectable={false}
             >
-              {configs.map((c, index) => (
+              {rows.map((c, index) => (
                 <IndexTable.Row
                   id={c.id}
                   key={c.id}

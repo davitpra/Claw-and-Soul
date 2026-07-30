@@ -22,7 +22,8 @@ const SYNC_SETTLE_MS = 1500;
  *
  * Recibe `productTypeMap` (de `useShopifyProductMeta`) porque el template
  * efectivo de un producto puede venir heredado del `productType` de Shopify, y
- * de él depende la partición entre productos y accesorios.
+ * de él depende la partición entre productos y accesorios (ver
+ * `resolveTemplate`).
  */
 export function useProductsList(productTypeMap: Record<string, string>) {
   const [products, setProducts] = useState<AdminProduct[]>([]);
@@ -222,7 +223,9 @@ export function useProductsList(productTypeMap: Record<string, string>) {
 
   // Los productos asignados a un rol especial se muestran en su card y se
   // excluyen de la tabla principal para no duplicarlos. Un producto es accesorio
-  // cuando su template efectivo es "Accessory"; el resto son asignables a estilo.
+  // cuando su template efectivo es "Accessory", que sale del metafield
+  // `custom.art_kind` de Shopify (sync → `isAccessory`) o, para los productos
+  // legacy, del template guardado / el productType; el resto van a estilo.
   const { styleProducts, accessoryProducts } = useMemo(() => {
     const specialIds = new Set(
       [pbnProduct?.id, creditPackProduct?.id].filter(Boolean),

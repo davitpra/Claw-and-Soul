@@ -15,6 +15,24 @@ import {
   Button,
 } from "@shopify/polaris";
 import { adminApi, AdminStyle } from "@/entities/admin/api";
+import { SortColumn, useTableSort } from "@/hooks/useTableSort";
+
+const COLUMNS: SortColumn<AdminStyle>[] = [
+  { title: "Vista previa" },
+  { title: "Nombre", sortBy: (s) => s.displayName },
+  { title: "Categoría", sortBy: (s) => s.category },
+  {
+    title: "Estado",
+    sortBy: (s) => s.isActive,
+    defaultSortDirection: "descending",
+  },
+  {
+    title: "Config PBN",
+    sortBy: (s) => Boolean(s.pbnConfig),
+    defaultSortDirection: "descending",
+  },
+  { title: "Acciones" },
+];
 
 // Lista de estilos como puerta de entrada a la configuración PBN por estilo:
 // cada fila abre /admin/pbn/[id], que monta el estudio PBN sembrado con el
@@ -23,6 +41,8 @@ export default function AdminPbnPage() {
   const [styles, setStyles] = useState<AdminStyle[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  const { rows, headings, sortProps } = useTableSort(styles, COLUMNS);
 
   useEffect(() => {
     adminApi.styles
@@ -57,11 +77,12 @@ export default function AdminPbnPage() {
           <Card padding="0">
             <IndexTable
               resourceName={{ singular: "estilo", plural: "estilos" }}
-              itemCount={styles.length}
-              headings={[{ title: "Vista previa" }, { title: "Nombre" }, { title: "Categoría" }, { title: "Estado" }, { title: "Config PBN" }, { title: "Acciones" }]}
+              itemCount={rows.length}
+              headings={headings}
+              {...sortProps}
               selectable={false}
             >
-              {styles.map((s, index) => (
+              {rows.map((s, index) => (
                 <IndexTable.Row
                   id={s.id}
                   key={s.id}

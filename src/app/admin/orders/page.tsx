@@ -39,6 +39,25 @@ import {
   FULFILLMENT_OPTIONS,
   filterOptionLabel,
 } from "@/entities/admin/lib/order-filters";
+import { ServerSortColumn, useServerSort } from "@/hooks/useTableSort";
+
+// "Producción" no es ordenable: el estado del pedido lo deriva `getOrderStatus`
+// de los items (con un valor "mixed" que no existe en la DB), así que no hay
+// campo por el que ordenar. Para eso está el filtro de Producción.
+const COLUMNS: ServerSortColumn[] = [
+  {
+    title: "# Pedido",
+    sortKey: "orderNumber",
+    defaultSortDirection: "descending",
+  },
+  { title: "Cliente", sortKey: "customer" },
+  { title: "Items", sortKey: "items", defaultSortDirection: "descending" },
+  { title: "Total", sortKey: "total", defaultSortDirection: "descending" },
+  { title: "Pago", sortKey: "payment" },
+  { title: "Producción" },
+  { title: "Shopify", sortKey: "shopify" },
+  { title: "Fecha", sortKey: "date", defaultSortDirection: "descending" },
+];
 
 function fmtDate(iso: string) {
   return new Date(iso).toLocaleDateString("es-ES", {
@@ -79,6 +98,10 @@ export default function AdminOrdersPage() {
     tone: "info" | "success" | "critical";
   } | null>(null);
 
+  const { sortKey, sortOrder, headings, sortProps } = useServerSort(COLUMNS, {
+    onSortChange: () => setPage(1),
+  });
+
   const load = useCallback(async () => {
     setLoading(true);
     try {
@@ -88,12 +111,14 @@ export default function AdminOrdersPage() {
         status: status[0] || undefined,
         method: method[0] || undefined,
         fulfillmentStatus: fulfillment[0] || undefined,
+        sort: sortKey,
+        order: sortOrder,
       });
       setOrders(data);
     } finally {
       setLoading(false);
     }
-  }, [page, q, status, method, fulfillment]);
+  }, [page, q, status, method, fulfillment, sortKey, sortOrder]);
 
   useEffect(() => {
     load();
@@ -280,16 +305,8 @@ export default function AdminOrdersPage() {
             <IndexTable
               resourceName={{ singular: "pedido", plural: "pedidos" }}
               itemCount={orders.data.length}
-              headings={[
-                { title: "# Pedido" },
-                { title: "Cliente" },
-                { title: "Items" },
-                { title: "Total" },
-                { title: "Pago" },
-                { title: "Producción" },
-                { title: "Shopify" },
-                { title: "Fecha" },
-              ]}
+              headings={headings}
+              {...sortProps}
               selectable={false}
             >
               {orders.data.map((order, index) => {

@@ -19,7 +19,15 @@ import {
   Button,
 } from "@shopify/polaris";
 import { adminApi, AdminUserListItem, Paginated } from "@/entities/admin/api";
+import { ServerSortColumn, useServerSort } from "@/hooks/useTableSort";
 import { GrantCreditsModal } from "./_components/GrantCreditsModal";
+
+const COLUMNS: ServerSortColumn[] = [
+  { title: "Usuario", sortKey: "name" },
+  { title: "Correo", sortKey: "email" },
+  { title: "Créditos", sortKey: "credits", defaultSortDirection: "descending" },
+  { title: "" },
+];
 
 function getInitials(fullName: string | null, email: string): string {
   if (fullName) {
@@ -36,22 +44,34 @@ function getHandle(email: string): string {
 }
 
 export default function AdminCreditsPage() {
-  const [result, setResult] = useState<Paginated<AdminUserListItem> | null>(null);
+  const [result, setResult] = useState<Paginated<AdminUserListItem> | null>(
+    null,
+  );
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
   const [error, setError] = useState<string | null>(null);
   const [activeUser, setActiveUser] = useState<AdminUserListItem | null>(null);
 
+  const { sortKey, sortOrder, headings, sortProps } = useServerSort(COLUMNS, {
+    onSortChange: () => setPage(1),
+  });
+
   // `loading` derivado: hay carga en curso mientras la query ya resuelta no
-  // coincida con la actual. Evita el setState síncrono dentro del efecto.
-  const queryKey = `${page}|${search}`;
+  // coincida con la actual. Evita el setState síncrono dentro del efecto. El
+  // orden entra en la clave porque también cambia la respuesta del backend.
+  const queryKey = `${page}|${search}|${sortKey}|${sortOrder}`;
   const [loadedKey, setLoadedKey] = useState<string | null>(null);
   const loading = loadedKey !== queryKey;
 
   useEffect(() => {
     let cancelled = false;
     adminApi.users
-      .list(page, search || undefined)
+      .list({
+        page,
+        search: search || undefined,
+        sort: sortKey,
+        order: sortOrder,
+      })
       .then((data) => {
         if (cancelled) return;
         setResult(data);
@@ -65,7 +85,7 @@ export default function AdminCreditsPage() {
     return () => {
       cancelled = true;
     };
-  }, [page, search, queryKey]);
+  }, [page, search, sortKey, sortOrder, queryKey]);
 
   const handleGranted = (userId: string, newBalance: number) => {
     setResult((prev) =>
@@ -73,15 +93,15 @@ export default function AdminCreditsPage() {
         ? {
             ...prev,
             data: prev.data.map((u) =>
-              u.id === userId ? { ...u, generationCredits: newBalance } : u
+              u.id === userId ? { ...u, generationCredits: newBalance } : u,
             ),
           }
-        : prev
+        : prev,
     );
     setActiveUser((prev) =>
       prev && prev.id === userId
         ? { ...prev, generationCredits: newBalance }
-        : prev
+        : prev,
     );
   };
 
@@ -136,12 +156,8 @@ export default function AdminCreditsPage() {
             <IndexTable
               resourceName={{ singular: "usuario", plural: "usuarios" }}
               itemCount={result?.data.length ?? 0}
-              headings={[
-                { title: "Usuario" },
-                { title: "Correo" },
-                { title: "Créditos" },
-                { title: "" },
-              ]}
+              headings={headings}
+              {...sortProps}
               selectable={false}
             >
               {result?.data.map((u, i) => (
@@ -193,11 +209,7 @@ export default function AdminCreditsPage() {
           )}
 
           {result && result.meta.totalPages > 1 && (
-            <Box
-              padding="400"
-              borderBlockStartWidth="025"
-              borderColor="border"
-            >
+            <Box padding="400" borderBlockStartWidth="025" borderColor="border">
               <InlineStack align="center">
                 <Pagination
                   hasPrevious={page > 1}

@@ -14,12 +14,31 @@ import {
   Button,
 } from "@shopify/polaris";
 import { adminApi, AdminVisionConfig } from "@/entities/admin/api";
+import { SortColumn, useTableSort } from "@/hooks/useTableSort";
+
+const COLUMNS: SortColumn<AdminVisionConfig>[] = [
+  { title: "Nombre", sortBy: (c) => c.name },
+  { title: "Modelo", sortBy: (c) => c.visionModel },
+  {
+    title: "Temperatura",
+    sortBy: (c) => c.visionTemperature,
+    defaultSortDirection: "descending",
+  },
+  {
+    title: "Estado",
+    sortBy: (c) => c.isActive,
+    defaultSortDirection: "descending",
+  },
+  { title: "Acciones" },
+];
 
 export default function AdminVisionConfigsPage() {
   const [configs, setConfigs] = useState<AdminVisionConfig[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [toggling, setToggling] = useState<string | null>(null);
+
+  const { rows, headings, sortProps } = useTableSort(configs, COLUMNS);
 
   const load = () => {
     setLoading(true);
@@ -80,17 +99,12 @@ export default function AdminVisionConfigsPage() {
                 singular: "vision config",
                 plural: "vision configs",
               }}
-              itemCount={configs.length}
-              headings={[
-                { title: "Nombre" },
-                { title: "Modelo" },
-                { title: "Temperatura" },
-                { title: "Estado" },
-                { title: "Acciones" },
-              ]}
+              itemCount={rows.length}
+              headings={headings}
+              {...sortProps}
               selectable={false}
             >
-              {configs.map((c, index) => (
+              {rows.map((c, index) => (
                 <IndexTable.Row
                   id={c.id}
                   key={c.id}
@@ -122,9 +136,7 @@ export default function AdminVisionConfigsPage() {
                   </IndexTable.Cell>
                   <IndexTable.Cell>
                     <Text as="span">
-                      {c.visionTemperature !== null
-                        ? c.visionTemperature
-                        : "—"}
+                      {c.visionTemperature !== null ? c.visionTemperature : "—"}
                     </Text>
                   </IndexTable.Cell>
                   <IndexTable.Cell>

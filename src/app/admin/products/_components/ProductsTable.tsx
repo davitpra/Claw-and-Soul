@@ -13,8 +13,12 @@ import {
 } from "@shopify/polaris";
 import { DeleteIcon, ImageIcon } from "@shopify/polaris-icons";
 import { AdminProduct, AdminStyle } from "@/entities/admin/api";
-import { normalizeTemplate } from "@/entities/product/lib/template";
+import {
+  normalizeTemplate,
+  templateLabel,
+} from "@/entities/product/lib/template";
 import { artKindLabel } from "@/entities/product/model/artKind";
+import { SortColumn, useTableSort } from "@/hooks/useTableSort";
 
 // El template es el formato de entrega del storefront: Digital es la descarga
 // del coloreable; Canvas/Poster son los físicos. El contenido (coloreable vs
@@ -30,7 +34,11 @@ export const TEMPLATE_OPTIONS = [
   { label: "Accessory", value: "Accessory" },
 ];
 
-/** Un producto es accesorio cuando su template es "Accessory". */
+/**
+ * Formato de los accesorios. Su fuente de verdad es el metafield `custom.art_kind`
+ * de Shopify, que el sync baja a `isAccessory`; este valor sigue existiendo como
+ * template para los productos legacy marcados a mano o vía `productType`.
+ */
 export const ACCESSORY_TEMPLATE = "Accessory";
 
 // Formatos que llevan una obra de arte y por tanto admiten contenido (artKind);
@@ -43,15 +51,17 @@ const VALID_TEMPLATES = new Set(
 );
 
 /**
- * Template efectivo de un producto: el guardado manda; si no hay, cae al
- * `productType` de Shopify (solo si es una opción válida); si no, "".
- * normalizeTemplate absorbe el valor legacy "PBN" (alias de "Digital").
- * Compartido entre la partición de la página y el default del Select.
+ * Template efectivo de un producto: si Shopify lo marcó como accesorio (metafield
+ * `custom.art_kind`, que el sync baja a `isAccessory`) manda eso; si no, el
+ * template guardado; si no, el `productType` de Shopify (solo si es una opción
+ * válida); si no, "". normalizeTemplate absorbe el valor legacy "PBN" (alias de
+ * "Digital"). Compartido entre la partición de la página y el default del Select.
  */
 export function resolveTemplate(
-  p: Pick<AdminProduct, "template" | "shopifyHandle">,
+  p: Pick<AdminProduct, "template" | "shopifyHandle" | "isAccessory">,
   productTypeMap: Record<string, string>,
 ): string {
+  if (p.isAccessory) return ACCESSORY_TEMPLATE;
   if (p.template) return normalizeTemplate(p.template);
   const shopifyType = normalizeTemplate(
     p.shopifyHandle ? productTypeMap[p.shopifyHandle] : undefined,
@@ -100,22 +110,42 @@ export function ProductsTable({
   onToggleActive,
   onDelete,
 }: ProductsTableProps) {
+  // Se ordena por el valor que muestra la celda (el label del template, el del
+  // contenido, el nombre del estilo), no por el campo crudo, para que lo que se
+  // ve sea lo que se ordena. El hook vive dentro de la tabla, así que las dos
+  // instancias (productos y accesorios) llevan su orden por separado.
+  const columns: SortColumn<AdminProduct>[] = [
+    { title: "Producto", sortBy: (p) => p.displayName },
+    ...(showStyleColumn
+      ? [
+          {
+            title: "Estilo asignado",
+            sortBy: (p: AdminProduct) => p.style?.displayName,
+          },
+        ]
+      : []),
+    { title: "Fulfillment", sortBy: (p) => p.fulfillmentMethod ?? "in_house" },
+    { title: "Template", sortBy: (p) => resolveTemplate(p, productTypeMap) },
+    { title: "Contenido", sortBy: (p) => artKindLabel(p.artKind) },
+    {
+      title: "Estado",
+      sortBy: (p) => p.isActive,
+      defaultSortDirection: "descending",
+    },
+    { title: "Acciones" },
+  ];
+
+  const { rows, headings, sortProps } = useTableSort(products, columns);
+
   return (
     <IndexTable
       resourceName={{ singular: "producto", plural: "productos" }}
-      itemCount={products.length}
-      headings={[
-        { title: "Producto" },
-        ...(showStyleColumn ? [{ title: "Estilo asignado" }] : []),
-        { title: "Fulfillment" },
-        { title: "Template" },
-        { title: "Contenido" },
-        { title: "Estado" },
-        { title: "Acciones" },
-      ]}
+      itemCount={rows.length}
+      headings={headings}
+      {...sortProps}
       selectable={false}
     >
-      {products.map((p, index) => (
+      {rows.map((p, index) => (
         <IndexTable.Row
           id={p.id}
           key={p.id}
@@ -191,28 +221,42 @@ export function ProductsTable({
           </IndexTable.Cell>
 
           <IndexTable.Cell>
-            <div onClick={(e) => e.stopPropagation()}>
-              <InlineStack gap="200" blockAlign="center">
-                <div style={{ minWidth: 150 }}>
-                  <Select
-                    label=""
-                    labelHidden
-                    disabled={savingTemplate === p.id}
-                    value={resolveTemplate(p, productTypeMap)}
-                    onChange={(value) => onTemplateChange(p.id, value)}
-                    helpText={
-                      // El valor mostrado viene del productType de Shopify, no de
-                      // un template guardado: avisamos que es heredado.
-                      !p.template && resolveTemplate(p, productTypeMap)
-                        ? "Heredado de Shopify"
-                        : undefined
-                    }
-                    options={TEMPLATE_OPTIONS}
-                  />
-                </div>
-                {savingTemplate === p.id && <Spinner size="small" />}
-              </InlineStack>
-            </div>
+            {/* Los accesorios los declara el metafield custom.art_kind de
+                Shopify, así que su formato es de solo lectura: dejarlo editable
+                invitaría a un cambio que el siguiente sync revierte. */}
+            {p.isAccessory ? (
+              <BlockStack gap="0">
+                <Text variant="bodyMd" as="span">
+                  {templateLabel(ACCESSORY_TEMPLATE)}
+                </Text>
+                <Text variant="bodySm" tone="subdued" as="span">
+                  Se edita en Shopify
+                </Text>
+              </BlockStack>
+            ) : (
+              <div onClick={(e) => e.stopPropagation()}>
+                <InlineStack gap="200" blockAlign="center">
+                  <div style={{ minWidth: 150 }}>
+                    <Select
+                      label=""
+                      labelHidden
+                      disabled={savingTemplate === p.id}
+                      value={resolveTemplate(p, productTypeMap)}
+                      onChange={(value) => onTemplateChange(p.id, value)}
+                      helpText={
+                        // El valor mostrado viene del productType de Shopify, no de
+                        // un template guardado: avisamos que es heredado.
+                        !p.template && resolveTemplate(p, productTypeMap)
+                          ? "Heredado de Shopify"
+                          : undefined
+                      }
+                      options={TEMPLATE_OPTIONS}
+                    />
+                  </div>
+                  {savingTemplate === p.id && <Spinner size="small" />}
+                </InlineStack>
+              </div>
+            )}
           </IndexTable.Cell>
 
           <IndexTable.Cell>
