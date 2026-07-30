@@ -30,21 +30,13 @@ import {
   Divider,
 } from "@shopify/polaris";
 import { adminApi, OverviewStats } from "@/entities/admin/api";
+import { syncStatusTone } from "@/entities/admin/lib/sync-status";
 
 const STATUS_COLORS: Record<string, string> = {
   completed: "#448da6",
   failed: "#ef4444",
   processing: "#f59e0b",
   pending: "#6b7280",
-};
-
-const SYNC_STATUS_TONES: Record<
-  string,
-  "success" | "critical" | "warning"
-> = {
-  completed: "success",
-  failed: "critical",
-  running: "warning",
 };
 
 function fmtDay(d: string) {
@@ -336,7 +328,7 @@ export default function AdminOverviewPage() {
                     <Box paddingBlock="300">
                       <InlineStack align="space-between" blockAlign="center">
                         <InlineStack gap="300" blockAlign="center">
-                          <Badge tone={SYNC_STATUS_TONES[s.status] ?? "enabled"}>
+                          <Badge tone={syncStatusTone(s.status)}>
                             {s.status}
                           </Badge>
                           <Text as="span">{s.type}</Text>
