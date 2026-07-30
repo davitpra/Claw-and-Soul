@@ -18,14 +18,14 @@ import {
 
 const navItems = [
   { label: "Dashboard", href: "/admin", icon: HomeIcon, exact: true },
+  { label: "Pedidos", href: "/admin/orders", icon: OrderIcon },
+  { label: "Productos", href: "/admin/products", icon: InventoryIcon },
+  { label: "Estilos", href: "/admin/styles", icon: PaintBrushFlatIcon },
+  { label: "Producción", href: "/admin/production", icon: PrintIcon },
   { label: "Usuarios", href: "/admin/users", icon: TeamIcon },
   { label: "Créditos", href: "/admin/credits", icon: GiftCardIcon },
-  { label: "Pedidos", href: "/admin/orders", icon: OrderIcon },
-  { label: "Producción", href: "/admin/production", icon: PrintIcon },
-  { label: "Estilos", href: "/admin/styles", icon: PaintBrushFlatIcon },
-  { label: "PBN", href: "/admin/pbn", icon: ColorIcon },
-  { label: "Productos", href: "/admin/products", icon: InventoryIcon },
   { label: "Gastos", href: "/admin/expenses", icon: ReceiptIcon },
+  { label: "PBN", href: "/admin/pbn", icon: ColorIcon },
 ];
 
 export default function AdminSidebar() {
