@@ -121,7 +121,10 @@ export default function StudioLandingPage() {
         <WavesDivider flip />
         <WhyItMatters />
         <WavesDivider />
-        <ProductFAQ faqs={LANDING_FAQS} />
+        {/* Destino de "FAQ" en el footer: /studio-landing#faq. */}
+        <div id="faq" className="scroll-mt-20">
+          <ProductFAQ faqs={LANDING_FAQS} />
+        </div>
       </main>
 
       <Footer />
