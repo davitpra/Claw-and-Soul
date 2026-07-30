@@ -23,7 +23,7 @@ import {
   Paginated,
 } from "@/entities/admin/api";
 import { ServerSortColumn, useServerSort } from "@/hooks/useTableSort";
-import { GrantCreditsModal } from "../_components/GrantCreditsModal";
+import { GrantCreditsModal } from "../../_components/GrantCreditsModal";
 
 const COLUMNS: ServerSortColumn[] = [
   { title: "Fecha", sortKey: "date", defaultSortDirection: "descending" },
@@ -130,7 +130,7 @@ export default function AdminUserCreditsPage() {
         detail ? detail.fullName || detail.email : "Movimientos de créditos"
       }
       subtitle={detail ? detail.email : undefined}
-      backAction={{ content: "Créditos", url: "/admin/credits" }}
+      backAction={{ content: "Usuarios", url: "/admin/users" }}
       titleMetadata={
         detail ? (
           <Badge tone="info">{`${detail.generationCredits} créditos`}</Badge>

@@ -1,0 +1,125 @@
+"use client";
+
+import { useEffect, useState } from "react";
+import type { IndexTableProps } from "@shopify/polaris";
+import { adminApi, AdminUserListItem, Paginated } from "@/entities/admin/api";
+import {
+  ServerSortColumn,
+  SortProps,
+  useServerSort,
+} from "@/hooks/useTableSort";
+
+// Columnas de la lista. Viven aquí y no en el componente de tabla porque el
+// sorting es estado de la query: `useServerSort` las traduce a los params
+// `sort`/`order` del endpoint paginado.
+//
+// "Acciones" no es ordenable, y tampoco lo es ninguna columna sin `sortKey`.
+const COLUMNS: ServerSortColumn[] = [
+  { title: "Usuario", sortKey: "name" },
+  { title: "Correo", sortKey: "email" },
+  { title: "Mascotas", sortKey: "pets", defaultSortDirection: "descending" },
+  {
+    title: "Generaciones",
+    sortKey: "generations",
+    defaultSortDirection: "descending",
+  },
+  { title: "Créditos", sortKey: "credits", defaultSortDirection: "descending" },
+  {
+    title: "Última actividad",
+    sortKey: "lastActivity",
+    defaultSortDirection: "descending",
+  },
+  { title: "" },
+];
+
+interface UsersList {
+  result: Paginated<AdminUserListItem> | null;
+  loading: boolean;
+  error: string | null;
+  dismissError: () => void;
+  search: string;
+  /** Cambia la búsqueda y vuelve a la página 1. */
+  setSearch: (value: string) => void;
+  page: number;
+  setPage: (page: number) => void;
+  headings: IndexTableProps["headings"];
+  sortProps: SortProps;
+  /** Refleja en la fila el saldo devuelto por un grant, sin refetch. */
+  applyGrant: (userId: string, newBalance: number) => void;
+}
+
+/**
+ * Estado y carga de la lista paginada de usuarios: búsqueda, página, orden y
+ * saldo de créditos. Vive fuera de `page.tsx` para que la página se limite a
+ * componer el layout de Polaris.
+ */
+export function useUsersList(): UsersList {
+  const [result, setResult] = useState<Paginated<AdminUserListItem> | null>(
+    null,
+  );
+  const [search, setSearchValue] = useState("");
+  const [page, setPage] = useState(1);
+  const [error, setError] = useState<string | null>(null);
+
+  const { sortKey, sortOrder, headings, sortProps } = useServerSort(COLUMNS, {
+    onSortChange: () => setPage(1),
+  });
+
+  // `loading` derivado: hay carga en curso mientras la query ya resuelta no
+  // coincida con la actual. Evita el setState síncrono dentro del efecto. El
+  // orden entra en la clave porque también cambia la respuesta del backend.
+  const queryKey = `${page}|${search}|${sortKey}|${sortOrder}`;
+  const [loadedKey, setLoadedKey] = useState<string | null>(null);
+  const loading = loadedKey !== queryKey;
+
+  useEffect(() => {
+    let cancelled = false;
+    adminApi.users
+      .list({
+        page,
+        search: search || undefined,
+        sort: sortKey,
+        order: sortOrder,
+      })
+      .then((data) => {
+        if (cancelled) return;
+        setResult(data);
+        setLoadedKey(queryKey);
+      })
+      .catch((e: Error) => {
+        if (cancelled) return;
+        setError(e.message);
+        setLoadedKey(queryKey);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [page, search, sortKey, sortOrder, queryKey]);
+
+  return {
+    result,
+    loading,
+    error,
+    dismissError: () => setError(null),
+    search,
+    setSearch: (value: string) => {
+      setSearchValue(value);
+      setPage(1);
+    },
+    page,
+    setPage,
+    headings,
+    sortProps,
+    applyGrant: (userId, newBalance) =>
+      setResult((prev) =>
+        prev
+          ? {
+              ...prev,
+              data: prev.data.map((u) =>
+                u.id === userId ? { ...u, generationCredits: newBalance } : u,
+              ),
+            }
+          : prev,
+      ),
+  };
+}

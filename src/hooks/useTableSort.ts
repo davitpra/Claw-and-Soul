@@ -41,7 +41,7 @@ export interface ServerSortColumn extends ColumnBase {
 }
 
 /** Props de sorting listas para esparcir sobre `<IndexTable>`. */
-interface SortProps {
+export interface SortProps {
   sortable: boolean[];
   sortColumnIndex: number | undefined;
   sortDirection: SortDirection;

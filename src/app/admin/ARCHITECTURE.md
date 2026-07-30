@@ -120,6 +120,10 @@ Toda ruta de nivel superior se registra en
 sidebar — se navega a ellas desde el editor de estilos (`styles/[id]`). Es una
 decisión de UX, no un olvido.
 
+Lo mismo con `credits/`: ya no tiene lista propia (se fusionó en `users/`, que
+muestra el saldo y abre el `GrantCreditsModal`); solo queda `credits/[id]` con
+el historial de movimientos, al que se llega desde la fila del usuario.
+
 ---
 
 ## 8. Checklist: añadir una nueva sección admin

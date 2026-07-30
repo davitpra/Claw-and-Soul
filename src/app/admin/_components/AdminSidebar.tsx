@@ -7,7 +7,6 @@ import { Avatar, Icon } from "@shopify/polaris";
 import {
   HomeIcon,
   TeamIcon,
-  GiftCardIcon,
   OrderIcon,
   PaintBrushFlatIcon,
   ColorIcon,
@@ -22,8 +21,9 @@ const navItems = [
   { label: "Productos", href: "/admin/products", icon: InventoryIcon },
   { label: "Estilos", href: "/admin/styles", icon: PaintBrushFlatIcon },
   { label: "PBN", href: "/admin/pbn", icon: ColorIcon },
+  // Los créditos ya no son una sección propia: se ven y se acreditan desde la
+  // lista de usuarios, y su historial vive en /admin/credits/[id].
   { label: "Usuarios", href: "/admin/users", icon: TeamIcon },
-  { label: "Créditos", href: "/admin/credits", icon: GiftCardIcon },
   { label: "Gastos", href: "/admin/expenses", icon: ReceiptIcon },
 ];
 

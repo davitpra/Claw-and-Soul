@@ -22,8 +22,9 @@ const MIN_AMOUNT = 1;
 const MAX_AMOUNT = 1000;
 
 /**
- * Acredita créditos a un usuario desde la lista de /admin/credits vía
- * POST /admin/credits/grant. Valida el monto (1..1000) y admite nota opcional.
+ * Acredita créditos a un usuario vía POST /admin/credits/grant, desde la lista
+ * de usuarios o desde sus movimientos. Valida el monto (1..1000) y admite nota
+ * opcional.
  * Los grants manuales son repetibles (referenceId null).
  */
 export function GrantCreditsModal({

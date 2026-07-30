@@ -32,6 +32,7 @@ import {
   Paginated,
 } from "@/entities/admin/api";
 import { PRODUCTION_STATUS_LABELS } from "@/entities/admin/lib/production-status";
+import { getHandle, getInitials } from "@/entities/admin/lib/user-format";
 import { GrantCreditsCard } from "./_components/GrantCreditsCard";
 
 const EXPENSE_CATEGORY_LABELS: Record<string, string> = {
@@ -47,20 +48,6 @@ function fmtCurrency(amount: number, currency: string) {
     currency,
     minimumFractionDigits: 2,
   }).format(amount);
-}
-
-function getInitials(fullName: string | null, email: string): string {
-  if (fullName) {
-    const parts = fullName.trim().split(" ");
-    return parts.length >= 2
-      ? (parts[0][0] + parts[1][0]).toUpperCase()
-      : parts[0].slice(0, 2).toUpperCase();
-  }
-  return email.slice(0, 2).toUpperCase();
-}
-
-function getHandle(email: string): string {
-  return "@" + email.split("@")[0];
 }
 
 function daysSince(dateStr: string): number {
