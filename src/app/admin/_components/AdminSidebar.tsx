@@ -21,8 +21,8 @@ const navItems = [
   { label: "Productos", href: "/admin/products", icon: InventoryIcon },
   { label: "Estilos", href: "/admin/styles", icon: PaintBrushFlatIcon },
   { label: "PBN", href: "/admin/pbn", icon: ColorIcon },
-  // Los créditos ya no son una sección propia: se ven y se acreditan desde la
-  // lista de usuarios, y su historial vive en /admin/credits/[id].
+  // Los créditos ya no son una sección propia: el saldo se ve en la lista de
+  // usuarios, y el historial y el abono viven en la pestaña "Créditos" de la ficha.
   { label: "Usuarios", href: "/admin/users", icon: TeamIcon },
   { label: "Gastos", href: "/admin/expenses", icon: ReceiptIcon },
 ];

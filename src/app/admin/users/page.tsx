@@ -1,6 +1,5 @@
 "use client";
 
-import { useState } from "react";
 import { useRouter } from "next/navigation";
 import {
   Page,
@@ -15,8 +14,6 @@ import {
   Pagination,
   Box,
 } from "@shopify/polaris";
-import { AdminUserListItem } from "@/entities/admin/api";
-import { GrantCreditsModal } from "../_components/GrantCreditsModal";
 import { UsersTable } from "./_components/UsersTable";
 import { useUsersList } from "./useUsersList";
 
@@ -33,11 +30,7 @@ export default function AdminUsersPage() {
     setPage,
     headings,
     sortProps,
-    applyGrant,
   } = useUsersList();
-
-  // Usuario al que se le van a acreditar créditos; el modal se abre con él.
-  const [grantTarget, setGrantTarget] = useState<AdminUserListItem | null>(null);
 
   return (
     <Page
@@ -88,7 +81,6 @@ export default function AdminUsersPage() {
               headings={headings}
               sortProps={sortProps}
               onRowClick={(id) => router.push(`/admin/users/${id}`)}
-              onGrantCredits={setGrantTarget}
             />
           )}
 
@@ -107,14 +99,6 @@ export default function AdminUsersPage() {
           )}
         </Card>
       </BlockStack>
-
-      <GrantCreditsModal
-        user={grantTarget}
-        onClose={() => setGrantTarget(null)}
-        onGranted={(newBalance) => {
-          if (grantTarget) applyGrant(grantTarget.id, newBalance);
-        }}
-      />
     </Page>
   );
 }

@@ -120,9 +120,9 @@ Toda ruta de nivel superior se registra en
 sidebar — se navega a ellas desde el editor de estilos (`styles/[id]`). Es una
 decisión de UX, no un olvido.
 
-Lo mismo con `credits/`: ya no tiene lista propia (se fusionó en `users/`, que
-muestra el saldo y abre el `GrantCreditsModal`); solo queda `credits/[id]` con
-el historial de movimientos, al que se llega desde la fila del usuario.
+Lo mismo con los créditos: ya no son una ruta propia. El saldo se ve en la lista
+de usuarios, y el historial de movimientos y el abono manual viven en la pestaña
+"Créditos" de la ficha (`users/[id]`).
 
 ---
 

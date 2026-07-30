@@ -1,8 +1,7 @@
 /**
  * Helpers de presentación de usuarios en el admin.
- * Centralizados para que la lista (`app/admin/users`), el detalle
- * (`app/admin/users/[id]`) y los movimientos de créditos
- * (`app/admin/credits/[id]`) muestren la misma identidad para un mismo usuario.
+ * Centralizados para que la lista (`app/admin/users`) y el detalle
+ * (`app/admin/users/[id]`) muestren la misma identidad para un mismo usuario.
  */
 
 /**

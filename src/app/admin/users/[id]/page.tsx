@@ -17,10 +17,9 @@ import {
 } from "@shopify/polaris";
 import { getHandle, roleBadgeTone } from "@/entities/admin/lib/user-format";
 import { useUserDetail } from "./useUserDetail";
+import { CreditsPanel } from "./_components/CreditsPanel";
 import { GenerationsPanel } from "./_components/GenerationsPanel";
-import { GrantCreditsCard } from "./_components/GrantCreditsCard";
 import { PetsPanel } from "./_components/PetsPanel";
-import { PhotosPanel } from "./_components/PhotosPanel";
 import { UserExpensesCard } from "./_components/UserExpensesCard";
 import { UserOrdersPanel } from "./_components/UserOrdersPanel";
 import { UserProfileCard } from "./_components/UserProfileCard";
@@ -28,8 +27,8 @@ import { UserStatsCard } from "./_components/UserStatsCard";
 
 const TABS = [
   { id: "mascotas", content: "Mascotas", panelID: "panel-mascotas" },
-  { id: "imagenes", content: "Imágenes", panelID: "panel-imagenes" },
   { id: "ia", content: "Resultados IA", panelID: "panel-ia" },
+  { id: "creditos", content: "Créditos", panelID: "panel-creditos" },
   { id: "pedidos", content: "Pedidos", panelID: "panel-pedidos" },
 ];
 
@@ -85,6 +84,9 @@ export default function AdminUserDetailPage() {
           <Badge tone={user.isActive ? "success" : "enabled"}>
             {user.isActive ? "Activo" : "Inactivo"}
           </Badge>
+          {/* El saldo dejó la barra lateral al mudarse a la pestaña Créditos;
+              aquí sigue estando a la vista sin abrirla. */}
+          <Badge tone="info">{`${user.generationCredits} créditos`}</Badge>
         </InlineStack>
       }
     >
@@ -97,15 +99,7 @@ export default function AdminUserDetailPage() {
               photoCount={allPhotos.length}
               generationCount={gens?.meta.total ?? null}
             />
-            <GrantCreditsCard
-              userId={id}
-              balance={user.generationCredits}
-              onGranted={applyGrant}
-            />
-            <UserExpensesCard
-              expenses={expenses}
-              loading={loadingExpenses}
-            />
+            <UserExpensesCard expenses={expenses} loading={loadingExpenses} />
           </BlockStack>
         </Layout.Section>
 
@@ -114,13 +108,19 @@ export default function AdminUserDetailPage() {
             <Tabs tabs={TABS} selected={selectedTab} onSelect={setSelectedTab}>
               <Box padding="400">
                 {selectedTab === 0 && <PetsPanel pets={user.pets} />}
-                {selectedTab === 1 && <PhotosPanel photos={allPhotos} />}
-                {selectedTab === 2 && (
+                {selectedTab === 1 && (
                   <GenerationsPanel
                     gens={gens}
                     loading={gensLoading}
                     page={genPage}
                     onPageChange={setGenPage}
+                  />
+                )}
+                {selectedTab === 2 && (
+                  <CreditsPanel
+                    userId={id}
+                    balance={user.generationCredits}
+                    onGranted={applyGrant}
                   />
                 )}
                 {selectedTab === 3 && <UserOrdersPanel userId={id} />}

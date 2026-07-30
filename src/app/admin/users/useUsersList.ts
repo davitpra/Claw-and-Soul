@@ -11,9 +11,7 @@ import {
 
 // Columnas de la lista. Viven aquí y no en el componente de tabla porque el
 // sorting es estado de la query: `useServerSort` las traduce a los params
-// `sort`/`order` del endpoint paginado.
-//
-// "Acciones" no es ordenable, y tampoco lo es ninguna columna sin `sortKey`.
+// `sort`/`order` del endpoint paginado. Una columna sin `sortKey` no es ordenable.
 //
 // No hay columna "Correo": el email vive bajo el nombre, dentro de "Usuario".
 // Con eso se pierde el sort por email puro, pero el backend resuelve `name` como
@@ -44,7 +42,6 @@ const COLUMNS: ServerSortColumn[] = [
     sortKey: "lastActivity",
     defaultSortDirection: "descending",
   },
-  { title: "Acciones", alignment: "end" },
 ];
 
 interface UsersList {
@@ -59,8 +56,6 @@ interface UsersList {
   setPage: (page: number) => void;
   headings: IndexTableProps["headings"];
   sortProps: SortProps;
-  /** Refleja en la fila el saldo devuelto por un grant, sin refetch. */
-  applyGrant: (userId: string, newBalance: number) => void;
 }
 
 /**
@@ -125,16 +120,5 @@ export function useUsersList(): UsersList {
     setPage,
     headings,
     sortProps,
-    applyGrant: (userId, newBalance) =>
-      setResult((prev) =>
-        prev
-          ? {
-              ...prev,
-              data: prev.data.map((u) =>
-                u.id === userId ? { ...u, generationCredits: newBalance } : u,
-              ),
-            }
-          : prev,
-      ),
   };
 }
