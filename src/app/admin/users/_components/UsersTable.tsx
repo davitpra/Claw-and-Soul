@@ -17,7 +17,6 @@ import {
   fmtAbsoluteDate,
   fmtRelativeTime,
   getHandle,
-  getInitials,
   roleBadgeTone,
 } from "@/entities/admin/lib/user-format";
 import type { SortProps } from "@/hooks/useTableSort";
@@ -32,7 +31,12 @@ type UsersTableProps = {
 /** Contador de la fila: un 0 se muestra como hueco para que destaque lo que sí tiene actividad. */
 function CountCell({ value }: { value: number }) {
   return (
-    <Text as="span" alignment="end" numeric tone={value ? undefined : "subdued"}>
+    <Text
+      as="span"
+      alignment="end"
+      numeric
+      tone={value ? undefined : "subdued"}
+    >
       {value || "—"}
     </Text>
   );
@@ -79,11 +83,6 @@ export function UsersTable({
         >
           <IndexTable.Cell>
             <InlineStack gap="300" blockAlign="center" wrap={false}>
-              <Avatar
-                size="sm"
-                initials={getInitials(u.fullName, u.email)}
-                name={u.fullName ?? u.email}
-              />
               <BlockStack gap="0">
                 {/* Los badges solo aparecen cuando dicen algo: un usuario normal
                     y activo es el caso mayoritario y no necesita etiqueta. */}
@@ -113,6 +112,12 @@ export function UsersTable({
           </IndexTable.Cell>
           <IndexTable.Cell>
             <CountCell value={u._count.generations} />
+          </IndexTable.Cell>
+          <IndexTable.Cell>
+            <CountCell value={u._count.paintByNumbers} />
+          </IndexTable.Cell>
+          <IndexTable.Cell>
+            <CountCell value={u._count.orders} />
           </IndexTable.Cell>
           <IndexTable.Cell>
             {/* Saldo agotado en crítico: es justo a quien hay que acreditar. */}

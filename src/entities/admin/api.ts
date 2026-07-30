@@ -21,7 +21,13 @@ export interface AdminUserListItem {
   generationCredits: number;
   createdAt: string;
   lastLoginAt: string | null;
-  _count: { pets: number; generations: number };
+  _count: {
+    pets: number;
+    generations: number;
+    paintByNumbers: number;
+    /** Solo pedidos enlazados a la cuenta: los de invitado no se atribuyen. */
+    orders: number;
+  };
 }
 
 export interface AdminUserPhoto {
@@ -203,6 +209,32 @@ export interface AdminUserOrderListItem {
   financialStatus: string | null;
   shopifyCreatedAt: string;
   items: AdminUserOrderItem[];
+}
+
+/**
+ * PBN guardado del usuario, tal como lo lista
+ * `GET /admin/users/:id/paint-by-numbers`. El backend proyecta con
+ * `USER_PBN_LIST_SELECT`: sin `config` (pesado) ni las claves de storage.
+ */
+export interface AdminUserPbn {
+  id: string;
+  sourceImageUrl: string | null;
+  previewUrl: string | null;
+  outlineSvgUrl: string | null;
+  paletteUrl: string | null;
+  colorCount: number | null;
+  /** saved | ordered */
+  status: string;
+  /** customer | admin */
+  origin: string;
+  createdAt: string;
+  /** Casi siempre null: al guardar un PBN no se manda `petId`. Ver `generation.pet`. */
+  pet: { id: string; name: string } | null;
+  generation: {
+    id: string;
+    pet: { id: string; name: string } | null;
+    style: { displayName?: string | null; category?: string | null } | null;
+  } | null;
 }
 
 export interface AdminCreditTransaction {
@@ -874,6 +906,10 @@ export const adminApi = {
     ): Promise<Paginated<AdminUserOrderListItem>> =>
       adminFetch<Paginated<AdminUserOrderListItem>>(
         `/admin/users/${id}/orders?page=${page}&limit=10`,
+      ),
+    paintByNumbers: (id: string, page = 1): Promise<Paginated<AdminUserPbn>> =>
+      adminFetch<Paginated<AdminUserPbn>>(
+        `/admin/users/${id}/paint-by-numbers?page=${page}&limit=24`,
       ),
     creditTransactions: (
       id: string,

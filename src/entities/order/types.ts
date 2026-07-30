@@ -174,6 +174,8 @@ export interface UserPbnListItem {
   colorCount: number | null;
   /** saved | ordered */
   status: string;
+  /** customer | admin */
+  origin: string;
   createdAt: string;
   /** Casi siempre null: al guardar un PBN no se manda `petId`. Ver `generation.pet`. */
   pet: { id: string; name: string } | null;

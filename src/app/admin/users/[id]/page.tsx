@@ -19,6 +19,7 @@ import { getHandle, roleBadgeTone } from "@/entities/admin/lib/user-format";
 import { useUserDetail } from "./useUserDetail";
 import { CreditsPanel } from "./_components/CreditsPanel";
 import { GenerationsPanel } from "./_components/GenerationsPanel";
+import { PbnPanel } from "./_components/PbnPanel";
 import { PetsPanel } from "./_components/PetsPanel";
 import { UserExpensesCard } from "./_components/UserExpensesCard";
 import { UserOrdersPanel } from "./_components/UserOrdersPanel";
@@ -27,7 +28,8 @@ import { UserStatsCard } from "./_components/UserStatsCard";
 
 const TABS = [
   { id: "mascotas", content: "Mascotas", panelID: "panel-mascotas" },
-  { id: "ia", content: "Resultados IA", panelID: "panel-ia" },
+  { id: "ia", content: "Arte IA", panelID: "panel-ia" },
+  { id: "pbn", content: "Paint by Numbers", panelID: "panel-pbn" },
   { id: "creditos", content: "Créditos", panelID: "panel-creditos" },
   { id: "pedidos", content: "Pedidos", panelID: "panel-pedidos" },
 ];
@@ -91,18 +93,6 @@ export default function AdminUserDetailPage() {
       }
     >
       <Layout>
-        <Layout.Section variant="oneThird">
-          <BlockStack gap="400">
-            <UserProfileCard user={user} />
-            <UserStatsCard
-              user={user}
-              photoCount={allPhotos.length}
-              generationCount={gens?.meta.total ?? null}
-            />
-            <UserExpensesCard expenses={expenses} loading={loadingExpenses} />
-          </BlockStack>
-        </Layout.Section>
-
         <Layout.Section>
           <Card padding="0">
             <Tabs tabs={TABS} selected={selectedTab} onSelect={setSelectedTab}>
@@ -116,17 +106,29 @@ export default function AdminUserDetailPage() {
                     onPageChange={setGenPage}
                   />
                 )}
-                {selectedTab === 2 && (
+                {selectedTab === 2 && <PbnPanel userId={id} />}
+                {selectedTab === 3 && (
                   <CreditsPanel
                     userId={id}
                     balance={user.generationCredits}
                     onGranted={applyGrant}
                   />
                 )}
-                {selectedTab === 3 && <UserOrdersPanel userId={id} />}
+                {selectedTab === 4 && <UserOrdersPanel userId={id} />}
               </Box>
             </Tabs>
           </Card>
+        </Layout.Section>
+        <Layout.Section variant="oneThird">
+          <BlockStack gap="400">
+            <UserProfileCard user={user} />
+            <UserStatsCard
+              user={user}
+              photoCount={allPhotos.length}
+              generationCount={gens?.meta.total ?? null}
+            />
+            <UserExpensesCard expenses={expenses} loading={loadingExpenses} />
+          </BlockStack>
         </Layout.Section>
       </Layout>
     </Page>

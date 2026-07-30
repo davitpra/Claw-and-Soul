@@ -20,16 +20,6 @@ export function UserProfileCard({ user }: { user: AdminUserDetail }) {
   return (
     <Card>
       <BlockStack gap="400">
-        <InlineStack align="center">
-          <Avatar
-            size="xl"
-            initials={getInitials(user.fullName, user.email)}
-            name={user.fullName ?? user.email}
-          />
-        </InlineStack>
-
-        <Divider />
-
         <BlockStack gap="300">
           <Field label="Email" value={user.email} />
           <BlockStack gap="100">
