@@ -15,6 +15,7 @@ import {
   InventoryIcon,
   ReceiptIcon,
 } from "@shopify/polaris-icons";
+import Image from "next/image";
 
 const navItems = [
   { label: "Dashboard", href: "/admin", icon: HomeIcon, exact: true },
@@ -44,13 +45,25 @@ export default function AdminSidebar() {
   return (
     <aside className="w-60 shrink-0 flex flex-col min-h-screen bg-white border-r border-[#e3e3e3]">
       {/* Logo */}
-      <div className="px-5 pt-5 pb-4 border-b border-[#e3e3e3]">
-        <Link href="/admin" className="no-underline block">
-          <div className="flex items-center gap-2.5 justify-center">
-            <span className="text-2xl font-bold text-[#202223] leading-tight block text-center">
-              Claw <span className="text-[#448da6]">&amp;</span> Soul
-            </span>
-          </div>
+      <div className="px-4 pt-5 pb-4 border-b border-[#e3e3e3] flex items-center justify-center">
+        <Link
+          href="/admin"
+          className="group flex items-center gap-2.5 no-underline text-text-main hover:opacity-80 transition-opacity"
+        >
+          <Image
+            src="/Logo.svg"
+            alt="Claw & Soul Logo"
+            width={20}
+            height={20}
+            priority
+            className="size-9 shrink-0 transition-transform group-hover:scale-105"
+          />
+          {/* <span> y no <h2>: el reset sin capa de Polaris fuerza
+              font-size:1em/font-weight:regular en headings y gana sobre las
+              utilidades de Tailwind, que sí están en @layer. */}
+          <span className="font-display text-text-main text-xl font-black leading-tight tracking-[-0.015em] whitespace-nowrap">
+            Claw & Soul
+          </span>
         </Link>
       </div>
 

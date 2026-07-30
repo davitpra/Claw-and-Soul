@@ -2,8 +2,8 @@
 
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
-import AdminSidebar from "@/widgets/admin-sidebar/AdminSidebar";
 import { useAuth } from "@/context/AuthContext";
+import AdminSidebar from "./_components/AdminSidebar";
 import PolarisProvider from "./PolarisProvider";
 
 export default function AdminLayout({

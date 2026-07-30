@@ -73,7 +73,7 @@ Estas reglas existen para que no se repitan los archivos gigantes que ya tenemos
 | Qué | Dónde |
 |-----|-------|
 | Componente/helper usado por 1 sola ruta | `<ruta>/_components/` |
-| Componente usado por ≥2 rutas admin | `admin/_components/` (ej. `ImagePreviewModal.tsx`) |
+| Componente usado por ≥2 rutas admin o por el `layout` | `admin/_components/` (ej. `ImagePreviewModal.tsx`, `AdminSidebar.tsx`) |
 | Llamada a API / tipos | `entities/admin/api.ts` (siempre, ya centralizado) |
 | Mapeo estado→label/tone, transiciones, filtros, formato | `entities/admin/lib/*` (ej. `production-status.ts`, `order-transitions.ts`, `order-format.ts`) |
 | Hook async específico de una ruta | Co-localizado (`use<X>Detail.ts`) |
@@ -114,7 +114,7 @@ bloquea la UI si falla).
 ## 7. Sidebar y descubribilidad
 
 Toda ruta de nivel superior se registra en
-`src/widgets/admin-sidebar/AdminSidebar.tsx`.
+`src/app/admin/_components/AdminSidebar.tsx`.
 
 **Excepción intencional:** `vision-configs` e `image-gen-configs` no están en el
 sidebar — se navega a ellas desde el editor de estilos (`styles/[id]`). Es una
