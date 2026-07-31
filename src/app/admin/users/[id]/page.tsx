@@ -81,18 +81,25 @@ export default function AdminUserDetailPage() {
       title={user.fullName || getHandle(user.email)}
       subtitle={user.email}
       titleMetadata={
-        <InlineStack gap="200">
+        <InlineStack gap="200" blockAlign="center">
           <Badge tone={roleBadgeTone(user.role)}>{user.role}</Badge>
           <Badge tone={user.isActive ? "success" : "enabled"}>
             {user.isActive ? "Activo" : "Inactivo"}
           </Badge>
           {/* El saldo dejó la barra lateral al mudarse a la pestaña Créditos;
-              aquí sigue estando a la vista sin abrirla. */}
+            aquí sigue estando a la vista sin abrirla. */}
           <Badge tone="info">{`${user.generationCredits} créditos`}</Badge>
         </InlineStack>
       }
     >
       <Layout>
+        <Layout.Section variant="fullWidth">
+          <UserStatsCard
+            user={user}
+            photoCount={allPhotos.length}
+            generationCount={gens?.meta.total ?? null}
+          />
+        </Layout.Section>
         <Layout.Section>
           <Card padding="0">
             <Tabs tabs={TABS} selected={selectedTab} onSelect={setSelectedTab}>
@@ -122,11 +129,6 @@ export default function AdminUserDetailPage() {
         <Layout.Section variant="oneThird">
           <BlockStack gap="400">
             <UserProfileCard user={user} />
-            <UserStatsCard
-              user={user}
-              photoCount={allPhotos.length}
-              generationCount={gens?.meta.total ?? null}
-            />
             <UserExpensesCard expenses={expenses} loading={loadingExpenses} />
           </BlockStack>
         </Layout.Section>

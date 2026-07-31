@@ -1,6 +1,6 @@
 "use client";
 
-import { BlockStack, Card, Text } from "@shopify/polaris";
+import { BlockStack, Box, Card, InlineGrid, Text } from "@shopify/polaris";
 import { AdminUserDetail } from "@/entities/admin/api";
 import { daysSince } from "@/entities/admin/lib/user-format";
 
@@ -11,7 +11,11 @@ interface UserStatsCardProps {
   generationCount: number | null;
 }
 
-/** Contadores de actividad del usuario. */
+/**
+ * Fila de contadores de actividad, al ancho del header. Sin título propio: se
+ * lee como una extensión de la cabecera, igual que la ficha de cliente del
+ * admin de Shopify.
+ */
 export function UserStatsCard({
   user,
   photoCount,
@@ -25,40 +29,30 @@ export function UserStatsCard({
   ];
 
   return (
-    <Card>
-      <BlockStack gap="300">
-        <Text variant="headingSm" as="h2">
-          Estadísticas
-        </Text>
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: "repeat(auto-fill, minmax(110px, 1fr))",
-            gap: 12,
-          }}
-        >
-          {stats.map((stat) => (
-            <div
-              key={stat.label}
-              style={{
-                background: "var(--p-color-bg-surface-secondary)",
-                borderRadius: 8,
-                padding: 12,
-                textAlign: "center",
-              }}
-            >
-              <Text variant="headingLg" as="p">
+    // Sin padding en la card para que los divisores lleguen de borde a borde;
+    // cada celda pone el suyo.
+    <Card padding="0">
+      <InlineGrid columns={{ xs: 2, md: 4 }} gap="0">
+        {stats.map((stat, i) => (
+          <Box
+            key={stat.label}
+            padding="400"
+            borderInlineStartWidth={i === 0 ? "0" : "025"}
+            borderColor="border"
+          >
+            <BlockStack gap="100">
+              <Text variant="bodySm" fontWeight="semibold" as="span">
+                {stat.label}
+              </Text>
+              <Text variant="bodyMd" as="span">
                 {typeof stat.value === "number"
                   ? stat.value.toLocaleString("es-ES")
                   : stat.value}
               </Text>
-              <Text variant="bodySm" tone="subdued" as="span">
-                {stat.label}
-              </Text>
-            </div>
-          ))}
-        </div>
-      </BlockStack>
+            </BlockStack>
+          </Box>
+        ))}
+      </InlineGrid>
     </Card>
   );
 }
