@@ -237,6 +237,13 @@ export interface AdminUserOrderItem {
   title: string;
   productionStatus: string;
   imageUrl: string | null;
+  /** Id numérico de la variante comprada: cruza con `useShopifyVariantImages`. */
+  shopifyVariantId: string | null;
+  productRef: {
+    shopifyHandle: string | null;
+    /** Imagen primaria del estilo: fallback de catálogo si Shopify no responde. */
+    style: { images: { imageUrl: string }[] } | null;
+  } | null;
   generation: { resultUrl: string | null } | null;
 }
 

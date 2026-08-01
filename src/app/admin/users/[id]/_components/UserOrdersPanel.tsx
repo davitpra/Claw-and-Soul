@@ -14,7 +14,10 @@ import {
   Spinner,
   Text,
 } from "@shopify/polaris";
-import { AdminUserOrderListItem } from "@/entities/admin/api";
+import {
+  AdminUserOrderItem,
+  AdminUserOrderListItem,
+} from "@/entities/admin/api";
 import { ADMIN_EMPTY_STATE_IMAGE } from "@/entities/admin/lib/empty-state";
 import {
   financialLabel,
@@ -25,6 +28,10 @@ import {
   productionStatusLabel,
   productionStatusTone,
 } from "@/entities/admin/lib/production-status";
+import {
+  useShopifyVariantImages,
+  variantNumericId,
+} from "@/hooks/useShopifyVariantImages";
 import { cloudinaryThumb } from "@/shared/lib/cloudinary";
 import { useUserOrders } from "../useUserOrders";
 
@@ -39,10 +46,35 @@ function orderStatus(items: AdminUserOrderListItem["items"]): string {
   return statuses.length === 1 ? statuses[0] : "mixed";
 }
 
+/**
+ * Imagen del producto de Shopify comprado: variante live de Shopify → imagen
+ * primaria del estilo (catálogo). Mismo orden que la card del detalle de pedido,
+ * y como allí no cae al arte del cliente: aquí interesa qué se compró.
+ */
+function productImage(
+  item: AdminUserOrderItem | undefined,
+  variantImages: Record<string, string>,
+): string | null {
+  if (!item) return null;
+  const numericId = variantNumericId(item.shopifyVariantId);
+  return (
+    (numericId ? variantImages[numericId] : null) ??
+    item.productRef?.style?.images?.[0]?.imageUrl ??
+    null
+  );
+}
+
 /** Pestaña "Pedidos": pedidos del usuario, cada fila enlaza a su detalle. */
 export function UserOrdersPanel({ userId }: { userId: string }) {
   const router = useRouter();
   const { orders, loading, page, setPage } = useUserOrders(userId);
+  // Best-effort: imagen live de Shopify de cada handle de la página, indexada
+  // por id numérico de variante (mismo hook que el detalle de pedido).
+  const variantImages = useShopifyVariantImages(
+    (orders?.data ?? []).flatMap((o) =>
+      o.items.map((i) => i.productRef?.shopifyHandle),
+    ),
+  );
 
   if (loading) {
     return (
@@ -85,6 +117,7 @@ export function UserOrdersPanel({ userId }: { userId: string }) {
             <OrderRow
               key={order.id}
               order={order}
+              variantImages={variantImages}
               onOpen={() => router.push(`/admin/orders/${order.id}`)}
             />
           )}
@@ -108,10 +141,10 @@ export function UserOrdersPanel({ userId }: { userId: string }) {
 
 /**
  * Miniatura del pedido. Se usa un `<img>` propio en vez del `Thumbnail` de
- * Polaris porque este no expone `onError`: los items guardan la URL del arte al
- * comprarlo, y si esa imagen se borró después (p. ej. el PBN de origen) la URL
- * queda apuntando a un 404. Con `Thumbnail` eso se ve como un recuadro blanco
- * roto; así cae al mismo placeholder que un pedido sin imagen.
+ * Polaris porque este no expone `onError`, y las URLs guardadas pueden apuntar a
+ * un 404 si la imagen se borró después (p. ej. un producto retirado de Shopify).
+ * Con `Thumbnail` eso se ve como un recuadro blanco roto; así cae al mismo
+ * placeholder que un pedido sin imagen.
  */
 function OrderThumb({ url }: { url: string | null }) {
   const [failed, setFailed] = useState(false);
@@ -141,13 +174,14 @@ function OrderThumb({ url }: { url: string | null }) {
 
 function OrderRow({
   order,
+  variantImages,
   onOpen,
 }: {
   order: AdminUserOrderListItem;
+  variantImages: Record<string, string>;
   onOpen: () => void;
 }) {
-  const thumb =
-    order.items[0]?.generation?.resultUrl ?? order.items[0]?.imageUrl;
+  const thumb = productImage(order.items[0], variantImages);
   const status = orderStatus(order.items);
   const count = order.items.length;
   // Con un solo item su título dice más que el recuento; con varios, el
@@ -165,7 +199,7 @@ function OrderRow({
       id={order.id}
       onClick={onOpen}
       accessibilityLabel={`Ver pedido ${order.orderNumber}`}
-      media={<OrderThumb url={thumb ?? null} />}
+      media={<OrderThumb url={thumb} />}
       verticalAlignment="center"
     >
       <InlineStack
