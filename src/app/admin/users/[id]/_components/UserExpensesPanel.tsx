@@ -1,26 +1,21 @@
 "use client";
 
 import { useState } from "react";
-import Link from "next/link";
 import {
   Banner,
   BlockStack,
-  Button,
   Card,
-  Collapsible,
-  Divider,
   EmptyState,
   InlineStack,
   Pagination,
   Spinner,
   Text,
 } from "@shopify/polaris";
-import { CustomerExpenses, ExpenseItem } from "@/entities/admin/api";
-import { EXPENSE_CATEGORY_LABELS } from "@/entities/admin/expense-labels";
+import { CustomerExpenses } from "@/entities/admin/api";
 import { ADMIN_EMPTY_STATE_IMAGE } from "@/entities/admin/lib/empty-state";
-import { fmtCurrency, fmtShortDate } from "@/entities/admin/lib/order-format";
 import { useUserExpenses } from "../useUserExpenses";
-import { expenseDetailRows } from "./expense-detail";
+import { ExpenseRow } from "./ExpenseRow";
+import { ExpensesBreakdown } from "./ExpensesBreakdown";
 import { RatesModal } from "./RatesModal";
 
 interface UserExpensesPanelProps {
@@ -124,27 +119,7 @@ function ExpensesSummary({
   return (
     <Card>
       <BlockStack gap="200">
-        {Object.entries(expenses.byCategory).map(([category, total]) => (
-          <InlineStack key={category} align="space-between" blockAlign="center">
-            <Text as="span" tone="subdued">
-              {EXPENSE_CATEGORY_LABELS[category] ?? category}
-            </Text>
-            <Text as="span">
-              ≈ {fmtCurrency(total, expenses.baseCurrency)}
-            </Text>
-          </InlineStack>
-        ))}
-
-        <Divider />
-
-        <InlineStack align="space-between" blockAlign="center">
-          <Text as="span" fontWeight="semibold">
-            Total gastos
-          </Text>
-          <Text as="span" fontWeight="semibold">
-            ≈ {fmtCurrency(expenses.grandTotal, expenses.baseCurrency)}
-          </Text>
-        </InlineStack>
+        <ExpensesBreakdown expenses={expenses} />
 
         {/* Sin coste real del proveedor, estos totales solo valen lo que valgan
             las tarifas: una a 0 registra los gastos en cero sin avisar. */}
@@ -157,95 +132,6 @@ function ExpensesSummary({
             upscaling: esas tarifas se mantienen a mano.
           </Text>
         </Banner>
-      </BlockStack>
-    </Card>
-  );
-}
-
-function ExpenseRow({ expense }: { expense: ExpenseItem }) {
-  const [open, setOpen] = useState(false);
-  const rows = expenseDetailRows(expense);
-  // Solo se muestra la conversión cuando de verdad hubo cambio de moneda.
-  const converted =
-    expense.amountBase !== null &&
-    expense.baseCurrency !== null &&
-    expense.baseCurrency !== expense.currency;
-
-  return (
-    <Card>
-      <BlockStack gap="200">
-        <InlineStack align="space-between" blockAlign="start" gap="200">
-          <BlockStack gap="050">
-            <Text as="span" fontWeight="semibold">
-              {EXPENSE_CATEGORY_LABELS[expense.category] ?? expense.category}
-            </Text>
-            <Text as="span" variant="bodySm" tone="subdued">
-              {fmtShortDate(expense.createdAt)}
-              {expense.provider && ` · ${expense.provider}`}
-              {expense.note && ` · ${expense.note}`}
-            </Text>
-            {expense.orderId && (
-              // `Link` de Next y no el de Polaris: el AppProvider no tiene
-              // `linkComponent`, así que el de Polaris recargaría la página.
-              <Link
-                href={`/admin/orders/${expense.orderId}`}
-                style={{ color: "var(--p-color-text-emphasis)" }}
-              >
-                <Text as="span" variant="bodySm">
-                  Ver pedido
-                </Text>
-              </Link>
-            )}
-          </BlockStack>
-
-          <BlockStack gap="050" inlineAlign="end">
-            <Text as="span" fontWeight="semibold">
-              {fmtCurrency(expense.amount, expense.currency)}
-            </Text>
-            {converted && (
-              <Text as="span" variant="bodySm" tone="subdued">
-                ≈ {fmtCurrency(expense.amountBase!, expense.baseCurrency!)}
-              </Text>
-            )}
-          </BlockStack>
-        </InlineStack>
-
-        {rows.length > 0 && (
-          <>
-            <InlineStack>
-              <Button
-                variant="plain"
-                size="slim"
-                disclosure={open ? "up" : "down"}
-                onClick={() => setOpen((prev) => !prev)}
-                ariaExpanded={open}
-                ariaControls={`expense-detail-${expense.id}`}
-              >
-                Detalle
-              </Button>
-            </InlineStack>
-            <Collapsible open={open} id={`expense-detail-${expense.id}`}>
-              <BlockStack gap="100">
-                <Divider />
-                {rows.map((row) => (
-                  <InlineStack
-                    key={row.label}
-                    align="space-between"
-                    blockAlign="center"
-                    gap="200"
-                  >
-                    <Text as="span" variant="bodySm" tone="subdued">
-                      {row.label}
-                    </Text>
-                    <Text as="span" variant="bodySm">
-                      {row.value}
-                    </Text>
-                  </InlineStack>
-                ))}
-              </BlockStack>
-            </Collapsible>
-          </>
-        )}
       </BlockStack>
     </Card>
   );

@@ -5,14 +5,12 @@ import {
   BlockStack,
   Button,
   Card,
-  Divider,
   InlineStack,
   Spinner,
   Text,
 } from "@shopify/polaris";
 import { CustomerExpenses } from "@/entities/admin/api";
-import { EXPENSE_CATEGORY_LABELS } from "@/entities/admin/expense-labels";
-import { fmtCurrency } from "@/entities/admin/lib/order-format";
+import { ExpensesBreakdown } from "./ExpensesBreakdown";
 import { RatesModal } from "./RatesModal";
 
 interface UserExpensesCardProps {
@@ -46,33 +44,7 @@ export function UserExpensesCard({
         )}
 
         {!loading && expenses && expenses.count > 0 && (
-          <BlockStack gap="200">
-            {Object.entries(expenses.byCategory).map(([category, total]) => (
-              <InlineStack
-                key={category}
-                align="space-between"
-                blockAlign="center"
-              >
-                <Text as="span" tone="subdued">
-                  {EXPENSE_CATEGORY_LABELS[category] ?? category}
-                </Text>
-                <Text as="span">
-                  ≈ {fmtCurrency(total, expenses.baseCurrency)}
-                </Text>
-              </InlineStack>
-            ))}
-
-            {Object.keys(expenses.byCategory).length > 0 && <Divider />}
-
-            <InlineStack align="space-between" blockAlign="center">
-              <Text as="span" fontWeight="semibold">
-                Total gastos
-              </Text>
-              <Text as="span" fontWeight="semibold">
-                ≈ {fmtCurrency(expenses.grandTotal, expenses.baseCurrency)}
-              </Text>
-            </InlineStack>
-          </BlockStack>
+          <ExpensesBreakdown expenses={expenses} />
         )}
 
         {/* Las tarifas se editan aquí mismo: una que esté a 0 registra los
