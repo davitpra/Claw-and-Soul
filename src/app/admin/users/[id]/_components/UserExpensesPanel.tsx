@@ -2,17 +2,24 @@
 
 import { useState } from "react";
 import {
-  Banner,
   BlockStack,
+  Box,
+  Button,
   Card,
   EmptyState,
+  InlineGrid,
   InlineStack,
   Pagination,
   Spinner,
   Text,
 } from "@shopify/polaris";
-import { CustomerExpenses } from "@/entities/admin/api";
+import {
+  AdminUserCreditEconomics,
+  CustomerExpenses,
+} from "@/entities/admin/api";
 import { ADMIN_EMPTY_STATE_IMAGE } from "@/entities/admin/lib/empty-state";
+import { fmtCreditCost } from "@/entities/admin/lib/credit-format";
+import { fmtCurrency } from "@/entities/admin/lib/order-format";
 import { useUserExpenses } from "../useUserExpenses";
 import { ExpenseRow } from "./ExpenseRow";
 import { ExpensesBreakdown } from "./ExpensesBreakdown";
@@ -23,6 +30,9 @@ interface UserExpensesPanelProps {
   /** Totales ya cargados por `useUserDetail`: la cabecera no vuelve a pedirlos. */
   expenses: CustomerExpenses | null;
   loadingSummary: boolean;
+  /** Ya cargada por la página para la card lateral: aquí valora el saldo. */
+  economics: AdminUserCreditEconomics | null;
+  loadingEconomics: boolean;
 }
 
 /**
@@ -33,6 +43,8 @@ export function UserExpensesPanel({
   userId,
   expenses,
   loadingSummary,
+  economics,
+  loadingEconomics,
 }: UserExpensesPanelProps) {
   const { items, loading, page, setPage } = useUserExpenses(userId);
   const [ratesOpen, setRatesOpen] = useState(false);
@@ -78,6 +90,7 @@ export function UserExpensesPanel({
       {expenses && (
         <ExpensesSummary
           expenses={expenses}
+          economics={loadingEconomics ? null : economics}
           onShowRates={() => setRatesOpen(true)}
         />
       )}
@@ -108,31 +121,148 @@ export function UserExpensesPanel({
   );
 }
 
-/** Mismo desglose que la card lateral, como cabecera de la pestaña. */
+/**
+ * Cabecera de la pestaña: las cifras clave como tiles y, debajo, el desglose por
+ * categoría. Los tiles separan lo gastado (movimientos ya registrados) de la
+ * proyección (el saldo de créditos por consumir), que si no se leería como un
+ * gasto más pese a poder pesar veinte veces más.
+ */
 function ExpensesSummary({
   expenses,
+  economics,
   onShowRates,
 }: {
   expenses: CustomerExpenses;
+  economics: AdminUserCreditEconomics | null;
   onShowRates: () => void;
 }) {
-  return (
-    <Card>
-      <BlockStack gap="200">
-        <ExpensesBreakdown expenses={expenses} />
+  const tiles = buildTotals(expenses, economics);
+  // Con un solo tile el desglose conserva su propio total: no hay proyección de
+  // la que distinguirlo.
+  const hasProjection = tiles.length > 1;
 
-        {/* Sin coste real del proveedor, estos totales solo valen lo que valgan
-            las tarifas: una a 0 registra los gastos en cero sin avisar. */}
-        <Banner
-          tone="warning"
-          action={{ content: "Ver tarifas", onAction: onShowRates }}
-        >
-          <Text as="p">
-            fal.ai no informa del coste de generación de imágenes ni de
-            upscaling: esas tarifas se mantienen a mano.
+  return (
+    <BlockStack gap="400">
+      <ExpensesTotals tiles={tiles} />
+
+      <Card>
+        <BlockStack gap="200">
+          <Text variant="headingSm" as="h3">
+            Desglose por categoría
           </Text>
-        </Banner>
-      </BlockStack>
+
+          <ExpensesBreakdown expenses={expenses} showTotal={!hasProjection} />
+
+          {economics && economics.balance > 0 && (
+            <Text as="p" tone="subdued" variant="bodySm">
+              {economics.unitCost === null
+                ? "Aún no hay generaciones con costo registrado: el saldo no se puede valorar."
+                : ``}
+            </Text>
+          )}
+
+          {/* Sin coste real del proveedor, estos totales solo valen lo que
+              valgan las tarifas: una a 0 registra los gastos en cero sin
+              avisar, y ahí es donde se corrige. */}
+          <InlineStack gap="200" blockAlign="center">
+            <Text as="span" tone="subdued" variant="bodySm">
+              fal.ai no informa del coste de generación de imágenes ni de
+              upscaling: esas tarifas se mantienen a mano.
+            </Text>
+            <Button variant="plain" size="slim" onClick={onShowRates}>
+              Ver tarifas
+            </Button>
+          </InlineStack>
+        </BlockStack>
+      </Card>
+    </BlockStack>
+  );
+}
+
+interface TotalTile {
+  label: string;
+  value: string;
+  /** Contexto del número: de dónde sale o qué lo hace aproximado. */
+  detail: string;
+  /** Atenúa el importe: lo que no es dinero ya gastado no se lee igual. */
+  projected?: boolean;
+}
+
+/**
+ * Las cifras que encabezan la pestaña. "Gastado" siempre; la proyección solo si
+ * el usuario tiene saldo, y el total estimado solo si además hay costo medio con
+ * el que valorarlo — sin él la suma sería idéntica a lo gastado y repetirla bajo
+ * otro nombre es justo la confusión que se quiere evitar.
+ */
+function buildTotals(
+  expenses: CustomerExpenses,
+  economics: AdminUserCreditEconomics | null,
+): TotalTile[] {
+  const tiles: TotalTile[] = [
+    {
+      label: "Gastado",
+      value: `≈ ${fmtCurrency(expenses.grandTotal, expenses.baseCurrency)}`,
+      detail: `${expenses.count.toLocaleString("es-ES")} movimiento(s)`,
+    },
+  ];
+
+  if (!economics || economics.balance <= 0) return tiles;
+
+  const { baseCurrency, unitCost, outstandingLiability } = economics;
+
+  tiles.push({
+    label: "Costo futuro",
+    // Sin costo medio no hay nada que estimar: mejor "—" que un 0 engañoso.
+    value:
+      unitCost === null
+        ? "—"
+        : `≈ ${fmtCreditCost(outstandingLiability, baseCurrency)}`,
+    detail: `${economics.balance.toLocaleString("es-ES")} crédito(s) sin gastar`,
+    projected: true,
+  });
+
+  if (unitCost !== null) {
+    tiles.push({
+      label: "Total estimado",
+      value: `≈ ${fmtCreditCost(expenses.grandTotal + outstandingLiability, baseCurrency)}`,
+      detail: "Gastado + costo futuro",
+      projected: true,
+    });
+  }
+
+  return tiles;
+}
+
+/** Fila de cifras al estilo de `UserStatsCard`: sin padding, cada celda el suyo. */
+function ExpensesTotals({ tiles }: { tiles: TotalTile[] }) {
+  return (
+    <Card padding="0">
+      <InlineGrid columns={{ xs: 1, sm: tiles.length }} gap="0">
+        {tiles.map((tile, i) => (
+          <Box
+            key={tile.label}
+            padding="400"
+            borderInlineStartWidth={i === 0 ? "0" : "025"}
+            borderColor="border"
+          >
+            <BlockStack gap="100">
+              <Text variant="bodySm" fontWeight="semibold" as="span">
+                {tile.label}
+              </Text>
+              <Text
+                variant="headingMd"
+                as="span"
+                tone={tile.projected ? "subdued" : undefined}
+              >
+                {tile.value}
+              </Text>
+              <Text variant="bodySm" as="span" tone="subdued">
+                {tile.detail}
+              </Text>
+            </BlockStack>
+          </Box>
+        ))}
+      </InlineGrid>
     </Card>
   );
 }

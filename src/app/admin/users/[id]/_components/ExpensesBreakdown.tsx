@@ -7,9 +7,16 @@ import { fmtCurrency } from "@/entities/admin/lib/order-format";
 
 /**
  * Desglose por categoría + total, en la moneda base del backend (de ahí el "≈").
- * Cabecera de la pestaña "Gastos".
+ * Cabecera de la pestaña "Gastos". Cuando esa cabecera ya muestra el total como
+ * tile va con `showTotal` en `false`, para no dar dos veces la misma cifra.
  */
-export function ExpensesBreakdown({ expenses }: { expenses: CustomerExpenses }) {
+export function ExpensesBreakdown({
+  expenses,
+  showTotal = true,
+}: {
+  expenses: CustomerExpenses;
+  showTotal?: boolean;
+}) {
   const categories = Object.entries(expenses.byCategory);
 
   return (
@@ -23,16 +30,20 @@ export function ExpensesBreakdown({ expenses }: { expenses: CustomerExpenses }) 
         </InlineStack>
       ))}
 
-      {categories.length > 0 && <Divider />}
+      {showTotal && (
+        <>
+          {categories.length > 0 && <Divider />}
 
-      <InlineStack align="space-between" blockAlign="center">
-        <Text as="span" fontWeight="semibold">
-          Total gastos
-        </Text>
-        <Text as="span" fontWeight="semibold">
-          ≈ {fmtCurrency(expenses.grandTotal, expenses.baseCurrency)}
-        </Text>
-      </InlineStack>
+          <InlineStack align="space-between" blockAlign="center">
+            <Text as="span" fontWeight="semibold">
+              Total gastos
+            </Text>
+            <Text as="span" fontWeight="semibold">
+              ≈ {fmtCurrency(expenses.grandTotal, expenses.baseCurrency)}
+            </Text>
+          </InlineStack>
+        </>
+      )}
     </BlockStack>
   );
 }

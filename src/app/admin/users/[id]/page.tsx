@@ -234,6 +234,8 @@ export default function AdminUserDetailPage() {
                     userId={id}
                     expenses={expenses}
                     loadingSummary={loadingExpenses}
+                    economics={economics}
+                    loadingEconomics={loadingEconomics}
                   />
                 )}
               </Box>
