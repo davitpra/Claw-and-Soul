@@ -26,6 +26,7 @@ import {
   userStatusTone,
 } from "@/entities/admin/lib/user-status";
 import { useUserDetail } from "./useUserDetail";
+import { useUserCreditEconomics } from "./useUserCreditEconomics";
 import { CreditsPanel } from "./_components/CreditsPanel";
 import { GenerationsPanel } from "./_components/GenerationsPanel";
 import { PbnPanel } from "./_components/PbnPanel";
@@ -68,6 +69,13 @@ export default function AdminUserDetailPage() {
     dismissStatusError,
     submitStatusAction,
   } = useUserDetail(id);
+  // Vive en la página, no en la pestaña de créditos: la card lateral que lo
+  // muestra está siempre visible, y el abono manual tiene que refrescarlo.
+  const {
+    economics,
+    loading: loadingEconomics,
+    reload: reloadEconomics,
+  } = useUserCreditEconomics(id);
   const [selectedTab, setSelectedTab] = useState(0);
 
   if (loading) {
@@ -209,7 +217,13 @@ export default function AdminUserDetailPage() {
                   <CreditsPanel
                     userId={id}
                     balance={user.generationCredits}
-                    onGranted={applyGrant}
+                    onGranted={(newBalance) => {
+                      applyGrant(newBalance);
+                      // El abono mueve el saldo, y con él el costo futuro
+                      // estimado de la card lateral.
+                      reloadEconomics();
+                    }}
+                    baseCurrency={economics?.baseCurrency ?? "CAD"}
                   />
                 )}
                 {selectedTab === 4 && <UserOrdersPanel userId={id} />}
@@ -227,7 +241,12 @@ export default function AdminUserDetailPage() {
         <Layout.Section variant="oneThird">
           <BlockStack gap="400">
             <UserProfileCard user={user} />
-            <UserExpensesCard expenses={expenses} loading={loadingExpenses} />
+            <UserExpensesCard
+              expenses={expenses}
+              loading={loadingExpenses}
+              economics={economics}
+              loadingEconomics={loadingEconomics}
+            />
           </BlockStack>
         </Layout.Section>
       </Layout>

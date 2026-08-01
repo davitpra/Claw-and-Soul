@@ -288,6 +288,13 @@ export interface AdminCreditTransaction {
   amount: number; // + grant, - spend
   reason: string; // signup_bonus | order_bonus | pack_purchase | admin_grant | generation_spend | generation_refund | order_bonus_reversal | pack_purchase_reversal
   referenceId: string | null;
+  /**
+   * Costo real de la generación referenciada, en moneda base. Sólo lo llevan
+   * los movimientos de gasto; los bonos y packs son saldo concedido, no gasto,
+   * y llegan como `null` — igual que un reembolso, porque una generación
+   * fallida nunca deja `Expense`.
+   */
+  costBase: number | null;
   note: string | null;
   createdAt: string;
 }
@@ -610,6 +617,40 @@ export interface ExpensesSummary {
   byCategory: Record<string, { total: number; count: number }>;
   grandTotal: number;
   count: number;
+}
+
+/**
+ * Los créditos traducidos a dinero, por el lado del COSTO interno: un crédito
+ * se gasta en una generación, y cada generación completada deja un `Expense`,
+ * así que el costo medio de esos gastos es el costo de un crédito.
+ */
+export interface AdminCreditEconomics {
+  period: string;
+  baseCurrency: string;
+  /** `null` si aún no hay ninguna generación con gasto registrado. */
+  unitCost: number | null;
+  unitCostSampleSize: number;
+  /** Si no coincide con `period`, la media se calculó sobre todo el histórico. */
+  unitCostPeriod: string;
+  unitCostBreakdown: { vision: number; image: number } | null;
+  creditsIssued: number;
+  creditsSpentNet: number;
+  /** Saldo actual del conjunto de usuarios; nunca filtrado por período. */
+  creditsOutstanding: number;
+  outstandingLiability: number;
+}
+
+export interface AdminUserCreditEconomics {
+  baseCurrency: string;
+  balance: number;
+  creditsSpentNet: number;
+  generationCost: number;
+  generationCount: number;
+  avgCostPerCredit: number | null;
+  /** Costo medio global: es el que valora el saldo, no la media del usuario. */
+  unitCost: number | null;
+  unitCostSampleSize: number;
+  outstandingLiability: number;
 }
 
 export interface ProviderRate {
@@ -1176,6 +1217,16 @@ export const adminApi = {
   expenses: {
     summary: (period: "7d" | "30d" | "90d" | "all" = "30d") =>
       adminFetch<ExpensesSummary>(`/admin/expenses/summary?period=${period}`),
+  },
+  credits: {
+    economics: (period: "7d" | "30d" | "90d" | "all" = "all") =>
+      adminFetch<AdminCreditEconomics>(
+        `/admin/credits/economics?period=${period}`,
+      ),
+    userEconomics: (userId: string) =>
+      adminFetch<AdminUserCreditEconomics>(
+        `/admin/credits/economics/${userId}`,
+      ),
   },
   expenseRates: {
     list: () => adminFetch<ProviderRate[]>("/admin/expense-rates"),

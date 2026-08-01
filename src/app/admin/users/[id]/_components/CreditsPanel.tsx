@@ -17,6 +17,7 @@ import {
   creditAmountTone,
   creditReasonLabel,
   fmtCreditAmount,
+  fmtCreditCost,
 } from "@/entities/admin/lib/credit-format";
 import { fmtAbsoluteDate } from "@/entities/admin/lib/user-format";
 import { useUserCredits } from "../useUserCredits";
@@ -28,16 +29,22 @@ interface CreditsPanelProps {
   balance: number;
   /** Propaga el nuevo saldo al detalle de usuario tras un grant exitoso. */
   onGranted: (newBalance: number) => void;
+  /** Moneda de la columna de costo; la fija el backend (`Expense.baseCurrency`). */
+  baseCurrency: string;
 }
 
 /**
  * Pestaña "Créditos": panel para acreditar créditos y el historial paginado de
  * movimientos del ledger. Un abono refresca el historial en el sitio.
+ *
+ * Las cifras agregadas (saldo valorado, costo incurrido) viven en la card
+ * lateral `UserExpensesCard`, que está siempre a la vista.
  */
 export function CreditsPanel({
   userId,
   balance,
   onGranted,
+  baseCurrency,
 }: CreditsPanelProps) {
   const { transactions, loading, page, setPage, reload } =
     useUserCredits(userId);
@@ -86,6 +93,7 @@ export function CreditsPanel({
                 { title: "Motivo" },
                 { title: "Nota" },
                 { title: "Monto" },
+                { title: "Costo" },
               ]}
               selectable={false}
             >
@@ -110,6 +118,11 @@ export function CreditsPanel({
                     <Badge tone={creditAmountTone(t.amount)}>
                       {fmtCreditAmount(t.amount)}
                     </Badge>
+                  </IndexTable.Cell>
+                  <IndexTable.Cell>
+                    <Text as="span" tone="subdued">
+                      {fmtCreditCost(t.costBase, baseCurrency)}
+                    </Text>
                   </IndexTable.Cell>
                 </IndexTable.Row>
               ))}
