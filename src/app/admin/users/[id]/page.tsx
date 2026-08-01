@@ -199,6 +199,12 @@ export default function AdminUserDetailPage() {
             user={user}
             photoCount={allPhotos.length}
             generationCount={gens?.meta.total ?? null}
+            money={{
+              revenue,
+              expenses,
+              economics,
+              loading: loadingRevenue || loadingExpenses || loadingEconomics,
+            }}
           />
         </Layout.Section>
         <Layout.Section>
