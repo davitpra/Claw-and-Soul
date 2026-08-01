@@ -553,9 +553,10 @@ export interface OrderExpenses {
 }
 
 export interface CustomerExpenses {
-  items: ExpenseItem[];
   byCategory: Record<string, number>;
   grandTotal: number;
+  /** Nº de gastos registrados; los movimientos se piden aparte y paginados. */
+  count: number;
   baseCurrency: string;
 }
 
@@ -927,6 +928,10 @@ export const adminApi = {
     },
     expenses: (id: string) =>
       adminFetch<CustomerExpenses>(`/admin/users/${id}/expenses`),
+    expenseItems: (id: string, page = 1): Promise<Paginated<ExpenseItem>> =>
+      adminFetch<Paginated<ExpenseItem>>(
+        `/admin/users/${id}/expenses/items?page=${page}&limit=20`,
+      ),
     grantCredits: (
       id: string,
       body: { amount: number; note?: string },
@@ -1105,6 +1110,17 @@ export const adminApi = {
   },
   expenseRates: {
     list: () => adminFetch<ProviderRate[]>("/admin/expense-rates"),
+    create: (body: {
+      provider: string;
+      model: string;
+      unit: string;
+      amount: number;
+      currency?: string;
+    }) =>
+      adminFetch<ProviderRate>("/admin/expense-rates", {
+        method: "POST",
+        body: JSON.stringify(body),
+      }),
     update: (
       id: string,
       body: { amount?: number; unit?: string; currency?: string },

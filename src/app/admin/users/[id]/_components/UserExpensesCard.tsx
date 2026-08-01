@@ -34,7 +34,13 @@ export function UserExpensesCard({
 
         {loading && <Spinner size="small" />}
 
-        {!loading && expenses && (
+        {!loading && expenses?.count === 0 && (
+          <Text as="p" tone="subdued">
+            Sin gastos registrados aún.
+          </Text>
+        )}
+
+        {!loading && expenses && expenses.count > 0 && (
           <BlockStack gap="200">
             {Object.entries(expenses.byCategory).map(([category, total]) => (
               <InlineStack
@@ -61,12 +67,6 @@ export function UserExpensesCard({
                 ≈ {fmtCurrency(expenses.grandTotal, expenses.baseCurrency)}
               </Text>
             </InlineStack>
-
-            {expenses.items.length === 0 && (
-              <Text as="p" tone="subdued">
-                Sin gastos registrados aún.
-              </Text>
-            )}
           </BlockStack>
         )}
       </BlockStack>

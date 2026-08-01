@@ -22,6 +22,7 @@ import { GenerationsPanel } from "./_components/GenerationsPanel";
 import { PbnPanel } from "./_components/PbnPanel";
 import { PetsPanel } from "./_components/PetsPanel";
 import { UserExpensesCard } from "./_components/UserExpensesCard";
+import { UserExpensesPanel } from "./_components/UserExpensesPanel";
 import { UserOrdersPanel } from "./_components/UserOrdersPanel";
 import { UserProfileCard } from "./_components/UserProfileCard";
 import { UserStatsCard } from "./_components/UserStatsCard";
@@ -32,6 +33,7 @@ const TABS = [
   { id: "pbn", content: "Paint by Numbers", panelID: "panel-pbn" },
   { id: "creditos", content: "Créditos", panelID: "panel-creditos" },
   { id: "pedidos", content: "Pedidos", panelID: "panel-pedidos" },
+  { id: "gastos", content: "Gastos", panelID: "panel-gastos" },
 ];
 
 export default function AdminUserDetailPage() {
@@ -119,6 +121,13 @@ export default function AdminUserDetailPage() {
                   />
                 )}
                 {selectedTab === 4 && <UserOrdersPanel userId={id} />}
+                {selectedTab === 5 && (
+                  <UserExpensesPanel
+                    userId={id}
+                    expenses={expenses}
+                    loadingSummary={loadingExpenses}
+                  />
+                )}
               </Box>
             </Tabs>
           </Card>

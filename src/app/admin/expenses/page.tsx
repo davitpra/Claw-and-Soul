@@ -10,12 +10,11 @@ import {
   Select,
   Spinner,
   Banner,
-  TextField,
-  Button,
   Divider,
 } from "@shopify/polaris";
-import { adminApi, ExpensesSummary, ProviderRate } from "@/entities/admin/api";
+import { adminApi, ExpensesSummary } from "@/entities/admin/api";
 import { EXPENSE_CATEGORY_LABELS } from "@/entities/admin/expense-labels";
+import { RatesSection } from "./_components/RatesSection";
 
 function fmtCurrency(amount: number, currency = "CAD") {
   return new Intl.NumberFormat("es-ES", {
@@ -36,72 +35,33 @@ export default function AdminExpensesPage() {
   // --- Resumen global ---
   const [period, setPeriod] = useState<"7d" | "30d" | "90d" | "all">("30d");
   const [summary, setSummary] = useState<ExpensesSummary | null>(null);
-  const [loadingSummary, setLoadingSummary] = useState(true);
   const [summaryError, setSummaryError] = useState<string | null>(null);
+
+  // `loadingSummary` derivado: hay carga en curso mientras el período ya
+  // resuelto no coincida con el actual. Evita el setState síncrono en el efecto.
+  const [loadedPeriod, setLoadedPeriod] = useState<string | null>(null);
+  const loadingSummary = loadedPeriod !== period;
 
   useEffect(() => {
     let alive = true;
-    setLoadingSummary(true);
-    setSummaryError(null);
     adminApi.expenses
       .summary(period)
       .then((data) => {
         if (alive) {
           setSummary(data);
-          setLoadingSummary(false);
+          setSummaryError(null);
         }
       })
       .catch((e: Error) => {
-        if (alive) {
-          setSummaryError(e.message);
-          setLoadingSummary(false);
-        }
+        if (alive) setSummaryError(e.message);
+      })
+      .finally(() => {
+        if (alive) setLoadedPeriod(period);
       });
     return () => {
       alive = false;
     };
   }, [period]);
-
-  // --- Tarifas fal.ai ---
-  const [rates, setRates] = useState<ProviderRate[]>([]);
-  const [rateInputs, setRateInputs] = useState<Record<string, string>>({});
-  const [rateSaving, setRateSaving] = useState<Record<string, boolean>>({});
-  const [rateMsg, setRateMsg] = useState<Record<string, { text: string; tone: "success" | "critical" }>>({});
-
-  useEffect(() => {
-    let alive = true;
-    adminApi.expenseRates.list().then((data) => {
-      if (alive) {
-        setRates(data);
-        const inputs: Record<string, string> = {};
-        for (const r of data) inputs[r.id] = String(r.amount);
-        setRateInputs(inputs);
-      }
-    });
-    return () => {
-      alive = false;
-    };
-  }, []);
-
-  async function handleSaveRate(rate: ProviderRate) {
-    const amount = parseFloat(rateInputs[rate.id] ?? "");
-    if (isNaN(amount) || amount < 0) {
-      setRateMsg((prev) => ({ ...prev, [rate.id]: { text: "Monto inválido.", tone: "critical" } }));
-      return;
-    }
-    setRateSaving((prev) => ({ ...prev, [rate.id]: true }));
-    setRateMsg((prev) => { const next = { ...prev }; delete next[rate.id]; return next; });
-    try {
-      const updated = await adminApi.expenseRates.update(rate.id, { amount });
-      setRates((prev) => prev.map((r) => (r.id === rate.id ? updated : r)));
-      setRateInputs((prev) => ({ ...prev, [rate.id]: String(updated.amount) }));
-      setRateMsg((prev) => ({ ...prev, [rate.id]: { text: "Guardado.", tone: "success" } }));
-    } catch (e) {
-      setRateMsg((prev) => ({ ...prev, [rate.id]: { text: (e as Error).message, tone: "critical" } }));
-    } finally {
-      setRateSaving((prev) => ({ ...prev, [rate.id]: false }));
-    }
-  }
 
   return (
     <Page title="Gastos" subtitle="Resumen de costos y configuración de tarifas">
@@ -175,76 +135,7 @@ export default function AdminExpensesPage() {
           </BlockStack>
         </Card>
 
-        {/* Tarifas fal.ai */}
-        <Card>
-          <BlockStack gap="300">
-            <BlockStack gap="100">
-              <Text variant="headingSm" as="h2">
-                Tarifas fal.ai
-              </Text>
-              <Text as="p" tone="subdued" variant="bodySm">
-                Costo por operación usado para registrar gastos de generación y upscale. Los cambios aplican a nuevas operaciones.
-              </Text>
-            </BlockStack>
-
-            {rates.length === 0 ? (
-              <InlineStack gap="200" blockAlign="center">
-                <Spinner size="small" />
-                <Text as="span" tone="subdued">
-                  Cargando tarifas…
-                </Text>
-              </InlineStack>
-            ) : (
-              <BlockStack gap="300">
-                {rates.map((rate) => (
-                  <BlockStack key={rate.id} gap="150">
-                    <BlockStack gap="050">
-                      <Text as="span" fontWeight="semibold" variant="bodySm">
-                        {rate.model}
-                      </Text>
-                      <Text as="span" tone="subdued" variant="bodySm">
-                        {rate.unit === "per_image" ? "por imagen" : "por megapíxel"} · {rate.currency}
-                      </Text>
-                    </BlockStack>
-                    {rateMsg[rate.id] && (
-                      <Banner
-                        tone={rateMsg[rate.id].tone}
-                        onDismiss={() => setRateMsg((prev) => { const next = { ...prev }; delete next[rate.id]; return next; })}
-                      >
-                        {rateMsg[rate.id].text}
-                      </Banner>
-                    )}
-                    <InlineStack gap="200" blockAlign="end">
-                      <div style={{ width: 160 }}>
-                        <TextField
-                          label="Monto"
-                          labelHidden
-                          type="number"
-                          step={0.000001}
-                          value={rateInputs[rate.id] ?? ""}
-                          onChange={(v) => setRateInputs((prev) => ({ ...prev, [rate.id]: v }))}
-                          autoComplete="off"
-                          prefix="$"
-                        />
-                      </div>
-                      <Button
-                        variant="primary"
-                        size="slim"
-                        loading={rateSaving[rate.id]}
-                        disabled={
-                          rateInputs[rate.id] === String(rate.amount)
-                        }
-                        onClick={() => handleSaveRate(rate)}
-                      >
-                        Guardar
-                      </Button>
-                    </InlineStack>
-                  </BlockStack>
-                ))}
-              </BlockStack>
-            )}
-          </BlockStack>
-        </Card>
+        <RatesSection />
       </BlockStack>
     </Page>
   );
