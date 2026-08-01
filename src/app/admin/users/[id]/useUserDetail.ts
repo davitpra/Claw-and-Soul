@@ -1,11 +1,18 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   adminApi,
   AdminUserDetail,
   AdminUserGeneration,
+  AdminUserStatusSummary,
   CustomerExpenses,
   Paginated,
 } from "@/entities/admin/api";
+
+/**
+ * Acción de ciclo de vida en curso. También identifica qué modal está abierto:
+ * `null` = ninguno.
+ */
+export type UserStatusAction = "ban" | "reactivate" | "delete" | "restore";
 
 /** Foto de mascota aplanada: arrastra a qué mascota pertenece para el alt. */
 export interface UserPhoto {
@@ -30,6 +37,15 @@ interface UserDetail {
   setGenPage: (page: number) => void;
   /** Refleja en pantalla el saldo devuelto por un grant, sin refetch. */
   applyGrant: (newBalance: number) => void;
+  /** Acción de estado con el modal abierto, o `null` si no hay ninguno. */
+  statusAction: UserStatusAction | null;
+  openStatusAction: (action: UserStatusAction) => void;
+  closeStatusAction: () => void;
+  savingStatus: boolean;
+  statusError: string | null;
+  dismissStatusError: () => void;
+  /** Ejecuta la acción abierta. `reason` se ignora en reactivar y restaurar. */
+  submitStatusAction: (reason: string) => Promise<void>;
 }
 
 /**
@@ -47,6 +63,12 @@ export function useUserDetail(id: string): UserDetail {
 
   const [gens, setGens] = useState<Paginated<AdminUserGeneration> | null>(null);
   const [genPage, setGenPage] = useState(1);
+
+  const [statusAction, setStatusAction] = useState<UserStatusAction | null>(
+    null,
+  );
+  const [savingStatus, setSavingStatus] = useState(false);
+  const [statusError, setStatusError] = useState<string | null>(null);
 
   // `gensLoading` derivado: hay carga en curso mientras la query ya resuelta no
   // coincida con la actual. Evita el setState síncrono dentro del efecto.
@@ -118,6 +140,52 @@ export function useUserDetail(id: string): UserDetail {
     [user],
   );
 
+  /**
+   * Ejecuta la acción de ciclo de vida abierta. El backend devuelve solo los
+   * campos de estado, así que se fusionan sobre la ficha en local en vez de
+   * recargarla entera: el resto (mascotas, créditos, gastos) no cambia.
+   */
+  const submitStatusAction = useCallback(
+    async (reason: string) => {
+      if (!statusAction || !user) return;
+
+      setSavingStatus(true);
+      setStatusError(null);
+
+      try {
+        let summary: AdminUserStatusSummary;
+
+        switch (statusAction) {
+          case "ban":
+            summary = await adminApi.users.setStatus(user.id, {
+              status: "banned",
+              reason,
+            });
+            break;
+          case "reactivate":
+            summary = await adminApi.users.setStatus(user.id, {
+              status: "active",
+            });
+            break;
+          case "delete":
+            summary = await adminApi.users.softDelete(user.id, { reason });
+            break;
+          case "restore":
+            summary = await adminApi.users.restore(user.id);
+            break;
+        }
+
+        setUser((prev) => (prev ? { ...prev, ...summary } : prev));
+        setStatusAction(null);
+      } catch (e: unknown) {
+        setStatusError((e as Error).message);
+      } finally {
+        setSavingStatus(false);
+      }
+    },
+    [statusAction, user],
+  );
+
   return {
     user,
     loading,
@@ -133,5 +201,15 @@ export function useUserDetail(id: string): UserDetail {
       setUser((prev) =>
         prev ? { ...prev, generationCredits: newBalance } : prev,
       ),
+    statusAction,
+    openStatusAction: (action) => {
+      setStatusError(null);
+      setStatusAction(action);
+    },
+    closeStatusAction: () => setStatusAction(null),
+    savingStatus,
+    statusError,
+    dismissStatusError: () => setStatusError(null),
+    submitStatusAction,
   };
 }

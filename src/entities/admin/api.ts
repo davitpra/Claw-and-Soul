@@ -12,12 +12,41 @@ export interface Paginated<T> {
   };
 }
 
+/**
+ * Ciclo de vida de la cuenta. El backend mantiene el invariante
+ * `isActive === (status === "active")`, así que `status` es siempre el dato más
+ * informativo de los dos: además del corte, dice por qué.
+ */
+export type AdminUserStatus = "active" | "banned" | "inactive" | "deleted";
+
+/**
+ * Lo que devuelven los endpoints de estado: solo los campos del ciclo de vida,
+ * no la ficha completa (el backend evita a propósito responder con la fila
+ * entera del usuario).
+ */
+export interface AdminUserStatusSummary {
+  id: string;
+  email: string;
+  role: string;
+  isActive: boolean;
+  status: AdminUserStatus;
+  statusReason: string | null;
+  statusChangedAt: string | null;
+  statusChangedBy: string | null;
+  deletedAt: string | null;
+  anonymizedAt: string | null;
+}
+
 export interface AdminUserListItem {
   id: string;
   email: string;
   fullName: string | null;
   role: string;
   isActive: boolean;
+  status: AdminUserStatus;
+  statusReason: string | null;
+  statusChangedAt: string | null;
+  deletedAt: string | null;
   generationCredits: number;
   createdAt: string;
   lastLoginAt: string | null;
@@ -52,6 +81,14 @@ export interface AdminUserDetail {
   fullName: string | null;
   role: string;
   isActive: boolean;
+  status: AdminUserStatus;
+  statusReason: string | null;
+  statusChangedAt: string | null;
+  /** User.id del admin que hizo el cambio; null si fue el cron o el propio usuario. */
+  statusChangedBy: string | null;
+  deletedAt: string | null;
+  /** Con fecha aquí, la cuenta ya está purgada y no se puede restaurar. */
+  anonymizedAt: string | null;
   emailVerified: boolean;
   generationCredits: number;
   /** Consumo neto en generaciones (spends menos refunds), en positivo. */
@@ -884,6 +921,8 @@ export const adminApi = {
         search?: string;
         sort?: string;
         order?: "asc" | "desc";
+        /** Sin este parámetro el backend oculta las cuentas dadas de baja. */
+        status?: AdminUserStatus | "all";
       } = {},
     ): Promise<Paginated<AdminUserListItem>> => {
       const p = new URLSearchParams({
@@ -893,6 +932,7 @@ export const adminApi = {
       if (params.search) p.set("search", params.search);
       if (params.sort) p.set("sort", params.sort);
       if (params.order) p.set("order", params.order);
+      if (params.status) p.set("status", params.status);
       return adminFetch<Paginated<AdminUserListItem>>(`/admin/users?${p}`);
     },
     detail: (id: string) => adminFetch<AdminUserDetail>(`/admin/users/${id}`),
@@ -943,6 +983,28 @@ export const adminApi = {
           body: JSON.stringify({ userId: id, ...body }),
         },
       ),
+    /** Suspender, reactivar o desactivar. Cerrar la cuenta revoca sus sesiones. */
+    setStatus: (
+      id: string,
+      body: { status: Exclude<AdminUserStatus, "deleted">; reason?: string },
+    ): Promise<AdminUserStatusSummary> =>
+      adminFetch<AdminUserStatusSummary>(`/admin/users/${id}/status`, {
+        method: "PATCH",
+        body: JSON.stringify(body),
+      }),
+    /** Baja lógica: el PII se anonimiza 30 días después. */
+    softDelete: (
+      id: string,
+      body: { reason: string },
+    ): Promise<AdminUserStatusSummary> =>
+      adminFetch<AdminUserStatusSummary>(`/admin/users/${id}`, {
+        method: "DELETE",
+        body: JSON.stringify(body),
+      }),
+    restore: (id: string): Promise<AdminUserStatusSummary> =>
+      adminFetch<AdminUserStatusSummary>(`/admin/users/${id}/restore`, {
+        method: "POST",
+      }),
   },
   orders: {
     list: (

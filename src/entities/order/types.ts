@@ -210,6 +210,8 @@ export interface UserProfile {
   role: string;
   emailVerified: boolean;
   isActive: boolean;
+  /** `false` en las cuentas creadas con Google: no hay contraseña que pedir. */
+  hasPassword: boolean;
   lastLoginAt: string | null;
   createdAt: string;
 }

@@ -2,7 +2,12 @@
 
 import { useEffect, useState } from "react";
 import type { IndexTableProps } from "@shopify/polaris";
-import { adminApi, AdminUserListItem, Paginated } from "@/entities/admin/api";
+import {
+  adminApi,
+  AdminUserListItem,
+  AdminUserStatus,
+  Paginated,
+} from "@/entities/admin/api";
 import {
   ServerSortColumn,
   SortProps,
@@ -46,7 +51,11 @@ const COLUMNS: ServerSortColumn[] = [
     sortKey: "lastActivity",
     defaultSortDirection: "descending",
   },
+  { title: "Estado" },
 ];
+
+/** Filtro de estado. `null` = por defecto: todo salvo las cuentas dadas de baja. */
+export type UserStatusFilter = AdminUserStatus | "all" | null;
 
 interface UsersList {
   result: Paginated<AdminUserListItem> | null;
@@ -56,6 +65,9 @@ interface UsersList {
   search: string;
   /** Cambia la búsqueda y vuelve a la página 1. */
   setSearch: (value: string) => void;
+  status: UserStatusFilter;
+  /** Cambia el filtro de estado y vuelve a la página 1. */
+  setStatus: (value: UserStatusFilter) => void;
   page: number;
   setPage: (page: number) => void;
   headings: IndexTableProps["headings"];
@@ -72,6 +84,7 @@ export function useUsersList(): UsersList {
     null,
   );
   const [search, setSearchValue] = useState("");
+  const [status, setStatusValue] = useState<UserStatusFilter>(null);
   const [page, setPage] = useState(1);
   const [error, setError] = useState<string | null>(null);
 
@@ -82,7 +95,7 @@ export function useUsersList(): UsersList {
   // `loading` derivado: hay carga en curso mientras la query ya resuelta no
   // coincida con la actual. Evita el setState síncrono dentro del efecto. El
   // orden entra en la clave porque también cambia la respuesta del backend.
-  const queryKey = `${page}|${search}|${sortKey}|${sortOrder}`;
+  const queryKey = `${page}|${search}|${status}|${sortKey}|${sortOrder}`;
   const [loadedKey, setLoadedKey] = useState<string | null>(null);
   const loading = loadedKey !== queryKey;
 
@@ -92,6 +105,7 @@ export function useUsersList(): UsersList {
       .list({
         page,
         search: search || undefined,
+        status: status ?? undefined,
         sort: sortKey,
         order: sortOrder,
       })
@@ -108,7 +122,7 @@ export function useUsersList(): UsersList {
     return () => {
       cancelled = true;
     };
-  }, [page, search, sortKey, sortOrder, queryKey]);
+  }, [page, search, status, sortKey, sortOrder, queryKey]);
 
   return {
     result,
@@ -118,6 +132,11 @@ export function useUsersList(): UsersList {
     search,
     setSearch: (value: string) => {
       setSearchValue(value);
+      setPage(1);
+    },
+    status,
+    setStatus: (value: UserStatusFilter) => {
+      setStatusValue(value);
       setPage(1);
     },
     page,

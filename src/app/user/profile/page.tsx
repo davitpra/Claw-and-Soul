@@ -8,6 +8,7 @@ import { useAuthFetch } from "@/hooks/useAuthFetch";
 import { useCredits } from "@/hooks/useCredits";
 import { ActiveSessions } from "@/widgets/active-sessions";
 import { useAvatarUpload } from "@/features/avatar";
+import { DeleteAccountCard } from "@/features/delete-account";
 import { cloudinaryThumb } from "@/shared/lib/cloudinary";
 import type { ApiEnvelope, UserProfile } from "@/entities/order/types";
 
@@ -433,6 +434,16 @@ export default function UserProfilePage() {
         <section className="rounded-xl bg-white p-6 sm:p-8">
           <ActiveSessions />
         </section>
+
+        {/* Danger zone. Only rendered once the profile has loaded: the card needs
+            the real email to validate the confirmation, and whether the account
+            has a password at all. */}
+        {profile && (
+          <DeleteAccountCard
+            email={profile.email}
+            hasPassword={profile.hasPassword}
+          />
+        )}
       </div>
 
       {avatar.elements}

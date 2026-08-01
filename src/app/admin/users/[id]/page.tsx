@@ -15,7 +15,16 @@ import {
   Tabs,
   Text,
 } from "@shopify/polaris";
-import { getHandle, roleBadgeTone } from "@/entities/admin/lib/user-format";
+import {
+  fmtAbsoluteDate,
+  getHandle,
+  roleBadgeTone,
+} from "@/entities/admin/lib/user-format";
+import {
+  USER_STATUS_EFFECT,
+  userStatusLabel,
+  userStatusTone,
+} from "@/entities/admin/lib/user-status";
 import { useUserDetail } from "./useUserDetail";
 import { CreditsPanel } from "./_components/CreditsPanel";
 import { GenerationsPanel } from "./_components/GenerationsPanel";
@@ -26,6 +35,7 @@ import { UserExpensesPanel } from "./_components/UserExpensesPanel";
 import { UserOrdersPanel } from "./_components/UserOrdersPanel";
 import { UserProfileCard } from "./_components/UserProfileCard";
 import { UserStatsCard } from "./_components/UserStatsCard";
+import { UserStatusModal } from "./_components/UserStatusModal";
 
 const TABS = [
   { id: "mascotas", content: "Mascotas", panelID: "panel-mascotas" },
@@ -50,6 +60,13 @@ export default function AdminUserDetailPage() {
     genPage,
     setGenPage,
     applyGrant,
+    statusAction,
+    openStatusAction,
+    closeStatusAction,
+    savingStatus,
+    statusError,
+    dismissStatusError,
+    submitStatusAction,
   } = useUserDetail(id);
   const [selectedTab, setSelectedTab] = useState(0);
 
@@ -77,21 +94,96 @@ export default function AdminUserDetailPage() {
     );
   }
 
+  const userName = user.fullName || getHandle(user.email);
+
+  // Las acciones disponibles dependen del estado: una cuenta ya suspendida se
+  // reactiva, una dada de baja solo se restaura (y solo si aún no se purgó).
+  const statusActions =
+    user.status === "deleted"
+      ? [
+          {
+            content: "Restaurar",
+            disabled: Boolean(user.anonymizedAt),
+            onAction: () => openStatusAction("restore"),
+          },
+        ]
+      : [
+          user.status === "active"
+            ? {
+                content: "Suspender",
+                onAction: () => openStatusAction("ban"),
+              }
+            : {
+                content: "Reactivar",
+                onAction: () => openStatusAction("reactivate"),
+              },
+          {
+            content: "Dar de baja",
+            destructive: true,
+            onAction: () => openStatusAction("delete"),
+          },
+        ];
+
   return (
     <Page
       backAction={{ url: "/admin/users", content: "Usuarios" }}
-      title={user.fullName || getHandle(user.email)}
+      title={userName}
       subtitle={user.email}
+      secondaryActions={statusActions}
       titleMetadata={
         <InlineStack gap="200" blockAlign="center">
           <Badge tone={roleBadgeTone(user.role)}>{user.role}</Badge>
-          <Badge tone={user.isActive ? "success" : "enabled"}>
-            {user.isActive ? "Activo" : "Inactivo"}
+          <Badge tone={userStatusTone(user.status)}>
+            {userStatusLabel(user.status)}
           </Badge>
         </InlineStack>
       }
     >
+      <UserStatusModal
+        key={statusAction ?? "none"}
+        action={statusAction}
+        userName={userName}
+        saving={savingStatus}
+        error={statusError}
+        onDismissError={dismissStatusError}
+        onClose={closeStatusAction}
+        onConfirm={submitStatusAction}
+      />
+
       <Layout>
+        {user.status !== "active" && (
+          <Layout.Section variant="fullWidth">
+            <Banner
+              tone={user.status === "inactive" ? "warning" : "critical"}
+              title={`Cuenta: ${userStatusLabel(user.status).toLowerCase()}`}
+            >
+              <BlockStack gap="100">
+                <Text as="p">{USER_STATUS_EFFECT[user.status]}</Text>
+                {user.statusReason && (
+                  <Text as="p">
+                    <Text as="span" fontWeight="semibold">
+                      Motivo:
+                    </Text>{" "}
+                    {user.statusReason}
+                  </Text>
+                )}
+                {user.statusChangedAt && (
+                  <Text as="p" tone="subdued">
+                    {fmtAbsoluteDate(user.statusChangedAt)}
+                    {user.statusChangedBy ? " · por un admin" : " · automático"}
+                  </Text>
+                )}
+                {user.anonymizedAt && (
+                  <Text as="p" tone="subdued">
+                    Datos personales borrados el{" "}
+                    {fmtAbsoluteDate(user.anonymizedAt)}. La baja ya no se puede
+                    deshacer.
+                  </Text>
+                )}
+              </BlockStack>
+            </Banner>
+          </Layout.Section>
+        )}
         <Layout.Section variant="fullWidth">
           <UserStatsCard
             user={user}

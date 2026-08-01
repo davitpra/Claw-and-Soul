@@ -10,10 +10,16 @@ import {
   Text,
   InlineStack,
   BlockStack,
+  ChoiceList,
   Filters,
   Pagination,
   Box,
 } from "@shopify/polaris";
+import type { AdminUserStatus } from "@/entities/admin/api";
+import {
+  USER_STATUS_FILTER_OPTIONS,
+  userStatusLabel,
+} from "@/entities/admin/lib/user-status";
 import { UsersTable } from "./_components/UsersTable";
 import { useUsersList } from "./useUsersList";
 
@@ -26,11 +32,18 @@ export default function AdminUsersPage() {
     dismissError,
     search,
     setSearch,
+    status,
+    setStatus,
     page,
     setPage,
     headings,
     sortProps,
   } = useUsersList();
+
+  const clearAll = () => {
+    setSearch("");
+    setStatus(null);
+  };
 
   return (
     <Page
@@ -58,10 +71,41 @@ export default function AdminUsersPage() {
           >
             <Filters
               queryValue={search}
-              filters={[]}
+              filters={[
+                {
+                  key: "status",
+                  label: "Estado",
+                  filter: (
+                    <ChoiceList
+                      title="Estado"
+                      titleHidden
+                      choices={USER_STATUS_FILTER_OPTIONS}
+                      selected={status ? [status] : []}
+                      onChange={([value]) =>
+                        setStatus((value as AdminUserStatus | "all") ?? null)
+                      }
+                    />
+                  ),
+                  shortcut: true,
+                },
+              ]}
+              appliedFilters={
+                status
+                  ? [
+                      {
+                        key: "status",
+                        label:
+                          status === "all"
+                            ? "Todos los estados"
+                            : userStatusLabel(status),
+                        onRemove: () => setStatus(null),
+                      },
+                    ]
+                  : []
+              }
               onQueryChange={setSearch}
               onQueryClear={() => setSearch("")}
-              onClearAll={() => setSearch("")}
+              onClearAll={clearAll}
               queryPlaceholder="Buscar usuario…"
             />
           </Box>

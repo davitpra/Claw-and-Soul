@@ -2,7 +2,6 @@
 
 import type { IndexTableProps } from "@shopify/polaris";
 import {
-  Avatar,
   Badge,
   BlockStack,
   Box,
@@ -19,6 +18,10 @@ import {
   getHandle,
   roleBadgeTone,
 } from "@/entities/admin/lib/user-format";
+import {
+  userStatusLabel,
+  userStatusTone,
+} from "@/entities/admin/lib/user-status";
 import type { SortProps } from "@/hooks/useTableSort";
 
 type UsersTableProps = {
@@ -78,14 +81,15 @@ export function UsersTable({
           id={u.id}
           key={u.id}
           position={i}
-          tone={u.isActive ? undefined : "subdued"}
+          tone={u.status === "active" ? undefined : "subdued"}
           onClick={() => onRowClick(u.id)}
         >
           <IndexTable.Cell>
             <InlineStack gap="300" blockAlign="center" wrap={false}>
               <BlockStack gap="0">
-                {/* Los badges solo aparecen cuando dicen algo: un usuario normal
-                    y activo es el caso mayoritario y no necesita etiqueta. */}
+                {/* El badge de rol solo aparece cuando dice algo: un usuario
+                    normal es el caso mayoritario y no necesita etiqueta. El
+                    estado tiene su propia columna. */}
                 <InlineStack gap="150" blockAlign="center">
                   <Text variant="bodyMd" fontWeight="semibold" as="span">
                     {u.fullName || getHandle(u.email)}
@@ -93,11 +97,6 @@ export function UsersTable({
                   {u.role !== "user" && (
                     <Badge tone={roleBadgeTone(u.role)} size="small">
                       {u.role}
-                    </Badge>
-                  )}
-                  {!u.isActive && (
-                    <Badge tone="critical" size="small">
-                      Inactivo
                     </Badge>
                   )}
                 </InlineStack>
@@ -138,6 +137,19 @@ export function UsersTable({
               <Text as="span" tone="subdued">
                 —
               </Text>
+            )}
+          </IndexTable.Cell>
+          <IndexTable.Cell>
+            {u.statusReason ? (
+              <Tooltip content={u.statusReason}>
+                <Badge tone={userStatusTone(u.status)}>
+                  {userStatusLabel(u.status)}
+                </Badge>
+              </Tooltip>
+            ) : (
+              <Badge tone={userStatusTone(u.status)}>
+                {userStatusLabel(u.status)}
+              </Badge>
             )}
           </IndexTable.Cell>
         </IndexTable.Row>
