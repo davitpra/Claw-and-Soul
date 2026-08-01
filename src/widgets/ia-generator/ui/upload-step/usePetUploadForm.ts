@@ -252,7 +252,7 @@ export function usePetUploadForm({
         // productInfo es null al llegar por URL sin pasar por IAProductStep
         // (deep link). La generación se dispara igual, pero se omite el carrito.
         // Digital (descarga gratuita; "PBN" legacy) tampoco va al carrito: no se
-        // cobra ni debe disparar el order_bonus de +5 créditos en checkout.
+        // cobra ni debe disparar el order_bonus de +3 créditos en checkout.
         const isDigital =
           normalizeTemplate(productInfo?.template) === "Digital";
         if (productInfo && !isDigital) {

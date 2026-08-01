@@ -24,9 +24,9 @@ const PERKS: Perk[] = [
   },
   {
     icon: "redeem",
-    title: "Earn 5 Credits",
+    title: "Earn 3 Credits",
     detail:
-      "Every piece you order adds 5 studio credits to your account for more AI art.",
+      "Every piece you order adds 3 studio credits to your account for more AI art.",
   },
 ];
 
