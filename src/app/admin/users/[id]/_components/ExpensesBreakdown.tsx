@@ -7,7 +7,7 @@ import { fmtCurrency } from "@/entities/admin/lib/order-format";
 
 /**
  * Desglose por categoría + total, en la moneda base del backend (de ahí el "≈").
- * Lo comparten la card lateral y la cabecera de la pestaña "Gastos".
+ * Cabecera de la pestaña "Gastos".
  */
 export function ExpensesBreakdown({ expenses }: { expenses: CustomerExpenses }) {
   const categories = Object.entries(expenses.byCategory);

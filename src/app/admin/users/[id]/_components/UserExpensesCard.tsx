@@ -12,16 +12,17 @@ import {
 } from "@shopify/polaris";
 import {
   AdminUserCreditEconomics,
+  AdminUserRevenue,
   CustomerExpenses,
 } from "@/entities/admin/api";
-import {
-  fmtCreditCost,
-  fmtUnitCost,
-} from "@/entities/admin/lib/credit-format";
-import { ExpensesBreakdown } from "./ExpensesBreakdown";
+import { fmtCreditCost } from "@/entities/admin/lib/credit-format";
+import { fmtCurrency } from "@/entities/admin/lib/order-format";
 import { RatesModal } from "./RatesModal";
 
 interface UserExpensesCardProps {
+  /** Lo facturado por el cliente: solo pedidos pagados. */
+  revenue: AdminUserRevenue | null;
+  loadingRevenue: boolean;
   expenses: CustomerExpenses | null;
   loading: boolean;
   /** Los créditos del cliente traducidos a dinero, por el lado del costo. */
@@ -30,11 +31,17 @@ interface UserExpensesCardProps {
 }
 
 /**
- * Coste acumulado que ha generado el cliente, desglosado por categoría, y la
- * traducción de sus créditos a dinero. Los importes son aproximados: vienen
- * convertidos a la moneda base del backend.
+ * El balance del cliente en tres cifras: lo que ha pagado, lo que ha costado
+ * servirle y la diferencia. Los importes vienen convertidos a la moneda base del
+ * backend, de ahí el "≈".
+ *
+ * El costo de sus generaciones ya está dentro de los gastos (cada generación
+ * completada deja un `Expense`), así que la ganancia no vuelve a restarlo: los
+ * créditos solo aparecen como nota del costo que aún está por incurrir.
  */
 export function UserExpensesCard({
+  revenue,
+  loadingRevenue,
   expenses,
   loading,
   economics,
@@ -42,35 +49,86 @@ export function UserExpensesCard({
 }: UserExpensesCardProps) {
   const [ratesOpen, setRatesOpen] = useState(false);
 
+  const loadingBalance = loadingRevenue || loading;
+  // Todas vienen de la misma moneda base del backend; se toma la primera que haya.
+  const currency =
+    revenue?.baseCurrency ?? expenses?.baseCurrency ?? economics?.baseCurrency;
+
+  const income = revenue?.total ?? 0;
+  const cost = expenses?.grandTotal ?? 0;
+  const profit = income - cost;
+
   return (
     <Card>
       <BlockStack gap="300">
         <Text variant="headingSm" as="h2">
-          Gastos acumulados
+          Balance del cliente
         </Text>
 
-        {loading && <Spinner size="small" />}
+        {loadingBalance && <Spinner size="small" />}
 
-        {!loading && expenses?.count === 0 && (
+        {!loadingBalance && !revenue && !expenses && (
           <Text as="p" tone="subdued">
-            Sin gastos registrados aún.
+            Sin datos de facturación ni de gastos.
           </Text>
         )}
 
-        {!loading && expenses && expenses.count > 0 && (
-          <ExpensesBreakdown expenses={expenses} />
+        {!loadingBalance && (revenue || expenses) && currency && (
+          <BlockStack gap="300">
+            <BlockStack gap="200">
+              <SummaryRow
+                label="Ingresos"
+                value={`≈ ${fmtCurrency(income, currency)}`}
+              />
+              <Text as="p" tone="subdued" variant="bodySm">
+                {revenue && revenue.orderCount > 0
+                  ? `${revenue.orderCount.toLocaleString("es-ES")} pedido(s) pagado(s)`
+                  : "Sin pedidos pagados aún"}
+              </Text>
+
+              <SummaryRow
+                label="Gastos"
+                value={`≈ ${fmtCurrency(cost, currency)}`}
+              />
+              {/* El desglose por categoría vive en la pestaña "Gastos": aquí
+                  solo interesa el total que resta de la ganancia. */}
+              <Text as="p" tone="subdued" variant="bodySm">
+                {expenses && expenses.count > 0
+                  ? `${expenses.count.toLocaleString("es-ES")} gasto(s) registrado(s)`
+                  : "Sin gastos registrados aún"}
+              </Text>
+            </BlockStack>
+
+            <Divider />
+
+            <SummaryRow
+              label="Ganancia"
+              value={`≈ ${fmtCurrency(profit, currency)}`}
+              tone={profit >= 0 ? "success" : "critical"}
+              strong
+            />
+
+            {/* Un total al que le falta el cambio de alguna divisa sigue siendo
+                útil, pero no puede presentarse como exacto. */}
+            {revenue && revenue.unconvertedCurrencies.length > 0 && (
+              <Text as="p" tone="subdued" variant="bodySm">
+                {`Incluye importes en ${revenue.unconvertedCurrencies.join(", ")} sin convertir: no se pudo obtener el tipo de cambio.`}
+              </Text>
+            )}
+          </BlockStack>
         )}
 
-        <Divider />
-
-        <Text variant="headingSm" as="h3">
-          Créditos
-        </Text>
-
-        {loadingEconomics && <Spinner size="small" />}
-
-        {!loadingEconomics && economics && (
-          <CreditEconomics economics={economics} />
+        {/* El saldo sin gastar es costo futuro: aún no resta de la ganancia,
+            pero lo hará cuando el cliente lo consuma. */}
+        {!loadingEconomics && economics && economics.balance > 0 && (
+          <Text as="p" tone="subdued" variant="bodySm">
+            {`Pendiente: ${economics.balance.toLocaleString("es-ES")} crédito(s) sin gastar`}
+            {/* Sin costo medio no hay nada que estimar: mejor callarlo que dar
+                un 0 engañoso. */}
+            {economics.unitCost !== null &&
+              `, ≈ ${fmtCreditCost(economics.outstandingLiability, economics.baseCurrency)} de costo futuro`}
+            .
+          </Text>
         )}
 
         {/* Las tarifas se editan aquí mismo: una que esté a 0 registra los
@@ -87,77 +145,30 @@ export function UserExpensesCard({
   );
 }
 
-/**
- * Un crédito se gasta en una generación y cada generación completada deja un
- * `Expense`, así que el saldo pendiente se puede valorar a costo. En columna
- * lateral no cabe una rejilla: se listan como el desglose de categorías.
- */
-function CreditEconomics({
-  economics,
+/** Fila etiqueta/valor de la columna lateral, como el desglose de categorías. */
+function SummaryRow({
+  label,
+  value,
+  strong,
+  tone,
 }: {
-  economics: AdminUserCreditEconomics;
+  label: string;
+  value: string;
+  strong?: boolean;
+  tone?: "success" | "critical";
 }) {
-  const { baseCurrency, unitCost } = economics;
-
-  const rows = [
-    {
-      label: "Saldo",
-      value: `${economics.balance.toLocaleString("es-ES")} crédito(s)`,
-    },
-    {
-      label: "Costo futuro estimado",
-      // Sin costo medio no hay nada que estimar: mejor "—" que un 0 engañoso.
-      value: fmtCreditCost(
-        unitCost === null ? null : economics.outstandingLiability,
-        baseCurrency,
-      ),
-    },
-    {
-      label: "Créditos gastados",
-      value: economics.creditsSpentNet.toLocaleString("es-ES"),
-    },
-    {
-      label: "Costo real incurrido",
-      value: fmtCreditCost(economics.generationCost, baseCurrency),
-    },
-  ];
-
-  // Lo ya gastado más lo que costará servir el saldo: el costo total que este
-  // cliente habrá generado cuando agote sus créditos.
-  const totalEstimated = fmtCreditCost(
-    unitCost === null
-      ? null
-      : economics.generationCost + economics.outstandingLiability,
-    baseCurrency,
-  );
-
   return (
-    <BlockStack gap="200">
-      {rows.map((row) => (
-        <InlineStack key={row.label} align="space-between" blockAlign="center">
-          <Text as="span" tone="subdued">
-            {row.label}
-          </Text>
-          <Text as="span">{row.value}</Text>
-        </InlineStack>
-      ))}
-
-      <Divider />
-
-      <InlineStack align="space-between" blockAlign="center">
-        <Text as="span" fontWeight="semibold">
-          Costo total estimado
-        </Text>
-        <Text as="span" fontWeight="semibold">
-          {totalEstimated}
-        </Text>
-      </InlineStack>
-
-      <Text as="p" tone="subdued" variant="bodySm">
-        {unitCost === null
-          ? "Aún no hay generaciones con costo registrado."
-          : `Estimado a ${fmtUnitCost(unitCost, baseCurrency)} por crédito (media de ${economics.unitCostSampleSize.toLocaleString("es-ES")} generaciones).`}
+    <InlineStack align="space-between" blockAlign="center">
+      <Text as="span" fontWeight={strong ? "semibold" : undefined}>
+        {label}
       </Text>
-    </BlockStack>
+      <Text
+        as="span"
+        tone={tone}
+        fontWeight={strong ? "semibold" : undefined}
+      >
+        {value}
+      </Text>
+    </InlineStack>
   );
 }

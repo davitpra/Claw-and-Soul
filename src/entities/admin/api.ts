@@ -603,6 +603,18 @@ export interface OrderExpenses {
   baseCurrency: string;
 }
 
+/**
+ * Lo facturado por el cliente, tal como lo agrega `GET /admin/users/:id/revenue`:
+ * solo pedidos pagados, convertidos a la moneda base (de ahí el "≈" en la UI).
+ */
+export interface AdminUserRevenue {
+  baseCurrency: string;
+  total: number;
+  orderCount: number;
+  /** Monedas cuyo tipo de cambio falló: su importe va sin convertir en `total`. */
+  unconvertedCurrencies: string[];
+}
+
 export interface CustomerExpenses {
   byCategory: Record<string, number>;
   grandTotal: number;
@@ -998,6 +1010,8 @@ export const adminApi = {
       adminFetch<Paginated<AdminUserOrderListItem>>(
         `/admin/users/${id}/orders?page=${page}&limit=10`,
       ),
+    revenue: (id: string) =>
+      adminFetch<AdminUserRevenue>(`/admin/users/${id}/revenue`),
     paintByNumbers: (id: string, page = 1): Promise<Paginated<AdminUserPbn>> =>
       adminFetch<Paginated<AdminUserPbn>>(
         `/admin/users/${id}/paint-by-numbers?page=${page}&limit=24`,

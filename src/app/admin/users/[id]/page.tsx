@@ -56,6 +56,8 @@ export default function AdminUserDetailPage() {
     allPhotos,
     expenses,
     loadingExpenses,
+    revenue,
+    loadingRevenue,
     gens,
     gensLoading,
     genPage,
@@ -242,6 +244,8 @@ export default function AdminUserDetailPage() {
           <BlockStack gap="400">
             <UserProfileCard user={user} />
             <UserExpensesCard
+              revenue={revenue}
+              loadingRevenue={loadingRevenue}
               expenses={expenses}
               loading={loadingExpenses}
               economics={economics}

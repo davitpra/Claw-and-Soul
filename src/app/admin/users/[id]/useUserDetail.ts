@@ -3,6 +3,7 @@ import {
   adminApi,
   AdminUserDetail,
   AdminUserGeneration,
+  AdminUserRevenue,
   AdminUserStatusSummary,
   CustomerExpenses,
   Paginated,
@@ -31,6 +32,8 @@ interface UserDetail {
   allPhotos: UserPhoto[];
   expenses: CustomerExpenses | null;
   loadingExpenses: boolean;
+  revenue: AdminUserRevenue | null;
+  loadingRevenue: boolean;
   gens: Paginated<AdminUserGeneration> | null;
   gensLoading: boolean;
   genPage: number;
@@ -60,6 +63,9 @@ export function useUserDetail(id: string): UserDetail {
 
   const [expenses, setExpenses] = useState<CustomerExpenses | null>(null);
   const [loadingExpenses, setLoadingExpenses] = useState(true);
+
+  const [revenue, setRevenue] = useState<AdminUserRevenue | null>(null);
+  const [loadingRevenue, setLoadingRevenue] = useState(true);
 
   const [gens, setGens] = useState<Paginated<AdminUserGeneration> | null>(null);
   const [genPage, setGenPage] = useState(1);
@@ -106,6 +112,25 @@ export function useUserDetail(id: string): UserDetail {
       .catch(() => {})
       .finally(() => {
         if (!cancelled) setLoadingExpenses(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [id]);
+
+  // Los ingresos acompañan a los gastos en la misma card lateral, así que se
+  // cargan aquí y con el mismo criterio best-effort. No necesitan recarga: un
+  // abono manual de créditos no mueve lo facturado.
+  useEffect(() => {
+    let cancelled = false;
+    adminApi.users
+      .revenue(id)
+      .then((data) => {
+        if (!cancelled) setRevenue(data);
+      })
+      .catch(() => {})
+      .finally(() => {
+        if (!cancelled) setLoadingRevenue(false);
       });
     return () => {
       cancelled = true;
@@ -193,6 +218,8 @@ export function useUserDetail(id: string): UserDetail {
     allPhotos,
     expenses,
     loadingExpenses,
+    revenue,
+    loadingRevenue,
     gens,
     gensLoading,
     genPage,
