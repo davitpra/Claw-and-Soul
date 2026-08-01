@@ -86,9 +86,6 @@ export default function AdminUserDetailPage() {
           <Badge tone={user.isActive ? "success" : "enabled"}>
             {user.isActive ? "Activo" : "Inactivo"}
           </Badge>
-          {/* El saldo dejó la barra lateral al mudarse a la pestaña Créditos;
-            aquí sigue estando a la vista sin abrirla. */}
-          <Badge tone="info">{`${user.generationCredits} créditos`}</Badge>
         </InlineStack>
       }
     >

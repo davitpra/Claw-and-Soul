@@ -9,14 +9,6 @@ import {
   useServerSort,
 } from "@/hooks/useTableSort";
 
-// Columnas de la lista. Viven aquí y no en el componente de tabla porque el
-// sorting es estado de la query: `useServerSort` las traduce a los params
-// `sort`/`order` del endpoint paginado. Una columna sin `sortKey` no es ordenable.
-//
-// No hay columna "Correo": el email vive bajo el nombre, dentro de "Usuario".
-// Con eso se pierde el sort por email puro, pero el backend resuelve `name` como
-// `fullName (nulls last) → email`, así que los usuarios sin nombre siguen
-// ordenados por email; y la búsqueda ya filtra por ambos campos.
 const COLUMNS: ServerSortColumn[] = [
   { title: "Usuario", sortKey: "name" },
   {

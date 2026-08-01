@@ -2,7 +2,6 @@
 
 import { BlockStack, Box, Card, InlineGrid, Text } from "@shopify/polaris";
 import { AdminUserDetail } from "@/entities/admin/api";
-import { daysSince } from "@/entities/admin/lib/user-format";
 
 interface UserStatsCardProps {
   user: AdminUserDetail;
@@ -25,7 +24,7 @@ export function UserStatsCard({
     { label: "Mascotas", value: user.pets.length },
     { label: "Imágenes", value: photoCount },
     { label: "Generaciones IA", value: generationCount ?? "—" },
-    { label: "Días desde alta", value: daysSince(user.createdAt) },
+    { label: "Créditos gastados", value: user.creditsSpent },
   ];
 
   return (

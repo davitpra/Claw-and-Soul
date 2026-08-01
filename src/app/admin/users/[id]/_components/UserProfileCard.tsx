@@ -1,16 +1,15 @@
 "use client";
 
-import {
-  Avatar,
-  Badge,
-  BlockStack,
-  Card,
-  Divider,
-  InlineStack,
-  Text,
-} from "@shopify/polaris";
+import { Badge, BlockStack, Card, InlineStack, Text } from "@shopify/polaris";
 import { AdminUserDetail } from "@/entities/admin/api";
-import { fmtAbsoluteDate, getInitials } from "@/entities/admin/lib/user-format";
+import { daysSince, fmtAbsoluteDate } from "@/entities/admin/lib/user-format";
+
+/** Días de alta en texto: «hoy» el primer día, y plural a partir del segundo. */
+function antiguedad(createdAt: string): string {
+  const days = daysSince(createdAt);
+  if (days === 0) return "de alta hoy";
+  return `hace ${days} día${days === 1 ? "" : "s"}`;
+}
 
 /**
  * Ficha de identidad del usuario. Los badges de rol y estado no se repiten
@@ -32,15 +31,32 @@ export function UserProfileCard({ user }: { user: AdminUserDetail }) {
               </Badge>
             </InlineStack>
           </BlockStack>
+          <BlockStack gap="100">
+            <Text variant="bodySm" tone="subdued" as="span">
+              Créditos
+            </Text>
+            <InlineStack>
+              <Badge tone={user.generationCredits === 0 ? "critical" : "info"}>
+                {`${user.generationCredits} ${
+                  user.generationCredits === 1 ? "crédito" : "créditos"
+                }`}
+              </Badge>
+            </InlineStack>
+          </BlockStack>
           {user.lastLoginAt && (
             <Field
               label="Último acceso"
               value={fmtAbsoluteDate(user.lastLoginAt)}
             />
           )}
+          {/* La antigüedad acompaña a la fecha de alta: el número suelto
+            («45 días») no dice desde cuándo, y la fecha sola obliga a
+            calcular. */}
           <Field
             label="Miembro desde"
-            value={fmtAbsoluteDate(user.createdAt)}
+            value={`${fmtAbsoluteDate(user.createdAt)} · ${antiguedad(
+              user.createdAt,
+            )}`}
           />
         </BlockStack>
       </BlockStack>

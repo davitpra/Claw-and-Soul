@@ -54,6 +54,8 @@ export interface AdminUserDetail {
   isActive: boolean;
   emailVerified: boolean;
   generationCredits: number;
+  /** Consumo neto en generaciones (spends menos refunds), en positivo. */
+  creditsSpent: number;
   createdAt: string;
   lastLoginAt: string | null;
   pets: AdminUserPet[];
