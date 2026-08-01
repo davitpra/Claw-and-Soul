@@ -1,7 +1,9 @@
 "use client";
 
+import { useState } from "react";
 import {
   BlockStack,
+  Button,
   Card,
   Divider,
   InlineStack,
@@ -11,6 +13,7 @@ import {
 import { CustomerExpenses } from "@/entities/admin/api";
 import { EXPENSE_CATEGORY_LABELS } from "@/entities/admin/expense-labels";
 import { fmtCurrency } from "@/entities/admin/lib/order-format";
+import { RatesModal } from "./RatesModal";
 
 interface UserExpensesCardProps {
   expenses: CustomerExpenses | null;
@@ -25,6 +28,8 @@ export function UserExpensesCard({
   expenses,
   loading,
 }: UserExpensesCardProps) {
+  const [ratesOpen, setRatesOpen] = useState(false);
+
   return (
     <Card>
       <BlockStack gap="300">
@@ -69,6 +74,16 @@ export function UserExpensesCard({
             </InlineStack>
           </BlockStack>
         )}
+
+        {/* Las tarifas se editan aquí mismo: una que esté a 0 registra los
+            costes en cero sin avisar. */}
+        <InlineStack align="end">
+          <Button onClick={() => setRatesOpen(true)}>
+            Ver tarifas de proveedor
+          </Button>
+        </InlineStack>
+
+        <RatesModal open={ratesOpen} onClose={() => setRatesOpen(false)} />
       </BlockStack>
     </Card>
   );

@@ -14,7 +14,6 @@ import {
 } from "@shopify/polaris";
 import { adminApi, ExpensesSummary } from "@/entities/admin/api";
 import { EXPENSE_CATEGORY_LABELS } from "@/entities/admin/expense-labels";
-import { RatesSection } from "./_components/RatesSection";
 
 function fmtCurrency(amount: number, currency = "CAD") {
   return new Intl.NumberFormat("es-ES", {
@@ -64,7 +63,7 @@ export default function AdminExpensesPage() {
   }, [period]);
 
   return (
-    <Page title="Gastos" subtitle="Resumen de costos y configuración de tarifas">
+    <Page title="Gastos" subtitle="Resumen de costos">
       <BlockStack gap="400">
         {/* Resumen global */}
         <Card>
@@ -134,8 +133,6 @@ export default function AdminExpensesPage() {
             ) : null}
           </BlockStack>
         </Card>
-
-        <RatesSection />
       </BlockStack>
     </Page>
   );

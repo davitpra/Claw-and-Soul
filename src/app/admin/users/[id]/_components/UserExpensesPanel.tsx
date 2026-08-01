@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import {
+  Banner,
   BlockStack,
   Button,
   Card,
@@ -20,7 +21,7 @@ import { ADMIN_EMPTY_STATE_IMAGE } from "@/entities/admin/lib/empty-state";
 import { fmtCurrency, fmtShortDate } from "@/entities/admin/lib/order-format";
 import { useUserExpenses } from "../useUserExpenses";
 import { expenseDetailRows } from "./expense-detail";
-import { ProviderRatesCard } from "./ProviderRatesCard";
+import { RatesModal } from "./RatesModal";
 
 interface UserExpensesPanelProps {
   userId: string;
@@ -39,6 +40,10 @@ export function UserExpensesPanel({
   loadingSummary,
 }: UserExpensesPanelProps) {
   const { items, loading, page, setPage } = useUserExpenses(userId);
+  const [ratesOpen, setRatesOpen] = useState(false);
+  const ratesModal = (
+    <RatesModal open={ratesOpen} onClose={() => setRatesOpen(false)} />
+  );
 
   if (loading || loadingSummary) {
     return (
@@ -51,26 +56,36 @@ export function UserExpensesPanel({
     );
   }
 
-  // Las tarifas se muestran también sin gastos: explican qué se cobrará.
+  // El acceso a las tarifas se ofrece también sin gastos: una tarifa a 0 hace
+  // que los costes se registren en cero sin avisar, y ahí es donde se corrige.
   if (!items?.data.length) {
     return (
-      <BlockStack gap="400">
+      <>
         <EmptyState
           heading="Sin gastos registrados"
           image={ADMIN_EMPTY_STATE_IMAGE}
+          action={{
+            content: "Ver tarifas de proveedor",
+            onAction: () => setRatesOpen(true),
+          }}
         >
           <Text as="p" tone="subdued">
             Este usuario todavía no ha generado ningún coste.
           </Text>
         </EmptyState>
-        <ProviderRatesCard />
-      </BlockStack>
+        {ratesModal}
+      </>
     );
   }
 
   return (
     <BlockStack gap="400">
-      {expenses && <ExpensesSummary expenses={expenses} />}
+      {expenses && (
+        <ExpensesSummary
+          expenses={expenses}
+          onShowRates={() => setRatesOpen(true)}
+        />
+      )}
 
       <BlockStack gap="200">
         <Text variant="headingSm" as="h3">
@@ -93,13 +108,19 @@ export function UserExpensesPanel({
         </InlineStack>
       )}
 
-      <ProviderRatesCard />
+      {ratesModal}
     </BlockStack>
   );
 }
 
 /** Mismo desglose que la card lateral, como cabecera de la pestaña. */
-function ExpensesSummary({ expenses }: { expenses: CustomerExpenses }) {
+function ExpensesSummary({
+  expenses,
+  onShowRates,
+}: {
+  expenses: CustomerExpenses;
+  onShowRates: () => void;
+}) {
   return (
     <Card>
       <BlockStack gap="200">
@@ -124,6 +145,18 @@ function ExpensesSummary({ expenses }: { expenses: CustomerExpenses }) {
             ≈ {fmtCurrency(expenses.grandTotal, expenses.baseCurrency)}
           </Text>
         </InlineStack>
+
+        {/* Sin coste real del proveedor, estos totales solo valen lo que valgan
+            las tarifas: una a 0 registra los gastos en cero sin avisar. */}
+        <Banner
+          tone="warning"
+          action={{ content: "Ver tarifas", onAction: onShowRates }}
+        >
+          <Text as="p">
+            fal.ai no informa del coste de generación de imágenes ni de
+            upscaling: esas tarifas se mantienen a mano.
+          </Text>
+        </Banner>
       </BlockStack>
     </Card>
   );

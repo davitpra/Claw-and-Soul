@@ -6,7 +6,6 @@ import {
   Banner,
   BlockStack,
   Button,
-  Card,
   Collapsible,
   Divider,
   InlineStack,
@@ -25,12 +24,18 @@ type Msg = { text: string; tone: "success" | "critical" };
 /** Edición en curso de una fila: monto como texto (lo que hay en el input). */
 type RateDraft = { amount: string; unit: string };
 
+export const RATES_DESCRIPTION =
+  "Costo por operación usado para registrar gastos de generación y upscale.";
+
 /**
  * Tarifas de proveedor: alta manual y edición de monto y unidad. La unidad
  * importa porque solo `per_megapixel` hace que el upscale cobre por superficie;
  * un modelo auto-registrado nace como `per_image` y hay que corregirlo aquí.
+ *
+ * Va sin `Card` ni cabecera propias: se monta dentro de `RatesModal`, que es
+ * hoy el único sitio desde el que se editan las tarifas.
  */
-export function RatesSection() {
+export function RatesEditor() {
   const [rates, setRates] = useState<ProviderRate[] | null>(null);
   const [drafts, setDrafts] = useState<Record<string, RateDraft>>({});
   const [saving, setSaving] = useState<Record<string, boolean>>({});
@@ -98,118 +103,103 @@ export function RatesSection() {
   }
 
   return (
-    <Card>
-      <BlockStack gap="300">
-        <BlockStack gap="100">
-          <Text variant="headingSm" as="h2">
-            Tarifas fal.ai
-          </Text>
-          <Text as="p" tone="subdued" variant="bodySm">
-            Costo por operación usado para registrar gastos de generación y
-            upscale.
-          </Text>
-        </BlockStack>
-        {/* Contrapunto al aviso: deja claro qué NO hay que mantener aquí. En
-            verde y no en gris porque es una buena noticia, no una advertencia. */}
-        <Banner tone="success" title="El análisis de visión se registra solo">
-          <Text as="p">
-            Ese proveedor sí devuelve el coste real de cada llamada.
-          </Text>
-        </Banner>
+    <BlockStack gap="300">
+      {/* Contrapunto al aviso: deja claro qué NO hay que mantener aquí. En
+          verde y no en gris porque es una buena noticia, no una advertencia. */}
+      <Banner tone="success" title="El análisis de visión se registra solo">
+        <Text as="p">
+          Ese proveedor sí devuelve el coste real de cada llamada.
+        </Text>
+      </Banner>
 
-        <SyncWarning />
+      <SyncWarning />
 
-        {rates === null ? (
-          <InlineStack gap="200" blockAlign="center">
-            <Spinner size="small" />
-            <Text as="span" tone="subdued">
-              Cargando tarifas…
-            </Text>
-          </InlineStack>
-        ) : (
-          <BlockStack gap="300">
-            {rates.map((rate) => (
-              <BlockStack key={rate.id} gap="150">
-                <InlineStack
-                  align="space-between"
-                  blockAlign="center"
-                  gap="200"
-                >
-                  <BlockStack gap="050">
-                    <Text as="span" fontWeight="semibold" variant="bodySm">
-                      {rate.model}
-                    </Text>
-                    <Text as="span" tone="subdued" variant="bodySm">
-                      {rate.provider} · {rate.currency}
-                    </Text>
-                  </BlockStack>
-                  {/* Un modelo auto-registrado nace a 0 y sus gastos se
-                      contabilizan en cero hasta que se le pone precio. */}
-                  {rate.amount === 0 && (
-                    <Badge tone="warning">Sin configurar</Badge>
-                  )}
-                </InlineStack>
-
-                {msg[rate.id] && (
-                  <Banner
-                    tone={msg[rate.id].tone}
-                    onDismiss={() => clearMsg(rate.id)}
-                  >
-                    {msg[rate.id].text}
-                  </Banner>
+      {rates === null ? (
+        <InlineStack gap="200" blockAlign="center">
+          <Spinner size="small" />
+          <Text as="span" tone="subdued">
+            Cargando tarifas…
+          </Text>
+        </InlineStack>
+      ) : (
+        <BlockStack gap="300">
+          {rates.map((rate) => (
+            <BlockStack key={rate.id} gap="150">
+              <InlineStack align="space-between" blockAlign="center" gap="200">
+                <BlockStack gap="050">
+                  <Text as="span" fontWeight="semibold" variant="bodySm">
+                    {rate.model}
+                  </Text>
+                  <Text as="span" tone="subdued" variant="bodySm">
+                    {rate.provider} · {rate.currency}
+                  </Text>
+                </BlockStack>
+                {/* Un modelo auto-registrado nace a 0 y sus gastos se
+                    contabilizan en cero hasta que se le pone precio. */}
+                {rate.amount === 0 && (
+                  <Badge tone="warning">Sin configurar</Badge>
                 )}
+              </InlineStack>
 
-                <InlineStack gap="200" blockAlign="end">
-                  <div style={{ width: 160 }}>
-                    <TextField
-                      label="Monto"
-                      labelHidden
-                      type="number"
-                      step={0.000001}
-                      value={drafts[rate.id]?.amount ?? ""}
-                      onChange={(v) =>
-                        setDrafts((prev) => ({
-                          ...prev,
-                          [rate.id]: { ...prev[rate.id], amount: v },
-                        }))
-                      }
-                      autoComplete="off"
-                      prefix="$"
-                    />
-                  </div>
-                  <div style={{ width: 180 }}>
-                    <Select
-                      label="Unidad"
-                      labelHidden
-                      options={RATE_UNIT_OPTIONS}
-                      value={drafts[rate.id]?.unit ?? rate.unit}
-                      onChange={(v) =>
-                        setDrafts((prev) => ({
-                          ...prev,
-                          [rate.id]: { ...prev[rate.id], unit: v },
-                        }))
-                      }
-                    />
-                  </div>
-                  <Button
-                    variant="primary"
-                    size="slim"
-                    loading={saving[rate.id]}
-                    disabled={!isDirty(rate, drafts[rate.id])}
-                    onClick={() => handleSave(rate)}
-                  >
-                    Guardar
-                  </Button>
-                </InlineStack>
-              </BlockStack>
-            ))}
+              {msg[rate.id] && (
+                <Banner
+                  tone={msg[rate.id].tone}
+                  onDismiss={() => clearMsg(rate.id)}
+                >
+                  {msg[rate.id].text}
+                </Banner>
+              )}
 
-            <Divider />
-            <NewRateForm onCreated={handleCreated} />
-          </BlockStack>
-        )}
-      </BlockStack>
-    </Card>
+              <InlineStack gap="200" blockAlign="end">
+                <div style={{ width: 160 }}>
+                  <TextField
+                    label="Monto"
+                    labelHidden
+                    type="number"
+                    step={0.000001}
+                    value={drafts[rate.id]?.amount ?? ""}
+                    onChange={(v) =>
+                      setDrafts((prev) => ({
+                        ...prev,
+                        [rate.id]: { ...prev[rate.id], amount: v },
+                      }))
+                    }
+                    autoComplete="off"
+                    prefix="$"
+                  />
+                </div>
+                <div style={{ width: 180 }}>
+                  <Select
+                    label="Unidad"
+                    labelHidden
+                    options={RATE_UNIT_OPTIONS}
+                    value={drafts[rate.id]?.unit ?? rate.unit}
+                    onChange={(v) =>
+                      setDrafts((prev) => ({
+                        ...prev,
+                        [rate.id]: { ...prev[rate.id], unit: v },
+                      }))
+                    }
+                  />
+                </div>
+                <Button
+                  variant="primary"
+                  size="slim"
+                  loading={saving[rate.id]}
+                  disabled={!isDirty(rate, drafts[rate.id])}
+                  onClick={() => handleSave(rate)}
+                >
+                  Guardar
+                </Button>
+              </InlineStack>
+            </BlockStack>
+          ))}
+
+          <Divider />
+          <NewRateForm onCreated={handleCreated} />
+        </BlockStack>
+      )}
+    </BlockStack>
   );
 }
 
