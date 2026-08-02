@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import {
   Badge,
   BlockStack,
@@ -14,6 +15,7 @@ import {
   generationStatusLabel,
   generationStatusTone,
 } from "@/entities/admin/lib/generation-status";
+import ImagePreviewModal from "@/app/admin/_components/ImagePreviewModal";
 
 interface GenerationsPanelProps {
   gens: Paginated<AdminUserGeneration> | null;
@@ -29,6 +31,11 @@ export function GenerationsPanel({
   page,
   onPageChange,
 }: GenerationsPanelProps) {
+  const [preview, setPreview] = useState<AdminUserGeneration | null>(null);
+  const previewUrl = preview
+    ? (preview.resultUrl ?? preview.thumbnailUrl)
+    : null;
+
   return (
     <BlockStack gap="400">
       <Text variant="headingMd" as="h2">
@@ -55,7 +62,11 @@ export function GenerationsPanel({
           }}
         >
           {gens.data.map((gen) => (
-            <GenerationTile key={gen.id} gen={gen} />
+            <GenerationTile
+              key={gen.id}
+              gen={gen}
+              onPreview={() => setPreview(gen)}
+            />
           ))}
         </div>
       )}
@@ -71,11 +82,31 @@ export function GenerationsPanel({
           />
         </InlineStack>
       )}
+
+      {preview && previewUrl && (
+        <ImagePreviewModal
+          src={previewUrl}
+          title={generationTitle(preview)}
+          onClose={() => setPreview(null)}
+        />
+      )}
     </BlockStack>
   );
 }
 
-function GenerationTile({ gen }: { gen: AdminUserGeneration }) {
+/** Título del preview: estilo · mascota, con fallback a "Generación". */
+function generationTitle(gen: AdminUserGeneration) {
+  const parts = [gen.style?.displayName, gen.pet?.name].filter(Boolean);
+  return parts.length ? parts.join(" · ") : "Generación";
+}
+
+function GenerationTile({
+  gen,
+  onPreview,
+}: {
+  gen: AdminUserGeneration;
+  onPreview: () => void;
+}) {
   const imgUrl = gen.thumbnailUrl ?? gen.resultUrl;
 
   return (
@@ -90,13 +121,28 @@ function GenerationTile({ gen }: { gen: AdminUserGeneration }) {
           }}
         >
           {imgUrl ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
-              src={imgUrl}
-              alt={gen.style?.displayName ?? "Generación"}
-              style={{ width: "100%", height: "100%", objectFit: "cover" }}
-              loading="lazy"
-            />
+            <button
+              type="button"
+              onClick={onPreview}
+              title="Ver detalle"
+              style={{
+                display: "block",
+                width: "100%",
+                height: "100%",
+                padding: 0,
+                border: "none",
+                background: "none",
+                cursor: "pointer",
+              }}
+            >
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={imgUrl}
+                alt={gen.style?.displayName ?? "Generación"}
+                style={{ width: "100%", height: "100%", objectFit: "cover" }}
+                loading="lazy"
+              />
+            </button>
           ) : (
             <div
               style={{
