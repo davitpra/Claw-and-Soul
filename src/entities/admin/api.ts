@@ -151,13 +151,18 @@ export interface AdminOrderItem {
   notes: string | null;
   shippedAt: string | null;
   deliveredAt: string | null;
+  /** Créditos por unidad si la línea es un pack de créditos; null si no lo es. */
+  creditAmount: number | null;
   productRef: {
     id: string;
     name: string;
     displayName: string;
     fulfillmentMethod: string;
     shopifyHandle: string | null;
-    images: { imageUrl: string }[];
+    template: string | null;
+    artKind: string | null;
+    isAccessory: boolean;
+    isCreditPack: boolean;
     style: { images: { imageUrl: string }[] } | null;
   } | null;
   productVariant: {
@@ -196,6 +201,8 @@ export interface AdminPaintByNumbers {
 
 export interface AdminOrderEvent {
   id: string;
+  /** Item al que pertenece el evento; null si es del pedido completo. */
+  orderItemId: string | null;
   eventType: string;
   fromStatus: string | null;
   toStatus: string | null;

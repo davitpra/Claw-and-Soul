@@ -34,7 +34,9 @@ import {
   useShopifyVariantImages,
   variantNumericId,
 } from "@/hooks/useShopifyVariantImages";
+import { orderItemKind } from "@/entities/admin/lib/order-item-kind";
 import { OrderItemCard } from "./_components/OrderItemCard";
+import { SimpleOrderItemCard } from "./_components/SimpleOrderItemCard";
 import { CancelOrderModal } from "./_components/CancelOrderModal";
 import { CustomerCard } from "./_components/CustomerCard";
 import { OrderTotalsCard } from "./_components/OrderTotalsCard";
@@ -119,6 +121,11 @@ export default function AdminOrderDetailPage() {
     .filter((i) => CANCELLABLE_STATUSES.includes(i.productionStatus))
     .map((i) => i.id);
 
+  // El historial de eventos etiqueta cada cambio con el tipo de su item.
+  const kindByItemId = Object.fromEntries(
+    order.items.map((i) => [i.id, orderItemKind(i)]),
+  );
+
   return (
     <Page
       backAction={{ url: "/admin/orders", content: "Pedidos" }}
@@ -166,24 +173,44 @@ export default function AdminOrderDetailPage() {
             <Text variant="headingMd" as="h2">
               Items ({order.items.length})
             </Text>
-            {order.items.map((item) => (
-              <OrderItemCard
-                key={item.id}
-                item={item}
-                orderId={id}
-                userId={order.userId}
-                currency={order.currency}
-                shopifyImageUrl={
-                  shopifyVariantImages[
-                    variantNumericId(item.productVariant?.shopifyVariantId) ?? ""
-                  ] ?? null
-                }
-                onUpdate={load}
-                onRequestCancel={setCancelItemIds}
-              />
-            ))}
+            {order.items.map((item) => {
+              const kind = orderItemKind(item);
+              const shopifyImageUrl =
+                shopifyVariantImages[
+                  variantNumericId(item.productVariant?.shopifyVariantId) ?? ""
+                ] ?? null;
 
-            <OrderEventsCard events={order.events} />
+              // Accesorios y créditos no llevan arte: card simple sin generación,
+              // impresión ni Print Studio.
+              return kind === "art" ? (
+                <OrderItemCard
+                  key={item.id}
+                  item={item}
+                  orderId={id}
+                  userId={order.userId}
+                  currency={order.currency}
+                  shopifyImageUrl={shopifyImageUrl}
+                  onUpdate={load}
+                  onRequestCancel={setCancelItemIds}
+                />
+              ) : (
+                <SimpleOrderItemCard
+                  key={item.id}
+                  item={item}
+                  kind={kind}
+                  orderId={id}
+                  currency={order.currency}
+                  shopifyImageUrl={shopifyImageUrl}
+                  onUpdate={load}
+                  onRequestCancel={setCancelItemIds}
+                />
+              );
+            })}
+
+            <OrderEventsCard
+              events={order.events}
+              kindByItemId={kindByItemId}
+            />
 
             <RawPayloadCard order={order} />
           </BlockStack>

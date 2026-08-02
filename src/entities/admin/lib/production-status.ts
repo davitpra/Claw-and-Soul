@@ -1,4 +1,5 @@
 import type { BadgeProps } from "@shopify/polaris";
+import { OrderItemKind } from "./order-item-kind";
 
 /**
  * Fuente única (admin) para la presentación del `productionStatus` por item.
@@ -40,7 +41,21 @@ export const PRODUCTION_STATUS_TONES: Record<string, BadgeProps["tone"]> = {
   mixed: "enabled",
 };
 
-export function productionStatusLabel(status: string): string {
+/**
+ * Etiquetas que cambian cuando el item es un accesorio: no hay arte que quede en
+ * borrador, el item solo está pendiente de preparar y enviar.
+ */
+const ACCESSORY_STATUS_LABELS: Record<string, string> = {
+  draft: "Por preparar",
+};
+
+export function productionStatusLabel(
+  status: string,
+  kind: OrderItemKind = "art",
+): string {
+  if (kind === "accessory" && ACCESSORY_STATUS_LABELS[status]) {
+    return ACCESSORY_STATUS_LABELS[status];
+  }
   return PRODUCTION_STATUS_LABELS[status] ?? status;
 }
 

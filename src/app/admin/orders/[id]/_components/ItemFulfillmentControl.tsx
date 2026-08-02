@@ -2,15 +2,18 @@
 
 import { Badge, InlineStack, Select } from "@shopify/polaris";
 import {
-  PRODUCTION_STATUS_LABELS,
+  productionStatusLabel,
   PRODUCTION_STATUS_TONES as STATUS_TONES,
 } from "@/entities/admin/lib/production-status";
+import { OrderItemKind } from "@/entities/admin/lib/order-item-kind";
 
 type ItemFulfillmentControlProps = {
   value: "in_house" | "pod";
   disabled: boolean;
   onChange: (value: string) => void;
   productionStatus: string;
+  // Los accesorios renombran algún estado (ej. draft → "Por preparar").
+  kind?: OrderItemKind;
 };
 
 // Selector del método de fulfillment (taller / POD) junto al badge del estado
@@ -20,6 +23,7 @@ export function ItemFulfillmentControl({
   disabled,
   onChange,
   productionStatus,
+  kind = "art",
 }: ItemFulfillmentControlProps) {
   return (
     <InlineStack gap="200" blockAlign="center">
@@ -37,7 +41,7 @@ export function ItemFulfillmentControl({
         />
       </div>
       <Badge tone={STATUS_TONES[productionStatus] ?? "enabled"}>
-        {PRODUCTION_STATUS_LABELS[productionStatus] ?? productionStatus}
+        {productionStatusLabel(productionStatus, kind)}
       </Badge>
     </InlineStack>
   );

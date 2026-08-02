@@ -9,15 +9,28 @@ import {
   Divider,
 } from "@shopify/polaris";
 import { AdminOrderDetail } from "@/entities/admin/api";
-import { PRODUCTION_STATUS_LABELS } from "@/entities/admin/lib/production-status";
+import { productionStatusLabel } from "@/entities/admin/lib/production-status";
+import { OrderItemKind } from "@/entities/admin/lib/order-item-kind";
 import { fmtDate } from "@/entities/admin/lib/order-format";
 
 type OrderEventsCardProps = {
   events: AdminOrderDetail["events"];
+  // Tipo de cada item del pedido: los accesorios renombran algún estado, así que
+  // el historial se etiqueta con el tipo del item que cambió.
+  kindByItemId: Record<string, OrderItemKind>;
 };
 
-export function OrderEventsCard({ events }: OrderEventsCardProps) {
+export function OrderEventsCard({
+  events,
+  kindByItemId,
+}: OrderEventsCardProps) {
   if (events.length === 0) return null;
+
+  const labelFor = (status: string, orderItemId: string | null) =>
+    productionStatusLabel(
+      status,
+      (orderItemId && kindByItemId[orderItemId]) || "art",
+    );
 
   return (
     <Card>
@@ -46,11 +59,8 @@ export function OrderEventsCard({ events }: OrderEventsCardProps) {
                     {ev.fromStatus && ev.toStatus && (
                       <Text as="span" tone="subdued">
                         {" "}
-                        ·{" "}
-                        {PRODUCTION_STATUS_LABELS[ev.fromStatus] ??
-                          ev.fromStatus}{" "}
-                        →{" "}
-                        {PRODUCTION_STATUS_LABELS[ev.toStatus] ?? ev.toStatus}
+                        · {labelFor(ev.fromStatus, ev.orderItemId)} →{" "}
+                        {labelFor(ev.toStatus, ev.orderItemId)}
                       </Text>
                     )}
                   </Text>

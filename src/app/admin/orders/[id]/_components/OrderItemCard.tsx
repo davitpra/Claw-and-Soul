@@ -12,7 +12,6 @@ import {
 } from "@shopify/polaris";
 import { adminApi, AdminOrderItem } from "@/entities/admin/api";
 import { VALID_TRANSITIONS } from "@/entities/admin/lib/order-transitions";
-import { fmtCurrency } from "@/entities/admin/lib/order-format";
 import ImagePreviewModal from "@/app/admin/_components/ImagePreviewModal";
 import PrintStudioModal from "./PrintStudioModal";
 import ConvertToPbnModal from "./ConvertToPbnModal";
@@ -21,6 +20,7 @@ import { ItemActionsBar } from "./ItemActionsBar";
 import { ItemFulfillmentControl } from "./ItemFulfillmentControl";
 import { ItemMediaRow } from "./ItemMediaRow";
 import { ItemProductPreview } from "./ItemProductPreview";
+import { ItemProductSummaryRow } from "./ItemProductSummaryRow";
 import { ItemStatusSelect } from "./ItemStatusSelect";
 import { GenerationActionsBar } from "./GenerationActionsBar";
 import { GenerationPickerModal } from "./GenerationPickerModal";
@@ -63,13 +63,9 @@ export function OrderItemCard({
   const genFileInputRef = useRef<HTMLInputElement>(null);
 
   // Imagen del producto de Shopify relacionado: imagen de la variante comprada
-  // (live desde Shopify) → imagen del catálogo (primaria/galería) → preview del
-  // estilo. No cae al arte del cliente.
+  // (live desde Shopify) → preview del estilo. No cae al arte del cliente.
   const productImage =
-    shopifyImageUrl ??
-    item.productRef?.images?.[0]?.imageUrl ??
-    item.productRef?.style?.images?.[0]?.imageUrl ??
-    null;
+    shopifyImageUrl ?? item.productRef?.style?.images?.[0]?.imageUrl ?? null;
   // Imagen generada por el usuario (IA): thumbnail para la card, full para la vista ampliada.
   const generatedThumb =
     item.generation?.thumbnailUrl ?? item.generation?.resultUrl ?? null;
@@ -261,49 +257,11 @@ export function OrderItemCard({
 
       <Card>
         <BlockStack gap="300">
-          <ItemMediaRow
+          <ItemProductSummaryRow
+            item={item}
             image={productImage}
-            alt={item.productRef?.displayName ?? item.title}
-          >
-            <InlineStack
-              align="space-between"
-              blockAlign="center"
-              gap="400"
-              wrap={false}
-            >
-              <BlockStack gap="050">
-                <Text variant="bodySm" tone="subdued" as="span">
-                  Producto de Shopify
-                </Text>
-                <Text variant="bodyMd" fontWeight="semibold" as="span">
-                  {item.productRef?.displayName ??
-                    item.productRef?.name ??
-                    item.title}
-                </Text>
-                {item.productVariant?.shopifyVariantTitle && (
-                  <Text variant="bodySm" tone="subdued" as="span">
-                    {item.productVariant.shopifyVariantTitle}
-                  </Text>
-                )}
-                {item.sku && (
-                  <Text variant="bodySm" tone="subdued" as="span">
-                    SKU: {item.sku}
-                  </Text>
-                )}
-              </BlockStack>
-              <InlineStack gap="400" blockAlign="center" wrap={false}>
-                <InlineStack gap="150" blockAlign="center" wrap={false}>
-                  <Text variant="bodyMd" tone="subdued" as="span">
-                    {fmtCurrency(item.unitPrice, currency)} ×
-                  </Text>
-                  <Badge>{String(item.quantity)}</Badge>
-                </InlineStack>
-                <Text variant="bodyMd" fontWeight="semibold" as="span">
-                  {fmtCurrency(item.totalPrice, currency)}
-                </Text>
-              </InlineStack>
-            </InlineStack>
-          </ItemMediaRow>
+            currency={currency}
+          />
 
           <Divider />
 
