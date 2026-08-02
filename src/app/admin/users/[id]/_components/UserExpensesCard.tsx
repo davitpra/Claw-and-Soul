@@ -35,9 +35,10 @@ interface UserExpensesCardProps {
  * servirle y la diferencia. Los importes vienen convertidos a la moneda base del
  * backend, de ahí el "≈".
  *
- * El costo de sus generaciones ya está dentro de los gastos (cada generación
- * completada deja un `Expense`), así que la ganancia no vuelve a restarlo: los
- * créditos solo aparecen como nota del costo que aún está por incurrir.
+ * Los gastos se muestran como TOTAL ESTIMADO —lo ya gastado más el costo futuro
+ * del saldo sin consumir—, no como gasto real: un cliente con créditos regalados
+ * sin usar parece más rentable de lo que será cuando los gaste. Sin costo medio
+ * con el que valorar el saldo no hay estimación posible y se cae al gasto real.
  */
 export function UserExpensesCard({
   revenue,
@@ -49,13 +50,23 @@ export function UserExpensesCard({
 }: UserExpensesCardProps) {
   const [ratesOpen, setRatesOpen] = useState(false);
 
-  const loadingBalance = loadingRevenue || loading;
+  // La estimación necesita las tres fuentes: sin la de créditos, el total
+  // cambiaría bajo los pies del admin al terminar de cargar.
+  const loadingBalance = loadingRevenue || loading || loadingEconomics;
   // Todas vienen de la misma moneda base del backend; se toma la primera que haya.
   const currency =
     revenue?.baseCurrency ?? expenses?.baseCurrency ?? economics?.baseCurrency;
 
   const income = revenue?.total ?? 0;
-  const cost = expenses?.grandTotal ?? 0;
+  const spent = expenses?.grandTotal ?? 0;
+  // Sin costo medio no hay nada que estimar: mejor el gasto real que inventar
+  // un costo futuro de 0 para un saldo que sí costará algo.
+  const futureCost =
+    economics && economics.balance > 0 && economics.unitCost !== null
+      ? economics.outstandingLiability
+      : null;
+  const estimated = futureCost !== null;
+  const cost = spent + (futureCost ?? 0);
   const profit = income - cost;
 
   return (
@@ -87,7 +98,7 @@ export function UserExpensesCard({
               </Text>
 
               <SummaryRow
-                label="Gastos"
+                label={estimated ? "Gastos (estimado)" : "Gastos"}
                 value={`≈ ${fmtCurrency(cost, currency)}`}
               />
               {/* El desglose por categoría vive en la pestaña "Gastos": aquí
@@ -97,12 +108,19 @@ export function UserExpensesCard({
                   ? `${expenses.count.toLocaleString("es-ES")} gasto(s) registrado(s)`
                   : "Sin gastos registrados aún"}
               </Text>
+              {/* Un total que mezcla dinero ya gastado con dinero por gastar
+                  tiene que decirlo, y decir cuánto es cada parte. */}
+              {estimated && economics && (
+                <Text as="p" tone="subdued" variant="bodySm">
+                  {`No es el gasto real: estimado = ≈ ${fmtCurrency(spent, currency)} gastado + ≈ ${fmtCreditCost(futureCost, currency)} de costo futuro por ${economics.balance.toLocaleString("es-ES")} crédito(s) sin gastar.`}
+                </Text>
+              )}
             </BlockStack>
 
             <Divider />
 
             <SummaryRow
-              label="Ganancia"
+              label={estimated ? "Ganancia (estimada)" : "Ganancia"}
               value={`≈ ${fmtCurrency(profit, currency)}`}
               tone={profit >= 0 ? "success" : "critical"}
               strong
@@ -118,16 +136,11 @@ export function UserExpensesCard({
           </BlockStack>
         )}
 
-        {/* El saldo sin gastar es costo futuro: aún no resta de la ganancia,
-            pero lo hará cuando el cliente lo consuma. */}
-        {!loadingEconomics && economics && economics.balance > 0 && (
+        {/* Cuando sí hay estimación el saldo ya se explica junto al total; esta
+            línea es solo para el caso en que no se puede valorar. */}
+        {!loadingBalance && !estimated && economics && economics.balance > 0 && (
           <Text as="p" tone="subdued" variant="bodySm">
-            {`Pendiente: ${economics.balance.toLocaleString("es-ES")} crédito(s) sin gastar`}
-            {/* Sin costo medio no hay nada que estimar: mejor callarlo que dar
-                un 0 engañoso. */}
-            {economics.unitCost !== null &&
-              `, ≈ ${fmtCreditCost(economics.outstandingLiability, economics.baseCurrency)} de costo futuro`}
-            .
+            {`Pendiente: ${economics.balance.toLocaleString("es-ES")} crédito(s) sin gastar, todavía sin costo medio con el que estimar su costo futuro.`}
           </Text>
         )}
 
