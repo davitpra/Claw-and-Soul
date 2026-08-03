@@ -71,14 +71,22 @@ export interface AdminUserPet {
   name: string;
   species: string;
   breed: string | null;
+  age: number | null;
+  /** Texto libre que escribió el propio usuario sobre la mascota. */
+  description: string | null;
   isActive: boolean;
   photos: AdminUserPhoto[];
 }
+
+/** Cómo entra el usuario a su cuenta. `none`: cuenta ya anonimizada. */
+export type AdminUserAuthProvider = "password" | "google" | "both" | "none";
 
 export interface AdminUserDetail {
   id: string;
   email: string;
   fullName: string | null;
+  avatarUrl: string | null;
+  authProvider: AdminUserAuthProvider;
   role: string;
   isActive: boolean;
   status: AdminUserStatus;
@@ -96,6 +104,102 @@ export interface AdminUserDetail {
   createdAt: string;
   lastLoginAt: string | null;
   pets: AdminUserPet[];
+}
+
+/**
+ * Dirección de envío conocida del usuario, sacada de su pedido más reciente.
+ * `null` cuando nunca ha comprado: es el único dato de ubicación que hay.
+ */
+export interface AdminUserShippingAddress {
+  /** JSON de Shopify; se pinta con `formatAddress` de `lib/order-format`. */
+  address: Record<string, string> | null;
+  phone: string | null;
+  sourceOrderNumber: string;
+  sourceOrderDate: string;
+}
+
+/**
+ * Ubicación **estimada** a partir de la IP. `country` es un ISO 3166-1 alfa-2;
+ * `city` y `region` faltan a menudo. Una VPN o el CGNAT de una operadora móvil
+ * devuelven el nodo de salida, no dónde está la persona.
+ */
+export interface AdminGeoLocation {
+  country: string;
+  region: string | null;
+  city: string | null;
+  timezone: string | null;
+}
+
+/** Sesión viva: un refresh token sin revocar y sin expirar. */
+export interface AdminUserSession {
+  id: string;
+  createdAt: string;
+  expiresAt: string;
+  lastUsedAt: string;
+  userAgent: string | null;
+  ipAddress: string | null;
+  /** `null` si la IP falta o no está en la base GeoIP. */
+  location: AdminGeoLocation | null;
+  /** Solo puede ser `true` cuando un admin abre su propia ficha. */
+  isCurrent: boolean;
+}
+
+export interface AdminUserSessions {
+  sessions: AdminUserSession[];
+  total: number;
+}
+
+/**
+ * Qué filas del audit log pide la ficha. `target` (por defecto) es lo que le
+ * pasó a la cuenta; `actor`, lo que la cuenta hizo sobre otras.
+ */
+export type AdminAuditScope = "target" | "actor" | "all";
+
+export interface AdminAuditLogEntry {
+  id: string;
+  action: string;
+  entityType: string | null;
+  entityId: string | null;
+  ipAddress: string | null;
+  userAgent: string | null;
+  /** `null` si la IP falta o no está en la base GeoIP. */
+  location: AdminGeoLocation | null;
+  /** JSON libre; para los eventos de cuenta trae `{ from, to, reason }`. */
+  details: Record<string, unknown> | null;
+  createdAt: string;
+  /** Quién lo hizo. `null` cuando actuó el cron (inactividad, purga). */
+  actor: { id: string; email: string; fullName: string | null } | null;
+  direction: "target" | "actor";
+}
+
+export interface AdminUserCartItem {
+  id: string;
+  variantId: string;
+  name: string;
+  size: string | null;
+  style: string | null;
+  color: string | null;
+  price: number;
+  quantity: number;
+  imageUrl: string;
+  generationId: string | null;
+  paintByNumbersId: string | null;
+  createdAt: string;
+}
+
+/**
+ * Carrito abierto. Los importes van **sin moneda**: `CartItem` no la guarda y
+ * los precios vienen del Storefront de Shopify.
+ */
+export interface AdminUserCart {
+  id: string;
+  createdAt: string;
+  updatedAt: string;
+  lineCount: number;
+  /** Suma de cantidades, no de líneas. */
+  itemCount: number;
+  subtotal: number;
+  items: AdminUserCartItem[];
 }
 
 export interface AdminUserGeneration {
@@ -1019,6 +1123,11 @@ export const adminApi = {
       ),
     revenue: (id: string) =>
       adminFetch<AdminUserRevenue>(`/admin/users/${id}/revenue`),
+    /** `null` si el usuario nunca ha comprado. */
+    shippingAddress: (id: string): Promise<AdminUserShippingAddress | null> =>
+      adminFetch<AdminUserShippingAddress | null>(
+        `/admin/users/${id}/shipping-address`,
+      ),
     paintByNumbers: (id: string, page = 1): Promise<Paginated<AdminUserPbn>> =>
       adminFetch<Paginated<AdminUserPbn>>(
         `/admin/users/${id}/paint-by-numbers?page=${page}&limit=24`,
@@ -1074,6 +1183,42 @@ export const adminApi = {
       adminFetch<AdminUserStatusSummary>(`/admin/users/${id}/restore`, {
         method: "POST",
       }),
+    sessions: (id: string): Promise<AdminUserSessions> =>
+      adminFetch<AdminUserSessions>(`/admin/users/${id}/sessions`),
+    /** Cierra una sesión concreta. 404 si ya estaba revocada o expiró. */
+    revokeSession: (
+      id: string,
+      tokenId: string,
+    ): Promise<{ revoked: number }> =>
+      adminFetch<{ revoked: number }>(
+        `/admin/users/${id}/sessions/${tokenId}`,
+        { method: "DELETE" },
+      ),
+    revokeAllSessions: (id: string): Promise<{ revoked: number }> =>
+      adminFetch<{ revoked: number }>(
+        `/admin/users/${id}/sessions/revoke-all`,
+        { method: "POST" },
+      ),
+    auditLog: (
+      id: string,
+      page = 1,
+      scope?: AdminAuditScope,
+    ): Promise<Paginated<AdminAuditLogEntry>> => {
+      const p = new URLSearchParams({ page: String(page), limit: "20" });
+      if (scope) p.set("scope", scope);
+      return adminFetch<Paginated<AdminAuditLogEntry>>(
+        `/admin/users/${id}/audit-log?${p}`,
+      );
+    },
+    /**
+     * `null` cuando el usuario no tiene carrito o está vacío. El backend lo
+     * envuelve en `{ cart }` porque `adminFetch` desempaqueta con
+     * `data?.data ?? data` y un `data: null` le haría devolver el envelope.
+     */
+    cart: (id: string): Promise<AdminUserCart | null> =>
+      adminFetch<{ cart: AdminUserCart | null }>(
+        `/admin/users/${id}/cart`,
+      ).then((res) => res.cart),
   },
   orders: {
     list: (

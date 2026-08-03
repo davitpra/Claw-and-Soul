@@ -1,9 +1,11 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   adminApi,
+  AdminUserCart,
   AdminUserDetail,
   AdminUserGeneration,
   AdminUserRevenue,
+  AdminUserShippingAddress,
   AdminUserStatusSummary,
   CustomerExpenses,
   Paginated,
@@ -34,6 +36,10 @@ interface UserDetail {
   loadingExpenses: boolean;
   revenue: AdminUserRevenue | null;
   loadingRevenue: boolean;
+  /** Carrito abierto, o `null` si no tiene o está vacío. */
+  cart: AdminUserCart | null;
+  /** Dirección del último pedido, o `null` si nunca ha comprado. */
+  shippingAddress: AdminUserShippingAddress | null;
   gens: Paginated<AdminUserGeneration> | null;
   gensLoading: boolean;
   genPage: number;
@@ -66,6 +72,11 @@ export function useUserDetail(id: string): UserDetail {
 
   const [revenue, setRevenue] = useState<AdminUserRevenue | null>(null);
   const [loadingRevenue, setLoadingRevenue] = useState(true);
+
+  const [cart, setCart] = useState<AdminUserCart | null>(null);
+
+  const [shippingAddress, setShippingAddress] =
+    useState<AdminUserShippingAddress | null>(null);
 
   const [gens, setGens] = useState<Paginated<AdminUserGeneration> | null>(null);
   const [genPage, setGenPage] = useState(1);
@@ -132,6 +143,37 @@ export function useUserDetail(id: string): UserDetail {
       .finally(() => {
         if (!cancelled) setLoadingRevenue(false);
       });
+    return () => {
+      cancelled = true;
+    };
+  }, [id]);
+
+  // El carrito también va en la columna lateral, siempre visible, así que se
+  // carga aquí y no en un hook de pestaña. Sin flag de carga: la card no se
+  // pinta hasta tener datos, y `null` es un resultado legítimo (sin carrito).
+  useEffect(() => {
+    let cancelled = false;
+    adminApi.users
+      .cart(id)
+      .then((data) => {
+        if (!cancelled) setCart(data);
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, [id]);
+
+  // Misma columna y mismo criterio: sin flag de carga, porque `null` (nunca ha
+  // comprado) es un resultado legítimo y la card sencillamente no se pinta.
+  useEffect(() => {
+    let cancelled = false;
+    adminApi.users
+      .shippingAddress(id)
+      .then((data) => {
+        if (!cancelled) setShippingAddress(data);
+      })
+      .catch(() => {});
     return () => {
       cancelled = true;
     };
@@ -220,6 +262,8 @@ export function useUserDetail(id: string): UserDetail {
     loadingExpenses,
     revenue,
     loadingRevenue,
+    cart,
+    shippingAddress,
     gens,
     gensLoading,
     genPage,

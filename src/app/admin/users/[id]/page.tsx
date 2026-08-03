@@ -27,10 +27,14 @@ import {
 } from "@/entities/admin/lib/user-status";
 import { useUserDetail } from "./useUserDetail";
 import { useUserCreditEconomics } from "./useUserCreditEconomics";
+import { AuditLogPanel } from "./_components/AuditLogPanel";
 import { CreditsPanel } from "./_components/CreditsPanel";
 import { GenerationsPanel } from "./_components/GenerationsPanel";
 import { PbnPanel } from "./_components/PbnPanel";
 import { PetsPanel } from "./_components/PetsPanel";
+import { SessionsPanel } from "./_components/SessionsPanel";
+import { UserAddressCard } from "./_components/UserAddressCard";
+import { UserCartCard } from "./_components/UserCartCard";
 import { UserExpensesCard } from "./_components/UserExpensesCard";
 import { UserExpensesPanel } from "./_components/UserExpensesPanel";
 import { UserOrdersPanel } from "./_components/UserOrdersPanel";
@@ -38,6 +42,7 @@ import { UserProfileCard } from "./_components/UserProfileCard";
 import { UserStatsCard } from "./_components/UserStatsCard";
 import { UserStatusModal } from "./_components/UserStatusModal";
 
+/** Lo que el usuario ha creado y comprado. */
 const TABS = [
   { id: "mascotas", content: "Mascotas", panelID: "panel-mascotas" },
   { id: "ia", content: "Arte IA", panelID: "panel-ia" },
@@ -45,6 +50,16 @@ const TABS = [
   { id: "creditos", content: "Créditos", panelID: "panel-creditos" },
   { id: "pedidos", content: "Pedidos", panelID: "panel-pedidos" },
   { id: "gastos", content: "Gastos", panelID: "panel-gastos" },
+];
+
+/**
+ * Card aparte: el acceso a la cuenta se consulta por otro motivo (soporte,
+ * moderación) que el contenido del usuario, y con ocho pestañas en una sola
+ * fila la lista empezaba a desbordar.
+ */
+const ACCOUNT_TABS = [
+  { id: "sesiones", content: "Sesiones", panelID: "panel-sesiones" },
+  { id: "actividad", content: "Actividad", panelID: "panel-actividad" },
 ];
 
 export default function AdminUserDetailPage() {
@@ -58,6 +73,8 @@ export default function AdminUserDetailPage() {
     loadingExpenses,
     revenue,
     loadingRevenue,
+    cart,
+    shippingAddress,
     gens,
     gensLoading,
     genPage,
@@ -79,6 +96,7 @@ export default function AdminUserDetailPage() {
     reload: reloadEconomics,
   } = useUserCreditEconomics(id);
   const [selectedTab, setSelectedTab] = useState(0);
+  const [selectedAccountTab, setSelectedAccountTab] = useState(0);
 
   if (loading) {
     return (
@@ -208,49 +226,82 @@ export default function AdminUserDetailPage() {
           />
         </Layout.Section>
         <Layout.Section>
-          <Card padding="0">
-            <Tabs tabs={TABS} selected={selectedTab} onSelect={setSelectedTab}>
-              <Box padding="400">
-                {selectedTab === 0 && <PetsPanel pets={user.pets} />}
-                {selectedTab === 1 && (
-                  <GenerationsPanel
-                    gens={gens}
-                    loading={gensLoading}
-                    page={genPage}
-                    onPageChange={setGenPage}
-                  />
-                )}
-                {selectedTab === 2 && <PbnPanel userId={id} />}
-                {selectedTab === 3 && (
-                  <CreditsPanel
-                    userId={id}
-                    balance={user.generationCredits}
-                    onGranted={(newBalance) => {
-                      applyGrant(newBalance);
-                      // El abono mueve el saldo, y con él el costo futuro
-                      // estimado de la card lateral.
-                      reloadEconomics();
-                    }}
-                    baseCurrency={economics?.baseCurrency ?? "CAD"}
-                  />
-                )}
-                {selectedTab === 4 && <UserOrdersPanel userId={id} />}
-                {selectedTab === 5 && (
-                  <UserExpensesPanel
-                    userId={id}
-                    expenses={expenses}
-                    loadingSummary={loadingExpenses}
-                    economics={economics}
-                    loadingEconomics={loadingEconomics}
-                  />
-                )}
-              </Box>
-            </Tabs>
-          </Card>
+          <BlockStack gap="400">
+            <Card padding="0">
+              <Tabs
+                tabs={TABS}
+                selected={selectedTab}
+                onSelect={setSelectedTab}
+              >
+                <Box padding="400">
+                  {selectedTab === 0 && <PetsPanel pets={user.pets} />}
+                  {selectedTab === 1 && (
+                    <GenerationsPanel
+                      gens={gens}
+                      loading={gensLoading}
+                      page={genPage}
+                      onPageChange={setGenPage}
+                    />
+                  )}
+                  {selectedTab === 2 && <PbnPanel userId={id} />}
+                  {selectedTab === 3 && (
+                    <CreditsPanel
+                      userId={id}
+                      balance={user.generationCredits}
+                      onGranted={(newBalance) => {
+                        applyGrant(newBalance);
+                        // El abono mueve el saldo, y con él el costo futuro
+                        // estimado de la card lateral.
+                        reloadEconomics();
+                      }}
+                      baseCurrency={economics?.baseCurrency ?? "CAD"}
+                    />
+                  )}
+                  {selectedTab === 4 && <UserOrdersPanel userId={id} />}
+                  {selectedTab === 5 && (
+                    <UserExpensesPanel
+                      userId={id}
+                      expenses={expenses}
+                      loadingSummary={loadingExpenses}
+                      economics={economics}
+                      loadingEconomics={loadingEconomics}
+                    />
+                  )}
+                </Box>
+              </Tabs>
+            </Card>
+            <Card padding="0">
+              <Tabs
+                tabs={ACCOUNT_TABS}
+                selected={selectedAccountTab}
+                onSelect={setSelectedAccountTab}
+              >
+                <Box padding="400">
+                  {selectedAccountTab === 0 && (
+                    <SessionsPanel
+                      userId={id}
+                      userName={userName}
+                      accountActive={user.status === "active"}
+                    />
+                  )}
+                  {selectedAccountTab === 1 && <AuditLogPanel userId={id} />}
+                </Box>
+              </Tabs>
+            </Card>
+          </BlockStack>
         </Layout.Section>
         <Layout.Section variant="oneThird">
           <BlockStack gap="400">
             <UserProfileCard user={user} />
+            {/* La dirección es PII del pedido: tras la purga de la cuenta no
+                debe volver a aparecer en la ficha. Igual con el carrito, cuyas
+                líneas apuntan a imágenes de mascotas ya borradas. */}
+            {!user.anonymizedAt && (
+              <>
+                <UserAddressCard address={shippingAddress} />
+                <UserCartCard cart={cart} />
+              </>
+            )}
             <UserExpensesCard
               revenue={revenue}
               loadingRevenue={loadingRevenue}
