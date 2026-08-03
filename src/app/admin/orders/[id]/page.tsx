@@ -41,7 +41,6 @@ import { CancelOrderModal } from "./_components/CancelOrderModal";
 import { CustomerCard } from "./_components/CustomerCard";
 import { OrderTotalsCard } from "./_components/OrderTotalsCard";
 import { OrderEventsCard } from "./_components/OrderEventsCard";
-import { RawPayloadCard } from "./_components/RawPayloadCard";
 
 export default function AdminOrderDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -211,8 +210,6 @@ export default function AdminOrderDetailPage() {
               events={order.events}
               kindByItemId={kindByItemId}
             />
-
-            <RawPayloadCard order={order} />
           </BlockStack>
         </Layout.Section>
 
