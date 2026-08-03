@@ -12,6 +12,17 @@ import { AdminUserPet } from "@/entities/admin/api";
 import { ADMIN_EMPTY_STATE_IMAGE } from "@/entities/admin/lib/empty-state";
 import { PhotoGrid } from "./PhotoGrid";
 
+/** Especie · raza · edad, saltándose lo que el usuario no rellenó. */
+function petSubtitle(pet: AdminUserPet): string {
+  return [
+    pet.species,
+    pet.breed,
+    pet.age === null ? null : `${pet.age} año${pet.age === 1 ? "" : "s"}`,
+  ]
+    .filter(Boolean)
+    .join(" · ");
+}
+
 /** Pestaña "Mascotas": una card por mascota con sus fotos. */
 export function PetsPanel({ pets }: { pets: AdminUserPet[] }) {
   if (pets.length === 0) {
@@ -40,11 +51,18 @@ export function PetsPanel({ pets }: { pets: AdminUserPet[] }) {
                 {pet.name}
               </Text>
               <Text variant="bodySm" tone="subdued" as="span">
-                {pet.species}
-                {pet.breed ? ` · ${pet.breed}` : ""}
+                {petSubtitle(pet)}
               </Text>
               {!pet.isActive && <Badge tone="enabled">Inactiva</Badge>}
             </InlineStack>
+
+            {/* Texto libre del usuario: suele traer el contexto que no está en
+                ningún campo estructurado (manchas, carácter, si ya murió). */}
+            {pet.description && (
+              <Text as="p" variant="bodySm">
+                {pet.description}
+              </Text>
+            )}
 
             {pet.photos.length === 0 ? (
               <Text as="p" tone="subdued" variant="bodySm">

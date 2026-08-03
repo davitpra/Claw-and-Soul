@@ -4,6 +4,8 @@
  * (`app/admin/users/[id]`) muestren la misma identidad para un mismo usuario.
  */
 
+import { AdminUserAuthProvider } from "../api";
+
 /**
  * Iniciales para el `<Avatar>`: dos letras del nombre cuando lo hay (nombre +
  * apellido si vienen ambos), y si no, las dos primeras del email.
@@ -34,6 +36,21 @@ export function roleBadgeTone(
   role: string,
 ): "attention" | "warning" | "info" | "enabled" {
   return ROLE_TONES[role] ?? "enabled";
+}
+
+/**
+ * Método de acceso en texto. Sirve sobre todo para el soporte de "no puedo
+ * recuperar mi contraseña": quien entró solo con Google no tiene ninguna.
+ */
+const AUTH_PROVIDER_LABELS: Record<AdminUserAuthProvider, string> = {
+  password: "Contraseña",
+  google: "Google",
+  both: "Google y contraseña",
+  none: "Sin credenciales",
+};
+
+export function authProviderLabel(provider: AdminUserAuthProvider): string {
+  return AUTH_PROVIDER_LABELS[provider] ?? "Desconocido";
 }
 
 /**

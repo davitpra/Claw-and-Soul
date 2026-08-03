@@ -1,8 +1,21 @@
 "use client";
 
-import { Badge, BlockStack, Card, InlineStack, Text } from "@shopify/polaris";
+import {
+  Avatar,
+  Badge,
+  BlockStack,
+  Card,
+  InlineStack,
+  Text,
+} from "@shopify/polaris";
 import { AdminUserDetail } from "@/entities/admin/api";
-import { daysSince, fmtAbsoluteDate } from "@/entities/admin/lib/user-format";
+import {
+  authProviderLabel,
+  daysSince,
+  fmtAbsoluteDate,
+  getHandle,
+  getInitials,
+} from "@/entities/admin/lib/user-format";
 
 /** Días de alta en texto: «hoy» el primer día, y plural a partir del segundo. */
 function antiguedad(createdAt: string): string {
@@ -19,6 +32,25 @@ export function UserProfileCard({ user }: { user: AdminUserDetail }) {
   return (
     <Card>
       <BlockStack gap="400">
+        {/* El avatar es la foto que subió el propio usuario: cuando falta (o
+            falla la carga), Polaris cae solo a las iniciales. */}
+        <InlineStack gap="300" blockAlign="center">
+          <Avatar
+            size="lg"
+            source={user.avatarUrl ?? undefined}
+            initials={getInitials(user.fullName, user.email)}
+            name={user.fullName ?? user.email}
+          />
+          <BlockStack gap="050">
+            <Text variant="headingSm" as="h2">
+              {user.fullName || getHandle(user.email)}
+            </Text>
+            <Text variant="bodySm" tone="subdued" as="span">
+              {authProviderLabel(user.authProvider)}
+            </Text>
+          </BlockStack>
+        </InlineStack>
+
         <BlockStack gap="300">
           <Field label="Email" value={user.email} />
           <BlockStack gap="100">
@@ -35,12 +67,19 @@ export function UserProfileCard({ user }: { user: AdminUserDetail }) {
             <Text variant="bodySm" tone="subdued" as="span">
               Créditos
             </Text>
-            <InlineStack>
+            <InlineStack gap="200" blockAlign="center">
               <Badge tone={user.generationCredits === 0 ? "critical" : "info"}>
                 {`${user.generationCredits} ${
                   user.generationCredits === 1 ? "crédito" : "créditos"
                 }`}
               </Badge>
+              {/* El saldo solo se entiende con lo ya consumido al lado: 0
+                  créditos es muy distinto en alguien que gastó 40. */}
+              <Text variant="bodySm" tone="subdued" as="span">
+                {`${user.creditsSpent} gastado${
+                  user.creditsSpent === 1 ? "" : "s"
+                }`}
+              </Text>
             </InlineStack>
           </BlockStack>
           {user.lastLoginAt && (
