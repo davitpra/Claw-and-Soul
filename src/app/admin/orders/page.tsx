@@ -89,7 +89,15 @@ export default function AdminOrdersPage() {
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
   const [q, setQ] = useState("");
-  const [status, setStatus] = useState<string[]>([]);
+  // Filtro inicial desde la URL (`?status=art_failed`), que es como el dashboard
+  // enlaza sus alertas. Se lee de `window.location` en vez de `useSearchParams`
+  // para no obligar a envolver la página en un `<Suspense>`; a partir de ahí el
+  // estado vive en el cliente, igual que el resto de filtros.
+  const [status, setStatus] = useState<string[]>(() => {
+    if (typeof window === "undefined") return [];
+    const initial = new URLSearchParams(window.location.search).get("status");
+    return initial ? [initial] : [];
+  });
   const [method, setMethod] = useState<string[]>([]);
   const [fulfillment, setFulfillment] = useState<string[]>([]);
   const [syncing, setSyncing] = useState(false);

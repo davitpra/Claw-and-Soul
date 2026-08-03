@@ -193,49 +193,77 @@ const filters = [
 </Box>
 ```
 
-### KPI tiles + recharts en Card
+### Fila de KPIs (stat row)
 
-Referencia: `src/app/admin/page.tsx:58-94` (StatTile), `src/app/admin/page.tsx:145-180` (grid)
+Referencia: `src/app/admin/_dashboard/StatRow.tsx`, usada por
+`_dashboard/KpiRow.tsx` y por `admin/users/[id]/_components/UserStatsCard.tsx`.
+
+Sin tiles con fondo ni bordes propios: una `Card padding="0"` con celdas
+separadas por divisores borde a borde. Las columnas salen del número de celdas
+para que dos filas apiladas alineen sus divisores. Nada de Tailwind ni de `style`
+inline para el layout.
 
 ```tsx
-// KPI tile custom (usa estilos inline mínimos + Text de Polaris)
-function StatTile({ label, value }: { label: string; value: number | string }) {
-  return (
-    <div style={{ background: "#f6f6f7", borderRadius: 8, padding: 16, border: "1px solid #e3e3e3" }}>
-      <Text variant="heading2xl" as="p">{String(value)}</Text>
-      <Text variant="bodySm" as="span" tone="subdued">{label}</Text>
-    </div>
-  );
-}
-
-// Grid de tiles dentro de Card
-<Card>
-  <BlockStack gap="300">
-    <Text variant="headingSm" as="h2">Totales</Text>
-    <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(140px, 1fr))", gap: 12 }}>
-      <StatTile label="Usuarios" value={stats.totals.users} />
-      {/* … */}
-    </div>
-  </BlockStack>
+<Card padding="0">
+  <InlineGrid columns={{ xs: 1, sm: 2, md: stats.length }} gap="0">
+    {stats.map((stat, i) => (
+      <Box key={stat.label} padding="400"
+           borderInlineStartWidth={i === 0 ? "0" : "025"} borderColor="border">
+        <BlockStack gap="050">
+          <Text variant="bodySm" as="span" tone="subdued">{stat.label}</Text>
+          <InlineStack gap="200" blockAlign="baseline" wrap={false}>
+            <Text variant="headingLg" as="span">{stat.value}</Text>
+            {stat.delta && (
+              <Text variant="bodySm" as="span" tone={stat.deltaTone}>{stat.delta}</Text>
+            )}
+          </InlineStack>
+        </BlockStack>
+      </Box>
+    ))}
+  </InlineGrid>
 </Card>
+```
 
-// recharts dentro de Card (sin Tailwind, solo ResponsiveContainer)
+### Barra de proporción sin CSS propio
+
+Para repartos (costos por categoría, embudo, top de estilos) basta con dos `Box`
+anidados; no hace falta `<progress>` ni una clase Tailwind.
+
+```tsx
+<Box background="bg-surface-secondary" borderRadius="100" minHeight="6px">
+  <Box background="bg-fill-brand" borderRadius="100" minHeight="6px"
+       width={`${Math.max(share * 100, 2)}%`} />
+</Box>
+```
+
+### recharts en Card
+
+Referencia: `src/app/admin/_dashboard/charts/` — `TrendChart.tsx` (series
+temporales, admite doble eje), `DonutChart.tsx` (reparto) y `chart-theme.ts`
+(colores, ejes, grid y tooltip compartidos).
+
+No se instancian `LineChart`/`PieChart` sueltos en una página: se usan los
+wrappers, que ya traen el `ResponsiveContainer`, el tema y el empty state.
+
+```tsx
 <Card>
   <BlockStack gap="300">
-    <Text variant="headingMd" as="h2">Generaciones — últimos 30 días</Text>
-    <ResponsiveContainer width="100%" height={220}>
-      <LineChart data={data}>
-        {/* … */}
-        <Line stroke="#448da6" strokeWidth={2} dataKey="count" dot={false} />
-      </LineChart>
-    </ResponsiveContainer>
+    <Text variant="headingMd" as="h2">Ingresos y pedidos por día</Text>
+    <TrendChart
+      data={stats.timeline}
+      series={[
+        { dataKey: "revenue", name: "Ingresos", color: CHART_COLORS.accent,
+          kind: "area", axis: "left", format: (v) => fmtCurrency(v, currency) },
+        { dataKey: "orders", name: "Pedidos", color: CHART_COLORS.positive, axis: "right" },
+      ]}
+    />
   </BlockStack>
 </Card>
 ```
 
 ### Layout 2 columnas (detalle)
 
-Referencia: `src/app/admin/page.tsx:182-282`
+Referencia: `src/app/admin/page.tsx` (filas de `Layout` del dashboard)
 
 ```tsx
 <Layout>

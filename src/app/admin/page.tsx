@@ -1,110 +1,100 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { ReactNode, useState } from "react";
 import {
-  LineChart,
-  Line,
-  BarChart,
-  Bar,
-  PieChart,
-  Pie,
-  Cell,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  ResponsiveContainer,
-  Legend,
-} from "recharts";
-import {
-  Page,
-  Layout,
-  Card,
-  Text,
-  InlineStack,
-  BlockStack,
-  Badge,
   Banner,
-  Spinner,
+  BlockStack,
   Box,
-  Divider,
+  InlineGrid,
+  InlineStack,
+  Page,
+  Select,
+  Spinner,
+  Text,
 } from "@shopify/polaris";
-import { adminApi, OverviewStats } from "@/entities/admin/api";
-import { syncStatusTone } from "@/entities/admin/lib/sync-status";
+import { OverviewStats, StatsPeriod } from "@/entities/admin/api";
+import { useDashboard } from "./useDashboard";
+import { ActivityCard } from "./_dashboard/ActivityCard";
+import { AlertsBanner } from "./_dashboard/AlertsBanner";
+import { CreditsCard } from "./_dashboard/CreditsCard";
+import { DashboardSection } from "./_dashboard/DashboardSection";
+import { GenerationStatusCard } from "./_dashboard/GenerationStatusCard";
+import { GrowthFunnelCard } from "./_dashboard/GrowthFunnelCard";
+import { KpiRow } from "./_dashboard/KpiRow";
+import { MoneyCard } from "./_dashboard/MoneyCard";
+import { PipelineHealthCard } from "./_dashboard/PipelineHealthCard";
+import { ProductionQueueCard } from "./_dashboard/ProductionQueueCard";
+import { TimelineCard } from "./_dashboard/TimelineCard";
+import { TopStylesCard } from "./_dashboard/TopStylesCard";
+import { DASHBOARD_SECTIONS, SectionKey } from "./_dashboard/sections";
 
-const STATUS_COLORS: Record<string, string> = {
-  completed: "#448da6",
-  failed: "#ef4444",
-  processing: "#f59e0b",
-  pending: "#6b7280",
+const PERIOD_OPTIONS = [
+  { label: "Últimos 3 días", value: "3d" },
+  { label: "Últimos 7 días", value: "7d" },
+  { label: "Últimos 30 días", value: "30d" },
+  { label: "Últimos 90 días", value: "90d" },
+];
+
+const PERIOD_LABELS: Record<StatsPeriod, string> = {
+  "3d": "3 días",
+  "7d": "7 días",
+  "30d": "30 días",
+  "90d": "90 días",
 };
 
-function fmtDay(d: string) {
-  return new Date(d).toLocaleDateString("es-ES", {
-    month: "short",
-    day: "numeric",
-  });
-}
+const SECTION_OPTIONS = DASHBOARD_SECTIONS.map((section) => ({
+  label: section.label,
+  value: section.key,
+}));
 
-function StatTile({
-  label,
-  value,
-  sub,
-  highlight,
-}: {
-  label: string;
-  value: number | string;
-  sub?: string;
-  highlight?: boolean;
-}) {
-  return (
-    <div
-      className={`rounded-lg p-4 flex flex-col gap-1 border ${
-        highlight
-          ? "bg-[#e8f3f6] border-[#448da6]"
-          : "bg-[#f6f6f7] border-[#e3e3e3]"
-      }`}
-    >
-      <Text variant="heading2xl" as="p">
-        {typeof value === "number" ? value.toLocaleString() : value}
-      </Text>
-      <Text variant="bodySm" as="span" tone="subdued">
-        {label}
-      </Text>
-      {sub && (
-        <Text variant="bodySm" as="span" tone="subdued">
-          {sub}
-        </Text>
-      )}
-    </div>
-  );
-}
+/** La sección son dos cards que colapsan a una columna en pantallas estrechas. */
+const SECTION_COLUMNS = { xs: 1, md: 2 } as const;
 
 export default function AdminOverviewPage() {
-  const [stats, setStats] = useState<OverviewStats | null>(null);
-  const [statsError, setStatsError] = useState<string | null>(null);
+  const { stats, error, period, setPeriod, loading } = useDashboard();
+  // Presentación pura: la respuesta trae los cuatro dominios de una vez, así que
+  // cambiar de sección no dispara ningún fetch y el estado no baja al hook.
+  const [section, setSection] = useState<SectionKey>("money");
 
-  const today = new Date().toLocaleDateString("es-ES", {
-    day: "numeric",
-    month: "long",
-    year: "numeric",
-  });
+  const periodLabel = PERIOD_LABELS[period];
+  const activeSection =
+    DASHBOARD_SECTIONS.find((s) => s.key === section) ?? DASHBOARD_SECTIONS[0];
 
-  useEffect(() => {
-    adminApi.stats
-      .overview()
-      .then(setStats)
-      .catch((e: Error) => setStatsError(e.message));
-  }, []);
+  const controls = (
+    <InlineStack gap="200" blockAlign="center" wrap={false}>
+      <Box minWidth="200px">
+        <Select
+          label="Sección"
+          labelHidden
+          options={SECTION_OPTIONS}
+          value={section}
+          onChange={(value) => setSection(value as SectionKey)}
+        />
+      </Box>
+      <Box minWidth="180px">
+        <Select
+          label="Periodo"
+          labelHidden
+          options={PERIOD_OPTIONS}
+          value={period}
+          onChange={(value) => setPeriod(value as StatsPeriod)}
+          disabled={loading}
+        />
+      </Box>
+    </InlineStack>
+  );
 
-  if (statsError) {
+  if (error) {
     return (
       <Page title="Dashboard">
-        <Banner tone="critical">{statsError}</Banner>
+        <Banner tone="critical">{error}</Banner>
       </Page>
     );
   }
 
+  // Solo en el primer arranque no hay nada que pintar. Al cambiar de periodo se
+  // conservan los datos anteriores y el `Select` queda deshabilitado, así que la
+  // página no parpadea.
   if (!stats) {
     return (
       <Page title="Dashboard">
@@ -120,242 +110,113 @@ export default function AdminOverviewPage() {
     );
   }
 
-  const statusPieData = Object.entries(stats.generationsByStatus).map(
-    ([name, value]) => ({ name, value })
-  );
+  const { money, production, pipeline, growth, baseCurrency } = stats;
 
   return (
     <Page
       title="Dashboard"
-      subtitle={`Resumen general · ${today}`}
+      subtitle={`Últimos ${periodLabel} · importes en ${baseCurrency}`}
+      primaryAction={controls}
     >
-      <BlockStack gap="500">
-        {/* KPI tiles */}
-        <Card>
-          <BlockStack gap="300">
-            <Text variant="headingSm" as="h2">
-              Totales
-            </Text>
-            <div
-              style={{
-                display: "grid",
-                gridTemplateColumns: "repeat(auto-fill, minmax(140px, 1fr))",
-                gap: 12,
-              }}
-            >
-              <StatTile
-                label="Usuarios"
-                value={stats.totals.users}
-                sub={`${stats.usersByRole.admin ?? 0} admins`}
-                highlight
-              />
-              <StatTile label="Mascotas" value={stats.totals.pets} />
-              <StatTile
-                label="Generaciones"
-                value={stats.totals.generations}
-                sub={`${stats.generationsByStatus.failed ?? 0} fallidas`}
-              />
-              <StatTile
-                label="Estilos activos"
-                value={stats.totals.styles}
-              />
-              <StatTile label="Formatos" value={stats.totals.formats} />
-              <StatTile label="Productos" value={stats.totals.products} />
-            </div>
-          </BlockStack>
-        </Card>
+      <BlockStack gap="600">
+        {/*
+          Resumen fijo. Se ve entero en las cuatro secciones: las alertas son
+          accionables siempre, y la fila de KPIs es lo que sitúa la sección
+          abierta dentro del conjunto en vez de dejarla como un dato suelto.
+        */}
+        <BlockStack gap="400">
+          <AlertsBanner
+            production={production}
+            pipeline={pipeline}
+            syncHealth={stats.syncHealth}
+          />
 
-        {/* Charts row */}
-        <Layout>
-          <Layout.Section>
-            <Card>
-              <BlockStack gap="300">
-                <Text variant="headingMd" as="h2">
-                  Generaciones — últimos 30 días
-                </Text>
-                {stats.timeline.length === 0 ? (
-                  <Text as="p" tone="subdued">
-                    Sin datos aún.
-                  </Text>
-                ) : (
-                  <ResponsiveContainer width="100%" height={220}>
-                    <LineChart
-                      data={stats.timeline}
-                      margin={{ top: 4, right: 8, left: -20, bottom: 0 }}
-                    >
-                      <CartesianGrid
-                        strokeDasharray="3 3"
-                        stroke="#E3E3E3"
-                      />
-                      <XAxis
-                        dataKey="day"
-                        tickFormatter={fmtDay}
-                        tick={{ fontSize: 11, fill: "#6d7175" }}
-                        interval="preserveStartEnd"
-                      />
-                      <YAxis
-                        tick={{ fontSize: 11, fill: "#6d7175" }}
-                        allowDecimals={false}
-                      />
-                      <Tooltip
-                        labelFormatter={(v) => fmtDay(String(v))}
-                        contentStyle={{
-                          borderRadius: 8,
-                          border: "1px solid #E3E3E3",
-                          fontSize: 12,
-                        }}
-                      />
-                      <Line
-                        type="monotone"
-                        dataKey="count"
-                        stroke="#448da6"
-                        strokeWidth={2}
-                        dot={false}
-                      />
-                    </LineChart>
-                  </ResponsiveContainer>
-                )}
-              </BlockStack>
-            </Card>
-          </Layout.Section>
+          <KpiRow
+            money={money}
+            pipeline={pipeline}
+            growth={growth}
+            currency={baseCurrency}
+            periodLabel={periodLabel}
+            section={section}
+          />
 
-          <Layout.Section variant="oneThird">
-            <Card>
-              <BlockStack gap="300">
-                <Text variant="headingMd" as="h2">
-                  Estado
-                </Text>
-                {statusPieData.length === 0 ? (
-                  <Text as="p" tone="subdued">
-                    Sin datos.
-                  </Text>
-                ) : (
-                  <ResponsiveContainer width="100%" height={220}>
-                    <PieChart>
-                      <Pie
-                        data={statusPieData}
-                        cx="50%"
-                        cy="50%"
-                        innerRadius={55}
-                        outerRadius={80}
-                        dataKey="value"
-                        paddingAngle={3}
-                      >
-                        {statusPieData.map((entry) => (
-                          <Cell
-                            key={entry.name}
-                            fill={STATUS_COLORS[entry.name] ?? "#94a3b8"}
-                          />
-                        ))}
-                      </Pie>
-                      <Tooltip
-                        contentStyle={{
-                          borderRadius: 8,
-                          border: "1px solid #E3E3E3",
-                          fontSize: 12,
-                        }}
-                      />
-                      <Legend
-                        iconType="circle"
-                        iconSize={8}
-                        wrapperStyle={{ fontSize: 12 }}
-                      />
-                    </PieChart>
-                  </ResponsiveContainer>
-                )}
-              </BlockStack>
-            </Card>
-          </Layout.Section>
-        </Layout>
+          {/* La serie sigue a la sección: un solo control gobierna la página. */}
+          <TimelineCard
+            timeline={stats.timeline}
+            metric={activeSection.metric}
+            currency={baseCurrency}
+            periodLabel={periodLabel}
+          />
+        </BlockStack>
 
-        {/* Top styles */}
-        <Card>
-          <BlockStack gap="300">
-            <Text variant="headingMd" as="h2">
-              Estilos más usados
-            </Text>
-            {stats.topStyles.length === 0 ? (
-              <Text as="p" tone="subdued">
-                Sin datos.
-              </Text>
-            ) : (
-              <ResponsiveContainer width="100%" height={200}>
-                <BarChart
-                  data={stats.topStyles}
-                  margin={{ top: 4, right: 8, left: -20, bottom: 40 }}
-                >
-                  <CartesianGrid strokeDasharray="3 3" stroke="#E3E3E3" />
-                  <XAxis
-                    dataKey="displayName"
-                    tick={{ fontSize: 11, fill: "#6d7175" }}
-                    angle={-30}
-                    textAnchor="end"
-                    interval={0}
-                  />
-                  <YAxis
-                    tick={{ fontSize: 11, fill: "#6d7175" }}
-                    allowDecimals={false}
-                  />
-                  <Tooltip
-                    contentStyle={{
-                      borderRadius: 8,
-                      border: "1px solid #E3E3E3",
-                      fontSize: 12,
-                    }}
-                  />
-                  <Bar dataKey="count" fill="#448da6" radius={[4, 4, 0, 0]} />
-                </BarChart>
-              </ResponsiveContainer>
-            )}
-          </BlockStack>
-        </Card>
-
-        {/* Recent syncs */}
-        <Card>
-          <BlockStack gap="300">
-            <Text variant="headingMd" as="h2">
-              Sincronizaciones recientes
-            </Text>
-            {stats.recentSyncs.length === 0 ? (
-              <Text as="p" tone="subdued">
-                Sin historial de sync.
-              </Text>
-            ) : (
-              <BlockStack gap="0">
-                {stats.recentSyncs.map((s, i) => (
-                  <div key={s.id}>
-                    {i > 0 && <Divider />}
-                    <Box paddingBlock="300">
-                      <InlineStack align="space-between" blockAlign="center">
-                        <InlineStack gap="300" blockAlign="center">
-                          <Badge tone={syncStatusTone(s.status)}>
-                            {s.status}
-                          </Badge>
-                          <Text as="span">{s.type}</Text>
-                        </InlineStack>
-                        <BlockStack gap="0" inlineAlign="end">
-                          <Text variant="bodySm" tone="subdued" as="span">
-                            {new Date(s.startedAt).toLocaleString("es-ES", {
-                              dateStyle: "short",
-                              timeStyle: "short",
-                            })}
-                          </Text>
-                          {s.productsChecked != null && (
-                            <Text variant="bodySm" tone="subdued" as="span">
-                              {s.productsChecked} rev · {s.productsCreated ?? 0}{" "}
-                              cr · {s.productsUpdated ?? 0} act
-                            </Text>
-                          )}
-                        </BlockStack>
-                      </InlineStack>
-                    </Box>
-                  </div>
-                ))}
-              </BlockStack>
-            )}
-          </BlockStack>
-        </Card>
+        <DashboardSection
+          title={activeSection.label}
+          icon={activeSection.icon}
+          description={activeSection.description}
+          action={activeSection.action}
+        >
+          <InlineGrid columns={SECTION_COLUMNS} gap="400">
+            {renderSectionCards(section, stats, periodLabel, period)}
+          </InlineGrid>
+        </DashboardSection>
       </BlockStack>
     </Page>
   );
+}
+
+/**
+ * Las dos cards de cada dominio. Va aparte de `DASHBOARD_SECTIONS` porque cada
+ * par recibe props distintas: los metadatos de la sección son datos, esto es
+ * composición.
+ */
+function renderSectionCards(
+  section: SectionKey,
+  stats: OverviewStats,
+  periodLabel: string,
+  period: StatsPeriod,
+): ReactNode {
+  const { money, production, pipeline, growth, baseCurrency } = stats;
+
+  switch (section) {
+    case "money":
+      return (
+        <>
+          <MoneyCard money={money} currency={baseCurrency} />
+          <TopStylesCard topStyles={stats.topStyles} currency={baseCurrency} />
+        </>
+      );
+    case "orders":
+      return (
+        <>
+          <ProductionQueueCard
+            production={production}
+            periodLabel={periodLabel}
+          />
+          <ActivityCard
+            recentEvents={stats.recentEvents}
+            syncHealth={stats.syncHealth}
+          />
+        </>
+      );
+    case "generations":
+      return (
+        <>
+          <PipelineHealthCard pipeline={pipeline} currency={baseCurrency} />
+          <GenerationStatusCard pipeline={pipeline} />
+        </>
+      );
+    case "users":
+      return (
+        <>
+          <GrowthFunnelCard growth={growth} periodLabel={periodLabel} />
+          <CreditsCard
+            growth={growth}
+            money={money}
+            currency={baseCurrency}
+            period={period}
+            periodLabel={periodLabel}
+          />
+        </>
+      );
+  }
 }

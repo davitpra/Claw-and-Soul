@@ -410,42 +410,141 @@ export interface AdminCreditTransaction {
   createdAt: string;
 }
 
-export interface OrderStats {
-  total: number;
-  period: number;
+/** Ventanas que acepta `GET /admin/stats/overview`. */
+export type StatsPeriod = "3d" | "7d" | "30d" | "90d";
+
+/**
+ * Dinero del periodo. Los importes van en `baseCurrency`; los `*DeltaPct` son
+ * `null` cuando el periodo anterior fue 0 (un "+100%" desde cero no informa).
+ */
+export interface OverviewMoney {
   revenue: number;
-  byProductionStatus: Record<string, number>;
+  revenuePrev: number;
+  revenueDeltaPct: number | null;
+  orders: number;
+  ordersPrev: number;
+  ordersDeltaPct: number | null;
+  /** Ticket medio; `null` sin pedidos en la ventana. */
+  aov: number | null;
+  /** Monedas sumadas sin convertir por falta de tipo de cambio. */
+  unconvertedCurrencies: string[];
+  costs: {
+    total: number;
+    count: number;
+    byCategory: Record<string, number>;
+  };
+  grossMargin: number;
+  grossMarginPct: number | null;
+  creditsIssued: number;
+  creditsSpentNet: number;
+  creditsOutstanding: number;
+  creditLiability: number;
+  unitCost: number | null;
+  unitCostSampleSize: number;
+  /** Desglose de la tarifa unitaria; `null` si no hubo ninguna muestra. */
+  unitCostBreakdown: { vision: number; image: number } | null;
+  /** Si no coincide con el periodo pedido, la media se calculó sobre el histórico. */
+  unitCostPeriod: string;
+}
+
+/**
+ * Cola de producción. `queue` y `blocked` son una foto del AHORA, no de la
+ * ventana: un item atascado hace meses tiene que verse aunque el periodo sea de
+ * 7 días. Solo `shipped`/`delivered` se filtran por periodo.
+ */
+export interface OverviewProduction {
+  queue: Record<string, number>;
+  queueTotal: number;
+  byMethod: { in_house: number; pod: number };
+  oldestQueuedAt: string | null;
+  blocked: { artFailed: number; onHold: number; pendingPaid: number };
+  shipped: number;
+  delivered: number;
+}
+
+/** Salud del pipeline de IA. Todo excluye las generaciones de prueba del admin. */
+export interface OverviewPipeline {
+  total: number;
+  completed: number;
+  failed: number;
+  byStatus: Record<string, number>;
+  /** Porcentaje 0-100; `null` sin generaciones en la ventana. */
+  failureRate: number | null;
+  failureRatePrev: number | null;
+  totalDeltaPct: number | null;
+  /** Generaciones sin terminar pasado `stuckAfterMinutes`. Foto del ahora. */
+  stuck: number;
+  stuckAfterMinutes: number;
+  avgProcessingSeconds: number | null;
+  p95ProcessingSeconds: number | null;
+  byType: { image: number; video: number };
+  generationCost: number;
+  costPerGeneration: number | null;
+}
+
+export interface OverviewGrowth {
+  /** Usuarios registrados acumulados, no de la ventana. Excluye bajas. */
+  totalUsers: number;
+  newUsers: number;
+  newUsersPrev: number;
+  newUsersDeltaPct: number | null;
+  activeUsers: number;
+  /** Hechos ocurridos en la ventana, no cohortes: no persigue al mismo usuario. */
+  funnel: {
+    pets: number;
+    generations: number;
+    pbnSaved: number;
+    ordersPaid: number;
+  };
+  conversionRate: number | null;
+  abandonedCarts: number;
+  abandonedAfterDays: number;
 }
 
 export interface OverviewStats {
-  totals: {
-    users: number;
-    pets: number;
-    generations: number;
-    styles: number;
-    formats: number;
-    products: number;
+  period: {
+    key: StatsPeriod;
+    days: number;
+    from: string;
+    to: string;
+    prevFrom: string;
+    prevTo: string;
   };
-  usersByRole: Record<string, number>;
-  generationsByStatus: Record<string, number>;
-  generationsByType: Record<string, number>;
-  petsBySpecies: Record<string, number>;
-  topStyles: { styleId: string; displayName: string; count: number }[];
-  recentSyncs: {
-    id: string;
-    type: string;
-    status: string;
-    startedAt: string;
-    completedAt: string | null;
-    productsChecked: number | null;
-    productsCreated: number | null;
-    productsUpdated: number | null;
+  baseCurrency: string;
+  money: OverviewMoney;
+  production: OverviewProduction;
+  pipeline: OverviewPipeline;
+  growth: OverviewGrowth;
+  timeline: {
+    day: string;
+    generations: number;
+    orders: number;
+    revenue: number;
+    /** Altas del día; mismo criterio que `growth.newUsers`, sin filtrar borradas. */
+    newUsers: number;
   }[];
-  timeline: { day: string; count: number }[];
-  orders: {
-    thisWeek: number;
-    revenueThisWeek: number;
-    byProductionStatus: Record<string, number>;
+  /** Ordenado por ingresos, no por uso. */
+  topStyles: {
+    styleId: string;
+    displayName: string;
+    count: number;
+    revenue: number;
+  }[];
+  recentEvents: {
+    id: string;
+    orderId: string;
+    orderNumber: string;
+    eventType: string;
+    fromStatus: string | null;
+    toStatus: string | null;
+    source: string;
+    createdAt: string;
+  }[];
+  syncHealth: {
+    lastStatus: string | null;
+    lastType: string | null;
+    lastStartedAt: string | null;
+    failedLast24h: number;
   };
 }
 
@@ -812,7 +911,8 @@ async function adminFetch<T>(
 
 export const adminApi = {
   stats: {
-    overview: () => adminFetch<OverviewStats>("/admin/stats/overview"),
+    overview: (period: StatsPeriod = "30d") =>
+      adminFetch<OverviewStats>(`/admin/stats/overview?period=${period}`),
   },
   styles: {
     list: () => adminFetch<AdminStyle[]>("/admin/styles"),
@@ -1250,10 +1350,9 @@ export const adminApi = {
       return adminFetch<Paginated<AdminOrderListItem>>(`/admin/orders?${p}`);
     },
     detail: (id: string) => adminFetch<AdminOrderDetail>(`/admin/orders/${id}`),
-    stats: (period?: "7d" | "30d" | "90d") =>
-      adminFetch<OrderStats>(
-        `/admin/orders/stats/summary?period=${period ?? "30d"}`,
-      ),
+    // `GET /admin/orders/stats/summary` sigue existiendo en el backend, pero el
+    // dashboard ya lo cubre con `stats.overview()`; no se expone aquí para no
+    // dejar dos fuentes de la misma cifra.
     syncStatus: () => adminFetch(`/admin/orders/sync/status`),
     triggerSync: (since?: string) =>
       adminFetch<{ syncId: string }>("/admin/orders/sync", {
