@@ -25,10 +25,10 @@ export function GrowthFunnelCard({
   periodLabel: string;
 }) {
   const steps = [
-    { label: "Mascotas creadas", value: growth.funnel.pets },
+    { label: "Mascotas ingresadas", value: growth.funnel.pets },
     { label: "Generaciones completadas", value: growth.funnel.generations },
     { label: "PBN guardados", value: growth.funnel.pbnSaved },
-    { label: "Pedidos pagados", value: growth.funnel.ordersPaid },
+    { label: "Pedidos derivados", value: growth.funnel.ordersPaid },
   ];
 
   const peak = Math.max(...steps.map((s) => s.value), 1);
@@ -37,9 +37,14 @@ export function GrowthFunnelCard({
     <Card>
       <BlockStack gap="400">
         <InlineStack align="space-between" blockAlign="center">
-          <Text variant="headingSm" as="h3">
-            Crecimiento
-          </Text>
+          <BlockStack gap="0">
+            <Text variant="headingSm" as="h3">
+              Crecimiento
+            </Text>
+            <Text variant="bodySm" as="span" tone="subdued">
+              Cuentas creadas y hechos ocurridos en los últimos {periodLabel}
+            </Text>
+          </BlockStack>
           <InlineStack gap="200" blockAlign="baseline">
             <Text variant="headingLg" as="span">
               {fmtCount(growth.newUsers)}
@@ -88,17 +93,27 @@ export function GrowthFunnelCard({
 
         <Divider />
 
+        {/*
+          Las tres líneas están acotadas al periodo, pero no cuentan lo mismo: una
+          es una razón, otra mira la base ya existente y la última data el momento
+          en que cada carrito se dio por perdido. Cada una lo declara en su
+          detalle; sin eso, un 0 de altas arriba y un 1 de activos aquí se leen
+          como una contradicción.
+        */}
         <BlockStack gap="150">
           <StatLine
             label="Conversión generación → pedido"
+            detail="Pedidos pagados ÷ generaciones del periodo"
             value={fmtPct(growth.conversionRate)}
           />
           <StatLine
-            label={`Usuarios activos (${periodLabel})`}
+            label="Usuarios activos"
+            detail={`Cuentas ya existentes que iniciaron sesión en los últimos ${periodLabel}`}
             value={fmtCount(growth.activeUsers)}
           />
           <StatLine
-            label={`Carritos abandonados (> ${growth.abandonedAfterDays} días)`}
+            label="Carritos abandonados"
+            detail={`Cumplieron ${growth.abandonedAfterDays} días sin actividad durante los últimos ${periodLabel}`}
             value={fmtCount(growth.abandonedCarts)}
           />
         </BlockStack>

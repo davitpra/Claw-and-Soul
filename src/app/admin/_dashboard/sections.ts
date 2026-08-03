@@ -57,7 +57,9 @@ export const DASHBOARD_SECTIONS: DashboardSectionDef[] = [
     key: "users",
     label: "Usuarios",
     icon: TeamIcon,
-    description: "Altas y actividad del periodo",
+    // Las altas son del periodo, pero los activos salen de la base ya existente:
+    // decirlo aquí evita leer «0 altas» como «no hay usuarios».
+    description: "Altas del periodo y actividad de la base ya registrada",
     action: { label: "Ver usuarios", url: "/admin/users" },
     metric: "newUsers",
   },

@@ -81,7 +81,9 @@ export function KpiRow({
       icon: TeamIcon,
       selected: section === "users",
       value: fmtCount(growth.newUsers),
-      detail: `${fmtCount(growth.totalUsers)} registrados en total`,
+      // La cifra son altas, no actividad: sin los activos al lado, un 0 aquí se
+      // lee como «no hay nadie usando esto» y contradice al bloque de abajo.
+      detail: `${fmtCount(growth.activeUsers)} activos · ${fmtCount(growth.totalUsers)} registrados en total`,
       delta: fmtDelta(growth.newUsersDeltaPct),
       deltaTone: deltaTone(growth.newUsersDeltaPct),
     },

@@ -13,7 +13,21 @@ const METRIC_TITLES: Record<TimelineMetric, string> = {
   revenue: "Ingresos por día",
   orders: "Pedidos por día",
   generations: "Generaciones por día",
-  newUsers: "Usuarios por día",
+  // «Usuarios por día» se leía como la base de usuarios, no como altas: con la
+  // serie vacía parecía que no había ningún usuario en la plataforma.
+  newUsers: "Altas por día",
+};
+
+/**
+ * El vacío nombra la métrica que falta. Un «sin datos» genérico bajo un título de
+ * usuarios se interpreta como que no hay usuarios, cuando solo dice que nadie se
+ * registró en la ventana.
+ */
+const METRIC_EMPTY: Record<TimelineMetric, string> = {
+  revenue: "Sin ingresos",
+  orders: "Sin pedidos pagados",
+  generations: "Sin generaciones",
+  newUsers: "Ninguna cuenta nueva",
 };
 
 /**
@@ -92,7 +106,7 @@ export function TimelineCard({
           data={timeline}
           height={260}
           series={[series]}
-          emptyMessage={`Sin datos en los últimos ${periodLabel}.`}
+          emptyMessage={`${METRIC_EMPTY[metric]} en los últimos ${periodLabel}.`}
           // Solo el dinero necesita rótulo de unidad en el eje; los conteos se
           // leen solos y un formateador abreviado los estropearía ("1 mil").
           yTickFormat={
