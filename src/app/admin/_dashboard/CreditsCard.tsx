@@ -7,30 +7,30 @@ import {
   InlineStack,
   Text,
 } from "@shopify/polaris";
-import { OverviewGrowth, OverviewMoney, StatsPeriod } from "@/entities/admin/api";
+import { OverviewMoney, StatsPeriod } from "@/entities/admin/api";
 import { fmtCreditCost, fmtUnitCost } from "@/entities/admin/lib/credit-format";
 import { StatLine } from "./StatLine";
-import { deltaTone, fmtCount, fmtDelta } from "./format";
+import { fmtCount } from "./format";
 
 /**
- * Base de usuarios y economía de créditos.
+ * Economía de créditos. Acompaña a `PipelineHealthCard` porque el crédito es la
+ * unidad con la que se paga una generación: el gasto de aquí es el volumen de
+ * allí visto desde el saldo del usuario.
  *
- * Ojo con el alcance temporal, que no es uniforme: «registrados» y «en
- * circulación» son acumulados —una foto del ahora— mientras que altas, emitidos
- * y gastados sí siguen el selector de periodo. Por eso solo estos últimos llevan
- * el periodo en la etiqueta.
+ * Ojo con el alcance temporal, que no es uniforme: «en circulación» es un
+ * acumulado —una foto del ahora— mientras que emitidos y gastados siguen el
+ * selector de periodo. Por eso solo estos últimos llevan el periodo en la
+ * etiqueta.
  *
  * El pasivo se valora al costo medio de una generación, no a precio de venta: un
  * crédito solo cuesta lo que cuesta producirlo.
  */
 export function CreditsCard({
-  growth,
   money,
   currency,
   period,
   periodLabel,
 }: {
-  growth: OverviewGrowth;
   money: OverviewMoney;
   currency: string;
   period: StatsPeriod;
@@ -43,40 +43,29 @@ export function CreditsCard({
       <BlockStack gap="400">
         <InlineStack align="space-between" blockAlign="center">
           <Text variant="headingSm" as="h3">
-            Usuarios y créditos
+            Créditos
           </Text>
           <InlineStack gap="200" blockAlign="baseline">
             <Text variant="headingLg" as="span">
-              {fmtCount(growth.totalUsers)}
+              {fmtCount(money.creditsSpentNet)}
             </Text>
             <Text variant="bodySm" as="span" tone="subdued">
-              registrados
+              gastados
             </Text>
           </InlineStack>
         </InlineStack>
-
-        <StatLine
-          label={`Altas (${periodLabel})`}
-          value={fmtCount(growth.newUsers)}
-          delta={fmtDelta(growth.newUsersDeltaPct)}
-          deltaTone={deltaTone(growth.newUsersDeltaPct)}
-        />
 
         <Divider />
 
         <BlockStack gap="150">
           <StatLine
-            label="Créditos en circulación"
-            detail="Saldo actual de todas las cuentas, no del periodo"
-            value={fmtCount(money.creditsOutstanding)}
-          />
-          <StatLine
             label={`Créditos emitidos (${periodLabel})`}
             value={fmtCount(money.creditsIssued)}
           />
           <StatLine
-            label={`Créditos gastados (${periodLabel})`}
-            value={fmtCount(money.creditsSpentNet)}
+            label="Créditos en circulación"
+            detail="Saldo actual de todas las cuentas, no del periodo"
+            value={fmtCount(money.creditsOutstanding)}
           />
         </BlockStack>
 

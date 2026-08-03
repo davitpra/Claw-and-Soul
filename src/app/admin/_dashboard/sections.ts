@@ -15,7 +15,8 @@ export interface DashboardSectionDef {
   icon: IconSource;
   /** Alcance temporal de las cifras: es la ambigüedad recurrente del dashboard. */
   description: string;
-  action: { label: string; url: string };
+  /** Opcional: no todos los dominios tienen una página propia adonde ir. */
+  action?: { label: string; url: string };
   /** Serie que pinta `TimelineCard` mientras la sección está activa. */
   metric: TimelineMetric;
 }
@@ -31,7 +32,6 @@ export const DASHBOARD_SECTIONS: DashboardSectionDef[] = [
     label: "Ingresos",
     icon: CashDollarIcon,
     description: "Dinero movido dentro del periodo",
-    action: { label: "Ver gastos", url: "/admin/expenses" },
     metric: "revenue",
   },
   {
@@ -44,17 +44,20 @@ export const DASHBOARD_SECTIONS: DashboardSectionDef[] = [
   },
   {
     key: "generations",
-    label: "Generaciones",
+    label: "Generaciones y créditos",
     icon: MagicIcon,
-    description: "Pipeline de IA, sin las pruebas del admin",
+    // Los créditos viven aquí y no en usuarios porque es lo que se consume al
+    // generar: el saldo solo se mueve por el pipeline.
+    description:
+      "Pipeline de IA del periodo, sin las pruebas del admin; saldos acumulados",
     action: { label: "Ver estilos", url: "/admin/styles" },
     metric: "generations",
   },
   {
     key: "users",
-    label: "Usuarios y créditos",
+    label: "Usuarios",
     icon: TeamIcon,
-    description: "Altas del periodo; saldos y registrados acumulados",
+    description: "Altas y actividad del periodo",
     action: { label: "Ver usuarios", url: "/admin/users" },
     metric: "newUsers",
   },

@@ -37,7 +37,7 @@ export function MoneyCard({
       <BlockStack gap="400">
         <InlineStack align="space-between" blockAlign="center">
           <Text variant="headingSm" as="h3">
-            Costos y margen
+            Detalle de Costos
           </Text>
           <Text variant="bodySm" as="span" tone="subdued">
             {fmtCount(money.costs.count)} movimiento(s)
@@ -84,6 +84,9 @@ export function MoneyCard({
         <Divider />
 
         <BlockStack gap="150">
+          <Text variant="headingSm" as="h3">
+            Detalle de Ingresos y Costos
+          </Text>
           <StatLine
             label="Ingresos"
             value={`≈ ${fmtCurrency(money.revenue, currency)}`}
@@ -108,6 +111,7 @@ export function MoneyCard({
         <StatLine
           label="Ticket medio"
           detail="Ingresos ÷ pedidos pagados"
+          strong
           value={
             money.aov === null ? "—" : `≈ ${fmtCurrency(money.aov, currency)}`
           }

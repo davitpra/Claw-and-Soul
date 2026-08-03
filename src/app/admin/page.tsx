@@ -18,7 +18,6 @@ import { ActivityCard } from "./_dashboard/ActivityCard";
 import { AlertsBanner } from "./_dashboard/AlertsBanner";
 import { CreditsCard } from "./_dashboard/CreditsCard";
 import { DashboardSection } from "./_dashboard/DashboardSection";
-import { GenerationStatusCard } from "./_dashboard/GenerationStatusCard";
 import { GrowthFunnelCard } from "./_dashboard/GrowthFunnelCard";
 import { KpiRow } from "./_dashboard/KpiRow";
 import { MoneyCard } from "./_dashboard/MoneyCard";
@@ -47,8 +46,10 @@ const SECTION_OPTIONS = DASHBOARD_SECTIONS.map((section) => ({
   value: section.key,
 }));
 
-/** La sección son dos cards que colapsan a una columna en pantallas estrechas. */
+/** Dos cards que colapsan a una columna en pantallas estrechas… */
 const SECTION_COLUMNS = { xs: 1, md: 2 } as const;
+/** …salvo en usuarios, que es una sola card y ocupa el ancho entero. */
+const SINGLE_COLUMN = { xs: 1 } as const;
 
 export default function AdminOverviewPage() {
   const { stats, error, period, setPeriod, loading } = useDashboard();
@@ -155,7 +156,10 @@ export default function AdminOverviewPage() {
           description={activeSection.description}
           action={activeSection.action}
         >
-          <InlineGrid columns={SECTION_COLUMNS} gap="400">
+          <InlineGrid
+            columns={section === "users" ? SINGLE_COLUMN : SECTION_COLUMNS}
+            gap="400"
+          >
             {renderSectionCards(section, stats, periodLabel, period)}
           </InlineGrid>
         </DashboardSection>
@@ -165,8 +169,8 @@ export default function AdminOverviewPage() {
 }
 
 /**
- * Las dos cards de cada dominio. Va aparte de `DASHBOARD_SECTIONS` porque cada
- * par recibe props distintas: los metadatos de la sección son datos, esto es
+ * Las cards de cada dominio. Va aparte de `DASHBOARD_SECTIONS` porque cada
+ * sección recibe props distintas: los metadatos de la sección son datos, esto es
  * composición.
  */
 function renderSectionCards(
@@ -202,15 +206,7 @@ function renderSectionCards(
       return (
         <>
           <PipelineHealthCard pipeline={pipeline} currency={baseCurrency} />
-          <GenerationStatusCard pipeline={pipeline} />
-        </>
-      );
-    case "users":
-      return (
-        <>
-          <GrowthFunnelCard growth={growth} periodLabel={periodLabel} />
           <CreditsCard
-            growth={growth}
             money={money}
             currency={baseCurrency}
             period={period}
@@ -218,5 +214,7 @@ function renderSectionCards(
           />
         </>
       );
+    case "users":
+      return <GrowthFunnelCard growth={growth} periodLabel={periodLabel} />;
   }
 }

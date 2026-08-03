@@ -18,14 +18,6 @@ export const CHART_COLORS = {
   alt: "#7a6ea9",
 } as const;
 
-/** Colores por estado de generación, compartidos por dona y leyendas. */
-export const GENERATION_STATUS_COLORS: Record<string, string> = {
-  completed: CHART_COLORS.accent,
-  failed: CHART_COLORS.critical,
-  processing: CHART_COLORS.warning,
-  pending: CHART_COLORS.neutral,
-};
-
 export const AXIS_TICK = { fontSize: 11, fill: "#6d7175" } as const;
 
 export const GRID_STROKE = "#E3E3E3";

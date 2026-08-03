@@ -33,7 +33,7 @@ export function TopStylesCard({
     <Card>
       <BlockStack gap="300">
         <Text variant="headingSm" as="h3">
-          Estilos por ingresos
+          Ingresos por Estilo
         </Text>
 
         {topStyles.length === 0 ? (

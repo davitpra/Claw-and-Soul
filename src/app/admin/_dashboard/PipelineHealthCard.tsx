@@ -9,6 +9,10 @@ import { deltaTone, fmtCount, fmtDelta, fmtDuration, fmtPct } from "./format";
  * Salud del pipeline de IA. Todas las cifras excluyen las generaciones de
  * prueba del admin (`isAdminTest`), que antes inflaban la tasa de fallo.
  *
+ * El reparto por estado se resuelve con dos renglones —completadas y fallidas,
+ * con su peso sobre el total— en vez de con una dona aparte: son los dos únicos
+ * estados terminales, y una dona de dos porciones no dice más que sus cifras.
+ *
  * La evolución diaria de generaciones no vive aquí: `TimelineCard` ya la ofrece
  * en su selector de métrica.
  */
@@ -24,6 +28,9 @@ export function PipelineHealthCard({
     pipeline.failureRate !== null && pipeline.failureRatePrev !== null
       ? pipeline.failureRate - pipeline.failureRatePrev
       : null;
+
+  const share = (value: number) =>
+    pipeline.total ? (value / pipeline.total) * 100 : null;
 
   return (
     <Card>
@@ -52,12 +59,21 @@ export function PipelineHealthCard({
 
         <BlockStack gap="150">
           <MetricLine
-            label="Tasa de fallo"
-            value={fmtPct(pipeline.failureRate)}
+            label="Completadas"
+            value={fmtCount(pipeline.completed)}
+            detail={`${fmtPct(share(pipeline.completed))} del total`}
+          />
+          <MetricLine
+            label="Fallidas"
+            value={fmtCount(pipeline.failed)}
+            // La tasa de fallo va aquí de detalle: es la misma cifra que el peso
+            // de este renglón, así que repetirla en una línea propia sobraba.
             detail={
               failureDelta === null
-                ? undefined
-                : `${fmtDelta(failureDelta)} vs. periodo anterior`
+                ? `${fmtPct(pipeline.failureRate)} del total`
+                : `${fmtPct(pipeline.failureRate)} del total · ${fmtDelta(
+                    failureDelta,
+                  )} vs. periodo anterior`
             }
             tone={deltaTone(failureDelta, true)}
           />
@@ -74,7 +90,6 @@ export function PipelineHealthCard({
           <MetricLine
             label="Costo por generación"
             value={fmtUnitCost(pipeline.costPerGeneration, currency)}
-            detail={`${fmtCount(pipeline.completed)} completada(s)`}
           />
           {pipeline.stuck > 0 && (
             <MetricLine

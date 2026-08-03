@@ -11,7 +11,6 @@ import {
   PaintBrushFlatIcon,
   ColorIcon,
   InventoryIcon,
-  ReceiptIcon,
 } from "@shopify/polaris-icons";
 import Image from "next/image";
 
@@ -24,7 +23,6 @@ const navItems = [
   // Los créditos ya no son una sección propia: el saldo se ve en la lista de
   // usuarios, y el historial y el abono viven en la pestaña "Créditos" de la ficha.
   { label: "Usuarios", href: "/admin/users", icon: TeamIcon },
-  { label: "Gastos", href: "/admin/expenses", icon: ReceiptIcon },
 ];
 
 export default function AdminSidebar() {
