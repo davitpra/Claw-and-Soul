@@ -6,18 +6,15 @@ import { useAuth } from "@/context/AuthContext";
 import {
   IAHeader,
   IAUploadStep,
-  IAStyleStep,
   IALeadStep,
   IAThanksStep,
-  IAProductStep,
+  IAStartFromProduct,
   type SelectedProductInfo,
 } from "@/widgets/ia-generator";
 
-import { Style } from "@/entities/art-style/model/styles";
 import { getFormatPhysicalSize } from "@/entities/product/lib/formatPhysicalSize";
 import { normalizeTemplate } from "@/entities/product/lib/template";
-import { useCompatStyles } from "@/hooks/useCompatStyles";
-import { useAllStyles } from "@/hooks/useAllStyles";
+import { useStyle } from "@/hooks/useStyle";
 import { useFormatOptions } from "@/hooks/useFormatOptions";
 import { useGenerateImage, type GeneratePayload } from "@/hooks/useGenerateImage";
 import { useCredits } from "@/hooks/useCredits";
@@ -25,75 +22,38 @@ import { useCart } from "@/context/CartContext";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001/api";
 
+const PRODUCT_LOAD_ERROR =
+  "We couldn't load this product. Please pick it again from the catalog.";
+
+// Pasos visibles del generador. El producto, el formato y el estilo ya vienen
+// resueltos desde la ficha de producto, así que aquí solo queda la sesión, la
+// foto y el resultado.
+const STEP_LEAD = 1;
+const STEP_UPLOAD = 2;
+const STEP_THANKS = 3;
+
 function IAGeneratorContent() {
   const { isAuthenticated, isLoading: isAuthLoading } = useAuth();
   const searchParams = useSearchParams();
 
-  const productRefIdFromUrl = searchParams.get("product_ref_id");
-  const formatIdFromUrl = searchParams.get("format_id");
-  const styleIdFromUrl = searchParams.get("style_id");
+  const productRefId = searchParams.get("product_ref_id");
+  const formatId = searchParams.get("format_id");
+  const styleId = searchParams.get("style_id");
   const selectionsFromUrl = searchParams.get("selections");
 
-  const [pickedProductRefId, setPickedProductRefId] = useState<string | null>(
-    null,
-  );
-  const [pickedFormatId, setPickedFormatId] = useState<string | null>(null);
-  const [productInfo, setProductInfo] = useState<SelectedProductInfo | null>(
-    null,
-  );
-
-  const productRefId = productRefIdFromUrl ?? pickedProductRefId;
-  const formatId = formatIdFromUrl ?? pickedFormatId;
-  const isFiltered = !!(productRefId && formatId);
-  const needsProductSelection = !productRefId || !formatId;
+  // El generador es una ruta de continuación: sin el contexto completo del
+  // producto no hay nada que generar y no se dispara ningún fetch.
+  const hasProductContext = !!(productRefId && formatId && styleId);
 
   const {
-    styles: allStyles,
-    isLoading: isLoadingAllStyles,
-    error: allStylesError,
-  } = useAllStyles();
+    style,
+    isLoading: isLoadingStyle,
+    error: styleError,
+  } = useStyle(hasProductContext ? styleId : null);
 
-  const {
-    styles: compatStyles,
-    isLoading: isLoadingCompatStyles,
-    error: compatStylesError,
-  } = useCompatStyles(productRefId, formatId);
-
-  const isLoadingStyles = isFiltered
-    ? isLoadingCompatStyles
-    : isLoadingAllStyles;
-  const stylesError = isFiltered ? compatStylesError : allStylesError;
-  const displayStyles: Style[] = isFiltered ? compatStyles : allStyles;
-
-  const defaultStyle: Style | null = useMemo(() => {
-    if (isLoadingStyles) return null;
-    return displayStyles[0] ?? null;
-  }, [displayStyles, isLoadingStyles]);
-
-  const preselectedStyle: Style | null = useMemo(() => {
-    if (!styleIdFromUrl || isLoadingStyles) return null;
-    return displayStyles.find((s) => s.id === styleIdFromUrl) ?? null;
-  }, [styleIdFromUrl, displayStyles, isLoadingStyles]);
-
-  const [step, setStep] = useState(1);
+  const [step, setStep] = useState(STEP_LEAD);
+  const [bootstrapped, setBootstrapped] = useState(false);
   const [photos, setPhotos] = useState<File[]>([]);
-  const [selectedStyle, setSelectedStyle] = useState<Style | null>(null);
-  const [userSelections, setUserSelections] = useState<
-    Record<string, string | number>
-  >(() => {
-    if (!selectionsFromUrl) return {};
-    try {
-      const parsed = JSON.parse(selectionsFromUrl) as Record<string, unknown>;
-      const result: Record<string, string | number> = {};
-      for (const [k, v] of Object.entries(parsed)) {
-        if (typeof v === "string" || typeof v === "number") result[k] = v;
-      }
-      return result;
-    } catch {
-      return {};
-    }
-  });
-  const [styleSkipResolved, setStyleSkipResolved] = useState(false);
   const [generationId, setGenerationId] = useState<string | null>(null);
   // Payload de la última generación disparada: permite reintentar desde
   // IAThanksStep sin volver al paso de upload.
@@ -105,109 +65,108 @@ function IAGeneratorContent() {
   const { refresh: refreshCredits } = useCredits();
   const { addToCart, removeItem } = useCart();
 
+  // Con sesión abierta el paso de login sobra. Se decide una sola vez, cuando
+  // el estado de auth ya resolvió: así un refresh de token a mitad del upload
+  // no devuelve al usuario al login y le borra las fotos cargadas.
   useEffect(() => {
-    if (!styleIdFromUrl) return;
-    if (needsProductSelection || isLoadingStyles || isAuthLoading) return;
-    if (styleSkipResolved) return;
+    if (bootstrapped || isAuthLoading) return;
+    if (isAuthenticated) setStep(STEP_UPLOAD);
+    setBootstrapped(true);
+  }, [bootstrapped, isAuthLoading, isAuthenticated]);
 
-    // Inicialización única desde deep-link: sincroniza la URL (style_id) y los
-    // estilos cargados de forma asíncrona hacia el estado de navegación. No es
-    // un render derivado, por eso el setState dentro del efecto es intencional.
-    if (preselectedStyle) {
-      setSelectedStyle(preselectedStyle);
-      setStep((prev) => (prev === 1 ? (isAuthenticated ? 3 : 2) : prev));
+  // Las opciones del estilo (`templateVarOptions`) se eligen en la ficha del
+  // producto y llegan serializadas en `selections`. Si la URL no las trae —una
+  // URL armada a mano—, se cae a los valores por defecto del estilo.
+  const userSelections = useMemo<Record<string, string | number>>(() => {
+    if (selectionsFromUrl) {
+      try {
+        const parsed = JSON.parse(selectionsFromUrl) as Record<string, unknown>;
+        const result: Record<string, string | number> = {};
+        for (const [k, v] of Object.entries(parsed)) {
+          if (typeof v === "string" || typeof v === "number") result[k] = v;
+        }
+        if (Object.keys(result).length > 0) return result;
+      } catch {
+        // Selections inválidas: se ignoran y se usan los defaults del estilo.
+      }
     }
-    setStyleSkipResolved(true);
-  }, [
-    styleIdFromUrl,
-    needsProductSelection,
-    isLoadingStyles,
-    isAuthLoading,
-    preselectedStyle,
-    isAuthenticated,
-    styleSkipResolved,
-  ]);
-
-  const handleStyleSelect = (style: Style) => {
-    setSelectedStyle(style);
     const defaults: Record<string, string | number> = {};
-    if (style.templateVarOptions) {
+    if (style?.templateVarOptions) {
       for (const [key, opt] of Object.entries(style.templateVarOptions)) {
         if (opt.default !== undefined) defaults[key] = opt.default;
       }
     }
-    setUserSelections(defaults);
-  };
+    return defaults;
+  }, [selectionsFromUrl, style]);
 
-  const resolvedStyle: Style | null = useMemo(() => {
-    if (selectedStyle && displayStyles.find((s) => s.id === selectedStyle.id)) {
-      return selectedStyle;
-    }
-    return defaultStyle;
-  }, [selectedStyle, displayStyles, defaultStyle]);
-
-  // Deep-link resolution: when arriving via URL params, IAProductStep is skipped
-  // so productInfo stays null. We resolve it here from productRefId + formatId.
+  // El deep-link trae el id interno del producto; para leer precio, imagen y
+  // tamaño físico hace falta el handle de Shopify.
   const [resolvedHandle, setResolvedHandle] = useState<string | null>(null);
+  const [productLookupError, setProductLookupError] = useState<string | null>(
+    null,
+  );
 
   useEffect(() => {
-    if (!productRefIdFromUrl || productInfo) return;
+    if (!hasProductContext) return;
     let cancelled = false;
-    fetch(`${API_URL}/products/${productRefIdFromUrl}`, {
+    fetch(`${API_URL}/products/${productRefId}`, {
       credentials: "include",
     })
       .then((r) => r.json())
       .then((json) => {
         if (cancelled) return;
         const data = "data" in json ? json.data : json;
-        setResolvedHandle(
-          (data as { shopifyHandle?: string })?.shopifyHandle ?? null,
-        );
+        const handle = (data as { shopifyHandle?: string })?.shopifyHandle;
+        if (handle) setResolvedHandle(handle);
+        else setProductLookupError(PRODUCT_LOAD_ERROR);
       })
-      .catch(() => {});
+      .catch(() => {
+        if (!cancelled) setProductLookupError(PRODUCT_LOAD_ERROR);
+      });
     return () => {
       cancelled = true;
     };
-  }, [productRefIdFromUrl, productInfo]);
+  }, [hasProductContext, productRefId]);
 
   const {
-    formats: deepLinkFormats,
-    product: deepLinkShopifyProduct,
-    template: deepLinkTemplate,
+    formats,
+    product: shopifyProduct,
+    template,
+    isLoading: isLoadingFormats,
+    error: formatsError,
   } = useFormatOptions(resolvedHandle);
 
-  const effectiveProductInfo: SelectedProductInfo | null = useMemo(() => {
-    if (productInfo) return productInfo;
-    if (
-      !formatIdFromUrl ||
-      !deepLinkShopifyProduct ||
-      deepLinkFormats.length === 0
-    )
-      return null;
-    const f = deepLinkFormats.find((x) => x.formatId === formatIdFromUrl);
+  const productInfo: SelectedProductInfo | null = useMemo(() => {
+    if (!formatId || !shopifyProduct || formats.length === 0) return null;
+    const f = formats.find((x) => x.formatId === formatId);
     if (!f) return null;
     const physicalSize = getFormatPhysicalSize(
-      deepLinkShopifyProduct,
+      shopifyProduct,
       f.shopifyVariantId,
     );
     return {
       shopifyVariantId: f.shopifyVariantId,
       price: f.price,
       currencyCode: f.currencyCode,
-      productTitle: deepLinkShopifyProduct.title,
-      productImage: deepLinkShopifyProduct.images.edges[0]?.node.url ?? "",
+      productTitle: shopifyProduct.title,
+      productImage: shopifyProduct.images.edges[0]?.node.url ?? "",
       formatLabel: f.displayName,
-      template: deepLinkTemplate,
+      template,
       formatWidth: physicalSize?.width ?? null,
       formatHeight: physicalSize?.height ?? null,
     };
-  }, [
-    productInfo,
-    deepLinkFormats,
-    deepLinkShopifyProduct,
-    formatIdFromUrl,
-    deepLinkTemplate,
-  ]);
+  }, [formats, shopifyProduct, formatId, template]);
+
+  // El paso de upload solo se muestra con `productInfo` ya resuelto: si se
+  // enviara antes, `usePetUploadForm` no tendría variante y el producto físico
+  // nunca entraría al carrito.
+  const isResolvingProduct =
+    !productLookupError && (!resolvedHandle || isLoadingFormats);
+
+  const productError =
+    productLookupError ??
+    formatsError ??
+    (!isResolvingProduct && !productInfo ? PRODUCT_LOAD_ERROR : null);
 
   // Reintenta la generación fallida con el mismo payload, sin salir de la
   // pantalla de "Thank you". Un nuevo generationId reinicia el polling.
@@ -222,21 +181,20 @@ function IAGeneratorContent() {
 
       // Producto físico: el item del carrito referenciaba el generationId que
       // falló. Lo reemplazamos por el nuevo (mismo variantId) para que checkout
-      // y updateItemImage apunten a la generación buena. Digital/deep-link no
-      // van al carrito, así que se omiten.
-      const info = effectiveProductInfo;
-      const isDigital = normalizeTemplate(info?.template) === "Digital";
-      if (info && !isDigital) {
-        removeItem(info.shopifyVariantId);
+      // y updateItemImage apunten a la generación buena. Digital no va al
+      // carrito, así que se omite.
+      const isDigital = normalizeTemplate(productInfo?.template) === "Digital";
+      if (productInfo && !isDigital) {
+        removeItem(productInfo.shopifyVariantId);
         addToCart({
           id: g.id,
-          variantId: info.shopifyVariantId,
-          name: info.productTitle,
-          size: info.formatLabel,
-          style: resolvedStyle?.name ?? undefined,
-          price: parseFloat(info.price),
+          variantId: productInfo.shopifyVariantId,
+          name: productInfo.productTitle,
+          size: productInfo.formatLabel,
+          style: style?.name ?? undefined,
+          price: parseFloat(productInfo.price),
           quantity: 1,
-          img: info.productImage,
+          img: productInfo.productImage,
           generationId: g.id,
         });
       }
@@ -253,19 +211,18 @@ function IAGeneratorContent() {
     }
   };
 
+  const isBootstrapping =
+    !bootstrapped || isLoadingStyle || isResolvingProduct || !productInfo;
+
   return (
     <div className="bg-white text-slate-dark font-body min-h-screen flex flex-col transition-all duration-500">
-      <IAHeader step={step} />
+      <IAHeader step={hasProductContext ? step : 0} />
 
-      {needsProductSelection ? (
-        <IAProductStep
-          onSelect={(refId, fmtId, info) => {
-            setPickedProductRefId(refId);
-            setPickedFormatId(fmtId);
-            setProductInfo(info);
-          }}
-        />
-      ) : styleIdFromUrl && !styleSkipResolved ? (
+      {!hasProductContext ? (
+        <IAStartFromProduct />
+      ) : productError || styleError ? (
+        <IAStartFromProduct message={productError ?? styleError ?? undefined} />
+      ) : isBootstrapping ? (
         <div className="flex-1 flex items-center justify-center">
           <span className="material-symbols-outlined animate-spin text-4xl text-primary">
             progress_activity
@@ -273,50 +230,35 @@ function IAGeneratorContent() {
         </div>
       ) : (
         <>
-          {step === 1 && (
-            <IAStyleStep
-              styles={displayStyles}
-              selectedStyle={resolvedStyle}
-              onStyleSelect={handleStyleSelect}
-              onBack={undefined}
-              onNext={() => setStep(isAuthenticated ? 3 : 2)}
-              isLoading={isLoadingStyles}
-              error={stylesError}
-              isFiltered={isFiltered}
-              userSelections={userSelections}
-              onSelectionsChange={(key, val) =>
-                setUserSelections((prev) => ({ ...prev, [key]: val }))
-              }
-            />
+          {step === STEP_LEAD && (
+            <IALeadStep onComplete={() => setStep(STEP_UPLOAD)} />
           )}
 
-          {step === 2 && <IALeadStep onComplete={() => setStep(3)} />}
-
-          {step === 3 && (
+          {step === STEP_UPLOAD && (
             <IAUploadStep
               photos={photos}
               onPhotosChange={setPhotos}
-              styleId={resolvedStyle?.id ?? null}
+              styleId={styleId}
               productRefId={productRefId}
               formatId={formatId}
               onNext={(genId, payload) => {
                 setGenerationId(genId);
                 setLastPayload(payload);
-                setStep(4);
+                setStep(STEP_THANKS);
               }}
-              productInfo={effectiveProductInfo}
-              styleName={resolvedStyle?.name ?? null}
+              productInfo={productInfo}
+              styleName={style?.name ?? null}
               userSelections={userSelections}
             />
           )}
 
-          {step === 4 && (
+          {step === STEP_THANKS && (
             <IAThanksStep
               generationId={generationId}
-              productImage={effectiveProductInfo?.productImage}
-              formatWidth={effectiveProductInfo?.formatWidth}
-              formatHeight={effectiveProductInfo?.formatHeight}
-              template={effectiveProductInfo?.template}
+              productImage={productInfo.productImage}
+              formatWidth={productInfo.formatWidth}
+              formatHeight={productInfo.formatHeight}
+              template={productInfo.template}
               onRetry={lastPayload ? handleRetry : undefined}
               retrying={retrying}
               retryError={retryError}

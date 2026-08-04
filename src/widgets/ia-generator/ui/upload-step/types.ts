@@ -1,4 +1,4 @@
-import type { SelectedProductInfo } from "../IAProductStep";
+import type { SelectedProductInfo } from "../../model/selectedProduct";
 import type { GeneratePayload } from "@/hooks/useGenerateImage";
 
 export interface PetPhoto {

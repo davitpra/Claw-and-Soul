@@ -33,6 +33,9 @@ export default function PersonalizeButton({
     isCompatLoading ||
     !!backendError ||
     !hasBackendMapping ||
+    // Sin estilo asignado el generador no tiene qué producir: se bloquea aquí
+    // en vez de dejar que la ruta /ia-generator reciba un contexto incompleto.
+    !styleId ||
     !formatId;
 
   const handlePersonalize = () => {
@@ -53,7 +56,7 @@ export default function PersonalizeButton({
     ? "Loading options…"
     : backendError
       ? "Unavailable for personalization"
-      : !hasBackendMapping
+      : !hasBackendMapping || !styleId
         ? "Unavailable for personalization"
         : !selectedVariant
           ? "Select a size"

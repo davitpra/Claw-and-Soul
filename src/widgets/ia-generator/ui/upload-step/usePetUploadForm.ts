@@ -249,8 +249,8 @@ export function usePetUploadForm({
         // La generación consumió 1 crédito: refrescamos el saldo del badge.
         void refreshCredits();
 
-        // productInfo es null al llegar por URL sin pasar por IAProductStep
-        // (deep link). La generación se dispara igual, pero se omite el carrito.
+        // La página no muestra este paso hasta resolver productInfo, pero si
+        // faltara la generación se dispara igual y se omite el carrito.
         // Digital (descarga gratuita; "PBN" legacy) tampoco va al carrito: no se
         // cobra ni debe disparar el order_bonus de +3 créditos en checkout.
         const isDigital =

@@ -32,7 +32,9 @@ export const FOOTER_SECTIONS: NavSection[] = [
     title: "Create",
     links: [
       { label: "Paint by Numbers Studio", href: "/studio" },
-      { label: "AI Pet Portraits", href: "/ia-generator" },
+      // El generador solo se abre desde la ficha de un producto, así que el
+      // link entra por el catálogo de prints.
+      { label: "AI Pet Portraits", href: "/catalog?intent=print" },
       { label: "How It Works", href: "/studio-landing" },
       { label: "Buy Credits", href: "/credits" },
     ],

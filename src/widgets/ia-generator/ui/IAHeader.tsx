@@ -2,7 +2,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { GenerationStatus } from "@/hooks/useGenerationStatus";
 
-const TOTAL_STEPS = 4;
+const TOTAL_STEPS = 3;
 
 interface IAHeaderProps {
   step: number;

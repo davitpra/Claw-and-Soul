@@ -49,7 +49,7 @@ export function MyArtworks({ artworks, isLoading, error }: Props) {
           <div className="rounded-xl bg-cream px-4 py-8 text-center">
             <p className="text-text-muted">No artworks yet.</p>
             <Link
-              href="/ia-generator"
+              href="/catalog"
               className="mt-3 inline-block rounded-xl bg-primary px-6 py-3 text-sm font-bold text-white transition-all hover:bg-primary-dark hover:shadow-md"
             >
               Create your first artwork
