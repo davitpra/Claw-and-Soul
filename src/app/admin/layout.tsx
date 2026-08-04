@@ -1,7 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { notFound } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
 import AdminSidebar from "./_components/AdminSidebar";
 import PolarisProvider from "./PolarisProvider";
@@ -12,14 +11,9 @@ export default function AdminLayout({
   children: React.ReactNode;
 }) {
   const { isAdmin, isLoading } = useAuth();
-  const router = useRouter();
 
-  useEffect(() => {
-    if (!isLoading && !isAdmin) {
-      router.replace("/");
-    }
-  }, [isAdmin, isLoading, router]);
-
+  // El spinner va primero a propósito: sin él, el 404 parpadearía mientras
+  // AuthContext todavía está resolviendo la sesión.
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-[#f4f6f8]">
@@ -28,7 +22,10 @@ export default function AdminLayout({
     );
   }
 
-  if (!isAdmin) return null;
+  // 404 en vez de redirigir a "/": así la ruta no delata que existe. Va en el
+  // render, no en un useEffect, porque notFound() funciona lanzando. La
+  // autorización real sigue siendo del backend en cada endpoint /admin/*.
+  if (!isAdmin) notFound();
 
   return (
     <PolarisProvider>
