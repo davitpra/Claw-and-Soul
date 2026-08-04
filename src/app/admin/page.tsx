@@ -12,8 +12,14 @@ import {
   Spinner,
   Text,
 } from "@shopify/polaris";
-import { OverviewStats, StatsPeriod } from "@/entities/admin/api";
+import {
+  OverviewStats,
+  StatsPeriod,
+  UsersDetailStats,
+} from "@/entities/admin/api";
 import { useDashboard } from "./useDashboard";
+import { useUserAnalytics } from "./useUserAnalytics";
+import { ActivationCohortCard } from "./_dashboard/ActivationCohortCard";
 import { ActivityCard } from "./_dashboard/ActivityCard";
 import { AlertsBanner } from "./_dashboard/AlertsBanner";
 import { CreditsCard } from "./_dashboard/CreditsCard";
@@ -23,8 +29,11 @@ import { KpiRow } from "./_dashboard/KpiRow";
 import { MoneyCard } from "./_dashboard/MoneyCard";
 import { PipelineHealthCard } from "./_dashboard/PipelineHealthCard";
 import { ProductionQueueCard } from "./_dashboard/ProductionQueueCard";
+import { RetentionCard } from "./_dashboard/RetentionCard";
 import { TimelineCard } from "./_dashboard/TimelineCard";
 import { TopStylesCard } from "./_dashboard/TopStylesCard";
+import { TopUsersCard } from "./_dashboard/TopUsersCard";
+import { UserSegmentsCard } from "./_dashboard/UserSegmentsCard";
 import { DASHBOARD_SECTIONS, SectionKey } from "./_dashboard/sections";
 
 const PERIOD_OPTIONS = [
@@ -46,16 +55,17 @@ const SECTION_OPTIONS = DASHBOARD_SECTIONS.map((section) => ({
   value: section.key,
 }));
 
-/** Dos cards que colapsan a una columna en pantallas estrechas… */
+/** Cards que colapsan a una columna en pantallas estrechas. */
 const SECTION_COLUMNS = { xs: 1, md: 2 } as const;
-/** …salvo en usuarios, que es una sola card y ocupa el ancho entero. */
-const SINGLE_COLUMN = { xs: 1 } as const;
 
 export default function AdminOverviewPage() {
   const { stats, error, period, setPeriod, loading } = useDashboard();
-  // Presentación pura: la respuesta trae los cuatro dominios de una vez, así que
-  // cambiar de sección no dispara ningún fetch y el estado no baja al hook.
+  // El overview trae los cuatro dominios de una vez, así que cambiar de sección
+  // no dispara ningún fetch y el estado se queda aquí.
   const [section, setSection] = useState<SectionKey>("money");
+  // La excepción son los dos bloques pesados de usuarios, que solo se piden al
+  // abrir su sección y no se vuelven a pedir al cerrarla y reabrirla.
+  const userAnalytics = useUserAnalytics(period, section === "users");
 
   const periodLabel = PERIOD_LABELS[period];
   const activeSection =
@@ -156,11 +166,11 @@ export default function AdminOverviewPage() {
           description={activeSection.description}
           action={activeSection.action}
         >
-          <InlineGrid
-            columns={section === "users" ? SINGLE_COLUMN : SECTION_COLUMNS}
-            gap="400"
-          >
-            {renderSectionCards(section, stats, periodLabel, period)}
+          <InlineGrid columns={SECTION_COLUMNS} gap="400">
+            {renderSectionCards(section, stats, periodLabel, period, {
+              data: userAnalytics.data,
+              loading: userAnalytics.loading,
+            })}
           </InlineGrid>
         </DashboardSection>
       </BlockStack>
@@ -178,6 +188,7 @@ function renderSectionCards(
   stats: OverviewStats,
   periodLabel: string,
   period: StatsPeriod,
+  userAnalytics: { data: UsersDetailStats | null; loading: boolean },
 ): ReactNode {
   const { money, production, pipeline, growth, baseCurrency } = stats;
 
@@ -205,7 +216,14 @@ function renderSectionCards(
     case "generations":
       return (
         <>
-          <PipelineHealthCard pipeline={pipeline} currency={baseCurrency} />
+          {/* Las dos reciben `money`: el costo por generación y el costo por
+              crédito son la misma cifra y salen de la misma fuente. */}
+          <PipelineHealthCard
+            pipeline={pipeline}
+            money={money}
+            currency={baseCurrency}
+            period={period}
+          />
           <CreditsCard
             money={money}
             currency={baseCurrency}
@@ -215,6 +233,29 @@ function renderSectionCards(
         </>
       );
     case "users":
-      return <GrowthFunnelCard growth={growth} periodLabel={periodLabel} />;
+      return (
+        <>
+          {/* Primero la base ya existente y luego las altas: la sección deja de
+              ser «cuánta gente entró» para ser «cómo está la clientela». */}
+          <UserSegmentsCard segments={stats.users.segments} />
+          <ActivationCohortCard
+            cohort={userAnalytics.data?.cohort ?? null}
+            periodLabel={periodLabel}
+            loading={userAnalytics.loading}
+          />
+          <RetentionCard
+            retention={stats.users.retention}
+            currency={baseCurrency}
+            periodLabel={periodLabel}
+          />
+          <TopUsersCard
+            topUsers={userAnalytics.data?.topUsers ?? []}
+            currency={baseCurrency}
+            periodLabel={periodLabel}
+            loading={userAnalytics.loading}
+          />
+          <GrowthFunnelCard growth={growth} periodLabel={periodLabel} />
+        </>
+      );
   }
 }

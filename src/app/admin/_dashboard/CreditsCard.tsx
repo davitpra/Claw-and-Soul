@@ -74,6 +74,9 @@ export function CreditsCard({
         <BlockStack gap="150">
           <StatLine
             label="Costo medio por crédito"
+            // Mismo número que «Costo medio por generación» en
+            // `PipelineHealthCard`: allí se lee por unidad producida, aquí por
+            // unidad de saldo. El desglose vision/imagen solo se explica aquí.
             detail={
               breakdown
                 ? `visión ${fmtUnitCost(

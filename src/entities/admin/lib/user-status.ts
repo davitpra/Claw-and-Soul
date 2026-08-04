@@ -1,5 +1,5 @@
 import type { BadgeProps } from "@shopify/polaris";
-import type { AdminUserStatus } from "../api";
+import type { AdminUserStatus, UserActivityFilter } from "../api";
 
 /**
  * Presentación del ciclo de vida de una cuenta. Centralizado aquí para que el
@@ -41,6 +41,43 @@ export const USER_STATUS_FILTER_OPTIONS: {
   { label: "Dados de baja", value: "deleted" },
   { label: "Todos", value: "all" },
 ];
+
+/**
+ * Opciones del filtro de recencia. Es un eje distinto del estado de la cuenta y
+ * se combina con él: «dormido» habla de cuándo dio señales de vida, no de si
+ * está suspendido.
+ *
+ * `3d` existe en el backend para los enlaces del dashboard, pero no se ofrece
+ * aquí: es demasiado fino para elegirlo a mano.
+ */
+export const USER_ACTIVITY_FILTER_OPTIONS: {
+  label: string;
+  value: UserActivityFilter;
+}[] = [
+  { label: "Activos (7 días)", value: "7d" },
+  { label: "Activos (30 días)", value: "30d" },
+  { label: "Activos (90 días)", value: "90d" },
+  { label: "Dormidos (+90 días)", value: "dormant" },
+  { label: "Nunca activaron", value: "never" },
+];
+
+const ACTIVITY_LABELS = new Map(
+  USER_ACTIVITY_FILTER_OPTIONS.map((o) => [o.value, o.label]),
+);
+
+/** Etiqueta del chip del filtro aplicado; cubre también el `3d` no listado. */
+export function userActivityLabel(value: UserActivityFilter): string {
+  return ACTIVITY_LABELS.get(value) ?? "Activos (3 días)";
+}
+
+export function isUserActivityFilter(
+  value: unknown,
+): value is UserActivityFilter {
+  return (
+    value === "3d" ||
+    USER_ACTIVITY_FILTER_OPTIONS.some((o) => o.value === value)
+  );
+}
 
 /**
  * Explicación del efecto de cada estado, para el banner de la ficha. El admin

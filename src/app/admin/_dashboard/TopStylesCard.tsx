@@ -11,6 +11,7 @@ import {
 } from "@shopify/polaris";
 import { OverviewStats } from "@/entities/admin/api";
 import { fmtCurrency } from "@/entities/admin/lib/order-format";
+import { BarMeter } from "./BarMeter";
 import { fmtCount } from "./format";
 
 /**
@@ -60,21 +61,7 @@ export function TopStylesCard({
                         {fmtCurrency(style.revenue, currency)}
                       </Text>
                     </InlineStack>
-                    <Box
-                      background="bg-surface-secondary"
-                      borderRadius="100"
-                      minHeight="6px"
-                    >
-                      <Box
-                        background="bg-fill-brand"
-                        borderRadius="100"
-                        minHeight="6px"
-                        width={`${Math.max(
-                          (style.revenue / peak) * 100,
-                          style.revenue ? 2 : 0,
-                        )}%`}
-                      />
-                    </Box>
+                    <BarMeter value={style.revenue} peak={peak} />
                     <Text variant="bodySm" as="span" tone="subdued">
                       {fmtCount(style.count)} generación(es)
                     </Text>

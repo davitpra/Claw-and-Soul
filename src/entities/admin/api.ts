@@ -50,6 +50,13 @@ export interface AdminUserListItem {
   generationCredits: number;
   createdAt: string;
   lastLoginAt: string | null;
+  /**
+   * Última señal de vida: incluye el login, pero también el uso de la app sin
+   * volver a autenticarse. Es lo que muestra la columna «Última actividad».
+   * Solo acumula señal desde que se añadió la columna; en cuentas antiguas
+   * puede ser `null` aun habiendo `lastLoginAt`.
+   */
+  lastSeenAt: string | null;
   _count: {
     pets: number;
     generations: number;
@@ -58,6 +65,19 @@ export interface AdminUserListItem {
     orders: number;
   };
 }
+
+/**
+ * Filtro de recencia del listado. Los cuatro periodos coinciden con
+ * `StatsPeriod`, para que las cifras de actividad del dashboard enlacen aquí
+ * directamente.
+ */
+export type UserActivityFilter =
+  | "3d"
+  | "7d"
+  | "30d"
+  | "90d"
+  | "dormant"
+  | "never";
 
 export interface AdminUserPhoto {
   id: string;
@@ -431,7 +451,8 @@ export interface OverviewMoney {
   costs: {
     total: number;
     count: number;
-    byCategory: Record<string, number>;
+    /** Total e importe de movimientos por categoría (`image_upscale`, `pod_production`…). */
+    byCategory: Record<string, { total: number; count: number }>;
   };
   grossMargin: number;
   grossMarginPct: number | null;
@@ -478,8 +499,6 @@ export interface OverviewPipeline {
   avgProcessingSeconds: number | null;
   p95ProcessingSeconds: number | null;
   byType: { image: number; video: number };
-  generationCost: number;
-  costPerGeneration: number | null;
 }
 
 export interface OverviewGrowth {
@@ -501,6 +520,88 @@ export interface OverviewGrowth {
   abandonedAfterDays: number;
 }
 
+export interface UserRecencySegments {
+  /** Clientes no dados de baja. Denominador de todos los porcentajes. */
+  base: number;
+  /** ACUMULATIVOS Y ANIDADOS: los de 7 d están dentro de los de 30 d. */
+  active7d: number;
+  active30d: number;
+  active90d: number;
+  /** Complemento exacto de `active90d`; incluye a quien nunca entró. */
+  dormant: number;
+  /**
+   * Registrados sin mascota ni generación. CRUZA los otros buckets —se puede
+   * estar activo y sin activar a la vez—, así que no suma con ellos.
+   */
+  neverActivated: number;
+  active30dPct: number | null;
+  dormantPct: number | null;
+  neverActivatedPct: number | null;
+  dormantAfterDays: number;
+}
+
+export interface UserRetention {
+  /** Acumulado, no del periodo. Solo pedidos enlazados a una cuenta. */
+  buyers: number;
+  repeatBuyers: number;
+  repeatRatePct: number | null;
+  /** Pedidos pagados DEL PERIODO, ya en moneda base. */
+  revenueFirstTime: number;
+  revenueReturning: number;
+  revenueGuest: number;
+  ordersFirstTime: number;
+  ordersReturning: number;
+  ordersGuest: number;
+  /** Recurrentes ÷ (primera compra + recurrentes): los invitados quedan fuera. */
+  returningRevenuePct: number | null;
+  baseCurrency: string;
+  unconvertedCurrencies: string[];
+}
+
+export interface OverviewUsers {
+  segments: UserRecencySegments;
+  retention: UserRetention;
+}
+
+export interface ActivationCohort {
+  /** Mismo criterio que `growth.newUsers`. */
+  signups: number;
+  /** ACUMULATIVOS: cada escalón exige todos los anteriores. */
+  withPet: number;
+  withGeneration: number;
+  withPbn: number;
+  withPaidOrder: number;
+  /** Dio señales de vida más de 24 h después del alta. */
+  returned: number;
+  returnedPct: number | null;
+  activationPct: number | null;
+  purchasePct: number | null;
+  /** Días que ha tenido la cohorte más antigua para madurar. */
+  maturityDays: number;
+}
+
+export interface TopUserRow {
+  id: string;
+  email: string;
+  fullName: string | null;
+  status: AdminUserStatus;
+  /** Su email ya no identifica a nadie: no mostrarlo como contacto. */
+  anonymized: boolean;
+  revenue: number;
+  orders: number;
+  creditsSpent: number;
+  generations: number;
+}
+
+/** Respuesta de `GET /admin/stats/users`: los bloques de carga diferida. */
+export interface UsersDetailStats {
+  period: { key: StatsPeriod; days: number; from: string; to: string };
+  baseCurrency: string;
+  cohort: ActivationCohort;
+  topUsers: TopUserRow[];
+  unconvertedCurrencies: string[];
+}
+
 export interface OverviewStats {
   period: {
     key: StatsPeriod;
@@ -515,6 +616,7 @@ export interface OverviewStats {
   production: OverviewProduction;
   pipeline: OverviewPipeline;
   growth: OverviewGrowth;
+  users: OverviewUsers;
   timeline: {
     day: string;
     generations: number;
@@ -913,6 +1015,12 @@ export const adminApi = {
   stats: {
     overview: (period: StatsPeriod = "30d") =>
       adminFetch<OverviewStats>(`/admin/stats/overview?period=${period}`),
+    /**
+     * Cohorte de activación y top usuarios: fuera del overview a propósito, se
+     * pide solo al abrir la sección Usuarios del dashboard.
+     */
+    users: (period: StatsPeriod = "30d") =>
+      adminFetch<UsersDetailStats>(`/admin/stats/users?period=${period}`),
   },
   styles: {
     list: () => adminFetch<AdminStyle[]>("/admin/styles"),
@@ -1194,6 +1302,8 @@ export const adminApi = {
         order?: "asc" | "desc";
         /** Sin este parámetro el backend oculta las cuentas dadas de baja. */
         status?: AdminUserStatus | "all";
+        /** Recencia de la última señal de vida. Combinable con `status`. */
+        activity?: UserActivityFilter;
       } = {},
     ): Promise<Paginated<AdminUserListItem>> => {
       const p = new URLSearchParams({
@@ -1204,6 +1314,7 @@ export const adminApi = {
       if (params.sort) p.set("sort", params.sort);
       if (params.order) p.set("order", params.order);
       if (params.status) p.set("status", params.status);
+      if (params.activity) p.set("activity", params.activity);
       return adminFetch<Paginated<AdminUserListItem>>(`/admin/users?${p}`);
     },
     detail: (id: string) => adminFetch<AdminUserDetail>(`/admin/users/${id}`),

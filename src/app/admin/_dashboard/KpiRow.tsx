@@ -83,7 +83,9 @@ export function KpiRow({
       value: fmtCount(growth.newUsers),
       // La cifra son altas, no actividad: sin los activos al lado, un 0 aquí se
       // lee como «no hay nadie usando esto» y contradice al bloque de abajo.
-      detail: `${fmtCount(growth.activeUsers)} activos · ${fmtCount(growth.totalUsers)} registrados en total`,
+      // «Con actividad» y no «que entraron»: cuenta el login y también el uso de
+      // la app sin volver a autenticarse.
+      detail: `${fmtCount(growth.activeUsers)} con actividad · ${fmtCount(growth.totalUsers)} registrados en total`,
       delta: fmtDelta(growth.newUsersDeltaPct),
       deltaTone: deltaTone(growth.newUsersDeltaPct),
     },

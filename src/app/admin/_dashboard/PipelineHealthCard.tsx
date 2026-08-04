@@ -1,8 +1,13 @@
 "use client";
 
 import { BlockStack, Card, Divider, InlineStack, Text } from "@shopify/polaris";
-import { OverviewPipeline } from "@/entities/admin/api";
+import {
+  OverviewMoney,
+  OverviewPipeline,
+  StatsPeriod,
+} from "@/entities/admin/api";
 import { fmtUnitCost } from "@/entities/admin/lib/credit-format";
+import { fmtCurrency } from "@/entities/admin/lib/order-format";
 import { deltaTone, fmtCount, fmtDelta, fmtDuration, fmtPct } from "./format";
 
 /**
@@ -15,14 +20,27 @@ import { deltaTone, fmtCount, fmtDelta, fmtDuration, fmtPct } from "./format";
  *
  * La evolución diaria de generaciones no vive aquí: `TimelineCard` ya la ofrece
  * en su selector de métrica.
+ *
+ * El bloque de costo sale de `money`, no de `pipeline`: es exactamente la misma
+ * cifra que muestra `CreditsCard` al lado. Antes el backend calculaba aquí una
+ * media propia —con upscales dentro y otro denominador— y las dos cards se
+ * contradecían en pantalla. El upscale sigue visible, pero como lo que es: un
+ * gasto de preparación para impresión, aparte del costo de generar.
  */
 export function PipelineHealthCard({
   pipeline,
+  money,
   currency,
+  period,
 }: {
   pipeline: OverviewPipeline;
+  money: OverviewMoney;
   currency: string;
+  period: StatsPeriod;
 }) {
+  const upscale = money.costs.byCategory.image_upscale;
+  const generationSpend = money.costs.byCategory.image_generation?.total ?? 0;
+  const aiSpend = generationSpend + (upscale?.total ?? 0);
   // Subir la tasa de fallo es malo: el delta va invertido respecto al resto.
   const failureDelta =
     pipeline.failureRate !== null && pipeline.failureRatePrev !== null
@@ -87,10 +105,6 @@ export function PipelineHealthCard({
             label="Imagen"
             value={`${fmtCount(pipeline.byType.image)}`}
           />
-          <MetricLine
-            label="Costo por generación"
-            value={fmtUnitCost(pipeline.costPerGeneration, currency)}
-          />
           {pipeline.stuck > 0 && (
             <MetricLine
               label={`Atascadas (> ${pipeline.stuckAfterMinutes} min)`}
@@ -98,6 +112,51 @@ export function PipelineHealthCard({
               tone="critical"
             />
           )}
+        </BlockStack>
+
+        <Divider />
+
+        <BlockStack gap="150">
+          <MetricLine
+            label="Costo medio por generación"
+            // Se nombra la coincidencia en vez de dejarla adivinar: es el mismo
+            // número que «Costo medio por crédito» de la card de al lado, porque
+            // un crédito se gasta en exactamente una generación.
+            detail={
+              money.unitCost === null
+                ? "Sin generaciones con costo registrado"
+                : money.unitCostPeriod !== period
+                  ? `= costo por crédito · media del histórico (${fmtCount(
+                      money.unitCostSampleSize,
+                    )} generaciones)`
+                  : `= costo por crédito · media de ${fmtCount(
+                      money.unitCostSampleSize,
+                    )} generaciones`
+            }
+            value={fmtUnitCost(money.unitCost, currency)}
+          />
+          <MetricLine
+            label="Upscales de impresión"
+            // No entra en la media de arriba: un upscale prepara un archivo para
+            // imprimir, no genera arte, y no consume crédito.
+            detail={
+              upscale?.count
+                ? `${fmtUnitCost(
+                    upscale.total / upscale.count,
+                    currency,
+                  )} cada uno · aparte del costo por generación`
+                : "Aparte del costo por generación"
+            }
+            value={`${fmtCount(upscale?.count ?? 0)} · ${fmtCurrency(
+              upscale?.total ?? 0,
+              currency,
+            )}`}
+          />
+          <MetricLine
+            label="Gasto de IA en el periodo"
+            detail="Generación + upscale"
+            value={fmtCurrency(aiSpend, currency)}
+          />
         </BlockStack>
       </BlockStack>
     </Card>

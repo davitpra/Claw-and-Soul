@@ -29,8 +29,8 @@ export function MoneyCard({
   currency: string;
 }) {
   const categories = Object.entries(money.costs.byCategory)
-    .filter(([, total]) => total > 0)
-    .sort((a, b) => b[1] - a[1]);
+    .filter(([, row]) => row.total > 0)
+    .sort((a, b) => b[1].total - a[1].total);
 
   return (
     <Card>
@@ -50,7 +50,7 @@ export function MoneyCard({
           </Text>
         ) : (
           <BlockStack gap="300">
-            {categories.map(([category, total]) => {
+            {categories.map(([category, { total }]) => {
               const share = money.costs.total ? total / money.costs.total : 0;
               return (
                 <BlockStack gap="100" key={category}>

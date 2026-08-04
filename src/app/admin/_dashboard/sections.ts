@@ -57,9 +57,12 @@ export const DASHBOARD_SECTIONS: DashboardSectionDef[] = [
     key: "users",
     label: "Usuarios",
     icon: TeamIcon,
-    // Las altas son del periodo, pero los activos salen de la base ya existente:
-    // decirlo aquí evita leer «0 altas» como «no hay usuarios».
-    description: "Altas del periodo y actividad de la base ya registrada",
+    // Tres alcances distintos conviven en la sección y hay que declararlo: las
+    // altas y su cohorte son del periodo, la recencia es una foto de hoy y la
+    // recompra es acumulada. Sin esto, «0 altas» arriba y «5 activos» abajo se
+    // leen como una contradicción.
+    description:
+      "Altas del periodo, recencia de la base a día de hoy y recompra acumulada",
     action: { label: "Ver usuarios", url: "/admin/users" },
     metric: "newUsers",
   },

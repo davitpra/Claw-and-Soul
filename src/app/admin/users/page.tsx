@@ -1,5 +1,6 @@
 "use client";
 
+import { Suspense } from "react";
 import { useRouter } from "next/navigation";
 import {
   Page,
@@ -15,15 +16,51 @@ import {
   Pagination,
   Box,
 } from "@shopify/polaris";
-import type { AdminUserStatus } from "@/entities/admin/api";
+import type {
+  AdminUserStatus,
+  UserActivityFilter,
+} from "@/entities/admin/api";
 import {
+  USER_ACTIVITY_FILTER_OPTIONS,
   USER_STATUS_FILTER_OPTIONS,
+  userActivityLabel,
   userStatusLabel,
 } from "@/entities/admin/lib/user-status";
 import { UsersTable } from "./_components/UsersTable";
 import { useUsersList } from "./useUsersList";
 
+/**
+ * `useUsersList` lee el filtro inicial de la query string con `useSearchParams`,
+ * que obliga a un límite de Suspense aunque la página sea de cliente: sin él el
+ * prerender de `next build` falla. El contenido vive en `UsersPageContent` solo
+ * por eso.
+ */
 export default function AdminUsersPage() {
+  return (
+    <Suspense fallback={<UsersPageFallback />}>
+      <UsersPageContent />
+    </Suspense>
+  );
+}
+
+function UsersPageFallback() {
+  return (
+    <Page title="Usuarios" subtitle="Usuarios registrados en la plataforma">
+      <Card>
+        <Box padding="600">
+          <InlineStack align="center" gap="300">
+            <Spinner size="small" />
+            <Text as="span" tone="subdued">
+              Cargando usuarios…
+            </Text>
+          </InlineStack>
+        </Box>
+      </Card>
+    </Page>
+  );
+}
+
+function UsersPageContent() {
   const router = useRouter();
   const {
     result,
@@ -34,6 +71,8 @@ export default function AdminUsersPage() {
     setSearch,
     status,
     setStatus,
+    activity,
+    setActivity,
     page,
     setPage,
     headings,
@@ -43,6 +82,7 @@ export default function AdminUsersPage() {
   const clearAll = () => {
     setSearch("");
     setStatus(null);
+    setActivity(null);
   };
 
   return (
@@ -88,9 +128,25 @@ export default function AdminUsersPage() {
                   ),
                   shortcut: true,
                 },
+                {
+                  key: "activity",
+                  label: "Actividad",
+                  filter: (
+                    <ChoiceList
+                      title="Actividad"
+                      titleHidden
+                      choices={USER_ACTIVITY_FILTER_OPTIONS}
+                      selected={activity ? [activity] : []}
+                      onChange={([value]) =>
+                        setActivity((value as UserActivityFilter) ?? null)
+                      }
+                    />
+                  ),
+                  shortcut: true,
+                },
               ]}
-              appliedFilters={
-                status
+              appliedFilters={[
+                ...(status
                   ? [
                       {
                         key: "status",
@@ -101,8 +157,17 @@ export default function AdminUsersPage() {
                         onRemove: () => setStatus(null),
                       },
                     ]
-                  : []
-              }
+                  : []),
+                ...(activity
+                  ? [
+                      {
+                        key: "activity",
+                        label: userActivityLabel(activity),
+                        onRemove: () => setActivity(null),
+                      },
+                    ]
+                  : []),
+              ]}
               onQueryChange={setSearch}
               onQueryClear={() => setSearch("")}
               onClearAll={clearAll}

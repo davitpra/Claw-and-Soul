@@ -126,18 +126,27 @@ export function UsersTable({
               </Badge>
             </InlineStack>
           </IndexTable.Cell>
+          {/*
+            La última señal de vida, no el último login: `lastSeenAt` recoge
+            también el uso de la app sin re-autenticarse. Cae a `lastLoginAt` en
+            las cuentas anteriores a que existiera la columna, que es lo único
+            que se pudo reconstruir de su historia.
+          */}
           <IndexTable.Cell>
-            {u.lastLoginAt ? (
-              <Tooltip content={fmtAbsoluteDate(u.lastLoginAt)}>
+            {(() => {
+              const lastSeen = u.lastSeenAt ?? u.lastLoginAt;
+              return lastSeen ? (
+                <Tooltip content={fmtAbsoluteDate(lastSeen)}>
+                  <Text as="span" tone="subdued">
+                    {fmtRelativeTime(lastSeen)}
+                  </Text>
+                </Tooltip>
+              ) : (
                 <Text as="span" tone="subdued">
-                  {fmtRelativeTime(u.lastLoginAt)}
+                  —
                 </Text>
-              </Tooltip>
-            ) : (
-              <Text as="span" tone="subdued">
-                —
-              </Text>
-            )}
+              );
+            })()}
           </IndexTable.Cell>
           <IndexTable.Cell>
             {u.statusReason ? (
