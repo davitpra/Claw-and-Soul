@@ -6,6 +6,7 @@ import { Card } from "@/shared/ui/Card";
 import { cloudinaryThumb } from "@/shared/lib/cloudinary";
 import { useAuthFetch } from "@/hooks/useAuthFetch";
 import type { ApiEnvelope, UserPet } from "@/entities/order/types";
+import { EmptyState } from "./EmptyState";
 
 // Devuelve la URL de la foto principal de la mascota (o la primera disponible).
 function primaryPhotoUrl(pet: UserPet): string | null {
@@ -73,9 +74,11 @@ export function AllPets({ initialPets }: Props) {
         )}
 
         {!isLoading && !error && pets.length === 0 && (
-          <div className="rounded-xl bg-cream px-4 py-8 text-center">
-            <p className="text-text-muted">No pets yet.</p>
-          </div>
+          <EmptyState
+            icon="pets"
+            title="No pets yet"
+            description="When you add a pet it will show up here."
+          />
         )}
 
         {!isLoading && !error && pets.length > 0 && (

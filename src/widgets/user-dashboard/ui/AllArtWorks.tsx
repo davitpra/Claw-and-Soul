@@ -24,6 +24,7 @@ import {
   useInfiniteSentinel,
   useMasonryColumns,
 } from "@/widgets/user-dashboard/lib/masonry";
+import { EmptyState } from "./EmptyState";
 
 // Imagen del arte, o `null` mientras la generación no ha producido ninguna
 // (pending/processing) o ha fallado. En ese caso NO se renderiza un <img>: ver
@@ -231,28 +232,16 @@ export function AllArtWorks() {
         )}
 
         {!isLoading && !error && generations.length === 0 && (
-          <div className="px-4 py-8 text-center">
-            <span className="mx-auto flex size-16 items-center justify-center rounded-full bg-cream text-text-muted">
-              <span className="material-symbols-outlined text-[32px]">
-                palette
-              </span>
-            </span>
-            <h2 className="mt-4 font-display text-xl font-black text-text-main">
-              No artworks yet
-            </h2>
-            <p className="mt-1 text-sm text-text-muted">
-              When you create an artwork it will show up here.
-            </p>
-            <Link
-              href="/catalog"
-              className="mt-5 inline-flex items-center gap-2 rounded-xl bg-primary px-6 py-3 text-sm font-bold text-white shadow-sm transition-all hover:bg-primary-dark hover:shadow-md"
-            >
-              <span className="material-symbols-outlined text-[18px]">
-                auto_awesome
-              </span>
-              Create your first artwork
-            </Link>
-          </div>
+          <EmptyState
+            icon="palette"
+            title="No artworks yet"
+            description="When you create an artwork it will show up here."
+            cta={{
+              href: "/catalog",
+              icon: "auto_awesome",
+              label: "Create your first artwork",
+            }}
+          />
         )}
 
         {!isLoading && !error && generations.length > 0 && (

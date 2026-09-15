@@ -5,6 +5,7 @@ import { ProductCard } from "@/entities/pet-product/ui/ProductCard";
 import type { Product } from "@/entities/pet-product/model/types";
 import type { UserGeneration } from "@/entities/order/types";
 import LightRays from "@/shared/ui/LightRays";
+import { EmptyState } from "./EmptyState";
 
 interface Props {
   artworks: UserGeneration[];
@@ -46,15 +47,17 @@ export function MyArtworks({ artworks, isLoading, error }: Props) {
         )}
 
         {!isLoading && !error && artworks.length === 0 && (
-          <div className="rounded-xl bg-cream px-4 py-8 text-center">
-            <p className="text-text-muted">No artworks yet.</p>
-            <Link
-              href="/catalog"
-              className="mt-3 inline-block rounded-xl bg-primary px-6 py-3 text-sm font-bold text-white transition-all hover:bg-primary-dark hover:shadow-md"
-            >
-              Create your first artwork
-            </Link>
-          </div>
+          <EmptyState
+            headingLevel="h3"
+            icon="palette"
+            title="No artworks yet"
+            description="When you create an artwork it will show up here."
+            cta={{
+              href: "/catalog",
+              icon: "auto_awesome",
+              label: "Create your first artwork",
+            }}
+          />
         )}
 
         {!isLoading && !error && artworks.length > 0 && (

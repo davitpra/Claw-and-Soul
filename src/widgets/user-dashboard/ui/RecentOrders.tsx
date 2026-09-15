@@ -9,6 +9,7 @@ import {
   statusBadge,
 } from "@/entities/order/lib/presentation";
 import type { UserOrderListItem } from "@/entities/order/types";
+import { EmptyState } from "./EmptyState";
 
 interface Props {
   orders: UserOrderListItem[];
@@ -67,15 +68,13 @@ export function RecentOrders({ orders, isLoading, error }: Props) {
         )}
 
         {!isLoading && !error && orders.length === 0 && (
-          <div className="rounded-xl bg-cream px-4 py-8 text-center">
-            <p className="text-text-muted">You have no orders yet.</p>
-            <Link
-              href="/catalog"
-              className="mt-3 inline-block rounded-xl bg-primary px-6 py-3 text-sm font-bold text-white transition-all hover:bg-primary-dark hover:shadow-md"
-            >
-              Start shopping
-            </Link>
-          </div>
+          <EmptyState
+            headingLevel="h3"
+            icon="shopping_bag"
+            title="No orders yet"
+            description="When you place an order it will show up here."
+            cta={{ href: "/catalog", icon: "storefront", label: "Start shopping" }}
+          />
         )}
 
         {!isLoading && !error && orders.length > 0 && (

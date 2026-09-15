@@ -1,7 +1,6 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import Link from "next/link";
 import { useAuthFetch } from "@/hooks/useAuthFetch";
 import { useShopifyVariantImages } from "@/hooks/useShopifyVariantImages";
 import { ProductCard } from "@/entities/pet-product/ui/ProductCard";
@@ -19,6 +18,7 @@ import type {
   UserOrderListItem,
 } from "@/entities/order/types";
 import LightRays from "@/shared/ui/LightRays";
+import { EmptyState } from "./EmptyState";
 
 // Adapta una orden al shape `Product` que consume ProductCard: la imagen del
 // item principal hace de "poster", el número de orden de nombre y el total de
@@ -161,28 +161,12 @@ export function AllOrders() {
       )}
 
       {!showSkeleton && !error && orders.length === 0 && (
-        <div className="px-4 py-8 text-center">
-          <span className="mx-auto flex size-16 items-center justify-center rounded-full bg-cream text-text-muted">
-            <span className="material-symbols-outlined text-[32px]">
-              shopping_bag
-            </span>
-          </span>
-          <h2 className="mt-4 font-display text-xl font-black text-text-main">
-            No orders yet
-          </h2>
-          <p className="mt-1 text-sm text-text-muted">
-            When you place an order it will show up here.
-          </p>
-          <Link
-            href="/catalog"
-            className="mt-5 inline-flex items-center gap-2 rounded-xl bg-primary px-6 py-3 text-sm font-bold text-white shadow-sm transition-all hover:bg-primary-dark hover:shadow-md"
-          >
-            <span className="material-symbols-outlined text-[18px]">
-              storefront
-            </span>
-            Start shopping
-          </Link>
-        </div>
+        <EmptyState
+          icon="shopping_bag"
+          title="No orders yet"
+          description="When you place an order it will show up here."
+          cta={{ href: "/catalog", icon: "storefront", label: "Start shopping" }}
+        />
       )}
 
       {!showSkeleton && !error && orders.length > 0 && (
